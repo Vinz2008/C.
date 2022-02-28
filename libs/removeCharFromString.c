@@ -1,0 +1,1 @@
+extern char *removeCharFromString(char charToRemove, char *str);
