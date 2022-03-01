@@ -136,6 +136,12 @@ int interpret(char filename[], int debugMode) {
                 }
 
             }
+            if (startswith("if", lineList[i])){
+                if (debugMode == 1) {
+                    printf("if detected\n");
+                }
+
+            }
             if (startswith("function", lineList[i])){
                 isFunctionInt = 0;
                 if (debugMode == 1) {

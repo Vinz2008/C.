@@ -1,4 +1,7 @@
 function int main() {
-    print("hello");
-    return 0;
+    print("hello")
+    if (1 < 2) {
+
+    }
+    return 0
 }
