@@ -1,2 +1,4 @@
 vlang
 .vscode/
+*.exe
+build/

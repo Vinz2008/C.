@@ -12,7 +12,7 @@ all:
 
 windows:
 	mkdir build
-	$(CC) -c -g intepret.c -o build/intepret.o
+	$(CC) -c -g interpret.c -o build/interpret.o
 	$(CC) -c -g libs/removeCharFromString.c -o build/removeCharFromString.o
 	$(CC) -c -g libs/startswith.c -o build/startswith.o
 	$(CC) -c -g main.c -o build/main.o
@@ -23,4 +23,4 @@ windows:
 install:
 	cp sasm /usr/bin/sasm
 run:
-	./vlang test.vlang
+	./vlang test.vlang -d

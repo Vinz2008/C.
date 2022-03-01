@@ -1,1 +1,1 @@
-extern int interpret(char filename[]);
+extern int interpret(char filename[], int debugMode);
