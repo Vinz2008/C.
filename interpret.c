@@ -91,7 +91,6 @@ int interpret(char filename[], int debugMode) {
 	    c++;
 	    }
         for (i = 0; i < sizeLineList; i++) {
-            char stringToPrint[20];
             if (debugMode == 1) {
             printf("lineList[i]: %s\n", lineList[i]);
             }
