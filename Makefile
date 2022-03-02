@@ -21,6 +21,6 @@ windows:
 
 
 install:
-	cp sasm /usr/bin/sasm
+	cp sasm /usr/bin/vlang
 run:
 	./vlang test.vlang -d
