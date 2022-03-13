@@ -1,4 +1,5 @@
 function int main() {
+    int hello = 2
     print("hello")
     if (1 < 2) {
 

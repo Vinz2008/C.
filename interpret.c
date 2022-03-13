@@ -4,7 +4,12 @@
 #include <stdlib.h>
 #include <string.h>
 //#include "libs/removeCharFromString.h"
-                       
+
+struct Variable {
+char name[10];
+char value[20];
+char type;
+};     
 
 int interpret(char filename[], char filecompileOutput[],int debugMode, int compileMode) {
     int i;
@@ -98,6 +103,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 
 	    c++;
 	    }
+        struct Variable varArray[20];
+	    int nbVariable;
         for (i = 0; i < sizeLineList; i++) {
             if (debugMode == 1) {
             printf("lineList[i]: %s\n", lineList[i]);
@@ -167,6 +174,23 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     //isFunctionInt = 1;
                 }
             }
+            if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
+	        strcpy(varArray[nbVariable].name, lineList[i + 1]);
+	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
+	        if (startswith("int",lineList[i])){
+		    varArray[nbVariable].type = 'i';
+	    	if (debugMode == 1) {
+                    printf("int var initialization detected\n");
+            	}
+	        }
+	        if (startswith("char",lineList[i])){
+		    varArray[nbVariable].type = 'c';
+	    	if (debugMode == 1) {
+		    printf("char var initialization detected\n");
+		    }
+	        }
+	        nbVariable++;
+	        }
         }
         }
 
