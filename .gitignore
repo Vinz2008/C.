@@ -2,3 +2,5 @@ vlang
 .vscode/
 *.exe
 build/
+vlang
+out.c

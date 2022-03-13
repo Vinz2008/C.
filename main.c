@@ -2,17 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #include "interpret.h"
-#ifdef _WIN32
 #define ARGUMENT_START 1
-#else
-#define ARGUMENT_START 0
-#endif
+
 
 int main(int argc,char* argv[]){
     int i;
      if(argc==1)
     {
-    printf("No Extra Command Line Argument Passed OtherThan Program Name");
+    printf("No Extra Command Line Argument Passed Other Than Program Name\n");
     exit(0);
     }
     else
@@ -22,7 +19,9 @@ int main(int argc,char* argv[]){
     char compileArg[10];
     char debugArg[10];
     int isDebug = 0;
+    int IsCompile = 0;
     char inputFilename[10];
+    char fileCompileOutput[11];
     for (i=ARGUMENT_START;i<argc;i++) 
     {
     //printf("argv[%i] : %s\n",i, argv[i]);
@@ -38,12 +37,25 @@ int main(int argc,char* argv[]){
     //printf("debug found\n");
     isDebug = 1;
     }
-    else {
-    strcpy(inputFilename,argv[i]);
+    else if (strcmp(argv[i], "-c") == 0) {
+        IsCompile = 1;
+
     }
+    else {
+    memset(inputFilename,0,sizeof(inputFilename));
+    strcpy(inputFilename,argv[i]);
+    //printf("filename input %s\n", inputFilename);
+    }
+    }
+    //printf("filename opening 1 : %s\n", inputFilename);
+    if (IsCompile == 1) {
+        strcpy(fileCompileOutput, "out.c"); 
+    } else {
+        strcpy(fileCompileOutput, ""); 
     }
     if (argv[1] != NULL){
-    interpret(inputFilename, isDebug);
+    //printf("filename opening 2 : %s\n", inputFilename);
+    interpret(inputFilename, fileCompileOutput, isDebug, IsCompile);
     }
     }
     return 0;

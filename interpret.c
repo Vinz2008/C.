@@ -6,11 +6,19 @@
 //#include "libs/removeCharFromString.h"
                        
 
-int interpret(char filename[], int debugMode) {
+int interpret(char filename[], char filecompileOutput[],int debugMode, int compileMode) {
     int i;
     int i2;
     FILE *fptr;
+    if (compileMode == 1) {
+    FILE *fptrtemp;
+    fptrtemp = fopen(filecompileOutput, "w");
+    fclose(fptrtemp);
+    }
+    FILE *fptrOutput; //Only used if compiling
+    fptrOutput = fopen(filecompileOutput, "w");
     char line[40];
+    //printf("filename opening 3 : %s\n", filename);
     fptr = fopen(filename, "r");
     if (fptr == NULL)
     {
@@ -108,6 +116,11 @@ int interpret(char filename[], int debugMode) {
                     stringToPrint[i3] = lineList[i][i2];
                     i3++;    
                 }
+                if (compileMode == 1) {
+                    printf("compile print");
+                    fprintf(fptrOutput, "printf");
+                }
+                else {
                 if (debugMode == 1) {
                 printf("stringToPrint: %s\n", stringToPrint);
                 printf("---REAL OUTPUT---\n");
@@ -115,6 +128,7 @@ int interpret(char filename[], int debugMode) {
                 printf("%s\n", stringToPrint);
                 if (debugMode == 1) {
                 printf("-----------------\n");
+                }
                 }
             }
             if (startswith("return", lineList[i])){
