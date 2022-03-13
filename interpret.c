@@ -25,6 +25,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     char line[40];
     //printf("filename opening 3 : %s\n", filename);
     fptr = fopen(filename, "r");
+    struct Variable varArray[20];
+	int nbVariable = 0;
     if (fptr == NULL)
     {
         printf("Error! The file is empty\n");   
@@ -103,8 +105,6 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 
 	    c++;
 	    }
-        struct Variable varArray[20];
-	    int nbVariable;
         for (i = 0; i < sizeLineList; i++) {
             if (debugMode == 1) {
             printf("lineList[i]: %s\n", lineList[i]);
@@ -174,8 +174,11 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     //isFunctionInt = 1;
                 }
             }
-            if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
-	        strcpy(varArray[nbVariable].name, lineList[i + 1]);
+            if (startswith("int", lineList[0]) || startswith("char", lineList[0])){
+                if (debugMode == 1) {
+                    printf("int detected\n");
+            	}	        
+            strcpy(varArray[nbVariable].name, lineList[i + 1]);
 	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
 	        if (startswith("int",lineList[i])){
 		    varArray[nbVariable].type = 'i';
@@ -193,6 +196,6 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	        }
         }
         }
-
+    memset(varArray,0, sizeof(varArray));
     return 0;
 }
