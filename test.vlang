@@ -1,8 +1,8 @@
-function int main() {
+func int main() {
     int hello = 2
     print("hello")
     if (1 < 2) {
-
+    print("world")
     }
     return 0
 }

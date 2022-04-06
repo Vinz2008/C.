@@ -59,7 +59,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
            if (debugMode == 1) {
             printf("char : %c\n",lineList[c][i]);
            }
-            if (lineList[c][i] == "("[0]) {
+            if (lineList[c][i] == '(') {
                 posFirstParenthesis = i;
                 if (debugMode == 1) {
                 printf("posFirstParenthesis: %i\n",posFirstParenthesis);
@@ -124,8 +124,10 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     i3++;    
                 }
                 if (compileMode == 1) {
-                    printf("compile print");
-                    fprintf(fptrOutput, "printf");
+                    //printf("compile print\n");
+                    fprintf(fptrOutput, "printf(\"");
+		    fprintf(fptrOutput, "%s",stringToPrint);
+		    fprintf(fptrOutput, "\");\n");
                 }
                 else {
                 if (debugMode == 1) {
@@ -162,7 +164,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 }
 
             }
-            if (startswith("function", lineList[i])){
+            if (startswith("func", lineList[i])){
                 isFunctionInt = 0;
                 if (debugMode == 1) {
                     printf("function detected\n");
