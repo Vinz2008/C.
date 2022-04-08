@@ -32,7 +32,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         printf("Error! The file is empty\n");   
         exit(1);
     }
-     while (fgets(line,150, fptr)) {
+     while (fgets(line,40, fptr)) {
         //strcpy(line, removeCharFromString("\t", line));
         if (debugMode == 1) {
         printf("%s", line);
