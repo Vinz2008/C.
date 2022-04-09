@@ -38,6 +38,16 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         printf("%s", line);
         }
         char line2[40];
+	char lineTemp[40];
+	i2 = 0;
+	for (i=0;i<strlen(line);i++){
+	if (line[i] != '\n'){
+	lineTemp[i2]= line[i];
+	i2++;
+	}
+	}
+	strcpy(line, lineTemp);
+	memset(lineTemp,0,sizeof(lineTemp));
         strcpy(line2, line);
         int c = 0;
         int posLastQuote = -1;
@@ -156,6 +166,10 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 if (debugMode == 1) {
                     printf("returnedThing: %s\n", returnedThing);
                 }
+		if (compileMode == 1){
+		fprintf(fptrOutput, "return ");
+		fprintf(fptrOutput, "%s;\n", returnedThing);
+		}
 
             }
             if (startswith("if", lineList[i])){
@@ -171,10 +185,16 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 }
                 if (startswith("int", lineList[i + 1])){
                     if (debugMode == 1) {
-                    printf("function is an int\n");
+                    printf("function %s is an int\n", lineList[i+2]);
                     }
                     //isFunctionInt = 1;
+		    if (compileMode == 1){
+		    fprintf(fptrOutput, "int ");
+		    }
                 }
+	        if (compileMode == 1){
+		fprintf(fptrOutput, ";\n");
+		}
             }
             if (startswith("int", lineList[0]) || startswith("char", lineList[0])){
                 if (debugMode == 1) {
@@ -198,6 +218,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	        }
         }
         }
+    //memset(line, 0, sizeof(line));
     memset(varArray,0, sizeof(varArray));
     return 0;
 }

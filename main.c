@@ -19,7 +19,7 @@ int main(int argc,char* argv[]){
     char compileArg[10];
     char debugArg[10];
     int isDebug = 0;
-    int IsCompile = 0;
+    int IsCompile = 1;
     char inputFilename[10];
     char fileCompileOutput[11];
     for (i=ARGUMENT_START;i<argc;i++) 
@@ -40,6 +40,9 @@ int main(int argc,char* argv[]){
     else if (strcmp(argv[i], "-c") == 0) {
         IsCompile = 1;
 
+    }
+    else if (strcmp(argv[i], "-i") == 0){
+    	IsCompile = 0;
     }
     else {
     memset(inputFilename,0,sizeof(inputFilename));
