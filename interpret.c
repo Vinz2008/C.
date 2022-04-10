@@ -9,7 +9,15 @@ struct Variable {
 char name[10];
 char value[20];
 char type;
-};     
+};
+     
+struct Function {
+char name[10];
+int numberArguments;
+char arguments[10][10];
+char type;
+};
+
 
 int interpret(char filename[], char filecompileOutput[],int debugMode, int compileMode) {
     int i;
@@ -25,8 +33,11 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     char line[40];
     //printf("filename opening 3 : %s\n", filename);
     fptr = fopen(filename, "r");
-    struct Variable varArray[20];
-	int nbVariable = 0;
+    //struct Variable varArray[20];
+    struct Variable* varArray = malloc(20*sizeof(struct Variable));
+    //struct Function FuncArray[20];
+    int nbVariable = 0;
+    int nbVariableMax = 20;
     if (fptr == NULL)
     {
         printf("Error! The file is empty\n");   
@@ -196,11 +207,11 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		fprintf(fptrOutput, ";\n");
 		}
             }
-            if (startswith("int", lineList[0]) || startswith("char", lineList[0])){
+            if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
                 if (debugMode == 1) {
                     printf("int detected\n");
             	}	        
-            strcpy(varArray[nbVariable].name, lineList[i + 1]);
+            	strcpy(varArray[nbVariable].name, lineList[i + 1]);
 	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
 	        if (startswith("int",lineList[i])){
 		    varArray[nbVariable].type = 'i';
@@ -215,6 +226,10 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		    }
 	        }
 	        nbVariable++;
+		if (nbVariable >= nbVariableMax){
+		varArray = realloc(varArray, 10 + sizeof(varArray));
+		nbVariableMax += 10;
+		}
 	        }
         }
         }
