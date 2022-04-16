@@ -20,7 +20,8 @@ int main(int argc,char* argv[]){
     char debugArg[10];
     int isDebug = 0;
     int IsCompile = 1;
-    char inputFilename[10];
+    char inputFilename[15];
+    char tempFileName[15];
     char fileCompileOutput[11];
     for (i=ARGUMENT_START;i<argc;i++) 
     {
@@ -34,7 +35,7 @@ int main(int argc,char* argv[]){
     }*/
     if(strcmp(argv[i], "-d") == 0)
     {
-    //printf("debug found\n");
+    printf("debug found\n");
     isDebug = 1;
     }
     else if (strcmp(argv[i], "-c") == 0) {
@@ -51,6 +52,7 @@ int main(int argc,char* argv[]){
     }
     }
     //printf("filename opening 1 : %s\n", inputFilename);
+    strcpy(tempFileName,inputFilename);
     if (IsCompile == 1) {
         strcpy(fileCompileOutput, "out.c"); 
     } else {
@@ -58,6 +60,8 @@ int main(int argc,char* argv[]){
     }
     if (argv[1] != NULL){
     //printf("filename opening 2 : %s\n", inputFilename);
+    strcpy(inputFilename, tempFileName);
+    //printf("filename opening 3 : %s\n", inputFilename);
     interpret(inputFilename, fileCompileOutput, isDebug, IsCompile);
     }
     }
