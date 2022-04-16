@@ -1,5 +1,6 @@
 #include "interpret.h"   
 #include "libs/startswith.h"
+#include "libs/color.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     //struct Variable varArray[20];
     struct Variable* varArray = malloc(20*sizeof(struct Variable));
     //struct Function FuncArray[20];
+    struct Function* funcArray = malloc(20*sizeof(struct Function));
     int nbVariable = 0;
     int nbVariableMax = 20;
     if (fptr == NULL)
@@ -186,7 +188,13 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             if (startswith("if", lineList[i])){
                 if (debugMode == 1) {
                     printf("if detected\n");
+		    printf("%c\n", lineList[i+1][0]);
                 }
+		if (lineList[i+1][0] != '('){
+		printf(BRED "ERROR : no parenthesis in if\n" reset);
+		printf("%s\n", line2);
+		exit(0);
+		}
 
             }
             if (startswith("func", lineList[i])){
@@ -204,7 +212,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		    }
                 }
 	        if (compileMode == 1){
-		fprintf(fptrOutput, ";\n");
+		fprintf(fptrOutput, "\n");
 		}
             }
             if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
@@ -234,6 +242,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         }
         }
     //memset(line, 0, sizeof(line));
-    memset(varArray,0, sizeof(varArray));
+    memset(&varArray,0, sizeof(varArray));
+    memset(&funcArray,0,sizeof(funcArray));
     return 0;
 }
