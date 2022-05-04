@@ -1,17 +1,17 @@
 #include "interpret.h"   
 #include "libs/startswith.h"
 #include "libs/color.h"
+#include "libs/removeCharFromString.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-//#include "libs/removeCharFromString.h"
 
 struct Variable {
 char name[10];
 char value[20];
 char type;
 };
-     
+
 struct Function {
 char name[10];
 int numberArguments;
@@ -46,9 +46,9 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         exit(1);
     }
      while (fgets(line,40, fptr)) {
-        //strcpy(line, removeCharFromString("\t", line));
+	removeCharFromString('\t',line);
         if (debugMode == 1) {
-        printf("%s", line);
+        printf("line : %s", line);
         }
         char line2[40];
 	char lineTemp[40];
