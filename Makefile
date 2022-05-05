@@ -1,23 +1,24 @@
 CC=gcc
-
+ifeq ($(OS),Windows_NT)
+OUTPUTBIN = vlang.exe
+else
+OUTPUTBIN = vlang
+endif
 
 all:
 	mkdir build
 	$(CC) -c -g interpret.c -o build/interpret.o
+	$(CC) -c -g parser.c -o build/parser.o
 	$(CC) -c -g libs/removeCharFromString.c -o build/removeCharFromString.o
 	$(CC) -c -g libs/startswith.c -o build/startswith.o
 	$(CC) -c -g main.c -o build/main.o
-	$(CC) -o vlang build/main.o build/interpret.o build/removeCharFromString.o build/startswith.o
-	rm -rf build
-
-windows:
-	mkdir build
-	$(CC) -c -g interpret.c -o build/interpret.o
-	$(CC) -c -g libs/removeCharFromString.c -o build/removeCharFromString.o
-	$(CC) -c -g libs/startswith.c -o build/startswith.o
-	$(CC) -c -g main.c -o build/main.o
-	$(CC) -o vlang.exe build/main.o build/interpret.o build/removeCharFromString.o build/startswith.o
+	$(CC) -o $(OUTPUTBIN) build/main.o build/interpret.o build/removeCharFromString.o build/startswith.o build/parser.o
+ifeq ($(OS),Windows_NT)
 	rmdir .\build\ /s /q
+else
+	rm -rf build
+endif
+
 
 
 install:
@@ -25,4 +26,4 @@ install:
 run:
 	./vlang test.vlang -d
 clean:
-	rm -rf build
+	rm -rf build vlang

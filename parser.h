@@ -1,1 +1,1 @@
-extern int parser(char* line,char* lineList);
+extern int parser(char line[40],char lineList[10][10], int* sizeLineList, int posFirstQuote, int posLastQuote, int posFirstParenthesis, int posLastParenthesis,int debugMode);
