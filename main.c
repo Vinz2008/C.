@@ -19,6 +19,7 @@ int main(int argc,char* argv[]){
     char compileArg[10];
     char debugArg[10];
     int isDebug = 0;
+    int llvmMode = 0;
     int IsCompile = 1;
     char inputFilename[15];
     char tempFileName[15];
@@ -45,6 +46,9 @@ int main(int argc,char* argv[]){
     else if (strcmp(argv[i], "-i") == 0){
     	IsCompile = 0;
     }
+    else if (strcmp(argv[i], "--llvm") == 0) {
+        llvmMode = 1;
+    }
     else {
     memset(inputFilename,0,sizeof(inputFilename));
     strcpy(inputFilename,argv[i]);
@@ -62,7 +66,7 @@ int main(int argc,char* argv[]){
     //printf("filename opening 2 : %s\n", inputFilename);
     strcpy(inputFilename, tempFileName);
     //printf("filename opening 3 : %s\n", inputFilename);
-    interpret(inputFilename, fileCompileOutput, isDebug, IsCompile);
+    interpret(inputFilename, fileCompileOutput, isDebug, IsCompile, llvmMode);
     }
     }
     return 0;

@@ -2,6 +2,9 @@
 #include "libs/startswith.h"
 #include "libs/color.h"
 #include "libs/removeCharFromString.h"
+#include <llvm-c/Core.h>
+#include <llvm-c/TargetMachine.h>
+#include <llvm-c/Analysis.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,8 +22,14 @@ char arguments[10][10];
 char type;
 };
 
+struct FunctionLLVM {
+    LLVMTypeRef param_types[20];
+    LLVMTypeRef ret_type;
+    LLVMValueRef function;
+};
 
-int interpret(char filename[], char filecompileOutput[],int debugMode, int compileMode) {
+
+int interpret(char filename[], char filecompileOutput[],int debugMode, int compileMode, int llvmMode) {
     int i;
     int i2;
     FILE *fptr;
@@ -30,6 +39,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     fclose(fptrtemp);
     }
     FILE *fptrOutput; //Only used if compiling
+    LLVMModuleRef Module = LLVMModuleCreateWithName("main");
+    LLVMBuilderRef Builder = LLVMCreateBuilder();
     fptrOutput = fopen(filecompileOutput, "w");
     char line[40];
     //printf("filename opening 3 : %s\n", filename);
@@ -206,10 +217,18 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     if (debugMode == 1) {
                     printf("function %s is an int\n", lineList[i+2]);
                     }
+                    char* functionName = lineList[i+2];
                     //isFunctionInt = 1;
-		    if (compileMode == 1){
-		    fprintf(fptrOutput, "int ");
-		    }
+		        if (compileMode == 1){
+		        fprintf(fptrOutput, "int ");
+		        }
+                else if(llvmMode == 1){
+                        LLVMTypeRef param_types[] = {LLVMVoidType()};
+                        LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
+                        LLVMValueRef main = LLVMAddFunction(Module, functionName, ret_type);
+                        LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main, "entry");
+                        LLVMPositionBuilderAtEnd(Builder, entry);
+                } 
                 }
 	        if (compileMode == 1){
 		fprintf(fptrOutput, "\n");
@@ -241,6 +260,11 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	        }
         }
         }
+    if (llvmMode == 1){
+        char *error = NULL;
+    LLVMVerifyModule(Module, LLVMAbortProcessAction, &error);
+    LLVMDisposeMessage(error);
+    }
     //memset(line, 0, sizeof(line));
     memset(&varArray,0, sizeof(varArray));
     memset(&funcArray,0,sizeof(funcArray));
