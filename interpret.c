@@ -1,10 +1,14 @@
-#include "interpret.h"   
+#include "interpret.h"
 #include "libs/startswith.h"
 #include "libs/color.h"
 #include "libs/removeCharFromString.h"
 #include <llvm-c/Core.h>
 #include <llvm-c/TargetMachine.h>
 #include <llvm-c/Analysis.h>
+#include <llvm-c/ExecutionEngine.h>
+#include <llvm-c/Target.h>
+#include <llvm-c/BitWriter.h>
+#include <llvm-c/LLJIT.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -41,6 +45,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     FILE *fptrOutput; //Only used if compiling
     LLVMModuleRef Module = LLVMModuleCreateWithName("main");
     LLVMBuilderRef Builder = LLVMCreateBuilder();
+    LLVMValueRef main;
     fptrOutput = fopen(filecompileOutput, "w");
     char line[40];
     //printf("filename opening 3 : %s\n", filename);
@@ -174,7 +179,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 }
                 }
             }
-            if (startswith("return", lineList[i])){
+            else if (startswith("return", lineList[i])){
                 if (debugMode == 1) {
                     printf("return detected\n");
                 }
@@ -196,7 +201,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		}
 
             }
-            if (startswith("if", lineList[i])){
+            else if (startswith("if", lineList[i])){
                 if (debugMode == 1) {
                     printf("if detected\n");
 		    printf("%c\n", lineList[i+1][0]);
@@ -208,7 +213,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		}
 
             }
-            if (startswith("func", lineList[i])){
+            else if (startswith("func", lineList[i])){
                 isFunctionInt = 0;
                 if (debugMode == 1) {
                     printf("function detected\n");
@@ -225,10 +230,12 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 else if(llvmMode == 1){
                         LLVMTypeRef param_types[] = {LLVMVoidType()};
                         LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
-                        LLVMValueRef main = LLVMAddFunction(Module, functionName, ret_type);
+                        main = LLVMAddFunction(Module, functionName, ret_type);
                         LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main, "entry");
                         LLVMPositionBuilderAtEnd(Builder, entry);
-                } 
+			LLVMValueRef tmp = LLVMBuildAdd(Builder, LLVMGetParam(main, 0), LLVMGetParam(main, 1), "tmp");
+    			LLVMBuildRet(Builder, tmp);
+                }
                 }
 	        if (compileMode == 1){
 		fprintf(fptrOutput, "\n");
@@ -237,7 +244,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
                 if (debugMode == 1) {
                     printf("int detected\n");
-            	}	        
+                }
             	strcpy(varArray[nbVariable].name, lineList[i + 1]);
 	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
 	        if (startswith("int",lineList[i])){
@@ -261,9 +268,24 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         }
         }
     if (llvmMode == 1){
-        char *error = NULL;
+    LLVMExecutionEngineRef Engine;
+    char *error = NULL;
     LLVMVerifyModule(Module, LLVMAbortProcessAction, &error);
     LLVMDisposeMessage(error);
+    LLVMWriteBitcodeToFile(Module, "out.bc");
+    LLVMLinkInMCJIT();
+    LLVMInitializeNativeTarget();
+    LLVMInitializeNativeAsmPrinter();
+    LLVMInitializeNativeAsmParser();
+    if(LLVMCreateExecutionEngineForModule(&Engine, Module, &error)) {
+    fprintf(stderr, "Failed to create ExecutionEngine: %s\n", error);
+    LLVMDisposeMessage(error);
+    return 1;
+    }
+    int (*main)(void) = (int (*)(void)) LLVMGetFunctionAddress(Engine, "main");
+    //printf("status main : %i\n", main()); 
+    LLVMDisposeModule(Module);
+    LLVMDisposeBuilder(Builder);
     }
     //memset(line, 0, sizeof(line));
     memset(&varArray,0, sizeof(varArray));
