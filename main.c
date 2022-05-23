@@ -19,8 +19,8 @@ int main(int argc,char* argv[]){
     char compileArg[10];
     char debugArg[10];
     int isDebug = 0;
-    int llvmMode = 0;
-    int IsCompile = 1;
+    int llvmMode = 1;
+    int IsCompile = 0;
     char inputFilename[15];
     char tempFileName[15];
     char fileCompileOutput[11];

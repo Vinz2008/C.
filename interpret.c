@@ -43,6 +43,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     fclose(fptrtemp);
     }
     FILE *fptrOutput; //Only used if compiling
+    LLVMContextRef context;
     LLVMModuleRef Module = LLVMModuleCreateWithName("main");
     LLVMBuilderRef Builder = LLVMCreateBuilder();
     LLVMValueRef main;
@@ -228,13 +229,20 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		        fprintf(fptrOutput, "int ");
 		        }
                 else if(llvmMode == 1){
-                        LLVMTypeRef param_types[] = {LLVMVoidType()};
-                        LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
-                        main = LLVMAddFunction(Module, functionName, ret_type);
-                        LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main, "entry");
-                        LLVMPositionBuilderAtEnd(Builder, entry);
-			LLVMValueRef tmp = LLVMBuildAdd(Builder, LLVMGetParam(main, 0), LLVMGetParam(main, 1), "tmp");
-    			LLVMBuildRet(Builder, tmp);
+                    LLVMTypeRef param_types[] = {LLVMVoidType()};
+                    LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
+                    main = LLVMAddFunction(Module, functionName, ret_type);
+                    LLVMSetLinkage(main, LLVMExternalLinkage);
+                    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main, "entry");
+                    LLVMPositionBuilderAtEnd(Builder, entry);
+                    if (LLVMVerifyFunction(main, LLVMPrintMessageAction) == 1) {
+                    printf("ERROR : invalid function\n");
+                    LLVMDeleteFunction(main);
+                    exit(1);
+                    }
+			        LLVMValueRef tmp = LLVMBuildAdd(Builder, LLVMGetParam(main, 0), LLVMGetParam(main, 1), "tmp");
+                    printf("test\n");
+    			    LLVMBuildRet(Builder, tmp);
                 }
                 }
 	        if (compileMode == 1){
