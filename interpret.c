@@ -224,13 +224,15 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     printf("function %s is an int\n", lineList[i+2]);
                     }
                     char* functionName = lineList[i+2];
+		    removeCharFromString('(', functionName);
+		    removeCharFromString(')',functionName);
                     //isFunctionInt = 1;
 		        if (compileMode == 1){
 		        fprintf(fptrOutput, "int ");
 		        }
                 else if(llvmMode == 1){
                     LLVMTypeRef param_types[] = {LLVMVoidType()};
-                    LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 2, 0);
+                    LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 1, 0);
                     main = LLVMAddFunction(Module, functionName, ret_type);
                     LLVMSetLinkage(main, LLVMExternalLinkage);
                     LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main, "entry");
@@ -240,7 +242,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     LLVMDeleteFunction(main);
                     exit(1);
                     }
-			        LLVMValueRef tmp = LLVMBuildAdd(Builder, LLVMGetParam(main, 0), LLVMGetParam(main, 1), "tmp");
+		    printf("LLVMGetParam(main, 1) : %p\n", LLVMGetParam(main, 1));
+	            LLVMValueRef tmp = LLVMBuildAdd(Builder, LLVMGetParam(main, 0),LLVMGetParam(main, 1), "tmp");
                     printf("test\n");
     			    LLVMBuildRet(Builder, tmp);
                 }
@@ -290,8 +293,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     LLVMDisposeMessage(error);
     return 1;
     }
-    int (*main)(void) = (int (*)(void)) LLVMGetFunctionAddress(Engine, "main");
-    //printf("status main : %i\n", main()); 
+    int (*main_func)(void) = (int (*)(void)) LLVMGetFunctionAddress(Engine, "main");
+    printf("status main : %i\n", main_func()); 
     LLVMDisposeModule(Module);
     LLVMDisposeBuilder(Builder);
     }
