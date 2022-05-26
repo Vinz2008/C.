@@ -2,13 +2,8 @@
 #include "libs/startswith.h"
 #include "libs/color.h"
 #include "libs/removeCharFromString.h"
-#include <llvm-c/Core.h>
-#include <llvm-c/TargetMachine.h>
-#include <llvm-c/Analysis.h>
-#include <llvm-c/ExecutionEngine.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/BitWriter.h>
-#include <llvm-c/LLJIT.h>
+#include <unistd.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -26,16 +21,36 @@ char arguments[10][10];
 char type;
 };
 
-struct FunctionLLVM {
-    LLVMTypeRef param_types[20];
-    LLVMTypeRef ret_type;
-    LLVMValueRef function;
-};
 
 
 int interpret(char filename[], char filecompileOutput[],int debugMode, int compileMode, int llvmMode) {
     int i;
     int i2;
+    int posSlash;
+    char pathTemp[PATH_MAX];
+    char pathStd[PATH_MAX];
+    memset(pathTemp,0,sizeof(pathTemp));
+    if (readlink("/proc/self/exe", pathTemp, PATH_MAX) == -1) {
+    printf("ERROR : the compiler can't find itself and so can't find std");
+    } else {
+    printf("%s\n", pathTemp);
+    for (i = strlen(pathTemp) - 1; i > 0; i--){
+    if (pathTemp[i] == '/'){
+    posSlash = i;
+    if (debugMode == 1){
+    printf("posSlash : %i\n", posSlash);
+    }
+    break;
+    }
+    }
+    for (i = 0; i <= posSlash; i++){
+    pathStd[i] = pathTemp[i];
+    }
+    strncat(pathStd, "std", 3);
+    if (debugMode == 1){
+    printf("pathStd : %s\n", pathStd);
+    }
+    }
     FILE *fptr;
     if (compileMode == 1) {
     FILE *fptrtemp;
@@ -43,10 +58,6 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     fclose(fptrtemp);
     }
     FILE *fptrOutput; //Only used if compiling
-    LLVMContextRef context;
-    LLVMModuleRef Module = LLVMModuleCreateWithName("main");
-    LLVMBuilderRef Builder = LLVMCreateBuilder();
-    LLVMValueRef main;
     fptrOutput = fopen(filecompileOutput, "w");
     char line[40];
     //printf("filename opening 3 : %s\n", filename);
@@ -227,26 +238,11 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		    removeCharFromString('(', functionName);
 		    removeCharFromString(')',functionName);
                     //isFunctionInt = 1;
-		        if (compileMode == 1){
+		    if (compileMode == 1){
 		        fprintf(fptrOutput, "int ");
-		        }
-                else if(llvmMode == 1){
-                    LLVMTypeRef param_types[] = {LLVMVoidType()};
-                    LLVMTypeRef ret_type = LLVMFunctionType(LLVMInt32Type(), param_types, 1, 0);
-                    main = LLVMAddFunction(Module, functionName, ret_type);
-                    LLVMSetLinkage(main, LLVMExternalLinkage);
-                    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(main, "entry");
-                    LLVMPositionBuilderAtEnd(Builder, entry);
-                    if (LLVMVerifyFunction(main, LLVMPrintMessageAction) == 1) {
-                    printf("ERROR : invalid function\n");
-                    LLVMDeleteFunction(main);
-                    exit(1);
+		    }
+                    else if(llvmMode == 1){
                     }
-		    printf("LLVMGetParam(main, 1) : %p\n", LLVMGetParam(main, 1));
-	            LLVMValueRef tmp = LLVMBuildAdd(Builder, LLVMGetParam(main, 0),LLVMGetParam(main, 1), "tmp");
-                    printf("test\n");
-    			    LLVMBuildRet(Builder, tmp);
-                }
                 }
 	        if (compileMode == 1){
 		fprintf(fptrOutput, "\n");
@@ -279,24 +275,6 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         }
         }
     if (llvmMode == 1){
-    LLVMExecutionEngineRef Engine;
-    char *error = NULL;
-    LLVMVerifyModule(Module, LLVMAbortProcessAction, &error);
-    LLVMDisposeMessage(error);
-    LLVMWriteBitcodeToFile(Module, "out.bc");
-    LLVMLinkInMCJIT();
-    LLVMInitializeNativeTarget();
-    LLVMInitializeNativeAsmPrinter();
-    LLVMInitializeNativeAsmParser();
-    if(LLVMCreateExecutionEngineForModule(&Engine, Module, &error)) {
-    fprintf(stderr, "Failed to create ExecutionEngine: %s\n", error);
-    LLVMDisposeMessage(error);
-    return 1;
-    }
-    int (*main_func)(void) = (int (*)(void)) LLVMGetFunctionAddress(Engine, "main");
-    printf("status main : %i\n", main_func()); 
-    LLVMDisposeModule(Module);
-    LLVMDisposeBuilder(Builder);
     }
     //memset(line, 0, sizeof(line));
     memset(&varArray,0, sizeof(varArray));

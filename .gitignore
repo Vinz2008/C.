@@ -6,3 +6,4 @@ vlang
 out.c
 *.ll
 *.bc
+test
