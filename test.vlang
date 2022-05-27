@@ -1,3 +1,6 @@
+import io
+import std
+
 func int main() {
     int hello = 2
     print("hello")

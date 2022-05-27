@@ -46,7 +46,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     for (i = 0; i <= posSlash; i++){
     pathStd[i] = pathTemp[i];
     }
-    strncat(pathStd, "std", 3);
+    strncat(pathStd, "std", 4);
     if (debugMode == 1){
     printf("pathStd : %s\n", pathStd);
     }
@@ -92,12 +92,14 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         strcpy(line2, line);
         int c = 0;
         int posLastQuote = -1;
-	int posFirstQuote;
+	    int posFirstQuote;
         int posFirstParenthesis;
         int posLastParenthesis;
         int sizeLineList = 0;
         int isFunctionInt = 0;
         char lineList[10][10];
+        char tempStr[PATH_MAX];
+        char* libraryName;
         char *pch = strtok(line," ");
         while (pch != NULL)
 	    {
@@ -161,7 +163,32 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             printf("lineList[i]: %s\n", lineList[i]);
             }
             //if instructions
-            if (startswith("print", lineList[i])){
+            if (startswith("import", lineList[i])){
+                libraryName = lineList[i+1];
+                printf("path std: %s\n", pathStd);
+                snprintf(tempStr, PATH_MAX, "%s/%s", pathStd, libraryName);
+                /*strcpy(tempStr, pathStd);
+                strncat(tempStr, "/", 2);
+                strncat(tempStr, libraryName, strlen(libraryName));*/
+                if (debugMode == 1) {
+                printf("File %s in %s imported\n", libraryName, tempStr);
+                }
+                FILE* fptrTemp;
+	            char* line = NULL;
+	            ssize_t charNb;
+	            size_t len;
+                if ((fptrTemp = fopen(tempStr, "r")) == NULL){
+	            printf("The file doesn't exist or cannot be opened\n");
+	            exit(1);
+	            }
+                while ((charNb = getline(&line, &len, fptrTemp)) != -1){
+	            fprintf(fptrOutput,"%s",line);
+	            }
+                fprintf(fptrOutput,"\n");
+                memset(line, 0, strlen(line));
+                //memset(tempStr, 0, strlen(tempStr));  
+            }
+            else if (startswith("print", lineList[i])){
                 int i3 = 0;
                 char stringToPrint[20];
                 if (debugMode == 1) {
@@ -177,8 +204,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 if (compileMode == 1) {
                     //printf("compile print\n");
                     fprintf(fptrOutput, "printf(\"");
-		    fprintf(fptrOutput, "%s",stringToPrint);
-		    fprintf(fptrOutput, "\");\n");
+		            fprintf(fptrOutput, "%s",stringToPrint);
+		            fprintf(fptrOutput, "\");\n");
                 }
                 else {
                 if (debugMode == 1) {
@@ -207,22 +234,22 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 if (debugMode == 1) {
                     printf("returnedThing: %s\n", returnedThing);
                 }
-		if (compileMode == 1){
-		fprintf(fptrOutput, "return ");
-		fprintf(fptrOutput, "%s;\n", returnedThing);
-		}
+		        if (compileMode == 1){
+		        fprintf(fptrOutput, "return ");
+		        fprintf(fptrOutput, "%s;\n", returnedThing);
+		        }
 
             }
             else if (startswith("if", lineList[i])){
                 if (debugMode == 1) {
                     printf("if detected\n");
-		    printf("%c\n", lineList[i+1][0]);
+		            printf("%c\n", lineList[i+1][0]);
                 }
-		if (lineList[i+1][0] != '('){
-		printf(BRED "ERROR : no parenthesis in if\n" reset);
-		printf("%s\n", line2);
-		exit(0);
-		}
+		        if (lineList[i+1][0] != '('){
+		        printf(BRED "ERROR : no parenthesis in if\n" reset);
+		        printf("%s\n", line2);
+		        exit(0);
+		        }
 
             }
             else if (startswith("func", lineList[i])){
@@ -230,47 +257,51 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 if (debugMode == 1) {
                     printf("function detected\n");
                 }
+                if (llvmMode == 1){
+                    fprintf(fptrOutput, "define ");
+                }
                 if (startswith("int", lineList[i + 1])){
                     if (debugMode == 1) {
                     printf("function %s is an int\n", lineList[i+2]);
                     }
                     char* functionName = lineList[i+2];
-		    removeCharFromString('(', functionName);
-		    removeCharFromString(')',functionName);
+		            removeCharFromString('(', functionName);
+		            removeCharFromString(')',functionName);
                     //isFunctionInt = 1;
-		    if (compileMode == 1){
-		        fprintf(fptrOutput, "int ");
-		    }
+		            if (compileMode == 1){
+		            fprintf(fptrOutput, "int ");
+		            }
                     else if(llvmMode == 1){
+                        fprintf(fptrOutput, "i32");
                     }
                 }
-	        if (compileMode == 1){
-		fprintf(fptrOutput, "\n");
-		}
+	            if (compileMode == 1){
+		        fprintf(fptrOutput, "\n");
+		        }
             }
             if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
                 if (debugMode == 1) {
                     printf("int detected\n");
                 }
             	strcpy(varArray[nbVariable].name, lineList[i + 1]);
-	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
-	        if (startswith("int",lineList[i])){
-		    varArray[nbVariable].type = 'i';
-	    	if (debugMode == 1) {
+	            strcpy(varArray[nbVariable].value, lineList[i + 2]);
+	            if (startswith("int",lineList[i])){
+		        varArray[nbVariable].type = 'i';
+	    	    if (debugMode == 1) {
                     printf("int var initialization detected\n");
             	}
-	        }
-	        if (startswith("char",lineList[i])){
-		    varArray[nbVariable].type = 'c';
-	    	if (debugMode == 1) {
-		    printf("char var initialization detected\n");
-		    }
-	        }
-	        nbVariable++;
-		if (nbVariable >= nbVariableMax){
-		varArray = realloc(varArray, 10 + sizeof(varArray));
-		nbVariableMax += 10;
-		}
+	            }
+	            if (startswith("char",lineList[i])){
+		        varArray[nbVariable].type = 'c';
+	    	    if (debugMode == 1) {
+		        printf("char var initialization detected\n");
+		        }
+	            }
+	            nbVariable++;
+		        if (nbVariable >= nbVariableMax){
+		        varArray = realloc(varArray, 10 + sizeof(varArray));
+		        nbVariableMax += 10;
+		        }
 	        }
         }
         }

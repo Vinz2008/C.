@@ -59,6 +59,8 @@ int main(int argc,char* argv[]){
     strcpy(tempFileName,inputFilename);
     if (IsCompile == 1) {
         strcpy(fileCompileOutput, "out.c"); 
+    } else if (llvmMode == 1) {
+        strcpy(fileCompileOutput, "out.ll"); 
     } else {
         strcpy(fileCompileOutput, ""); 
     }

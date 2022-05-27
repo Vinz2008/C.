@@ -7,3 +7,4 @@ out.c
 *.ll
 *.bc
 test
+out.s
