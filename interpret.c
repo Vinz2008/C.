@@ -14,10 +14,15 @@ char value[20];
 char type;
 };
 
+struct Argument {
+char name[10];
+char type;
+};
+
 struct Function {
 char name[10];
 int numberArguments;
-char arguments[10][10];
+struct Argument arguments[10];
 char type;
 };
 
@@ -98,6 +103,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         int sizeLineList = 0;
         int isFunctionInt = 0;
         char lineList[10][10];
+	memset(lineList, 0, sizeof(lineList));
         char tempStr[PATH_MAX];
         char* libraryName;
         char *pch = strtok(line," ");
@@ -107,10 +113,12 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             if (debugMode == 1) {
             printf ("pch : %s\n",pch);
             }
+	    memset(lineList[c], 0 ,sizeof(lineList[c]));
 	    strcpy(lineList[c], pch);
        for (i = 0; i < strlen(lineList[c]); i++) {
            if (debugMode == 1) {
-            printf("char : %c\n",lineList[c][i]);
+            printf("lineList[c] length  : %lu\n", strlen(lineList[c]));
+            printf("char %i : %c\n",i,lineList[c][i]);
            }
             if (lineList[c][i] == '(') {
                 posFirstParenthesis = i;
@@ -304,6 +312,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		        }
 	        }
         }
+        memset(lineList, 0 ,sizeof(lineList));
         }
     if (llvmMode == 1){
     }
