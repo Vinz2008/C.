@@ -8,3 +8,4 @@ out.c
 *.bc
 test
 out.s
+test-llvm.c

@@ -275,12 +275,17 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     char* functionName = lineList[i+2];
 		            removeCharFromString('(', functionName);
 		            removeCharFromString(')',functionName);
+                    
                     //isFunctionInt = 1;
 		            if (compileMode == 1){
 		            fprintf(fptrOutput, "int ");
 		            }
                     else if(llvmMode == 1){
-                        fprintf(fptrOutput, "i32");
+                        fprintf(fptrOutput, "i32 ");
+                        fprintf(fptrOutput, "@%s", functionName);
+                        fprintf(fptrOutput, "(){\n");
+                        fprintf(fptrOutput, "ret i32 0\n");
+                        fprintf(fptrOutput, "}\n");
                     }
                 }
 	            if (compileMode == 1){
