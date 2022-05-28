@@ -225,7 +225,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		            fprintf(fptrOutput, "%s",stringToPrint);
 		            fprintf(fptrOutput, "\");\n");
                 } else if (llvmMode == 1) {
-                    fprintf(fptrOutput, "call i32 @printf")
+                    fprintf(fptrOutput, "call i32 @printf(")
                 }
                 else {
                 if (debugMode == 1) {
