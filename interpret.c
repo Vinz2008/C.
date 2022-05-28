@@ -1,6 +1,7 @@
 #include "interpret.h"
 #include "libs/startswith.h"
 #include "libs/color.h"
+#include "libs/isInt.h"
 #include "libs/removeCharFromString.h"
 #include <unistd.h>
 #include <limits.h>
@@ -78,12 +79,13 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         printf("Error! The file is empty\n");   
         exit(1);
     }
-     while (fgets(line,40, fptr)) {
+    while (fgets(line,40, fptr)) {
 	removeCharFromString('\t',line);
-        if (debugMode == 1) {
-        printf("line : %s", line);
-        }
-        char line2[40];
+    removeCharFromString('\n',line);
+    if (debugMode == 1) {
+    printf("line : %s", line);
+    }
+    char line2[40];
 	char lineTemp[40];
 	i2 = 0;
 	for (i=0;i<strlen(line);i++){
@@ -94,32 +96,32 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	}
 	strcpy(line, lineTemp);
 	memset(lineTemp,0,sizeof(lineTemp));
-        strcpy(line2, line);
-        int c = 0;
-        int posLastQuote = -1;
-	    int posFirstQuote;
-        int posFirstParenthesis;
-        int posLastParenthesis;
-        int sizeLineList = 0;
-        int isFunctionInt = 0;
-        char lineList[10][10];
+    strcpy(line2, line);
+    int c = 0;
+    int posLastQuote = -1;
+	int posFirstQuote;
+    int posFirstParenthesis;
+    int posLastParenthesis;
+    int sizeLineList = 0;
+    int isFunctionInt = 0;
+    char lineList[10][10];
 	memset(lineList, 0, sizeof(lineList));
-        char tempStr[PATH_MAX];
-        char* libraryName;
-        char *pch = strtok(line," ");
+    char tempStr[PATH_MAX];
+    char* libraryName;
+    char *pch = strtok(line," ");
         while (pch != NULL)
 	    {
-            sizeLineList++;
-            if (debugMode == 1) {
-            printf ("pch : %s\n",pch);
-            }
+        sizeLineList++;
+        if (debugMode == 1) {
+        printf ("pch : %s\n",pch);
+        }
 	    memset(lineList[c], 0 ,sizeof(lineList[c]));
 	    strcpy(lineList[c], pch);
-       for (i = 0; i < strlen(lineList[c]); i++) {
-           if (debugMode == 1) {
+        for (i = 0; i < strlen(lineList[c]); i++) {
+            if (debugMode == 1) {
             printf("lineList[c] length  : %lu\n", strlen(lineList[c]));
             printf("char %i : %c\n",i,lineList[c][i]);
-           }
+            }
             if (lineList[c][i] == '(') {
                 posFirstParenthesis = i;
                 if (debugMode == 1) {
@@ -132,7 +134,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                         if (debugMode == 1) {
                         printf("posLastParenthesis: %i\n",posLastParenthesis);
                         }
-		        break;
+		            break;
 
                     }
                 }
@@ -181,6 +183,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 if (debugMode == 1) {
                 printf("File %s in %s imported\n", libraryName, tempStr);
                 }
+                fprintf(fptrOutput, "; %s\n", libraryName);
                 FILE* fptrTemp;
 	            char* line = NULL;
 	            ssize_t charNb;
@@ -195,6 +198,13 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 fprintf(fptrOutput,"\n");
                 memset(line, 0, strlen(line));
                 //memset(tempStr, 0, strlen(tempStr));  
+            } else if(startswith("}", lineList[i])){
+                if (debugMode == 1) {
+                    printf("} detected\n");
+                }
+                if (llvmMode == 1){
+                    fprintf(fptrOutput, "}");
+                }
             }
             else if (startswith("print", lineList[i])){
                 int i3 = 0;
@@ -214,6 +224,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     fprintf(fptrOutput, "printf(\"");
 		            fprintf(fptrOutput, "%s",stringToPrint);
 		            fprintf(fptrOutput, "\");\n");
+                } else if (llvmMode == 1) {
+                    fprintf(fptrOutput, "call i32 @printf")
                 }
                 else {
                 if (debugMode == 1) {
@@ -231,7 +243,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     printf("return detected\n");
                 }
                 char returnedThing[10];
-                 strcpy(returnedThing, lineList[i+1]);
+                strcpy(returnedThing, lineList[i+1]);
                  /*if (isFunctionInt == 1) {
                      printf("function is Int detected \n");
                      int returnedThingInt;
@@ -245,7 +257,17 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		        if (compileMode == 1){
 		        fprintf(fptrOutput, "return ");
 		        fprintf(fptrOutput, "%s;\n", returnedThing);
-		        }
+		        } else if (llvmMode == 1){
+                    fprintf(fptrOutput, "ret ");
+                if (isInt(returnedThing)){
+                    if (debugMode == 1) {
+                    printf("the returned value %s is an int\n", returnedThing);
+                    }
+                    fprintf(fptrOutput, "i32 %d", atoi(returnedThing));
+                } else {
+                    fprintf(fptrOutput, "%s",  returnedThing);
+                }
+                }
 
             }
             else if (startswith("if", lineList[i])){
@@ -284,8 +306,6 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                         fprintf(fptrOutput, "i32 ");
                         fprintf(fptrOutput, "@%s", functionName);
                         fprintf(fptrOutput, "(){\n");
-                        fprintf(fptrOutput, "ret i32 0\n");
-                        fprintf(fptrOutput, "}\n");
                     }
                 }
 	            if (compileMode == 1){
@@ -318,10 +338,18 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	        }
         }
         memset(lineList, 0 ,sizeof(lineList));
+        if (line != "" && line != "\0" && line != "\n"){
+        fprintf(fptrOutput, "\n");
+        if (debugMode == 1){
+            printf("backslash n written to line\n");
+        }
+        }
         }
     if (llvmMode == 1){
     }
     //memset(line, 0, sizeof(line));
+    fclose(fptr);
+    fclose(fptrOutput);
     memset(&varArray,0, sizeof(varArray));
     memset(&funcArray,0,sizeof(funcArray));
     return 0;

@@ -1,4 +1,5 @@
 CC=gcc
+buildFolder=build
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = vlang.exe
 else
@@ -7,21 +8,22 @@ endif
 
 all:
 ifeq ($(OS),Windows_NT)
-	rmdir .\build\ /s /q
+	rmdir .\$(buildFolder)\ /s /q
 else
-	rm -rf build
+	rm -rf $(buildFolder)
 endif
-	mkdir build
-	$(CC) -c -g interpret.c -o build/interpret.o
-	$(CC) -c -g parser.c -o build/parser.o
-	$(CC) -c -g libs/removeCharFromString.c -o build/removeCharFromString.o
-	$(CC) -c -g libs/startswith.c -o build/startswith.o
-	$(CC) -c -g main.c -o build/main.o
-	$(CC) -o $(OUTPUTBIN) build/main.o build/interpret.o build/removeCharFromString.o build/startswith.o build/parser.o
+	mkdir $(buildFolder)
+	$(CC) -c -g interpret.c -o $(buildFolder)/interpret.o
+	$(CC) -c -g parser.c -o $(buildFolder)/parser.o
+	$(CC) -c -g libs/removeCharFromString.c -o $(buildFolder)/removeCharFromString.o
+	$(CC) -c -g libs/startswith.c -o $(buildFolder)/startswith.o
+	$(CC) -c -g libs/isInt.c -o $(buildFolder)/isInt.o
+	$(CC) -c -g main.c -o $(buildFolder)/main.o
+	$(CC) -o $(OUTPUTBIN) $(buildFolder)/main.o $(buildFolder)/interpret.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/parser.o $(buildFolder)/isInt.o
 ifeq ($(OS),Windows_NT)
-	rmdir .\build\ /s /q
+	rmdir .\$(buildFolder)\ /s /q
 else
-	rm -rf build
+	rm -rf $(buildFolder)
 endif
 
 
@@ -31,4 +33,4 @@ install:
 run:
 	./vlang test.vlang -d --llvm
 clean:
-	rm -rf build vlang
+	rm -rf $(buildFolder) vlang
