@@ -10,3 +10,4 @@ test
 out.s
 test-llvm.c
 out
+out.o
