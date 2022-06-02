@@ -9,3 +9,4 @@ out.c
 test
 out.s
 test-llvm.c
+out
