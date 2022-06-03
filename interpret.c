@@ -58,10 +58,22 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     }
     }
     FILE *fptr;
+    FILE* declarationTempFile;
+    char declarationTempFileName[PATH_MAX];
+    snprintf(declarationTempFileName, PATH_MAX, "%s.declaration.temp", filecompileOutput);
+    FILE* functionTempFile;
+    char functionTempFileName[PATH_MAX];
+    snprintf(functionTempFileName, PATH_MAX, "%s.function.temp", filecompileOutput);
     if (compileMode == 1) {
     FILE *fptrtemp;
     fptrtemp = fopen(filecompileOutput, "w");
     fclose(fptrtemp);
+    FILE *fptrtemp2;
+    fptrtemp2 = fopen(declarationTempFileName, "w");
+    fclose(fptrtemp2);
+    FILE* fptrtemp3;
+    fptrtemp3 = fopen(functionTempFileName, "w");
+    fclose(fptrtemp3);
     }
     FILE *fptrOutput; //Only used if compiling
     fptrOutput = fopen(filecompileOutput, "w");
@@ -217,7 +229,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     printf("lineList[i][i2]: %c\n",lineList[i][i2]);
                     }
                     stringToPrint[i3] = lineList[i][i2];
-                    i3++;    
+                    i3++;
                 }
                 if (compileMode == 1) {
                     //printf("compile print\n");
