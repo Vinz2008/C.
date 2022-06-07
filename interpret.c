@@ -3,6 +3,7 @@
 #include "libs/color.h"
 #include "libs/isInt.h"
 #include "libs/removeCharFromString.h"
+#include "libs/isCharContainedInStr.h"
 #include <unistd.h>
 #include <limits.h>
 #include <stdio.h>
@@ -250,6 +251,14 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 }
                 }
             }
+	    else if (isCharContainedInStr('(', lineList[i]) && isCharContainedInStr(')', lineList[i])){
+	    if (debugMode == 1){
+	    printf("calling function detected\n");
+	    }
+	    if (llvmMode == 1){
+	    fprintf(fptrOutput, "call");
+	    }
+	    }
             else if (startswith("return", lineList[i])){
                 if (debugMode == 1) {
                     printf("return detected\n");

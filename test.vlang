@@ -1,5 +1,6 @@
 import io
 import std
 func int main() {
+    puts("test")
     return 0
 }
