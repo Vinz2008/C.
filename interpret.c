@@ -1,11 +1,12 @@
 #include "interpret.h"
 #include "libs/startswith.h"
 #include "libs/color.h"
-#include "libs/isInt.h"
+#include "types.h"
 #include "libs/removeCharFromString.h"
 #include "libs/isCharContainedInStr.h"
 #include <unistd.h>
 #include <limits.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -89,8 +90,12 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     int nbVariableMax = 20;
     if (fptr == NULL)
     {
-        printf("Error! The file is empty\n");   
+        printf("Error! The file is empty\n");
         exit(1);
+    }
+    if (llvmMode == 1){
+    char* filenameBase = basename(filename);
+    fprintf(fptrOutput, "source_filename = %s\n", filenameBase);
     }
     while (fgets(line,40, fptr)) {
 	removeCharFromString('\t',line);
@@ -162,7 +167,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	    posFirstQuote = i;
         if (debugMode == 1) {
 	    printf("posFirstQuote: %i\n", posFirstQuote);
-        }    
+        }
 	    for (i2 = i+ 1; i2 < strlen(lineList[c]); i2++) {
 	    if (lineList[c][i2] == "\""[0]) {
 	    posLastQuote = i2;
@@ -280,7 +285,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		        fprintf(fptrOutput, "%s;\n", returnedThing);
 		        } else if (llvmMode == 1){
                     fprintf(fptrOutput, "ret ");
-                if (isInt(returnedThing)){
+                if (isNumber(returnedThing)){
                     if (debugMode == 1) {
                     printf("the returned value %s is an int\n", returnedThing);
                     }

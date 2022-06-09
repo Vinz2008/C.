@@ -17,10 +17,10 @@ endif
 	$(CC) -c -g parser.c -o $(buildFolder)/parser.o
 	$(CC) -c -g libs/removeCharFromString.c -o $(buildFolder)/removeCharFromString.o
 	$(CC) -c -g libs/startswith.c -o $(buildFolder)/startswith.o
-	$(CC) -c -g libs/isInt.c -o $(buildFolder)/isInt.o
+	$(CC) -c -g types.c -o $(buildFolder)/types.o
 	$(CC) -c -g libs/isCharContainedInStr.c -o $(buildFolder)/isCharContainedInStr.o
 	$(CC) -c -g main.c -o $(buildFolder)/main.o
-	$(CC) -o $(OUTPUTBIN) $(buildFolder)/main.o $(buildFolder)/interpret.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/parser.o $(buildFolder)/isInt.o $(buildFolder)/isCharContainedInStr.o
+	$(CC) -o $(OUTPUTBIN) $(buildFolder)/main.o $(buildFolder)/interpret.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/parser.o $(buildFolder)/types.o $(buildFolder)/isCharContainedInStr.o
 ifeq ($(OS),Windows_NT)
 	rmdir .\$(buildFolder)\ /s /q
 else
