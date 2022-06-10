@@ -1,3 +1,6 @@
+// FOR NOW NOT USED 
+// I DON'T KNOW WHY , BUT THE LINELIST RETURNED IS EMPTY
+
 #include "parser.h"
 #include <string.h>
 #include <stdio.h>
