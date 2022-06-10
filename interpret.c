@@ -70,12 +70,15 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     FILE *fptrtemp;
     fptrtemp = fopen(filecompileOutput, "w");
     fclose(fptrtemp);
+    }
+    if (llvmMode == 1){
     FILE *fptrtemp2;
     fptrtemp2 = fopen(declarationTempFileName, "w");
     fclose(fptrtemp2);
     FILE* fptrtemp3;
     fptrtemp3 = fopen(functionTempFileName, "w");
     fclose(fptrtemp3);
+    functionTempFile = fopen(functionTempFileName, "w");
     }
     FILE *fptrOutput; //Only used if compiling
     fptrOutput = fopen(filecompileOutput, "w");
@@ -221,7 +224,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     printf("} detected\n");
                 }
                 if (llvmMode == 1){
-                    fprintf(fptrOutput, "}");
+                    fprintf(functionTempFile, "}");
                 }
             }
             else if (startswith("print", lineList[i])){
@@ -243,7 +246,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		            fprintf(fptrOutput, "%s",stringToPrint);
 		            fprintf(fptrOutput, "\");\n");
                 } else if (llvmMode == 1) {
-                    fprintf(fptrOutput, "call i32 @printf(");
+                    fprintf(functionTempFile, "call i32 @printf(");
                 }
                 else {
                 if (debugMode == 1) {
@@ -261,7 +264,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	    printf("calling function detected\n");
 	    }
 	    if (llvmMode == 1){
-	    fprintf(fptrOutput, "call");
+	    fprintf(functionTempFile, "call");
 	    }
 	    }
             else if (startswith("return", lineList[i])){
@@ -284,14 +287,14 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		        fprintf(fptrOutput, "return ");
 		        fprintf(fptrOutput, "%s;\n", returnedThing);
 		        } else if (llvmMode == 1){
-                    fprintf(fptrOutput, "ret ");
+                    fprintf(functionTempFile, "ret ");
                 if (isNumber(returnedThing)){
                     if (debugMode == 1) {
                     printf("the returned value %s is an int\n", returnedThing);
                     }
-                    fprintf(fptrOutput, "i32 %d", atoi(returnedThing));
+                    fprintf(functionTempFile, "i32 %d", atoi(returnedThing));
                 } else {
-                    fprintf(fptrOutput, "%s",  returnedThing);
+                    fprintf(functionTempFile, "%s",  returnedThing);
                 }
                 }
 
@@ -314,7 +317,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                     printf("function detected\n");
                 }
                 if (llvmMode == 1){
-                    fprintf(fptrOutput, "define ");
+                    fprintf(functionTempFile, "define ");
                 }
                 if (startswith("int", lineList[i + 1])){
                     if (debugMode == 1) {
@@ -329,9 +332,9 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		            fprintf(fptrOutput, "int ");
 		            }
                     else if(llvmMode == 1){
-                        fprintf(fptrOutput, "i32 ");
-                        fprintf(fptrOutput, "@%s", functionName);
-                        fprintf(fptrOutput, "(){\n");
+                        fprintf(functionTempFile, "i32 ");
+                        fprintf(functionTempFile, "@%s", functionName);
+                        fprintf(functionTempFile, "(){\n");
                     }
                 }
 	            if (compileMode == 1){
@@ -365,13 +368,27 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         }
         memset(lineList, 0 ,sizeof(lineList));
         if (line != "" && line != "\0" && line != "\n"){
-        fprintf(fptrOutput, "\n");
+        fprintf(functionTempFile, "\n");
         if (debugMode == 1){
             printf("backslash n written to line\n");
         }
         }
         }
+        fclose(functionTempFile);
+        //fclose(declarationTempFile);
     if (llvmMode == 1){
+        ssize_t charNb;
+	    size_t len;
+        FILE* fptrTempFunction = fopen(functionTempFileName, "r");
+	    char* lineFunction = NULL;
+        while ((charNb = getline(&lineFunction, &len, fptrTempFunction)) != -1){
+	        fprintf(fptrOutput,"%s",lineFunction);
+	    }
+        FILE* fptrTempDeclaration = fopen(declarationTempFileName, "r");
+        char* lineDeclaration = NULL;
+        while ((charNb = getline(&lineDeclaration, &len, fptrTempFunction)) != -1){
+	        fprintf(fptrOutput,"%s",lineDeclaration);
+	    }
     }
     //memset(line, 0, sizeof(line));
     fclose(fptr);

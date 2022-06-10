@@ -34,4 +34,4 @@ install:
 run:
 	./vlang test.vlang -d --llvm
 clean:
-	rm -rf $(buildFolder) vlang
+	rm -rf $(buildFolder) vlang out.ll out.ll.*
