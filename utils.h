@@ -1,0 +1,1 @@
+int isFunctionCall(char* str);

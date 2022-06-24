@@ -2,6 +2,7 @@
 #include "libs/startswith.h"
 #include "libs/color.h"
 #include "types.h"
+#include "utils.h"
 #include "libs/removeCharFromString.h"
 #include "libs/isCharContainedInStr.h"
 #include <unistd.h>
@@ -101,7 +102,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     fprintf(fptrOutput, "source_filename = %s\n", filenameBase);
     }
     while (fgets(line,40, fptr)) {
-	removeCharFromString('\t',line);
+    removeCharFromString('\t',line);
     removeCharFromString('\n',line);
     if (debugMode == 1) {
     printf("line : %s", line);
@@ -120,13 +121,13 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     strcpy(line2, line);
     int c = 0;
     int posLastQuote = -1;
-	int posFirstQuote;
+    int posFirstQuote;
     int posFirstParenthesis;
     int posLastParenthesis;
     int sizeLineList = 0;
     int isFunctionInt = 0;
     char lineList[10][10];
-	memset(lineList, 0, sizeof(lineList));
+    memset(lineList, 0, sizeof(lineList));
     char tempStr[PATH_MAX];
     char* libraryName;
     char *pch = strtok(line," ");
@@ -259,9 +260,13 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 }
                 }
             }
-	    else if (isCharContainedInStr('(', lineList[i]) && isCharContainedInStr(')', lineList[i])){
+	    else if (isFunctionCall(lineList[i])){
+	    char functionName[100];
+	    for (int i3 = 0; lineList[i][i3] != '('; i3++){
+            functionName[i3] = lineList[i][i3];
+	    }
 	    if (debugMode == 1){
-	    printf("calling function detected\n");
+	    printf("calling function %s detected\n", functionName);
 	    }
 	    if (llvmMode == 1){
 	    fprintf(functionTempFile, "call");
