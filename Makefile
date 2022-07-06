@@ -29,7 +29,11 @@ endif
 
 
 install:
-	cp vlang /usr/bin/vlang
+	mkdir /opt/vlang
+	cp std/ /opt/vlang/
+	cp vlang /opt/vlang/
+	echo `export PATH=$PATH:/opt/vlang` >> ~/.${SHELL}rc
+	source ~/.${SHELL}rc
 run:
 	./vlang test.vlang -d --llvm
 clean:
