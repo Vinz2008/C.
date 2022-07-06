@@ -31,11 +31,16 @@ endif
 
 
 install:
+	rm -rf /opt/vlang/
 	mkdir /opt/vlang
-	cp std/ /opt/vlang/
+	cp -r std/ /opt/vlang/
 	cp vlang /opt/vlang/
-	echo `export PATH=$PATH:/opt/vlang` >> ~/.${SHELL}rc
-	source ~/.${SHELL}rc
+ifeq ($(origin SHELL_USED),undefined)
+	@#exit 1
+else
+	@#echo `export PATH=$PATH:/opt/vlang` >> /home/${LOGNAME}/.${SHELL_USED}rc
+endif
+
 run:
 	./vlang test.vlang -d --llvm
 clean:
