@@ -1,9 +1,9 @@
 CC=gcc
 buildFolder=build
 ifeq ($(OS),Windows_NT)
-OUTPUTBIN = vlang.exe
+OUTPUTBIN = cpoint.exe
 else
-OUTPUTBIN = vlang
+OUTPUTBIN = cpoint
 endif
 
 all:
@@ -31,17 +31,17 @@ endif
 
 
 install:
-	rm -rf /opt/vlang/
-	mkdir /opt/vlang
-	cp -r std/ /opt/vlang/
-	cp vlang /opt/vlang/
+	rm -rf /opt/cpoint/
+	mkdir /opt/cpoint
+	cp -r std/ /opt/cpoint/
+	cp cpoint /opt/cpoint/
 ifeq ($(origin SHELL_USED),undefined)
 	@#exit 1
 else
-	@#echo `export PATH=$PATH:/opt/vlang` >> /home/${LOGNAME}/.${SHELL_USED}rc
+	@#echo `export PATH=$PATH:/opt/cpoint` >> /home/${LOGNAME}/.${SHELL_USED}rc
 endif
 
 run:
-	./vlang test.vlang -d --llvm
+	./cpoint test.cpoint -d --llvm
 clean:
-	rm -rf $(buildFolder) vlang out.ll out.ll.*
+	rm -rf $(buildFolder) cpoint out.ll out.ll.* cpoint.*

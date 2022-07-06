@@ -1,8 +1,7 @@
-vlang
+cpoint
 .vscode/
 *.exe
 build/
-vlang
 out.c
 *.ll
 *.bc
