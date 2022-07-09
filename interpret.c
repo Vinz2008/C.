@@ -136,11 +136,15 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     memset(lineList, 0, sizeof(lineList));
     char tempStr[PATH_MAX];
     char* libraryName;
+    if (debugMode == 1) {
     printf("BEFORE PARSER\n");
+    }
     parser(line, lineList, &sizeLineList, posFirstQuote, posLastQuote, posFirstParenthesis, posLastParenthesis, debugMode);
+    if (debugMode == 1) {
     printf("AFTER PARSER\n");
     printf("sizeLineList after parsing  : %d\n", sizeLineList);
     printf("lineList[1] after parsing : %s\n", lineList[1]);
+    }
         for (i = 0; i < sizeLineList; i++) {
             if (debugMode == 1) {
             printf("lineList[i]: %s\n", lineList[i]);

@@ -6,29 +6,49 @@ else
 OUTPUTBIN = cpoint
 endif
 
-all:
+all: setup $(buildFolder)/interpret.o $(buildFolder)/parser.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/types.o $(buildFolder)/utils.o $(buildFolder)/isCharContainedInStr.o $(buildFolder)/main.o linking clean-build
+
+setup:
 ifeq ($(OS),Windows_NT)
 	rmdir .\$(buildFolder)\ /s /q
 else
 	rm -rf $(buildFolder)
 endif
 	mkdir $(buildFolder)
+
+$(buildFolder)/interpret.o:
 	$(CC) -c -g interpret.c -o $(buildFolder)/interpret.o
+
+$(buildFolder)/parser.o:
 	$(CC) -c -g parser.c -o $(buildFolder)/parser.o
+
+$(buildFolder)/removeCharFromString.o:
 	$(CC) -c -g libs/removeCharFromString.c -o $(buildFolder)/removeCharFromString.o
+
+$(buildFolder)/startswith.o:	
 	$(CC) -c -g libs/startswith.c -o $(buildFolder)/startswith.o
+
+$(buildFolder)/types.o:
 	$(CC) -c -g types.c -o $(buildFolder)/types.o
+
+$(buildFolder)/utils.o:
 	$(CC) -c -g utils.c -o $(buildFolder)/utils.o
+
+$(buildFolder)/isCharContainedInStr.o:
 	$(CC) -c -g libs/isCharContainedInStr.c -o $(buildFolder)/isCharContainedInStr.o
+
+$(buildFolder)/main.o:
 	$(CC) -c -g main.c -o $(buildFolder)/main.o
+
+linking:
 	$(CC) -o $(OUTPUTBIN) $(buildFolder)/main.o $(buildFolder)/interpret.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/parser.o $(buildFolder)/types.o $(buildFolder)/isCharContainedInStr.o $(buildFolder)/utils.o
+
+clean-build:
 ifeq ($(OS),Windows_NT)
 	rmdir .\$(buildFolder)\ /s /q
 else
 	rm -rf $(buildFolder)
 endif
-
-
 
 install:
 	rm -rf /opt/cpoint/
