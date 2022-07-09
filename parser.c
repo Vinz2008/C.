@@ -18,39 +18,37 @@ int parser(char line[40],char** lineList, int* sizeLineList, int posFirstQuote, 
     char tempStr[PATH_MAX];
     char* libraryName;
     char *pch = strtok(line," ");
-        while (pch != NULL)
-	    {
-        ++*sizeLineList;
+    while (pch != NULL)
+	{
+    ++*sizeLineList;
+    if (debugMode == 1) {
+    printf("sizeLineList : %d\n", *sizeLineList);
+    printf ("pch : %s\n",pch);
+    }
+    lineList[c] = malloc(10 * sizeof(char));
+	memset(lineList[c], 0 ,sizeof(lineList[c]));
+    lineList[c] = pch;
+	//strcpy(lineList[c], pch);
+    for (i = 0; i < strlen(lineList[c]); i++) {
         if (debugMode == 1) {
-        printf("sizeLineList : %d\n", *sizeLineList);
-        printf ("pch : %s\n",pch);
+        printf("lineList[c] length  : %lu\n", strlen(lineList[c]));
+        printf("char %i : %c\n",i,lineList[c][i]);
         }
-        lineList[c] = malloc(10 * sizeof(char));
-	    memset(lineList[c], 0 ,sizeof(lineList[c]));
-        lineList[c] = pch;
-	    //strcpy(lineList[c], pch);
-        for (i = 0; i < strlen(lineList[c]); i++) {
+        if (lineList[c][i] == '(') {
+            posFirstParenthesis = i;
             if (debugMode == 1) {
-            printf("lineList[c] length  : %lu\n", strlen(lineList[c]));
-            printf("char %i : %c\n",i,lineList[c][i]);
+            printf("posFirstParenthesis: %i\n",posFirstParenthesis);
             }
-            if (lineList[c][i] == '(') {
-                posFirstParenthesis = i;
+            for (i2 = i; i2 < strlen(lineList[c]); i2++ ){
+                if (lineList[c][i2] == ")"[0]) {
+                posLastParenthesis = i2;
                 if (debugMode == 1) {
-                printf("posFirstParenthesis: %i\n",posFirstParenthesis);
+                printf("posLastParenthesis: %i\n",posLastParenthesis);
                 }
-                for (i2 = i; i2 < strlen(lineList[c]); i2++ )
-                {
-                    if (lineList[c][i2] == ")"[0]) {
-                        posLastParenthesis = i2;
-                        if (debugMode == 1) {
-                        printf("posLastParenthesis: %i\n",posLastParenthesis);
-                        }
-		            break;
-
-                    }
+	            break;
                 }
             }
+        }
 	    else if (lineList[c][i] == "\""[0]) {
 	    if (posLastQuote == i) {
         if (debugMode == 1) {
@@ -74,11 +72,10 @@ int parser(char line[40],char** lineList, int* sizeLineList, int posFirstQuote, 
 	    }
 	    }
 
-        }
-    	//pch = strtok (NULL, " \t");
-	    pch = strtok (NULL, " ");
-
-	    c++;
-	    }
+    }
+    //pch = strtok (NULL, " \t");
+	pch = strtok (NULL, " ");
+	c++;
+	}
 	return 0;
 }
