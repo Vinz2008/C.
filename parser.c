@@ -4,25 +4,36 @@
 #include "parser.h"
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
+#include <stdlib.h>
+#ifdef __linux__
+#include <linux/limits.h>
+#endif
 
-int parser(char line[40],char lineList[10][10], int* sizeLineList, int posFirstQuote, int posLastQuote, int posFirstParenthesis, int posLastParenthesis,int debugMode) {
+int parser(char line[40],char** lineList, int* sizeLineList, int posFirstQuote, int posLastQuote, int posFirstParenthesis, int posLastParenthesis,int debugMode) {
 	int c = 0;
-	int i;
-	int i2;
-	printf("line in parser : %s\n", line);
-	char *pch = strtok(line," ");
+    int i, i2;
+    int isFunctionInt = 0;
+    memset(lineList, 0, sizeof(lineList));
+    char tempStr[PATH_MAX];
+    char* libraryName;
+    char *pch = strtok(line," ");
         while (pch != NULL)
 	    {
-            *sizeLineList++;
-			printf("sizelinelist incremented\n");
+        ++*sizeLineList;
+        if (debugMode == 1) {
+        printf("sizeLineList : %d\n", *sizeLineList);
+        printf ("pch : %s\n",pch);
+        }
+        lineList[c] = malloc(10 * sizeof(char));
+	    memset(lineList[c], 0 ,sizeof(lineList[c]));
+        lineList[c] = pch;
+	    //strcpy(lineList[c], pch);
+        for (i = 0; i < strlen(lineList[c]); i++) {
             if (debugMode == 1) {
-            printf ("pch : %s\n",pch);
+            printf("lineList[c] length  : %lu\n", strlen(lineList[c]));
+            printf("char %i : %c\n",i,lineList[c][i]);
             }
-	    strcpy(lineList[c], pch);
-       for (i = 0; i < strlen(lineList[c]); i++) {
-           if (debugMode == 1) {
-            printf("char : %c\n",lineList[c][i]);
-           }
             if (lineList[c][i] == '(') {
                 posFirstParenthesis = i;
                 if (debugMode == 1) {
@@ -35,7 +46,7 @@ int parser(char line[40],char lineList[10][10], int* sizeLineList, int posFirstQ
                         if (debugMode == 1) {
                         printf("posLastParenthesis: %i\n",posLastParenthesis);
                         }
-		        break;
+		            break;
 
                     }
                 }
@@ -50,7 +61,7 @@ int parser(char line[40],char lineList[10][10], int* sizeLineList, int posFirstQ
 	    posFirstQuote = i;
         if (debugMode == 1) {
 	    printf("posFirstQuote: %i\n", posFirstQuote);
-        }    
+        }
 	    for (i2 = i+ 1; i2 < strlen(lineList[c]); i2++) {
 	    if (lineList[c][i2] == "\""[0]) {
 	    posLastQuote = i2;
@@ -65,7 +76,7 @@ int parser(char line[40],char lineList[10][10], int* sizeLineList, int posFirstQ
 
         }
     	//pch = strtok (NULL, " \t");
-	    pch = strtok(NULL, " ");
+	    pch = strtok (NULL, " ");
 
 	    c++;
 	    }

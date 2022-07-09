@@ -1,16 +1,20 @@
 #include "interpret.h"
-#include "libs/startswith.h"
-#include "libs/color.h"
-#include "types.h"
-#include "utils.h"
-#include "libs/removeCharFromString.h"
-#include "libs/isCharContainedInStr.h"
 #include <unistd.h>
 #include <limits.h>
 #include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifdef __linux__
+#include <linux/limits.h>
+#endif
+#include "parser.h"
+#include "types.h"
+#include "utils.h"
+#include "libs/removeCharFromString.h"
+#include "libs/isCharContainedInStr.h"
+#include "libs/startswith.h"
+#include "libs/color.h"
 
 struct Variable {
 char name[10];
@@ -99,13 +103,13 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     }
     if (llvmMode == 1){
     char* filenameBase = basename(filename);
-    fprintf(fptrOutput, "source_filename = %s\n", filenameBase);
+    fprintf(fptrOutput, "source_filename = \"%s\"\n", filenameBase);
     }
     while (fgets(line,40, fptr)) {
     removeCharFromString('\t',line);
     removeCharFromString('\n',line);
     if (debugMode == 1) {
-    printf("line : %s", line);
+    printf("line : %s\n", line);
     }
     char line2[40];
 	char lineTemp[40];
@@ -126,11 +130,18 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     int posLastParenthesis;
     int sizeLineList = 0;
     int isFunctionInt = 0;
-    char lineList[10][10];
+    //char lineList[10][10];
+    char** lineList;
+    lineList =  malloc(10 * sizeof(char*));
     memset(lineList, 0, sizeof(lineList));
     char tempStr[PATH_MAX];
     char* libraryName;
-    char *pch = strtok(line," ");
+    printf("BEFORE PARSER\n");
+    parser(line, lineList, &sizeLineList, posFirstQuote, posLastQuote, posFirstParenthesis, posLastParenthesis, debugMode);
+    printf("AFTER PARSER\n");
+    printf("sizeLineList after parsing  : %d\n", sizeLineList);
+    printf("lineList[1] after parsing : %s\n", lineList[1]);
+    /*char *pch = strtok(line," ");
         while (pch != NULL)
 	    {
         sizeLineList++;
@@ -189,7 +200,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	    pch = strtok (NULL, " ");
 
 	    c++;
-	    }
+	    }*/
         for (i = 0; i < sizeLineList; i++) {
             if (debugMode == 1) {
             printf("lineList[i]: %s\n", lineList[i]);
@@ -269,7 +280,8 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 	    printf("calling function %s detected\n", functionName);
 	    }
 	    if (llvmMode == 1){
-	    fprintf(functionTempFile, "call");
+	    fprintf(functionTempFile, "call ");
+        fprintf(functionTempFile, "@%s()", functionName);
 	    }
 	    }
             else if (startswith("return", lineList[i])){
@@ -293,7 +305,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		        fprintf(fptrOutput, "%s;\n", returnedThing);
 		        } else if (llvmMode == 1){
                     fprintf(functionTempFile, "ret ");
-                if (isNumber(returnedThing)){
+                    if (isNumber(returnedThing) == 1){
                     if (debugMode == 1) {
                     printf("the returned value %s is an int\n", returnedThing);
                     }
