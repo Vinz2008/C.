@@ -141,66 +141,6 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     printf("AFTER PARSER\n");
     printf("sizeLineList after parsing  : %d\n", sizeLineList);
     printf("lineList[1] after parsing : %s\n", lineList[1]);
-    /*char *pch = strtok(line," ");
-        while (pch != NULL)
-	    {
-        sizeLineList++;
-        if (debugMode == 1) {
-        printf ("pch : %s\n",pch);
-        }
-	    memset(lineList[c], 0 ,sizeof(lineList[c]));
-	    strcpy(lineList[c], pch);
-        for (i = 0; i < strlen(lineList[c]); i++) {
-            if (debugMode == 1) {
-            printf("lineList[c] length  : %lu\n", strlen(lineList[c]));
-            printf("char %i : %c\n",i,lineList[c][i]);
-            }
-            if (lineList[c][i] == '(') {
-                posFirstParenthesis = i;
-                if (debugMode == 1) {
-                printf("posFirstParenthesis: %i\n",posFirstParenthesis);
-                }
-                for (i2 = i; i2 < strlen(lineList[c]); i2++ )
-                {
-                    if (lineList[c][i2] == ")"[0]) {
-                        posLastParenthesis = i2;
-                        if (debugMode == 1) {
-                        printf("posLastParenthesis: %i\n",posLastParenthesis);
-                        }
-		            break;
-
-                    }
-                }
-            }
-	    else if (lineList[c][i] == "\""[0]) {
-	    if (posLastQuote == i) {
-        if (debugMode == 1) {
-	    printf("end quote so pass it\n");
-        }
-	    }
-	    else {
-	    posFirstQuote = i;
-        if (debugMode == 1) {
-	    printf("posFirstQuote: %i\n", posFirstQuote);
-        }
-	    for (i2 = i+ 1; i2 < strlen(lineList[c]); i2++) {
-	    if (lineList[c][i2] == "\""[0]) {
-	    posLastQuote = i2;
-        if (debugMode == 1) {
-	    printf("posLastQuote: %i\n", posLastQuote);
-        }
-	    break;
-	    }
-	    }
-	    }
-	    }
-
-        }
-    	//pch = strtok (NULL, " \t");
-	    pch = strtok (NULL, " ");
-
-	    c++;
-	    }*/
         for (i = 0; i < sizeLineList; i++) {
             if (debugMode == 1) {
             printf("lineList[i]: %s\n", lineList[i]);
