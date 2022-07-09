@@ -145,197 +145,196 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     printf("sizeLineList after parsing  : %d\n", sizeLineList);
     printf("lineList[1] after parsing : %s\n", lineList[1]);
     }
-        for (i = 0; i < sizeLineList; i++) {
+    for (i = 0; i < sizeLineList; i++) {
+        if (debugMode == 1) {
+        printf("lineList[i]: %s\n", lineList[i]);
+        }
+        //if instructions
+        if (startswith("import", lineList[i])){
+            libraryName = lineList[i+1];
+            printf("path std: %s\n", pathStd);
+            snprintf(tempStr, PATH_MAX, "%s/%s", pathStd, libraryName);
+            /*strcpy(tempStr, pathStd);
+            strncat(tempStr, "/", 2);
+            strncat(tempStr, libraryName, strlen(libraryName));*/
             if (debugMode == 1) {
-            printf("lineList[i]: %s\n", lineList[i]);
+            printf("File %s in %s imported\n", libraryName, tempStr);
             }
-            //if instructions
-            if (startswith("import", lineList[i])){
-                libraryName = lineList[i+1];
-                printf("path std: %s\n", pathStd);
-                snprintf(tempStr, PATH_MAX, "%s/%s", pathStd, libraryName);
-                /*strcpy(tempStr, pathStd);
-                strncat(tempStr, "/", 2);
-                strncat(tempStr, libraryName, strlen(libraryName));*/
-                if (debugMode == 1) {
-                printf("File %s in %s imported\n", libraryName, tempStr);
-                }
-                fprintf(fptrOutput, "; %s\n", libraryName);
-                FILE* fptrTemp;
-	            char* line = NULL;
-	            ssize_t charNb;
-	            size_t len;
-                if ((fptrTemp = fopen(tempStr, "r")) == NULL){
-	            printf("The file doesn't exist or cannot be opened\n");
-	            exit(1);
-	            }
-                while ((charNb = getline(&line, &len, fptrTemp)) != -1){
-	            fprintf(fptrOutput,"%s",line);
-	            }
-                fprintf(fptrOutput,"\n");
-                memset(line, 0, strlen(line));
-                //memset(tempStr, 0, strlen(tempStr));  
-            } else if(startswith("}", lineList[i])){
-                if (debugMode == 1) {
-                    printf("} detected\n");
-                }
-                if (llvmMode == 1){
-                    fprintf(functionTempFile, "}");
-                }
+            fprintf(fptrOutput, "; %s\n", libraryName);
+            FILE* fptrTemp;
+	        char* line = NULL;
+	        ssize_t charNb;
+	        size_t len;
+            if ((fptrTemp = fopen(tempStr, "r")) == NULL){
+	        printf("The file doesn't exist or cannot be opened\n");
+	        exit(1);
+	        }
+            while ((charNb = getline(&line, &len, fptrTemp)) != -1){
+	        fprintf(fptrOutput,"%s",line);
+	        }
+            fprintf(fptrOutput,"\n");
+            memset(line, 0, strlen(line));
+            //memset(tempStr, 0, strlen(tempStr));  
+        } else if(startswith("}", lineList[i])){
+            if (debugMode == 1) {
+                printf("} detected\n");
             }
-            else if (startswith("print", lineList[i])){
-                int i3 = 0;
-                char stringToPrint[20];
-                if (debugMode == 1) {
-                printf("print detected\n");
-                }
-                for (i2 = posFirstQuote + 1; i2 < posLastQuote; i2++) {
-                    if (debugMode == 1) {
-                    printf("lineList[i][i2]: %c\n",lineList[i][i2]);
-                    }
-                    stringToPrint[i3] = lineList[i][i2];
-                    i3++;
-                }
-                if (compileMode == 1) {
-                    //printf("compile print\n");
-                    fprintf(fptrOutput, "printf(\"");
-		            fprintf(fptrOutput, "%s",stringToPrint);
-		            fprintf(fptrOutput, "\");\n");
-                } else if (llvmMode == 1) {
-                    fprintf(functionTempFile, "call i32 @printf(");
-                }
-                else {
-                if (debugMode == 1) {
-                printf("stringToPrint: %s\n", stringToPrint);
-                printf("---REAL OUTPUT---\n");
-                }
-                printf("%s\n", stringToPrint);
-                if (debugMode == 1) {
-                printf("-----------------\n");
-                }
-                }
+            if (llvmMode == 1){
+                fprintf(functionTempFile, "}");
             }
+        }
+        else if (startswith("print", lineList[i])){
+            int i3 = 0;
+            char stringToPrint[20];
+            if (debugMode == 1) {
+            printf("print detected\n");
+            }
+            for (i2 = posFirstQuote + 1; i2 < posLastQuote; i2++) {
+                if (debugMode == 1) {
+                printf("lineList[i][i2]: %c\n",lineList[i][i2]);
+                }
+                stringToPrint[i3] = lineList[i][i2];
+                i3++;
+            }
+            if (compileMode == 1) {
+                //printf("compile print\n");
+                fprintf(fptrOutput, "printf(\"");
+		        fprintf(fptrOutput, "%s",stringToPrint);
+		        fprintf(fptrOutput, "\");\n");
+            } else if (llvmMode == 1) {
+                fprintf(functionTempFile, "call i32 @printf(");
+            }
+            else {
+            if (debugMode == 1) {
+            printf("stringToPrint: %s\n", stringToPrint);
+            printf("---REAL OUTPUT---\n");
+            }
+            printf("%s\n", stringToPrint);
+            if (debugMode == 1) {
+            printf("-----------------\n");
+            }
+            }
+        }
 	    else if (isFunctionCall(lineList[i])){
-	    char functionName[100];
-	    for (int i3 = 0; lineList[i][i3] != '('; i3++){
-            functionName[i3] = lineList[i][i3];
+	        char functionName[100];
+	        for (int i3 = 0; lineList[i][i3] != '('; i3++){
+                functionName[i3] = lineList[i][i3];
+	        }
+	        if (debugMode == 1){
+	    	printf("calling function %s detected\n", functionName);
+	    	}
+	    	if (llvmMode == 1){
+	    	fprintf(functionTempFile, "call ");
+        	fprintf(functionTempFile, "@%s()", functionName);
+	    	}
 	    }
-	    if (debugMode == 1){
-	    printf("calling function %s detected\n", functionName);
-	    }
-	    if (llvmMode == 1){
-	    fprintf(functionTempFile, "call ");
-        fprintf(functionTempFile, "@%s()", functionName);
-	    }
-	    }
-            else if (startswith("return", lineList[i])){
+        else if (startswith("return", lineList[i])){
+            if (debugMode == 1) {
+                printf("return detected\n");
+            }
+            char returnedThing[10];
+            strcpy(returnedThing, lineList[i+1]);
+             /*if (isFunctionInt == 1) {
+            	printf("function is Int detected \n");
+                int returnedThingInt;
+                returnedThingInt = (int)returnedThing;
+                memset( returnedThing, 0, strlen(returnedThing) );
+                int returnedThing = returnedThingInt;
+                }*/
+            if (debugMode == 1) {
+                printf("returnedThing: %s\n", returnedThing);
+            }
+		    if (compileMode == 1){
+		    fprintf(fptrOutput, "return ");
+		    fprintf(fptrOutput, "%s;\n", returnedThing);
+		    } else if (llvmMode == 1){
+                fprintf(functionTempFile, "ret ");
+                if (isNumber(returnedThing) == 1){
                 if (debugMode == 1) {
-                    printf("return detected\n");
+            		printf("the returned value %s is an int\n", returnedThing);
                 }
-                char returnedThing[10];
-                strcpy(returnedThing, lineList[i+1]);
-                 /*if (isFunctionInt == 1) {
-                     printf("function is Int detected \n");
-                     int returnedThingInt;
-                     returnedThingInt = (int)returnedThing;
-                     memset( returnedThing, 0, strlen(returnedThing) );
-                    int returnedThing = returnedThingInt;
-                 }*/
-                if (debugMode == 1) {
-                    printf("returnedThing: %s\n", returnedThing);
-                }
-		        if (compileMode == 1){
-		        fprintf(fptrOutput, "return ");
-		        fprintf(fptrOutput, "%s;\n", returnedThing);
-		        } else if (llvmMode == 1){
-                    fprintf(functionTempFile, "ret ");
-                    if (isNumber(returnedThing) == 1){
-                    if (debugMode == 1) {
-                    printf("the returned value %s is an int\n", returnedThing);
-                    }
-                    fprintf(functionTempFile, "i32 %d", atoi(returnedThing));
-                } else {
+                fprintf(functionTempFile, "i32 %d", atoi(returnedThing));
+            	} else {
                     fprintf(functionTempFile, "%s",  returnedThing);
                 }
-                }
-
             }
-            else if (startswith("if", lineList[i])){
-                if (debugMode == 1) {
-                    printf("if detected\n");
-		            printf("%c\n", lineList[i+1][0]);
-                }
-		        if (lineList[i+1][0] != '('){
+
+        }
+        else if (startswith("if", lineList[i])){
+            if (debugMode == 1) {
+                printf("if detected\n");
+		        printf("%c\n", lineList[i+1][0]);
+            }
+		    if (lineList[i+1][0] != '('){
 		        printf(BRED "ERROR : no parenthesis in if\n" reset);
 		        printf("%s\n", line2);
 		        exit(0);
-		        }
+		    }
 
+        }
+        else if (startswith("func", lineList[i])){
+            isFunctionInt = 0;
+            if (debugMode == 1) {
+                printf("function detected\n");
             }
-            else if (startswith("func", lineList[i])){
-                isFunctionInt = 0;
-                if (debugMode == 1) {
-                    printf("function detected\n");
-                }
-                if (llvmMode == 1){
-                    fprintf(functionTempFile, "define ");
-                }
-                if (startswith("int", lineList[i + 1])){
-                    if (debugMode == 1) {
-                    printf("function %s is an int\n", lineList[i+2]);
-                    }
-                    char* functionName = lineList[i+2];
-		            removeCharFromString('(', functionName);
-		            removeCharFromString(')',functionName);
-                    
-                    //isFunctionInt = 1;
-		            if (compileMode == 1){
-		            fprintf(fptrOutput, "int ");
-		            }
-                    else if(llvmMode == 1){
-                        fprintf(functionTempFile, "i32 ");
-                        fprintf(functionTempFile, "@%s", functionName);
-                        fprintf(functionTempFile, "(){\n");
-                    }
-                }
-	            if (compileMode == 1){
-		        fprintf(fptrOutput, "\n");
-		        }
+            if (llvmMode == 1){
+                fprintf(functionTempFile, "define ");
             }
-            if (startswith("int", lineList[i]) || startswith("char", lineList[i])){
+            if (startswith("int", lineList[i + 1])){
                 if (debugMode == 1) {
-                    printf("int detected\n");
+                printf("function %s is an int\n", lineList[i+2]);
                 }
-            	strcpy(varArray[nbVariable].name, lineList[i + 1]);
-	            strcpy(varArray[nbVariable].value, lineList[i + 2]);
-	            if (startswith("int",lineList[i])){
-		        varArray[nbVariable].type = 'i';
-	    	    if (debugMode == 1) {
-                    printf("int var initialization detected\n");
-            	}
-	            }
-	            if (startswith("char",lineList[i])){
-		        varArray[nbVariable].type = 'c';
-	    	    if (debugMode == 1) {
-		        printf("char var initialization detected\n");
+                char* functionName = lineList[i+2];
+		        removeCharFromString('(', functionName);
+		        removeCharFromString(')',functionName); 
+                //isFunctionInt = 1;
+		        if (compileMode == 1){
+		        	fprintf(fptrOutput, "int ");
 		        }
-	            }
-	            nbVariable++;
-		        if (nbVariable >= nbVariableMax){
-		        varArray = realloc(varArray, 10 + sizeof(varArray));
-		        nbVariableMax += 10;
-		        }
+                else if(llvmMode == 1){
+                    fprintf(functionTempFile, "i32 ");
+                    fprintf(functionTempFile, "@%s", functionName);
+                    fprintf(functionTempFile, "(){\n");
+                }
+            }
+	        if (compileMode == 1){
+		    fprintf(fptrOutput, "\n");
+		    }
+        }
+        if (isTypeWord(lineList[i]) == 1){
+            if (debugMode == 1) {
+                printf("int detected\n");
+            }
+            strcpy(varArray[nbVariable].name, lineList[i + 1]);
+	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
+	        if (startswith("int",lineList[i])){
+		    varArray[nbVariable].type = 'i';
+	    	if (debugMode == 1) {
+                printf("int var initialization detected\n");
+            }
 	        }
-        }
-        memset(lineList, 0 ,sizeof(lineList));
-        if (line != "" && line != "\0" && line != "\n"){
-        fprintf(functionTempFile, "\n");
-        if (debugMode == 1){
-            printf("backslash n written to line\n");
-        }
-        }
-        }
-        fclose(functionTempFile);
+	        if (startswith("char",lineList[i])){
+		    varArray[nbVariable].type = 'c';
+	    	if (debugMode == 1) {
+		    printf("char var initialization detected\n");
+		    }
+	        }
+	        nbVariable++;
+		    if (nbVariable >= nbVariableMax){
+		    varArray = realloc(varArray, 10 + sizeof(varArray));
+		    nbVariableMax += 10;
+		    }
+	    }
+    }
+    memset(lineList, 0 ,sizeof(lineList));
+    if (line != "" && line != "\0" && line != "\n"){
+    fprintf(functionTempFile, "\n");
+    if (debugMode == 1){
+        printf("backslash n written to line\n");
+    }
+    }
+    }
+    fclose(functionTempFile);
         //fclose(declarationTempFile);
     if (llvmMode == 1){
         ssize_t charNb;

@@ -23,3 +23,7 @@ int isNumber(char* str){
 	}
 	return 0;
 }
+
+int isTypeWord(char* str){ 
+	return (strcmp(str, "int") == 0 || strcmp(str, "char") == 0);
+}
