@@ -9,30 +9,13 @@
 #include <linux/limits.h>
 #endif
 #include "parser.h"
+#include "ast.h"
 #include "types.h"
 #include "utils.h"
 #include "libs/removeCharFromString.h"
 #include "libs/isCharContainedInStr.h"
 #include "libs/startswith.h"
 #include "libs/color.h"
-
-struct Variable {
-char name[10];
-char value[20];
-char type;
-};
-
-struct Argument {
-char name[10];
-char type;
-};
-
-struct Function {
-char name[10];
-int numberArguments;
-struct Argument arguments[10];
-char type;
-};
 
 
 
@@ -128,30 +111,30 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
     int posFirstQuote;
     int posFirstParenthesis;
     int posLastParenthesis;
-    int sizeLineList = 0;
+    struct ParsedText parsedText;
+    parsedText.sizeLineList = 0;
     int isFunctionInt = 0;
     //char lineList[10][10];
-    char** lineList;
-    lineList =  malloc(10 * sizeof(char*));
-    memset(lineList, 0, sizeof(lineList));
+    parsedText.lineList =  malloc(10 * sizeof(char*));
+    memset(parsedText.lineList, 0, sizeof(parsedText.lineList));
     char tempStr[PATH_MAX];
     char* libraryName;
     if (debugMode == 1) {
     printf("BEFORE PARSER\n");
     }
-    parser(line, lineList, &sizeLineList, posFirstQuote, posLastQuote, posFirstParenthesis, posLastParenthesis, debugMode);
+    parser(line, &parsedText, posFirstQuote, posLastQuote, posFirstParenthesis, posLastParenthesis, debugMode);
     if (debugMode == 1) {
     printf("AFTER PARSER\n");
-    printf("sizeLineList after parsing  : %d\n", sizeLineList);
-    printf("lineList[1] after parsing : %s\n", lineList[1]);
+    printf("sizeLineList after parsing  : %d\n", parsedText.sizeLineList);
+    printf("lineList[1] after parsing : %s\n", parsedText.lineList[1]);
     }
-    for (i = 0; i < sizeLineList; i++) {
+    for (i = 0; i < parsedText.sizeLineList; i++) {
         if (debugMode == 1) {
-        printf("lineList[i]: %s\n", lineList[i]);
+        printf("lineList[i]: %s\n", parsedText.lineList[i]);
         }
         //if instructions
-        if (startswith("import", lineList[i])){
-            libraryName = lineList[i+1];
+        if (startswith("import", parsedText.lineList[i])){
+            libraryName = parsedText.lineList[i+1];
             printf("path std: %s\n", pathStd);
             snprintf(tempStr, PATH_MAX, "%s/%s", pathStd, libraryName);
             /*strcpy(tempStr, pathStd);
@@ -175,7 +158,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             fprintf(fptrOutput,"\n");
             memset(line, 0, strlen(line));
             //memset(tempStr, 0, strlen(tempStr));  
-        } else if(startswith("}", lineList[i])){
+        } else if(startswith("}", parsedText.lineList[i])){
             if (debugMode == 1) {
                 printf("} detected\n");
             }
@@ -183,7 +166,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
                 fprintf(functionTempFile, "}");
             }
         }
-        else if (startswith("print", lineList[i])){
+        else if (startswith("print", parsedText.lineList[i])){
             int i3 = 0;
             char stringToPrint[20];
             if (debugMode == 1) {
@@ -191,9 +174,9 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             }
             for (i2 = posFirstQuote + 1; i2 < posLastQuote; i2++) {
                 if (debugMode == 1) {
-                printf("lineList[i][i2]: %c\n",lineList[i][i2]);
+                printf("lineList[i][i2]: %c\n",parsedText.lineList[i][i2]);
                 }
-                stringToPrint[i3] = lineList[i][i2];
+                stringToPrint[i3] = parsedText.lineList[i][i2];
                 i3++;
             }
             if (compileMode == 1) {
@@ -215,10 +198,10 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             }
             }
         }
-	    else if (isFunctionCall(lineList[i])){
+	    else if (isFunctionCall(parsedText.lineList[i])){
 	        char functionName[100];
-	        for (int i3 = 0; lineList[i][i3] != '('; i3++){
-                functionName[i3] = lineList[i][i3];
+	        for (int i3 = 0; parsedText.lineList[i][i3] != '('; i3++){
+                functionName[i3] = parsedText.lineList[i][i3];
 	        }
 	        if (debugMode == 1){
 	    	printf("calling function %s detected\n", functionName);
@@ -228,12 +211,12 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
         	fprintf(functionTempFile, "@%s()", functionName);
 	    	}
 	    }
-        else if (startswith("return", lineList[i])){
+        else if (startswith("return", parsedText.lineList[i])){
             if (debugMode == 1) {
                 printf("return detected\n");
             }
             char returnedThing[10];
-            strcpy(returnedThing, lineList[i+1]);
+            strcpy(returnedThing, parsedText.lineList[i+1]);
              /*if (isFunctionInt == 1) {
             	printf("function is Int detected \n");
                 int returnedThingInt;
@@ -260,19 +243,19 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             }
 
         }
-        else if (startswith("if", lineList[i])){
+        else if (startswith("if", parsedText.lineList[i])){
             if (debugMode == 1) {
                 printf("if detected\n");
-		        printf("%c\n", lineList[i+1][0]);
+		        printf("%c\n", parsedText.lineList[i+1][0]);
             }
-		    if (lineList[i+1][0] != '('){
+		    if (parsedText.lineList[i+1][0] != '('){
 		        printf(BRED "ERROR : no parenthesis in if\n" reset);
 		        printf("%s\n", line2);
 		        exit(0);
 		    }
 
         }
-        else if (startswith("func", lineList[i])){
+        else if (startswith("func", parsedText.lineList[i])){
             isFunctionInt = 0;
             if (debugMode == 1) {
                 printf("function detected\n");
@@ -280,11 +263,11 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
             if (llvmMode == 1){
                 fprintf(functionTempFile, "define ");
             }
-            if (startswith("int", lineList[i + 1])){
+            if (startswith("int", parsedText.lineList[i + 1])){
                 if (debugMode == 1) {
-                printf("function %s is an int\n", lineList[i+2]);
+                printf("function %s is an int\n", parsedText.lineList[i+2]);
                 }
-                char* functionName = lineList[i+2];
+                char* functionName = parsedText.lineList[i+2];
 		        removeCharFromString('(', functionName);
 		        removeCharFromString(')',functionName); 
                 //isFunctionInt = 1;
@@ -301,19 +284,19 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		    fprintf(fptrOutput, "\n");
 		    }
         }
-        if (isTypeWord(lineList[i]) == 1){
+        if (isTypeWord(parsedText.lineList[i]) == 1){
             if (debugMode == 1) {
                 printf("int detected\n");
             }
-            strcpy(varArray[nbVariable].name, lineList[i + 1]);
-	        strcpy(varArray[nbVariable].value, lineList[i + 2]);
-	        if (startswith("int",lineList[i])){
+            strcpy(varArray[nbVariable].name, parsedText.lineList[i + 1]);
+	        strcpy(varArray[nbVariable].value, parsedText.lineList[i + 2]);
+	        if (startswith("int",parsedText.lineList[i])){
 		    varArray[nbVariable].type = 'i';
 	    	if (debugMode == 1) {
                 printf("int var initialization detected\n");
             }
 	        }
-	        if (startswith("char",lineList[i])){
+	        if (startswith("char",parsedText.lineList[i])){
 		    varArray[nbVariable].type = 'c';
 	    	if (debugMode == 1) {
 		    printf("char var initialization detected\n");
@@ -326,7 +309,7 @@ int interpret(char filename[], char filecompileOutput[],int debugMode, int compi
 		    }
 	    }
     }
-    memset(lineList, 0 ,sizeof(lineList));
+    memset(parsedText.lineList, 0 ,sizeof(parsedText.lineList));
     if (line != "" && line != "\0" && line != "\n"){
     fprintf(functionTempFile, "\n");
     if (debugMode == 1){
