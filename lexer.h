@@ -19,6 +19,11 @@ enum Token{
     tok_number = -5,
 };
 
+typedef struct {
+	enum Token type;
+	void* data;
+} token_t;
+
 int getNextToken();
 int getTok();
 
