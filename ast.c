@@ -28,8 +28,14 @@ void initAST(char* str){
     lastNode = &firstNode;
 }
 
-void generateAST(char* str){
-    while (getTok != tok_next_line){
-        
+struct astNode* generateAST(enum Token* tokenArr){
+    for (int i =0; tokenArr[i] != tok_next_line;i++){
+        if (tokenArr[i] == tok_plus){
+            printf("PLUS\n");
+        }
+        if (i == sizeof(tokenArr)/sizeof(tokenArr[0])){
+            break;
+        }
     }
+    return &firstNode;
 }

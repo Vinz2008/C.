@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "lexer.h"
+#include "ast.h"
 #include "interpret.h"
 #define ARGUMENT_START 1
 
@@ -20,6 +22,7 @@ int main(int argc,char* argv[]){
     char debugArg[10];
     int isDebug = 0;
     int llvmMode = 1;
+    int devASTMode = 0;
     int IsCompile = 0;
     char inputFilename[15];
     char tempFileName[15];
@@ -49,6 +52,9 @@ int main(int argc,char* argv[]){
     else if (strcmp(argv[i], "--llvm") == 0) {
         llvmMode = 1;
     }
+    else if (strcmp(argv[i], "--dev-ast") == 0) {
+        devASTMode = 1;
+    }
     else {
     memset(inputFilename,0,sizeof(inputFilename));
     strcpy(inputFilename,argv[i]);
@@ -65,6 +71,18 @@ int main(int argc,char* argv[]){
         strcpy(fileCompileOutput, ""); 
     }
     if (argv[1] != NULL){
+    if (devASTMode == 1){
+        char line[100]; 
+        FILE* file = fopen(inputFilename, "r");
+        fgets(line, sizeof (line), file);
+        enum Token *lexerArr = lexer(line);
+        struct astNode * firstNode = generateAST(lexerArr);
+        printf("firstNode = %d", firstNode->tag);
+        printf("firstNode right = %d", firstNode->right->tag);
+        printf("firstNode left = %d", firstNode->left->tag);
+        fclose(file);
+        return 0;
+    }
     //printf("filename opening 2 : %s\n", inputFilename);
     strcpy(inputFilename, tempFileName);
     //printf("filename opening 3 : %s\n", inputFilename);

@@ -21,7 +21,6 @@ int getCharFromString(char* str){
     if (pos < strlen(str)){
         return str[pos++];
     } else {
-        pos = 0;
         return 100000;
     }
 }
@@ -69,6 +68,7 @@ int getTok(char* str, void* data){
     }
     if (lastChar == EOF) return tok_eof;
     if (lastChar == '\n') return tok_next_line;
+    if (lastChar == '+') return tok_plus;
     int currChar = lastChar;
     temp = getCharFromString(str);
     if (temp != 100000){
@@ -81,15 +81,20 @@ int getNextToken(char* str, void* data){
     return currTok = getTok(str, data);
 }
 
-enum Token* lexer(char* str){
+token_t* lexer(char* str){
 	void* data;
 	data = malloc(sizeof(*data));
 	token_t* temp_array = malloc(100 * sizeof(token_t));
 	enum Token temp_tok;
 	int pos = 0;
-	while ((temp_tok = getTok(str, data)) != tok_eof){
+    temp_tok = getTok(str, data);
+	while (temp_tok != tok_next_line || temp_tok != tok_eof){
 	token_t temp = { temp_tok, data };
 	temp_array[pos++] = temp;
+    printf("temp_tok : %d\n", temp_tok);
+    printf("TEST\n");
+    temp_tok = getTok(str, data);
 	}
+    printf("TEST2\n");
 	return temp_array;
 }

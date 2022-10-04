@@ -18,6 +18,7 @@ enum Token{
     // numbers
     tok_number = -5,
     tok_next_line = -6,
+    tok_plus = -7,
 };
 
 typedef struct {
@@ -27,5 +28,6 @@ typedef struct {
 
 int getNextToken();
 int getTok();
+token_t* lexer(char* str);
 
 #endif
