@@ -17,6 +17,7 @@ enum Token{
 
     // numbers
     tok_number = -5,
+    tok_next_line = -6,
 };
 
 typedef struct {

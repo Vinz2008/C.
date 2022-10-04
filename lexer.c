@@ -68,6 +68,7 @@ int getTok(char* str, void* data){
         if (lastChar != EOF) return getTok(str, data); // recursively find other tokens
     }
     if (lastChar == EOF) return tok_eof;
+    if (lastChar == '\n') return tok_next_line;
     int currChar = lastChar;
     temp = getCharFromString(str);
     if (temp != 100000){

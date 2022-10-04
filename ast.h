@@ -1,5 +1,10 @@
 #include "lexer.h"
 
+enum LeftOrRight{
+    left = 1,
+    right = 2
+};
+
 struct Variable {
 char name[10];
 char value[20];
@@ -22,6 +27,8 @@ void generateAST();
 
 
 
-typedef struct ast {
+struct astNode {
+    struct astNode  *previous;
+    struct astNode  *left, *right;
     enum Token tag;
-} AST;
+};
