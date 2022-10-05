@@ -13,23 +13,22 @@ struct astNode createNode(struct astNode* previous, struct astNode* left, struct
     struct astNode tempNode;
     tempNode.previous = previous;
     tempNode.left = left;
+    printf("LEFT : %p\n", left);
     tempNode.right = right;
+    tempNode.tag = tag; 
     return tempNode;
 }
 
-void addNode(struct astNode* node,  enum LeftOrRight leftOrRight){
+void addNode(struct astNode* node,  struct astNode* left, struct astNode* right){
     static struct astNode newNode;
-    newNode = createNode(lastNode, NULL, NULL, node->tag);
     if (firstNode == NULL){
-        firstNode = &node;
-    }{
-    if (leftOrRight == left){
-        lastNode->left = &newNode;
-    } else {
-        lastNode->right = &newNode;
+        firstNode = node;
+        printf("FIRST NODE\n");
+    }else {
+        lastNode->left = left;
+        lastNode->right = right;
     }
-    }
-    lastNode = &newNode;
+    lastNode = node;
 }
 
 void initAST(tokenArray_t tokenArr){
@@ -38,9 +37,9 @@ void initAST(tokenArray_t tokenArr){
 void printAST(struct astNode firstNodeTemp){
     printf("nbNode : %d\n", nbNode);
     //for(int i =0; i < nbNode; i++){
-        printf("node : %d\n", firstNodeTemp.left->tag);
-        printf("node left : %d\n", firstNodeTemp.left->left->tag);
-        printf("node right : %d\n", firstNodeTemp.left->right->tag);
+        printf("node : %d\n", firstNodeTemp.tag);
+        printf("node left : %d\n", firstNodeTemp.left->tag);
+        printf("node right : %d\n", firstNodeTemp.right->tag);
     //}
 }
 
@@ -56,18 +55,18 @@ struct astNode* generateAST(tokenArray_t tokenArr){
          printf("tok verif : %d\n", tokenArr.arr[i].type);
         if (tokenArr.arr[i].type == tok_plus){
             struct astNode templ = createNode(NULL, NULL, NULL, tokenArr.arr[i-1].type);
+            printf("tokenArr.arr[i+1].type : %d\n", tokenArr.arr[i+1].type);
             struct astNode tempr = createNode(NULL, NULL, NULL, tokenArr.arr[i+1].type);
             struct astNode tempNode = createNode(lastNode, &templ,  &tempr, tokenArr.arr[i].type);
             templ.previous = &tempNode;
             tempr.previous = &tempNode;
-            addNode(&tempNode, left);
-            printf("TEST3\n");
-            addNode(&templ, left);
-            addNode(&tempr, right);
+            addNode(&tempNode, &templ, &tempr);
+            printf("TEST3 tempNode.tag %d\n", tempNode.tag);
+            printf("TEST4\n");
             nbNode++;
         }
     }
-    printf("TEST4\n");
     printAST(*firstNode);
+    printf("firstNode pointer before : %p\n", firstNode);
     return firstNode;
 }

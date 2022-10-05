@@ -76,9 +76,10 @@ int main(int argc,char* argv[]){
         FILE* file = fopen(inputFilename, "r");
         fgets(line, sizeof (line), file);
         tokenArray_t lexerArr = lexer(line);
-        struct astNode * firstNode = generateAST(lexerArr);
+        struct astNode* firstNode = generateAST(lexerArr);
         printf("AFTER AST\n");
-        printf("firstNode = %d\n", firstNode->left->tag);
+        printf("firstNode pointer after : %p\n", firstNode);
+        printf("firstNode = %d\n", firstNode->tag);
         //printf("firstNode right = %d", firstNode->right->tag);
         printf("firstNode left = %d\n", firstNode->left->tag);
         fclose(file);

@@ -56,14 +56,14 @@ int getTok(char* str, void* data){
         }
     }
     if (isalpha(lastChar)){ // [a-zA-Z][a-zA-Z0-9]
-        identifierString = lastChar;
-        while (isalnum((lastChar = getchar()))){
+        append_char(lastChar, identifierString);
+        while (isalnum((lastChar = getCharFromString(str)))){
             append_char(lastChar, identifierString);
-
         }
-            if (strcmp("function", identifierString) == 0) return tok_function;
-            if (strcmp("extern", identifierString) == 0) return tok_extern;
-            return tok_identifier;
+        data = identifierString;
+        if (strcmp("function", identifierString) == 0) return tok_function;
+        if (strcmp("extern", identifierString) == 0) return tok_extern;
+        return tok_identifier;
     }
     if (isdigit(lastChar) || lastChar =='.'){
         char* numString = malloc(15 * sizeof(char));;
@@ -77,6 +77,9 @@ int getTok(char* str, void* data){
             } 
         } while (isdigit(lastChar) || lastChar == '-'); 
         *numString = strtod(numString, 0);
+        int* tempInt = malloc(sizeof(int));
+        *(tempInt) = atoi(numString);
+        data = tempInt;
         return tok_number;
     }
     if (lastChar == '#'){
@@ -108,8 +111,7 @@ int getNextToken(char* str, void* data){
 }
 
 tokenArray_t lexer(char* str){
-	void* data;
-	data = malloc(sizeof(*data));
+	void* data = NULL;
 	tokenArray_t temp_array ;
     initTokenArray(&temp_array, 1);
 	enum Token temp_tok;
