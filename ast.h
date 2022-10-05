@@ -23,7 +23,7 @@ struct Argument arguments[10];
 char type;
 };
 
-struct astNode* generateAST(enum Token* tokenArr);
+struct astNode* generateAST(tokenArray_t tokenArr);
 
 
 

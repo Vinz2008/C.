@@ -75,11 +75,12 @@ int main(int argc,char* argv[]){
         char line[100]; 
         FILE* file = fopen(inputFilename, "r");
         fgets(line, sizeof (line), file);
-        enum Token *lexerArr = lexer(line);
+        tokenArray_t lexerArr = lexer(line);
         struct astNode * firstNode = generateAST(lexerArr);
-        printf("firstNode = %d", firstNode->tag);
-        printf("firstNode right = %d", firstNode->right->tag);
-        printf("firstNode left = %d", firstNode->left->tag);
+        printf("AFTER AST\n");
+        printf("firstNode = %d\n", firstNode->left->tag);
+        //printf("firstNode right = %d", firstNode->right->tag);
+        printf("firstNode left = %d\n", firstNode->left->tag);
         fclose(file);
         return 0;
     }

@@ -15,7 +15,25 @@ void append_char(char c, char str[]){
      strcat(str , arr);
 }
 
+void initTokenArray(tokenArray_t* TokenArray, size_t initalSize){
+    TokenArray->arr = malloc(initalSize * sizeof(token_t));
+    TokenArray->used = 0;
+    TokenArray->size = initalSize;
+}
 
+void addTokenToTokenArray(tokenArray_t* TokenArray, token_t token){
+    if (TokenArray->used == TokenArray->size){
+        TokenArray->size *=2;
+        TokenArray->arr = realloc(TokenArray->arr, TokenArray->size * sizeof(token_t));
+    }
+    TokenArray->arr[TokenArray->used++] = token;
+}
+
+void emptyTokenArray(tokenArray_t* TokenArray){
+    free(TokenArray->arr);
+    TokenArray->arr = NULL;
+    TokenArray->used = TokenArray->size = 0;
+}
 
 int getCharFromString(char* str){
     if (pos < strlen(str)){
@@ -33,6 +51,8 @@ int getTok(char* str, void* data){
         temp = getCharFromString(str);
         if (temp != 100000){
         lastChar = temp;
+        } else {
+            return tok_next_line;
         }
     }
     if (isalpha(lastChar)){ // [a-zA-Z][a-zA-Z0-9]
@@ -52,7 +72,9 @@ int getTok(char* str, void* data){
             temp = getCharFromString(str);
             if (temp != 100000){
             lastChar = temp;
-            }
+            } else {
+            return tok_next_line;
+            } 
         } while (isdigit(lastChar) || lastChar == '-'); 
         *numString = strtod(numString, 0);
         return tok_number;
@@ -62,6 +84,8 @@ int getTok(char* str, void* data){
             temp = getCharFromString(str);
             if (temp != 100000){
             lastChar = temp;
+            } else {
+            return tok_next_line;
             }
         } while (lastChar != EOF && lastChar != '\n' && lastChar != '\r');
         if (lastChar != EOF) return getTok(str, data); // recursively find other tokens
@@ -73,6 +97,8 @@ int getTok(char* str, void* data){
     temp = getCharFromString(str);
     if (temp != 100000){
     lastChar = temp;
+    } else {
+        return tok_next_line;
     }
     return currChar;
 }
@@ -81,18 +107,25 @@ int getNextToken(char* str, void* data){
     return currTok = getTok(str, data);
 }
 
-token_t* lexer(char* str){
+tokenArray_t lexer(char* str){
 	void* data;
 	data = malloc(sizeof(*data));
-	token_t* temp_array = malloc(100 * sizeof(token_t));
+	tokenArray_t temp_array ;
+    initTokenArray(&temp_array, 1);
 	enum Token temp_tok;
 	int pos = 0;
     temp_tok = getTok(str, data);
-	while (temp_tok != tok_next_line || temp_tok != tok_eof){
-	token_t temp = { temp_tok, data };
-	temp_array[pos++] = temp;
-    printf("temp_tok : %d\n", temp_tok);
+	while (temp_tok != tok_next_line){
+	token_t temp;
+    temp.data =  data;
+    temp.type = temp_tok;
+    addTokenToTokenArray(&temp_array, temp);
+    printf("token added %d\n", temp.type);
+    printf("token inarr %d\n", temp.type);
+    printf("temp_tok : %d\n", temp_array.arr[temp_array.used].type);
     printf("TEST\n");
+    pos++;
+    data = malloc(sizeof(*data));
     temp_tok = getTok(str, data);
 	}
     printf("TEST2\n");
