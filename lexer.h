@@ -19,7 +19,7 @@ enum Token{
     tok_number = -5,
     tok_next_line = -6,
     tok_plus = -7,
-    tok_root = -8,
+    tok_root_node = -8,
 };
 
 typedef struct {

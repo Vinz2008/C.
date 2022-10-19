@@ -3,6 +3,7 @@
 #include <string.h>
 #include "lexer.h"
 #include "ast.h"
+#include "codegen.h"
 #include "interpret.h"
 #define ARGUMENT_START 1
 
@@ -79,9 +80,14 @@ int main(int argc,char* argv[]){
         struct astNode* firstNode = generateAST(lexerArr);
         printf("AFTER AST\n");
         printf("firstNode pointer after : %p\n", firstNode);
-        printf("firstNode = %d\n", firstNode->tag);
-        //printf("firstNode right = %d", firstNode->right->tag);
-        printf("firstNode left = %d\n", firstNode->left->tag);
+        printf("firstNode = %d\n", firstNode->tag.type);
+        printf("firstNode left = %d\n", firstNode->left->tag.type);
+        printf("firstNode left right = %d\n", firstNode->left->right->tag.type);
+        printf("firstNode left left = %d\n", firstNode->left->left->tag.type);
+        printf("START CODEGEN\n");
+        FILE* outfptr = fopen(fileCompileOutput, "w");
+        codegen(firstNode, outfptr);
+        fclose(outfptr);
         fclose(file);
         return 0;
     }

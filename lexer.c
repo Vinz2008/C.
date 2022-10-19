@@ -66,7 +66,7 @@ int getTok(char* str, void* data){
         return tok_identifier;
     }
     if (isdigit(lastChar) || lastChar =='.'){
-        char* numString = malloc(15 * sizeof(char));;
+        char* numString = malloc(15 * sizeof(char));
         do {
             append_char(lastChar, numString);
             temp = getCharFromString(str);
@@ -80,6 +80,9 @@ int getTok(char* str, void* data){
         int* tempInt = malloc(sizeof(int));
         *(tempInt) = atoi(numString);
         data = tempInt;
+        printf("numString : %s\n", numString);
+        printf("num : %d\n", atoi(numString));
+        printf("data : %d\n", *(int*)data);
         return tok_number;
     }
     if (lastChar == '#'){
@@ -125,9 +128,11 @@ tokenArray_t lexer(char* str){
     printf("token added %d\n", temp.type);
     printf("token inarr %d\n", temp.type);
     printf("temp_tok : %d\n", temp_array.arr[temp_array.used].type);
+    printf("temp_data ptr : %p\n", temp.data);
     printf("TEST\n");
     pos++;
-    data = malloc(sizeof(*data));
+    data = NULL;
+    //data = malloc(sizeof(*data));
     temp_tok = getTok(str, data);
 	}
     printf("TEST2\n");

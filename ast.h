@@ -1,5 +1,9 @@
 #include "lexer.h"
 
+#ifndef AST_HEADER_
+#define AST_HEADER_ 
+
+
 enum LeftOrRight{
     left = 1,
     right = 2
@@ -30,5 +34,7 @@ struct astNode* generateAST(tokenArray_t tokenArr);
 struct astNode {
     struct astNode  *previous;
     struct astNode  *left, *right;
-    enum Token tag;
+    token_t tag;
 };
+
+#endif

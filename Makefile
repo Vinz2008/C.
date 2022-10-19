@@ -7,7 +7,7 @@ OUTPUTBIN = cpoint
 endif
 CFLAGS = -c -g -Wall
 
-all: setup $(buildFolder)/interpret.o $(buildFolder)/parser.o $(buildFolder)/ast.o $(buildFolder)/lexer.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/types.o $(buildFolder)/utils.o $(buildFolder)/isCharContainedInStr.o $(buildFolder)/main.o linking clean-build
+all: setup $(buildFolder)/interpret.o $(buildFolder)/parser.o $(buildFolder)/ast.o $(buildFolder)/lexer.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/types.o $(buildFolder)/utils.o $(buildFolder)/isCharContainedInStr.o $(buildFolder)/codegen.o $(buildFolder)/main.o linking clean-build
 
 setup:
 ifeq ($(OS),Windows_NT)
@@ -41,6 +41,9 @@ $(buildFolder)/types.o:
 $(buildFolder)/utils.o:
 	$(CC) $(CFLAGS) utils.c -o $(buildFolder)/utils.o
 
+$(buildFolder)/codegen.o:
+	$(CC) $(CFLAGS) codegen.c -o $(buildFolder)/codegen.o
+
 $(buildFolder)/isCharContainedInStr.o:
 	$(CC) $(CFLAGS) libs/isCharContainedInStr.c -o $(buildFolder)/isCharContainedInStr.o
 
@@ -48,7 +51,7 @@ $(buildFolder)/main.o:
 	$(CC) $(CFLAGS) main.c -o $(buildFolder)/main.o
 
 linking:
-	$(CC) -o $(OUTPUTBIN) $(buildFolder)/main.o $(buildFolder)/interpret.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/parser.o $(buildFolder)/types.o $(buildFolder)/isCharContainedInStr.o $(buildFolder)/utils.o $(buildFolder)/ast.o $(buildFolder)/lexer.o
+	$(CC) -o $(OUTPUTBIN) $(buildFolder)/main.o $(buildFolder)/interpret.o $(buildFolder)/removeCharFromString.o $(buildFolder)/startswith.o $(buildFolder)/parser.o $(buildFolder)/types.o $(buildFolder)/isCharContainedInStr.o $(buildFolder)/utils.o $(buildFolder)/ast.o $(buildFolder)/lexer.o $(buildFolder)/codegen.o
 
 clean-build:
 ifeq ($(OS),Windows_NT)
