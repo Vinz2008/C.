@@ -11,3 +11,4 @@ test-llvm.c
 out
 out.o
 out.ll.*
+*.o
