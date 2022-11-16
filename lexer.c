@@ -11,8 +11,7 @@ int currTok;
 int pos = 0;
 
 void append_char(char c, char str[]){
-     char arr[2] = {c , '\0'};
-     strcat(str , arr);
+    strncat(str , &c, 1);
 }
 
 void initTokenArray(tokenArray_t* TokenArray, size_t initalSize){
@@ -35,21 +34,21 @@ void emptyTokenArray(tokenArray_t* TokenArray){
     TokenArray->used = TokenArray->size = 0;
 }
 
-int getCharFromString(char* str){
+char getCharFromString(char* str){
     if (pos < strlen(str)){
         return str[pos++];
     } else {
-        return 100000;
+        return '\0';
     }
 }
 
-int getTok(char* str, void* data){
+int getTok(struct TokReturn* tokreturn){
     identifierString = malloc(100 * sizeof(char));
     int lastChar = ' ';
-    char* temp;
+    char temp;
     while (isspace(lastChar)){
-        temp = getCharFromString(str);
-        if (temp != 100000){
+        temp = getCharFromString(tokreturn->str);
+        if (temp != '\0'){
         lastChar = temp;
         } else {
             return tok_next_line;
@@ -57,51 +56,58 @@ int getTok(char* str, void* data){
     }
     if (isalpha(lastChar)){ // [a-zA-Z][a-zA-Z0-9]
         append_char(lastChar, identifierString);
-        while (isalnum((lastChar = getCharFromString(str)))){
+        while (isalnum((lastChar = getCharFromString(tokreturn->str)))){
             append_char(lastChar, identifierString);
         }
-        data = identifierString;
+        tokreturn->data = identifierString;
         if (strcmp("function", identifierString) == 0) return tok_function;
         if (strcmp("extern", identifierString) == 0) return tok_extern;
         return tok_identifier;
     }
     if (isdigit(lastChar) || lastChar =='.'){
+        printf("lastchar digit : %c\n", lastChar);
         char* numString = malloc(15 * sizeof(char));
+        memset(numString, 0, sizeof(numString));
+        printf("numstring before appending : %s\n", numString);
         do {
             append_char(lastChar, numString);
-            temp = getCharFromString(str);
-            if (temp != 100000){
+            printf("CHAR APPENDED %c\n", lastChar);
+            temp = getCharFromString(tokreturn->str);
+            printf("temp digit : %c\n", temp);
+            if (temp != '\0'){
             lastChar = temp;
             } else {
             return tok_next_line;
             } 
         } while (isdigit(lastChar) || lastChar == '-'); 
-        *numString = strtod(numString, 0);
+        //char ptr;
+        //strtol(numString, &ptr, 10);
+        //*numString = strtod(numString, 0);
         int* tempInt = malloc(sizeof(int));
         *(tempInt) = atoi(numString);
-        data = tempInt;
+        tokreturn->data = tempInt;
         printf("numString : %s\n", numString);
         printf("num : %d\n", atoi(numString));
-        printf("data : %d\n", *(int*)data);
+        printf("data : %d\n", *(int*)tokreturn->data);
         return tok_number;
     }
     if (lastChar == '#'){
         do {
-            temp = getCharFromString(str);
-            if (temp != 100000){
+            temp = getCharFromString(tokreturn->str);
+            if (temp != '\0'){
             lastChar = temp;
             } else {
             return tok_next_line;
             }
         } while (lastChar != EOF && lastChar != '\n' && lastChar != '\r');
-        if (lastChar != EOF) return getTok(str, data); // recursively find other tokens
+        if (lastChar != EOF) return getTok(tokreturn); // recursively find other tokens
     }
     if (lastChar == EOF) return tok_eof;
     if (lastChar == '\n') return tok_next_line;
     if (lastChar == '+') return tok_plus;
     int currChar = lastChar;
-    temp = getCharFromString(str);
-    if (temp != 100000){
+    temp = getCharFromString(tokreturn->str);
+    if (temp != '\0'){
     lastChar = temp;
     } else {
         return tok_next_line;
@@ -109,20 +115,25 @@ int getTok(char* str, void* data){
     return currChar;
 }
 
-int getNextToken(char* str, void* data){
-    return currTok = getTok(str, data);
+int getNextToken(struct TokReturn* tokreturn){
+    return currTok = getTok(tokreturn);
 }
 
 tokenArray_t lexer(char* str){
-	void* data = NULL;
 	tokenArray_t temp_array ;
     initTokenArray(&temp_array, 1);
 	enum Token temp_tok;
 	int pos = 0;
-    temp_tok = getTok(str, data);
+    struct TokReturn* tokreturn = malloc(sizeof(struct TokReturn));
+    tokreturn->str = str;
+    temp_tok = getTok(tokreturn);
+    if (temp_tok == tok_number){
+        printf("data after function : %p\n", tokreturn->data);
+        printf("data value after function : %d\n", *(int*)tokreturn->data);
+    }
 	while (temp_tok != tok_next_line){
 	token_t temp;
-    temp.data =  data;
+    temp.data =  tokreturn->data;
     temp.type = temp_tok;
     addTokenToTokenArray(&temp_array, temp);
     printf("token added %d\n", temp.type);
@@ -131,9 +142,9 @@ tokenArray_t lexer(char* str){
     printf("temp_data ptr : %p\n", temp.data);
     printf("TEST\n");
     pos++;
-    data = NULL;
+    tokreturn->data = NULL;
     //data = malloc(sizeof(*data));
-    temp_tok = getTok(str, data);
+    temp_tok = getTok(tokreturn);
 	}
     printf("TEST2\n");
 	return temp_array;

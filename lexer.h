@@ -33,6 +33,11 @@ typedef struct {
     int used;
 } tokenArray_t;
 
+struct TokReturn{
+    char* str;
+    void* data;
+};
+
 
 int getNextToken();
 int getTok();

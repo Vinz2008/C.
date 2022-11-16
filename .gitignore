@@ -12,3 +12,4 @@ out
 out.o
 out.ll.*
 *.o
+log.txt
