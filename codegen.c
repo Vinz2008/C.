@@ -7,6 +7,22 @@
 
 void codegen(struct astNode* node, FILE* outfptr){
     struct astNode* currentNode = node;
+    if (currentNode == NULL){ return; }
+    printf("codegen current node tag : %d\n", currentNode->tag.type);
+    switch (currentNode->tag.type){
+        case tok_number:
+	    printf("ptr : %p\n", currentNode->tag.data);
+	    fprintf(outfptr, "%d ", *(int*)currentNode->tag.data);
+	    break;
+	case tok_plus:
+            fprintf(outfptr, "plus ");
+	    break;
+	default:
+	    break;
+    }
+    codegen(currentNode->left, outfptr);
+    codegen(currentNode->right, outfptr);
+    /*
     while (currentNode->left != NULL){
         currentNode = currentNode->left;
     }
@@ -36,5 +52,5 @@ void codegen(struct astNode* node, FILE* outfptr){
             }
         }
     }
-
+    */
 }
