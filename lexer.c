@@ -62,6 +62,7 @@ int getTok(struct TokReturn* tokreturn){
         tokreturn->data = identifierString;
         if (strcmp("function", identifierString) == 0) return tok_function;
         if (strcmp("extern", identifierString) == 0) return tok_extern;
+        if (strcmp("import", identifierString) == 0) return tok_import;
         return tok_identifier;
     }
     if (isdigit(lastChar) || lastChar =='.'){

@@ -75,18 +75,24 @@ int main(int argc,char* argv[]){
     if (devASTMode == 1){
         char line[100]; 
         FILE* file = fopen(inputFilename, "r");
-        fgets(line, sizeof (line), file);
+        FILE* outfptr = fopen(fileCompileOutput, "w");
+        while (fgets(line, sizeof(line), file)){
         tokenArray_t lexerArr = lexer(line);
         struct astNode* firstNode = generateAST(lexerArr);
+        struct astNode* fistNodeCopy = firstNode;
         printf("AFTER AST\n");
         printf("firstNode pointer after : %p\n", firstNode);
         printf("firstNode = %d\n", firstNode->tag.type);
+        if (firstNode->left != NULL){
         printf("firstNode left = %d\n", firstNode->left->tag.type);
         printf("firstNode left right = %d\n", firstNode->left->right->tag.type);
+        printf("firstNode left left data ptr = %p\n", firstNode->left->left->tag.data);
         printf("firstNode left left = %d\n", firstNode->left->left->tag.type);
+        }
         printf("START CODEGEN\n");
-        FILE* outfptr = fopen(fileCompileOutput, "w");
         codegen(firstNode, outfptr);
+        emptyAST(fistNodeCopy);
+        }
         fclose(outfptr);
         fclose(file);
         return 0;

@@ -20,6 +20,7 @@ enum Token{
     tok_next_line = -6,
     tok_plus = -7,
     tok_root_node = -8,
+    tok_import = -9,
 };
 
 typedef struct {

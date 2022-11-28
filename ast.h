@@ -28,7 +28,7 @@ char type;
 };
 
 struct astNode* generateAST(tokenArray_t tokenArr);
-
+void emptyAST(struct astNode* node);
 
 
 struct astNode {
