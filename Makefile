@@ -1,23 +1,17 @@
-CC=gcc
+CC=g++
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CFLAGS = -c -g -Wall -O2
+CFLAGS = -c -g -Wall -O3 $(shell llvm-config --cxxflags)
+LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 
 OBJS=\
-libs/startswith.o \
-libs/removeCharFromString.o \
-libs/isCharContainedInStr.o \
+lexer.o \
 ast.o \
 codegen.o \
-lexer.o \
-parser.o \
-interpret.o \
-utils.o \
-types.o \
 main.o \
 
 all: cpoint 
@@ -25,14 +19,14 @@ all: cpoint
 cpoint: $(OBJS) 
 	$(CC) $(LDFLAGS) -o $@ $^
 
-%.o:%.c
+%.o:%.cpp
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean-build:
 ifeq ($(OS),Windows_NT)
-	rmdir .\*.o .\libs\*.o /s /q
+	rmdir .\*.o /s /q
 else
-	rm -f ./*.o ./libs/*.o
+	rm -f ./*.o
 endif
 
 install:
@@ -47,6 +41,6 @@ else
 endif
 
 run:
-	./cpoint test.cpoint -d --llvm
+	./cpoint test3.cpoint -d
 clean: clean-build
 	rm -rf cpoint out.ll out.ll.* cpoint.*
