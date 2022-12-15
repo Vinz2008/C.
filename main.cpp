@@ -107,8 +107,8 @@ int main(int argc, char **argv){
     fprintf(stderr, "ready> ");
     getNextToken();
     InitializeModule();
+    TheModule->print(*file_out_ostream, nullptr);
     MainLoop();
-    TheModule->print(errs(), nullptr);
     return 0;
 
 }
