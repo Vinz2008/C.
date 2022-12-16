@@ -13,3 +13,5 @@ out.o
 out.ll.*
 *.o
 log.txt
+*.log
+test-llvm
