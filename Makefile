@@ -12,6 +12,7 @@ OBJS=\
 lexer.o \
 ast.o \
 codegen.o \
+debuginfo.o \
 main.o \
 
 all: cpoint 
@@ -44,3 +45,9 @@ run:
 	./cpoint test3.cpoint -d
 clean: clean-build
 	rm -rf cpoint out.ll out.ll.* cpoint.*
+
+
+test:
+	./cpoint test5.cpoint
+	make -C c_api
+	gcc -o test5 out.o c_api/c_api.a

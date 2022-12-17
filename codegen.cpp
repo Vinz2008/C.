@@ -11,6 +11,7 @@
 #include "llvm/IR/Verifier.h"
 #include "ast.h"
 #include "lexer.h"
+#include <iostream>
 #include <map>
 
 using namespace llvm;
@@ -63,6 +64,7 @@ Value *BinaryExprAST::codegen() {
 
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
+  std::cout << "function called " << Callee << std::endl;
   Function *CalleeF = TheModule->getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknown function referenced");
@@ -179,9 +181,20 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(MergeBB);
   PHINode *PN = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, "iftmp");
 
+
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
   return PN;
+}
+
+Value* ReturnAST::codegen(){
+  Value* value_returned = returned_expr->codegen();
+  return value_returned;
+  //return ConstantFP::get(*TheContext, APFloat(Val));
+}
+
+Value *ForExprAST::codegen(){
+
 }
 
 void InitializeModule() {

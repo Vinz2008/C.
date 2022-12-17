@@ -1,5 +1,5 @@
 def fib(x)
   if x < 3 then
-    0
+    return 0
   else
     fib(x-1)+fib(x-2);

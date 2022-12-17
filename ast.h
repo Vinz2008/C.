@@ -101,6 +101,31 @@ public:
   Value *codegen() override;
 };
 
+class ReturnAST : public ExprAST {
+  std::unique_ptr<ExprAST> returned_expr;
+  //double Val;
+public:
+  ReturnAST(std::unique_ptr<ExprAST> returned_expr)
+  : returned_expr(std::move(returned_expr)) {}
+  //ReturnAST(double val) : Val(val) {}
+  Value *codegen() override;
+
+};
+
+class ForExprAST : public ExprAST {
+  std::string VarName;
+  std::unique_ptr<ExprAST> Start, End, Step, Body;
+
+public:
+  ForExprAST(const std::string &VarName, std::unique_ptr<ExprAST> Start,
+             std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step,
+             std::unique_ptr<ExprAST> Body)
+    : VarName(VarName), Start(std::move(Start)), End(std::move(End)),
+      Step(std::move(Step)), Body(std::move(Body)) {}
+
+  Value *codegen() override;
+};
+
 
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
@@ -108,5 +133,8 @@ std::unique_ptr<FunctionAST> ParseDefinition();
 std::unique_ptr<PrototypeAST> ParseExtern();
 std::unique_ptr<FunctionAST> ParseTopLevelExpr();
 std::unique_ptr<ExprAST> ParseIfExpr();
+std::unique_ptr<ExprAST> ParseReturn();
+std::unique_ptr<ExprAST> ParseForExpr();
+
 
 #endif

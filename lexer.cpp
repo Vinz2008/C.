@@ -33,11 +33,12 @@ int getCharLine(){
       last_line = true;
     }
     pos = 0;
+  } else {
+     pos++;
   }
   file_log << "line : " << *line << "\n";
   file_log << "c : " << (char)c << "\n";
   file_log << "c int : " << c << "\n";
-  pos++;
   return c;
 }
 
@@ -63,6 +64,12 @@ static int gettok() {
       return tok_then;
     if (IdentifierStr == "else")
       return tok_else;
+    if (IdentifierStr == "for")
+      return tok_for;
+    if (IdentifierStr == "in")
+      return tok_in;
+    if (IdentifierStr == "return")
+      return tok_return;
     return tok_identifier;
   }
 
