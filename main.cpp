@@ -103,7 +103,7 @@ static void MainLoop() {
     case ';': // ignore top-level semicolons.
       getNextToken();
       break;
-    case tok_def:
+    case tok_func:
       HandleDefinition();
       break;
     case tok_extern:

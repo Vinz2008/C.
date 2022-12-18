@@ -7,6 +7,7 @@ using namespace std;
 
 string IdentifierStr;
 double NumVal;
+string strStatic;
 extern std::map<char, int> BinopPrecedence;
 
 int CurTok;
@@ -28,11 +29,19 @@ int getCharLine(){
     }
   }
   int c = (*line)[pos];
-  if (c == '\n' || c == '\r' || c == '\0' || pos + 1 >= strlen(line->c_str())){
+  if (c == '\0'){
+    pos++;
+    file_log << "\\0 found" << "\n";
+    c = (*line)[pos];
+    file_log << "next char after \\0 : " << (*line)[pos] << "\n";
+  }
+  if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line->c_str())){
+    file_log << "new line" << "\n";
     if (!getline(file_in, *line)){
       last_line = true;
     }
     pos = 0;
+    file_log << "next char in line : " << (*line)[pos] << "\n";
   } else {
      pos++;
   }
@@ -54,8 +63,8 @@ static int gettok() {
     while (isalnum((LastChar = getCharLine())))
       IdentifierStr += LastChar;
 
-    if (IdentifierStr == "def")
-      return tok_def;
+    if (IdentifierStr == "func")
+      return tok_func;
     if (IdentifierStr == "extern")
       return tok_extern;
     if (IdentifierStr == "if")
@@ -70,6 +79,13 @@ static int gettok() {
       return tok_in;
     if (IdentifierStr == "return")
       return tok_return;
+    if (IdentifierStr == "binary")
+      return tok_binary;
+    if (IdentifierStr == "unary")
+      return tok_unary;
+    if (IdentifierStr == "var")
+      return tok_var;
+    cout << "IdentifierStr : " << IdentifierStr << endl;
     return tok_identifier;
   }
 
@@ -93,6 +109,15 @@ static int gettok() {
     if (LastChar != EOF)
       return gettok();
   }
+  if (LastChar == '\"'){
+    LastChar = getCharLine();
+    do {
+      strStatic += LastChar;
+      LastChar = getCharLine();
+    } while (LastChar != '\"');
+    cout << "strStatic : " << strStatic << endl;
+    return tok_string;
+  }
 
   // Check for end of file.  Don't eat the EOF.
   if (LastChar == EOF)
@@ -105,7 +130,9 @@ static int gettok() {
 }
 
 int getNextToken() {
-  return CurTok = gettok();
+  CurTok = gettok();
+  //cout << "CurTok : " << CurTok << endl;
+  return CurTok;
 }
 
 int GetTokPrecedence() {

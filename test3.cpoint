@@ -1,4 +1,4 @@
-def fib(x)
+func fib(x)
   if x < 3 then
     return 0
   else

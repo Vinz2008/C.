@@ -5,7 +5,7 @@ OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CFLAGS = -c -g -Wall -O3 $(shell llvm-config --cxxflags)
+CFLAGS = -c -g -Wall -O2 $(shell llvm-config --cxxflags)
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 
 OBJS=\
@@ -15,9 +15,9 @@ codegen.o \
 debuginfo.o \
 main.o \
 
-all: cpoint 
+all: cpoint c_api_lib std_lib
 
-cpoint: $(OBJS) 
+cpoint: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o:%.cpp
@@ -44,10 +44,16 @@ endif
 run:
 	./cpoint test3.cpoint -d
 clean: clean-build
+	make -C c_api clean
+	make -C std clean
 	rm -rf cpoint out.ll out.ll.* cpoint.*
 
-
-test:
-	./cpoint test5.cpoint
+c_api_lib:
 	make -C c_api
-	gcc -o test5 out.o c_api/c_api.a
+
+std_lib:
+	make -C std
+
+test: c_api_lib std_lib
+	./cpoint test5.cpoint
+	gcc -o test5 out.o c_api/libc_api.a.a

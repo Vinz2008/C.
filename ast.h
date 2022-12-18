@@ -33,12 +33,20 @@ public:
   Value *codegen() override;
 };
 
+class StringExprAST : public ExprAST {
+  std::string str;
+public:
+  StringExprAST(const std::string &str) : str(str) {}
+  Value *codegen() override;
+};
+
 class VariableExprAST : public ExprAST {
   std::string Name;
 
 public:
   VariableExprAST(const std::string &Name) : Name(Name) {}
   Value *codegen() override;
+  const std::string &getName() const { return Name; }
 };
 
 class BinaryExprAST : public ExprAST {
@@ -52,6 +60,16 @@ public:
   Value *codegen() override;
 };
 
+class UnaryExprAST : public ExprAST {
+  char Opcode;
+  std::unique_ptr<ExprAST> Operand;
+
+public:
+  UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand)
+    : Opcode(Opcode), Operand(std::move(Operand)) {}
+
+  Value *codegen() override;
+};
 
 class CallExprAST : public ExprAST {
   std::string Callee;
@@ -70,13 +88,22 @@ public:
 class PrototypeAST {
   std::string Name;
   std::vector<std::string> Args;
+  bool IsOperator;
+  unsigned Precedence;  // Precedence if a binary op.
 
 public:
-  PrototypeAST(const std::string &name, std::vector<std::string> Args)
-    : Name(name), Args(std::move(Args)) {}
+  PrototypeAST(const std::string &name, std::vector<std::string> Args, bool IsOperator = false, unsigned Prec = 0)
+    : Name(name), Args(std::move(Args)), IsOperator(IsOperator), Precedence(Prec) {}
 
   const std::string &getName() const { return Name; }
   Function *codegen();
+  bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
+  bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
+  char getOperatorName() const {
+    assert(isUnaryOp() || isBinaryOp());
+    return Name[Name.size() - 1];
+  }
+  unsigned getBinaryPrecedence() const { return Precedence; }
 };
 
 class FunctionAST {
@@ -126,6 +153,17 @@ public:
   Value *codegen() override;
 };
 
+class VarExprAST : public ExprAST {
+  std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
+  std::unique_ptr<ExprAST> Body;
+
+public:
+  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames,
+             std::unique_ptr<ExprAST> Body)
+    : VarNames(std::move(VarNames)), Body(std::move(Body)) {}
+
+  Value *codegen() override;
+};
 
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
@@ -135,6 +173,9 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr();
 std::unique_ptr<ExprAST> ParseIfExpr();
 std::unique_ptr<ExprAST> ParseReturn();
 std::unique_ptr<ExprAST> ParseForExpr();
+std::unique_ptr<ExprAST> ParseStrExpr();
+std::unique_ptr<ExprAST> ParseUnary();
+std::unique_ptr<ExprAST> ParseVarExpr();
 
 
 #endif

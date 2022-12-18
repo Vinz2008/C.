@@ -1,7 +1,11 @@
-import io
-import std
+extern printd(a);
 
-func int main() {
-    puts("test")
-    return 0
-}
+func binary : 1 (x y) y;
+
+func function(x)
+  printd(x) : x = 4 : printd(x);
+
+func test(b)
+  printd(123) : printd(456) : printd(789);
+
+function(2 3);

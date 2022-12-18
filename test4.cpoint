@@ -1,2 +1,2 @@
-def average(x y)
+func average(x y)
   (x + y) * 0.5;

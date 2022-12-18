@@ -5,7 +5,7 @@ enum Token {
   tok_eof = -1,
 
   // commands
-  tok_def = -2,
+  tok_func = -2,
   tok_extern = -3,
 
   // primary
@@ -23,7 +23,8 @@ enum Token {
 
   // var definition
   tok_var = -13,
-  tok_return = -14
+  tok_return = -14,
+  tok_string = -15
 };
 
 int getNextToken();

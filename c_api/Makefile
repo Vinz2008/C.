@@ -1,10 +1,14 @@
+CC=gcc
 SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
 
-all: c_api.a 
+all: libc_api.a 
 
-c_api.a: $(OBJECTS)
-	ar -rc $@ $<
+libc_api.a: $(OBJECTS)
+	ar -rc $@ $^
 
 %.o: %.c
-	$(CC) $< -o $@
+	$(CC) -c $< -o $@
+
+clean:
+	rm -f ./*.o ./*.a
