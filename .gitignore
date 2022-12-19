@@ -17,3 +17,4 @@ log.txt
 *.log
 test-llvm
 *.a
+test
