@@ -6,11 +6,14 @@ extern double NumVal;
 extern int CurTok;
 extern std::string strStatic;
 extern std::string IdentifierStr;
+extern int return_status;
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
   fprintf(stderr, "LogError: %s\n", Str);
+  return_status = 1;
   return nullptr;
 }
+
 std::unique_ptr<PrototypeAST> LogErrorP(const char *Str) {
   LogError(Str);
   return nullptr;
@@ -21,6 +24,7 @@ std::unique_ptr<ReturnAST> LogErrorR(const char *Str) {
   std::cout << "token : " << CurTok << std::endl;
   return nullptr;
 }
+
 
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
@@ -261,7 +265,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   auto Then = ParseExpression();
   if (!Then)
     return nullptr;
-
+  std::cout << "CurTok : " << CurTok << std::endl;
   if (CurTok != tok_else)
     return LogError("expected else");
 
@@ -278,12 +282,15 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
 
 std::unique_ptr<ExprAST> ParseReturn(){
   getNextToken(); // eat the return
+  std::cout << "CurTok : " << CurTok << " " << NumVal << std::endl;
+
   auto return_value = ParseExpression();
   //auto Result = std::make_unique<ReturnAST>(NumVal);
   if (!return_value){
     return nullptr;
   }
   getNextToken();
+  std::cout << "CurTok : " << CurTok << std::endl;
   return std::make_unique<ReturnAST>(std::move(return_value));
   //return std::move(Result);
 }

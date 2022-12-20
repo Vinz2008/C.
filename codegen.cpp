@@ -328,8 +328,10 @@ Value *UnaryExprAST::codegen() {
     return nullptr;
 
   Function *F = getFunction(std::string("unary") + Opcode);
-  if (!F)
+  if (!F){
+    std::cout << "UnaryExprAST : " << Opcode << std::endl;
     return LogErrorV("Unknown unary operator");
+  }
 
   return Builder->CreateCall(F, OperandV, "unop");
 }

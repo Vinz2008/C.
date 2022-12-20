@@ -43,9 +43,11 @@ endif
 
 run:
 	./cpoint test3.cpoint -d
+
 clean: clean-build
 	make -C c_api clean
 	make -C std clean
+	make -C tests clean
 	rm -rf cpoint out.ll out.ll.* cpoint.*
 
 c_api_lib:
@@ -54,6 +56,5 @@ c_api_lib:
 std_lib:
 	make -C std
 
-test: c_api_lib std_lib
-	./cpoint test5.cpoint
-	gcc -o test5 out.o c_api/libc_api.a.a
+test: all
+	make -C tests run

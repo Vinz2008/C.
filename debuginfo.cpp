@@ -1,16 +1,11 @@
 #include "llvm/IR/DIBuilder.h"
+#include "debuginfo.h"
 
 using namespace llvm;
 
 
-static std::unique_ptr<DIBuilder> DBuilder;
+std::unique_ptr<DIBuilder> DBuilder;
 
-struct DebugInfo {
-  DICompileUnit *TheCU;
-  DIType *DblTy;
-
-  DIType *getDoubleTy();
-} KSDbgInfo;
 
 
 DIType *DebugInfo::getDoubleTy() {

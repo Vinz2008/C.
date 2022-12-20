@@ -11,4 +11,4 @@ libstd.a: $(OBJECTS)
 	$(CCPOINT) $< -o $@
 
 clean:
-	rm -f ./*.o ./*.a
+	rm -f ./*.o ./*.a ./*.ll ./*.log

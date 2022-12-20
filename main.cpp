@@ -11,9 +11,12 @@
 #include "llvm/MC/TargetRegistry.h"
 #include "llvm/Support/Host.h"
 #include "llvm/Support/FileSystem.h"
+#include "llvm/IR/DIBuilder.h"
 #include "lexer.h"
 #include "ast.h"
 #include "codegen.h"
+#include "debuginfo.h"
+
 using namespace std;
 using namespace llvm;
 using namespace llvm::sys;
@@ -23,6 +26,11 @@ using namespace llvm::sys;
 #else
 #define DLLEXPORT
 #endif
+
+int return_status = 0;
+
+extern std::unique_ptr<DIBuilder> DBuilder;
+struct DebugInfo CpointDebugInfo;
 
 /// putchard - putchar that takes a double and returns 0.
 extern "C" DLLEXPORT double putchard(double X) {
@@ -35,6 +43,7 @@ extern "C" DLLEXPORT double printd(double X) {
   fprintf(stderr, "%f\n", X);
   return 0;
 }
+
 
 std::map<char, int> BinopPrecedence;
 extern std::unique_ptr<Module> TheModule;
@@ -49,9 +58,11 @@ bool last_line = false;
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
     if (auto *FnIR = FnAST->codegen()) {
-    fprintf(stderr, "Parsed a function definition.\n");
+    cout << "Parsed a function definition." << endl;
+    //fprintf(stderr, "Parsed a function definition.\n");
     FnIR->print(*file_out_ostream);
-    fprintf(stderr, "\n");
+    //fprintf(stderr, "\n");
+    
     }
   } else {
     // Skip token for error recovery.
@@ -62,9 +73,10 @@ static void HandleDefinition() {
 static void HandleExtern() {
   if (auto ProtoAST = ParseExtern()) {
     if (auto *FnIR = ProtoAST->codegen()) {
-      fprintf(stderr, "Read extern: ");
+      //fprintf(stderr, "Read extern: ");
+      cout << "Read Extern" << endl;
       FnIR->print(*file_out_ostream);
-      fprintf(stderr, "\n");
+      //fprintf(stderr, "\n");
     }
   } else {
     // Skip token for error recovery.
@@ -77,9 +89,10 @@ static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
   if (auto FnAST = ParseTopLevelExpr()) {
     if (auto *FnIR = FnAST->codegen()) {
-      fprintf(stderr, "Read top-level expression:");
+      //fprintf(stderr, "Read top-level expression:");
+      cout << "Read top-level expression" << endl;
       FnIR->print(*file_out_ostream);
-      fprintf(stderr, "\n");
+      //fprintf(stderr, "\n");
 
       // Remove the anonymous expression.
       FnIR->eraseFromParent();
@@ -150,8 +163,18 @@ int main(int argc, char **argv){
     //fprintf(stderr, "ready> ");
     getNextToken();
     InitializeModule();
-    TheModule->print(*file_out_ostream, nullptr);
+    TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
+                           DEBUG_METADATA_VERSION);
+    if (Triple(sys::getProcessTriple()).isOSDarwin()){
+      TheModule->addModuleFlag(llvm::Module::Warning, "Dwarf Version", 2);
+    }
+    DBuilder = std::make_unique<DIBuilder>(*TheModule);
+    CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
+      dwarf::DW_LANG_C, DBuilder->createFile(filename, "."),
+      "Cpoint Compiler", false, "", 0);
+    DBuilder->finalize();
     MainLoop();
+    TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
     auto TargetTriple = sys::getDefaultTargetTriple();
@@ -184,6 +207,5 @@ int main(int argc, char **argv){
     pass.run(*TheModule);
     dest.flush();
     outs() << "Wrote " << object_filename << "\n";
-    return 0;
-
+    return return_status;
 }

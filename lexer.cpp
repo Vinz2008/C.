@@ -21,12 +21,20 @@ string* line = NULL;
 
 extern bool last_line;
 
+int getLine(std::istream &__is, std::string &__str){
+  if (!getline(__is, __str)){
+      last_line = true;
+  }
+  return 0;
+}
+
 int getCharLine(){
   if (line == NULL){
     line = new string("");
-    if (!getline(file_in, *line)){
+    getLine(file_in, *line);
+    /*if (!getline(file_in, *line)){
       last_line = true;
-    }
+    }*/
   }
   int c = (*line)[pos];
   if (c == '\0'){
@@ -37,9 +45,10 @@ int getCharLine(){
   }
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line->c_str())){
     file_log << "new line" << "\n";
-    if (!getline(file_in, *line)){
+    getLine(file_in, *line);
+    /*if (!getline(file_in, *line)){
       last_line = true;
-    }
+    }*/
     pos = 0;
     file_log << "next char in line : " << (*line)[pos] << "\n";
   } else {
