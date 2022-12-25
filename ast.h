@@ -42,9 +42,9 @@ public:
 
 class VariableExprAST : public ExprAST {
   std::string Name;
-
+  int type;
 public:
-  VariableExprAST(const std::string &Name) : Name(Name) {}
+  VariableExprAST(const std::string &Name, int type) : Name(Name), type(type) {}
   Value *codegen() override;
   const std::string &getName() const { return Name; }
 };
@@ -80,6 +80,27 @@ public:
               std::vector<std::unique_ptr<ExprAST>> Args)
       : Callee(Callee), Args(std::move(Args)) {}
   Value *codegen() override;
+};
+
+class VarExprAST : public ExprAST {
+  std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
+  //std::unique_ptr<ExprAST> Body;
+
+public:
+  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames
+             /*,std::unique_ptr<ExprAST> Body*/)
+    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/ {}
+
+  Value *codegen() override;
+};
+
+class ObjectDeclarAST {
+  std::string Name;
+  std::vector<std::unique_ptr<VarExprAST>> Vars;
+public:
+  ObjectDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars)
+    : Name(name), Vars(std::move(Vars)) {}
+  Value* codegen();
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
@@ -153,17 +174,6 @@ public:
   Value *codegen() override;
 };
 
-class VarExprAST : public ExprAST {
-  std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-  //std::unique_ptr<ExprAST> Body;
-
-public:
-  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames
-             /*,std::unique_ptr<ExprAST> Body*/)
-    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/ {}
-
-  Value *codegen() override;
-};
 
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();

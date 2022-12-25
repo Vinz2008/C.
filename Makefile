@@ -16,6 +16,7 @@ lexer.o \
 ast.o \
 codegen.o \
 debuginfo.o \
+types.o \
 linker.o \
 main.o \
 

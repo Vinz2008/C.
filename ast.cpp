@@ -1,6 +1,7 @@
 #include <map>
 #include "ast.h"
 #include "lexer.h"
+#include "types.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -50,7 +51,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   getNextToken();  // eat identifier.
 
   if (CurTok != '(') // Simple variable ref.
-    return std::make_unique<VariableExprAST>(IdName);
+    return std::make_unique<VariableExprAST>(IdName, double_type);
 
   // Call.
   getNextToken();  // eat (

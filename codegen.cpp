@@ -11,12 +11,13 @@
 #include "llvm/IR/Verifier.h"
 #include "ast.h"
 #include "lexer.h"
+#include "types.h"
 #include <iostream>
 #include <map>
 
 using namespace llvm;
 
-static std::unique_ptr<LLVMContext> TheContext;
+std::unique_ptr<LLVMContext> TheContext;
 std::unique_ptr<Module> TheModule;
 static std::unique_ptr<IRBuilder<>> Builder;
 static std::map<std::string, AllocaInst *> NamedValues;
@@ -41,7 +42,7 @@ Function *getFunction(std::string Name) {
 }
 
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                                          StringRef VarName) {
+                                          StringRef VarName, int type) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
   return TmpB.CreateAlloca(Type::getDoubleTy(*TheContext), 0,
@@ -68,6 +69,11 @@ Value *VariableExprAST::codegen() {
   if (!A)
     return LogErrorV("Unknown variable name");
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
+}
+
+Value* ObjectDeclarAST::codegen(){
+  StructType* objectType = StructType::create(*TheContext, StringRef(Name));
+  return nullptr;
 }
 
 Value *BinaryExprAST::codegen() {
@@ -171,7 +177,7 @@ Function *FunctionAST::codegen() {
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
   for (auto &Arg : TheFunction->args()){
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName());
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), double_type);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = Alloca;
   }
@@ -253,7 +259,7 @@ Value* ReturnAST::codegen(){
 
 Value *ForExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, double_type);
   Value *StartVal = Start->codegen();
   if (!StartVal)
     return nullptr;
@@ -360,7 +366,7 @@ Value *VarExprAST::codegen() {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, double_type);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when

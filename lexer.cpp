@@ -94,6 +94,8 @@ static int gettok() {
       return tok_unary;
     if (IdentifierStr == "var")
       return tok_var;
+    if (IdentifierStr == "object")
+      return tok_object;
     cout << "IdentifierStr : " << IdentifierStr << endl;
     return tok_identifier;
   }
