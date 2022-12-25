@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: install llvm
+      run: sudo apt-get install llvm
     - name: clean
       run: make clean
     - name: make
