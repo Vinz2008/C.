@@ -16,10 +16,13 @@
 #include "ast.h"
 #include "codegen.h"
 #include "debuginfo.h"
+#include "linker.h"
 
 using namespace std;
 using namespace llvm;
 using namespace llvm::sys;
+
+#define DEFAULT_STD_PATH "/usr/local/lib/cpoint"
 
 #ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)
@@ -95,7 +98,7 @@ static void HandleTopLevelExpression() {
       //fprintf(stderr, "\n");
 
       // Remove the anonymous expression.
-      FnIR->eraseFromParent();
+      //FnIR->eraseFromParent();
     }
   } else {
     // Skip token for error recovery.
@@ -133,7 +136,11 @@ static void MainLoop() {
 int main(int argc, char **argv){
     string filename ="";
     string object_filename = "out.o";
+    string exe_filename = "a.out";
+    string std_path = DEFAULT_STD_PATH;
     bool debug_mode = false;
+    bool link_files_mode = true;
+    bool std_mode = true;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -143,13 +150,25 @@ int main(int argc, char **argv){
           i++;
           object_filename = argv[i];
           cout << "object_filename " << object_filename << endl;
+        } else if (arg.compare("-std") == 0){
+          i++;
+          std_path = argv[i];
+          cout << "custom path std : " << std_path << endl;
+        } else if (arg.compare("-c") == 0){
+          link_files_mode = false;
+        } else if (arg.compare("-nostd") == 0){
+          std_mode = false;
         } else {
             cout << "filename : " << arg << endl;
             filename = arg;
         }
     }
     std::error_code ec;
+    if (debug_mode == false ){
+      file_log.open("/dev/null");
+    } else {
     file_log.open("cpoint.log");
+    }
     file_out_ostream = new raw_fd_ostream(llvm::StringRef("out.ll"), ec);
     file_in.open(filename);
     //file_out_ostream = std::make_unique<llvm::raw_fd_ostream>(llvm::StringRef(filename), &ec);
@@ -207,5 +226,25 @@ int main(int argc, char **argv){
     pass.run(*TheModule);
     dest.flush();
     outs() << "Wrote " << object_filename << "\n";
+    if (std_mode){
+      if (build_std(std_path) == -1){
+        cout << "Could not build std at path : " << std_path << endl;
+        exit(1);
+      }
+    }
+    if (link_files_mode){
+      std::string std_static_path = std_path;
+      if (std_path.back() != '/'){
+        std_static_path.append("/");
+      }
+      std_static_path.append("libstd.a");
+      /*std::string std_static_path = "-L";
+      std_static_path.append(std_path);
+      std_static_path.append(" -lstd");*/
+
+
+      std::vector<string> vect_obj_files{object_filename, std_static_path};
+      link_files(vect_obj_files, exe_filename);
+    }
     return return_status;
 }

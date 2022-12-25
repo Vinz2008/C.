@@ -377,13 +377,13 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   }
 
   // At this point, we have to have 'in'.
-  if (CurTok != tok_in)
+  /*if (CurTok != tok_in)
     return LogError("expected 'in' keyword after 'var'");
   getNextToken(); // eat 'in'.
 
   auto Body = ParseExpression();
   if (!Body)
     return nullptr;
-
-  return std::make_unique<VarExprAST>(std::move(VarNames), std::move(Body));
+  */
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/);
 }

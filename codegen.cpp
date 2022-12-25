@@ -372,16 +372,18 @@ Value *VarExprAST::codegen() {
   }
 
   // Codegen the body, now that all vars are in scope.
-  Value *BodyVal = Body->codegen();
+  /*Value *BodyVal = Body->codegen();
   if (!BodyVal)
     return nullptr;
-
+  */
   // Pop all our variables from scope.
-  for (unsigned i = 0, e = VarNames.size(); i != e; ++i)
+  /*for (unsigned i = 0, e = VarNames.size(); i != e; ++i)
     NamedValues[VarNames[i].first] = OldBindings[i];
-
+  */
   // Return the body computation.
-  return BodyVal;
+  //return BodyVal;
+  // for expr always returns 0.0.
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
 void InitializeModule() {

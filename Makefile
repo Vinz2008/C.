@@ -1,4 +1,7 @@
 CC=g++
+DESTDIR ?= /usr/bin
+PREFIX ?= /usr/local
+
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
@@ -13,9 +16,10 @@ lexer.o \
 ast.o \
 codegen.o \
 debuginfo.o \
+linker.o \
 main.o \
 
-all: cpoint c_api_lib std_lib
+all: cpoint std_lib
 
 cpoint: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
@@ -31,27 +35,20 @@ else
 endif
 
 install:
-	rm -rf /opt/cpoint/
-	mkdir /opt/cpoint
-	cp -r std/ /opt/cpoint/
-	cp cpoint /opt/cpoint/
-ifeq ($(origin SHELL_USED),undefined)
-	@#exit 1
-else
-	@#echo `export PATH=$PATH:/opt/cpoint` >> /home/${LOGNAME}/.${SHELL_USED}rc
-endif
+	cp cpoint $(DESTDIR)/
+	rm -rf $(PREFIX)/lib/cpoint
+	mkdir $(PREFIX)/lib/cpoint
+	cp -r std/* $(PREFIX)/lib/cpoint
+
 
 run:
 	./cpoint test3.cpoint -d
 
 clean: clean-build
-	make -C c_api clean
+	make -C std/c_api clean
 	make -C std clean
 	make -C tests clean
 	rm -rf cpoint out.ll out.ll.* cpoint.*
-
-c_api_lib:
-	make -C c_api
 
 std_lib:
 	make -C std
