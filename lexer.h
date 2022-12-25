@@ -1,47 +1,32 @@
+#include <memory>
+#include "ast.h"
 
-#ifndef __cpoint_lexer__
-#define __cpoint_lexer__
+enum Token {
+  tok_eof = -1,
 
-enum Token{
-    // end of file token
-    tok_eof = -1,
+  // commands
+  tok_func = -2,
+  tok_extern = -3,
 
-    // function keyword
-    tok_function = -2,
+  // primary
+  tok_identifier = -4,
+  tok_number = -5,
+  tok_if = -6,
+  tok_then = -7,
+  tok_else = -8,
+  tok_for = -9,
+  tok_in = -10,
 
-    // extern keyword
-    tok_extern = -3,
+  // operators
+  tok_binary = -11,
+  tok_unary = -12,
 
-    // function names and variable names
-    tok_identifier = -4,
-
-    // numbers
-    tok_number = -5,
-    tok_next_line = -6,
-    tok_plus = -7,
-    tok_root_node = -8,
-    tok_import = -9,
+  // var definition
+  tok_var = -13,
+  tok_return = -14,
+  tok_string = -15
 };
-
-typedef struct {
-	enum Token type;
-	void* data;
-} token_t;
-
-typedef struct {
-    token_t* arr;
-    int size;
-    int used;
-} tokenArray_t;
-
-struct TokReturn{
-    char* str;
-    void* data;
-};
-
 
 int getNextToken();
-int getTok();
-tokenArray_t lexer(char* str);
-
-#endif
+int GetTokPrecedence();
+std::unique_ptr<ExprAST> LogError(const char *Str);

@@ -1,0 +1,5 @@
+func fib(x)
+  if x < 1 then
+    1
+  else
+    return 21;

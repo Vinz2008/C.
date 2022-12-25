@@ -1,52 +1,57 @@
-CC=gcc
+CC=g++
+DESTDIR ?= /usr/bin
+PREFIX ?= /usr/local
+
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CFLAGS = -c -g -Wall -O2
+CFLAGS = -c -g -Wall -O2 $(shell llvm-config --cxxflags)
+LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 
 OBJS=\
-libs/startswith.o \
-libs/removeCharFromString.o \
-libs/isCharContainedInStr.o \
+lexer.o \
 ast.o \
 codegen.o \
-lexer.o \
-parser.o \
-interpret.o \
-utils.o \
-types.o \
+debuginfo.o \
+linker.o \
 main.o \
 
-all: cpoint 
+all: cpoint std_lib
 
-cpoint: $(OBJS) 
+cpoint: $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
-%.o:%.c
+%.o:%.cpp
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean-build:
 ifeq ($(OS),Windows_NT)
-	rmdir .\*.o .\libs\*.o /s /q
+	rmdir .\*.o /s /q
 else
-	rm -f ./*.o ./libs/*.o
+	rm -f ./*.o
 endif
 
 install:
-	rm -rf /opt/cpoint/
-	mkdir /opt/cpoint
-	cp -r std/ /opt/cpoint/
-	cp cpoint /opt/cpoint/
-ifeq ($(origin SHELL_USED),undefined)
-	@#exit 1
-else
-	@#echo `export PATH=$PATH:/opt/cpoint` >> /home/${LOGNAME}/.${SHELL_USED}rc
-endif
+	cp cpoint $(DESTDIR)/
+	rm -rf $(PREFIX)/lib/cpoint
+	mkdir $(PREFIX)/lib/cpoint
+	cp -r std/* $(PREFIX)/lib/cpoint
+
 
 run:
-	./cpoint test.cpoint -d --llvm
+	./cpoint test3.cpoint -d
+
 clean: clean-build
+	make -C std/c_api clean
+	make -C std clean
+	make -C tests clean
 	rm -rf cpoint out.ll out.ll.* cpoint.*
+
+std_lib:
+	make -C std
+
+test: all
+	make -C tests run

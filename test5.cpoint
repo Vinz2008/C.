@@ -1,0 +1,2 @@
+extern printd(x);
+printd(3.2);

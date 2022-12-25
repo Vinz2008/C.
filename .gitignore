@@ -8,8 +8,14 @@ out.c
 test
 out.s
 test-llvm.c
+test-llvm*.c
 out
 out.o
 out.ll.*
 *.o
 log.txt
+*.log
+test-llvm
+*.a
+test
+a.out
