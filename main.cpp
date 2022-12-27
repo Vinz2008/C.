@@ -138,6 +138,8 @@ int main(int argc, char **argv){
     string object_filename = "out.o";
     string exe_filename = "a.out";
     string std_path = DEFAULT_STD_PATH;
+    string target_triplet_found;
+    bool target_triplet_found_bool = false;
     bool debug_mode = false;
     bool link_files_mode = true;
     bool std_mode = true;
@@ -158,6 +160,11 @@ int main(int argc, char **argv){
           link_files_mode = false;
         } else if (arg.compare("-nostd") == 0){
           std_mode = false;
+        } else if(arg.compare("-target-triplet") == 0){
+          target_triplet_found_bool = true;
+          i++;
+          target_triplet_found = argv[i];
+          cout << "target triplet : " << target_triplet_found << endl;
         } else {
             cout << "filename : " << arg << endl;
             filename = arg;
@@ -196,7 +203,12 @@ int main(int argc, char **argv){
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
-    auto TargetTriple = sys::getDefaultTargetTriple();
+    string TargetTriple;
+    if (target_triplet_found_bool){
+    TargetTriple = target_triplet_found;
+    } else {
+    TargetTriple = sys::getDefaultTargetTriple();
+    }
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();

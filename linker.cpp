@@ -21,7 +21,7 @@ int build_std(string path){
 
 void link_files(vector<string> list_files, string filename_out){
     int retcode = -1;
-    string cmd = "gcc -o ";
+    string cmd = "clang -o ";
     cmd.append(filename_out);
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");
