@@ -256,7 +256,7 @@ int main(int argc, char **argv){
 
 
       std::vector<string> vect_obj_files{object_filename, std_static_path};
-      link_files(vect_obj_files, exe_filename);
+      link_files(vect_obj_files, exe_filename, TargetTriple);
     }
     return return_status;
 }

@@ -19,10 +19,12 @@ int build_std(string path){
     return retcode;
 }
 
-void link_files(vector<string> list_files, string filename_out){
+void link_files(vector<string> list_files, string filename_out, string target_triplet){
     int retcode = -1;
     string cmd = "clang -o ";
     cmd.append(filename_out);
+    cmd.append(" -target ");
+    cmd.append(target_triplet);
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");
         cmd.append(list_files.at(i));
