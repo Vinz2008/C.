@@ -63,7 +63,7 @@ static void HandleDefinition() {
     if (auto *FnIR = FnAST->codegen()) {
     cout << "Parsed a function definition." << endl;
     //fprintf(stderr, "Parsed a function definition.\n");
-    FnIR->print(*file_out_ostream);
+    //FnIR->print(*file_out_ostream);
     //fprintf(stderr, "\n");
     
     }
@@ -78,7 +78,7 @@ static void HandleExtern() {
     if (auto *FnIR = ProtoAST->codegen()) {
       //fprintf(stderr, "Read extern: ");
       cout << "Read Extern" << endl;
-      FnIR->print(*file_out_ostream);
+      //FnIR->print(*file_out_ostream);
       //fprintf(stderr, "\n");
     }
   } else {
@@ -94,7 +94,7 @@ static void HandleTopLevelExpression() {
     if (auto *FnIR = FnAST->codegen()) {
       //fprintf(stderr, "Read top-level expression:");
       cout << "Read top-level expression" << endl;
-      FnIR->print(*file_out_ostream);
+      //FnIR->print(*file_out_ostream);
       //fprintf(stderr, "\n");
 
       // Remove the anonymous expression.
@@ -106,6 +106,15 @@ static void HandleTopLevelExpression() {
   }
 }
 
+static void HandleObject() {
+  if (auto ObjAST = ParseObject()){
+    if (auto* ObjIR = ObjAST->codegen()){
+      //ObjIR->print(*file_out_ostream);
+    }
+  } else {
+    getNextToken();
+  }
+}
 
 static void MainLoop() {
   while (1) {
@@ -124,6 +133,9 @@ static void MainLoop() {
       break;
     case tok_extern:
       HandleExtern();
+      break;
+    case tok_object:
+      HandleObject();
       break;
     default:
       HandleTopLevelExpression();
@@ -188,7 +200,7 @@ int main(int argc, char **argv){
     BinopPrecedence['*'] = 40;  // highest.
     //fprintf(stderr, "ready> ");
     getNextToken();
-    InitializeModule();
+    InitializeModule(filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
                            DEBUG_METADATA_VERSION);
     if (Triple(sys::getProcessTriple()).isOSDarwin()){

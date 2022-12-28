@@ -8,6 +8,7 @@ extern int CurTok;
 extern std::string strStatic;
 extern std::string IdentifierStr;
 extern int return_status;
+bool isInObject = false;;
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
   fprintf(stderr, "LogError: %s\n", Str);
@@ -21,6 +22,13 @@ std::unique_ptr<PrototypeAST> LogErrorP(const char *Str) {
 }
 
 std::unique_ptr<ReturnAST> LogErrorR(const char *Str) {
+  LogError(Str);
+  std::cout << "token : " << CurTok << std::endl;
+  return nullptr;
+}
+
+
+std::unique_ptr<ObjectDeclarAST> LogErrorO(const char *Str) {
   LogError(Str);
   std::cout << "token : " << CurTok << std::endl;
   return nullptr;
@@ -206,6 +214,31 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), Kind != 0, BinaryPrecedence);
 }
 
+std::unique_ptr<ObjectDeclarAST> ParseObject(){
+  isInObject = true;
+  std::vector<std::unique_ptr<ExprAST>> VarList;
+  getNextToken(); // eat object
+  std::string objectName = IdentifierStr;
+  std::cout << "Object Name : " << objectName << std::endl;
+  getNextToken();
+  if (CurTok != '{')
+    return LogErrorO("Expected '{' in prototype");
+  getNextToken();
+  while (CurTok == tok_var){
+    auto declar = ParseVarExpr();
+    if (!declar){return nullptr;}
+    VarList.push_back(std::move(declar));
+    //getNextToken();
+    //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
+  }
+  if (CurTok != '}'){
+    return LogErrorO("Expected '}' in prototype");
+  }
+  getNextToken();  // eat '}'.
+  isInObject = false;
+  return std::make_unique<ObjectDeclarAST>(objectName, std::move(VarList));
+}
+
 std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken();  // eat func.
   auto Proto = ParsePrototype();
@@ -231,7 +264,7 @@ std::unique_ptr<ExprAST> ParseStrExpr(){
 
 std::unique_ptr<ExprAST> ParseUnary() {
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',')
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{')
     return ParsePrimary();
 
   // If this is a unary operator, read it.
@@ -243,6 +276,7 @@ std::unique_ptr<ExprAST> ParseUnary() {
 }
 
 std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
+  std::cout << "ParseTopLevelExpr" << std::endl;
   if (auto E = ParseExpression()) {
     // Make an anonymous proto.
     auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::string>());
@@ -386,5 +420,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   if (!Body)
     return nullptr;
   */
+ //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
   return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/);
 }

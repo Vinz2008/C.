@@ -1,1 +1,1 @@
-void InitializeModule();
+void InitializeModule(std::string filename);

@@ -2,3 +2,5 @@ extern printd(x);
 func test(x)
   for i = 1, i < x, 1.0 in
      printd(i);
+func main()
+  test(10);

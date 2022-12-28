@@ -22,8 +22,10 @@ std::unique_ptr<Module> TheModule;
 static std::unique_ptr<IRBuilder<>> Builder;
 static std::map<std::string, AllocaInst *> NamedValues;
 static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+static std::map<std::string, std::unique_ptr<ObjectDeclarAST>> ObjectDeclarations;
 
 extern std::map<char, int> BinopPrecedence;
+extern bool isInObject;
 
 
 Function *getFunction(std::string Name) {
@@ -71,9 +73,17 @@ Value *VariableExprAST::codegen() {
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
 }
 
-Value* ObjectDeclarAST::codegen(){
-  StructType* objectType = StructType::create(*TheContext, StringRef(Name));
-  return nullptr;
+Type* ObjectDeclarAST::codegen(){
+  std::cout << "codegen object" << std::endl;
+  StructType* objectType = StructType::create(*TheContext);
+  objectType->setName(Name);
+  std::vector<Type*> dataTypes;
+  for (int i = 0; i < Vars.size(); i++){
+    dataTypes.push_back(Type::getDoubleTy(*TheContext));
+  }
+  objectType->setBody(dataTypes);
+  ObjectDeclarations[Name] = std::make_unique<ObjectDeclarAST>(std::move(*this));
+  return objectType;
 }
 
 Value *BinaryExprAST::codegen() {
@@ -161,7 +171,6 @@ Function *FunctionAST::codegen() {
   FunctionProtos[Proto->getName()] = std::move(Proto);
   // First, check for an existing function from a previous 'extern' declaration.
   Function *TheFunction = getFunction(P.getName());
-  
   /*if (!TheFunction)
     TheFunction = Proto->codegen();*/
 
@@ -325,7 +334,6 @@ Value *ForExprAST::codegen(){
 
   // for expr always returns 0.0.
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-
 }
 
 Value *UnaryExprAST::codegen() {
@@ -343,6 +351,7 @@ Value *UnaryExprAST::codegen() {
 }
 
 Value *VarExprAST::codegen() {
+  //std::cout << "VAR CODEGEN " << VarNames.at(0).first << std::endl;
   std::vector<AllocaInst *> OldBindings;
 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
@@ -392,10 +401,11 @@ Value *VarExprAST::codegen() {
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
-void InitializeModule() {
+void InitializeModule(std::string filename) {
   // Open a new context and module.
   TheContext = std::make_unique<LLVMContext>();
-  TheModule = std::make_unique<Module>("module", *TheContext);
+  TheModule = std::make_unique<Module>(filename, *TheContext);
+  //std::cout << "CREATED MODULE" << std::endl;
 
   // Create a new builder for the module.
   Builder = std::make_unique<IRBuilder<>>(*TheContext);

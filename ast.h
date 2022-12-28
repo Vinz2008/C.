@@ -96,11 +96,11 @@ public:
 
 class ObjectDeclarAST {
   std::string Name;
-  std::vector<std::unique_ptr<VarExprAST>> Vars;
+  std::vector<std::unique_ptr<ExprAST>> Vars;
 public:
-  ObjectDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars)
+  ObjectDeclarAST(const std::string &name, std::vector<std::unique_ptr<ExprAST>> Vars)
     : Name(name), Vars(std::move(Vars)) {}
-  Value* codegen();
+  Type* codegen();
 };
 
 /// PrototypeAST - This class represents the "prototype" for a function,
@@ -186,6 +186,7 @@ std::unique_ptr<ExprAST> ParseForExpr();
 std::unique_ptr<ExprAST> ParseStrExpr();
 std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
+std::unique_ptr<ObjectDeclarAST> ParseObject();
 
 
 #endif
