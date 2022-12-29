@@ -3,7 +3,7 @@ CC=gcc
 OBJS=\
 tests.o \
 
-all: test
+all: clean test
 
 test: $(OBJS)
 	$(CC) -o $@ $^
