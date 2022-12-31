@@ -84,12 +84,13 @@ public:
 
 class VarExprAST : public ExprAST {
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
+  int type;
   //std::unique_ptr<ExprAST> Body;
 
 public:
-  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames
+  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, int type
              /*,std::unique_ptr<ExprAST> Body*/)
-    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/ {}
+    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, type(type) {}
 
   Value *codegen() override;
 };

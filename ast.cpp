@@ -264,7 +264,7 @@ std::unique_ptr<ExprAST> ParseStrExpr(){
 
 std::unique_ptr<ExprAST> ParseUnary() {
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{')
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':')
     return ParsePrimary();
 
   // If this is a unary operator, read it.
@@ -381,7 +381,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   getNextToken(); // eat the var.
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-
+  int type = -1;
   // At least one variable name is required.
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
@@ -389,7 +389,19 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   while (true) {
     std::string Name = IdentifierStr;
     getNextToken(); // eat identifier.
-
+    if (CurTok == ':'){
+      std::cout << "file declaration found" << std::endl;
+      getNextToken(); // eat the ':'
+      if (CurTok != tok_identifier)
+        return LogError("expected identifier after var");
+      if (is_type(IdentifierStr)){
+        type = get_type(IdentifierStr);
+        std::cout << "Variable type : " << type << std::endl;
+        getNextToken();
+      } else {
+        return LogError("wrong type found");
+      }
+    }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;
     if (CurTok == '=') {
@@ -399,7 +411,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       if (!Init)
         return nullptr;
     }
-
     VarNames.push_back(std::make_pair(Name, std::move(Init)));
 
     // End of var list, exit loop.
@@ -421,5 +432,5 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/);
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, type);
 }

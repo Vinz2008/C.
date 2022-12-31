@@ -6,7 +6,7 @@ using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
 
-Type* get_type(int t){
+Type* get_type_llvm(int t){
     switch (t){
         case double_type:
             return Type::getDoubleTy(*TheContext);
@@ -15,4 +15,28 @@ Type* get_type(int t){
         case float_type:
             return Type::getFloatTy(*TheContext);
     }
+}
+
+std::vector<std::string> types{
+    "double",
+    "int",
+    "float",
+};
+
+bool is_type(std::string type){
+    for (int i = 0; i < types.size(); i++){
+       if (type.compare(types.at(i)) == 0){
+	return true;
+       }
+    }
+    return false;
+}
+
+int get_type(std::string type){
+    for (int i = 0; i < types.size(); i++){
+       if (type.compare(types.at(i)) == 0){
+        return -(i + 1);
+       }
+    }
+    return 1;
 }

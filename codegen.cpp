@@ -47,7 +47,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           StringRef VarName, int type) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
-  return TmpB.CreateAlloca(Type::getDoubleTy(*TheContext), 0,
+  return TmpB.CreateAlloca(get_type_llvm(type), 0,
                            VarName);
 }
 
@@ -375,7 +375,7 @@ Value *VarExprAST::codegen() {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, double_type);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, type);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when
