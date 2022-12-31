@@ -44,10 +44,10 @@ Function *getFunction(std::string Name) {
 }
 
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                                          StringRef VarName, int type) {
+                                          StringRef VarName, int type, bool is_ptr) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
-  return TmpB.CreateAlloca(get_type_llvm(type), 0,
+  return TmpB.CreateAlloca(get_type_llvm(type, is_ptr), 0,
                            VarName);
 }
 
@@ -186,7 +186,7 @@ Function *FunctionAST::codegen() {
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
   for (auto &Arg : TheFunction->args()){
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), double_type);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), double_type, false);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = Alloca;
   }
@@ -268,7 +268,7 @@ Value* ReturnAST::codegen(){
 
 Value *ForExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, double_type);
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, double_type, false);
   Value *StartVal = Start->codegen();
   if (!StartVal)
     return nullptr;
@@ -375,7 +375,7 @@ Value *VarExprAST::codegen() {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, type);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, type, is_ptr);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when

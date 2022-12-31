@@ -382,6 +382,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   int type = -1;
+  bool is_ptr = false;
   // At least one variable name is required.
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
@@ -398,6 +399,10 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
         type = get_type(IdentifierStr);
         std::cout << "Variable type : " << type << std::endl;
         getNextToken();
+        if (CurTok == tok_identifier && IdentifierStr.compare("ptr") == 0){
+          is_ptr = true;
+          getNextToken();
+        }
       } else {
         return LogError("wrong type found");
       }
@@ -432,5 +437,5 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, type);
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, type, is_ptr);
 }

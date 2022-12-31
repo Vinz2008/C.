@@ -1,3 +1,4 @@
 func test()
   var x : double = 1
   var y : int = 2;
+  var z : int ptr = 2;

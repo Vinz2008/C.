@@ -9,4 +9,4 @@ enum types {
 
 bool is_type(std::string type);
 int get_type(std::string type);
-llvm::Type* get_type_llvm(int t);
+llvm::Type* get_type_llvm(int t, bool is_ptr);

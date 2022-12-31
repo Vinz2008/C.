@@ -6,14 +6,26 @@ using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
 
-Type* get_type_llvm(int t){
+Type* get_type_llvm(int t, bool is_ptr){
     switch (t){
         case double_type:
+            if (is_ptr){
+            return Type::getDoublePtrTy(*TheContext);
+            } else {
             return Type::getDoubleTy(*TheContext);
+            }
         case int_type:
+        if (is_ptr){
+            return Type::getInt32PtrTy(*TheContext);
+        } else {
             return Type::getInt32Ty(*TheContext);
+        }
         case float_type:
+        if (is_ptr){
+            return Type::getFloatPtrTy(*TheContext);
+        } else {
             return Type::getFloatTy(*TheContext);
+        }
     }
 }
 

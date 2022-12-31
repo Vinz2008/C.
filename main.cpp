@@ -184,7 +184,11 @@ int main(int argc, char **argv){
     }
     std::error_code ec;
     if (debug_mode == false ){
+#ifdef _WIN32
+      file_log.open("nul");
+#else
       file_log.open("/dev/null");
+#endif
     } else {
     file_log.open("cpoint.log");
     }
