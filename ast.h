@@ -40,6 +40,13 @@ public:
   Value *codegen() override;
 };
 
+class AddrExprAST : public ExprAST {
+  std::string Name;
+public:
+  AddrExprAST(const std::string &Name) : Name(Name) {}
+  Value *codegen() override;
+};
+
 class VariableExprAST : public ExprAST {
   std::string Name;
   int type;
@@ -131,11 +138,11 @@ public:
 
 class FunctionAST {
   std::unique_ptr<PrototypeAST> Proto;
-  std::unique_ptr<ExprAST> Body;
+  std::vector<std::unique_ptr<ExprAST>> Body;
 
 public:
   FunctionAST(std::unique_ptr<PrototypeAST> Proto,
-              std::unique_ptr<ExprAST> Body)
+              std::vector<std::unique_ptr<ExprAST>> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *codegen();
 };
@@ -189,6 +196,7 @@ std::unique_ptr<ExprAST> ParseStrExpr();
 std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<ObjectDeclarAST> ParseObject();
+std::unique_ptr<ExprAST> ParseAddrExpr();
 
 
 #endif

@@ -24,6 +24,8 @@ extern bool last_line;
 int getLine(std::istream &__is, std::string &__str){
   if (!getline(__is, __str)){
       last_line = true;
+      file_log << "end of file" << "\n";
+      
   }
   return 0;
 }
@@ -38,9 +40,13 @@ int getCharLine(){
   }
   int c = (*line)[pos];
   if (c == '\0'){
+start_backslash_zero:
     pos++;
     file_log << "\\0 found" << "\n";
     c = (*line)[pos];
+    if (c == '\0'){
+      goto start_backslash_zero;
+    }
     file_log << "next char after \\0 : " << (*line)[pos] << "\n";
   }
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line->c_str())){
@@ -96,6 +102,10 @@ static int gettok() {
       return tok_var;
     if (IdentifierStr == "object")
       return tok_object;
+    if (IdentifierStr == "addr")
+      return tok_addr;
+    if (IdentifierStr == "ptr")
+      return tok_ptr;
     cout << "IdentifierStr : " << IdentifierStr << endl;
     return tok_identifier;
   }

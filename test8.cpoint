@@ -1,4 +1,4 @@
 object test {
-  var x = 1
-  var z = 2
+  var x : double = 1
+  var z : double = 2 
 }

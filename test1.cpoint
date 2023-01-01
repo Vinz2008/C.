@@ -1,7 +1,6 @@
 extern printd(a);
-func binary : 1 (x y) y;
-func function(x)
-  printd(x) : printd(x);
-func test(b)
-  printd(123) : printd(456) : printd(789);
+func function(x){
+  printd(x) }
+func test(b){
+  printd(123) }
 function(2);

@@ -131,6 +131,7 @@ Value *BinaryExprAST::codegen() {
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   std::cout << "function called " << Callee << std::endl;
+
   Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknown function referenced");
@@ -147,6 +148,19 @@ Value *CallExprAST::codegen() {
   }
 
   return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+}
+
+Value* AddrExprAST::codegen(){
+  std::cout << "ADDR" << std::endl;
+ std:: map<std::string, llvm::AllocaInst *>::iterator it;
+  for (it = NamedValues.begin(); it != NamedValues.end(); it++){
+    std::cout << "name value : " << it->first << std::endl;
+  }
+  AllocaInst *A = NamedValues[Name];
+  std::cout << "VARNAME: " << Name << std::endl;
+  if (!A)
+    return LogErrorV("Addr Unknown variable name");
+  return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Name.c_str());
 }
 
 Function *PrototypeAST::codegen() {
@@ -190,7 +204,12 @@ Function *FunctionAST::codegen() {
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = Alloca;
   }
-  if (Value *RetVal = Body->codegen()) {
+  Value *RetVal = nullptr;
+  //std::cout << "BODY SIZE : " << Body.size() << std::endl;
+  for (int i = 0; i < Body.size(); i++){
+    RetVal = Body.at(i)->codegen();
+  }
+  if (RetVal) {
     // Finish off the function.
     Builder->CreateRet(RetVal);
 
@@ -351,7 +370,7 @@ Value *UnaryExprAST::codegen() {
 }
 
 Value *VarExprAST::codegen() {
-  //std::cout << "VAR CODEGEN " << VarNames.at(0).first << std::endl;
+  std::cout << "VAR CODEGEN " << VarNames.at(0).first << std::endl;
   std::vector<AllocaInst *> OldBindings;
 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();

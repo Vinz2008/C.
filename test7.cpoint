@@ -1,4 +1,12 @@
-func test()
+extern printd(x);
+func test(){
   var x : double = 1
-  var y : int = 2;
-  var z : int ptr = 2;
+  var y : int = 2
+  var z : int ptr = 0
+  var b : int = y
+  printd(x)
+}
+func main(){
+  var h = 2
+  test()
+}

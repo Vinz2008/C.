@@ -1,11 +1,11 @@
-func unary!(v)
+func unary!(v){
   if v then
     0
   else
-    1;
+    1 }
 
-func binary& 6 (LHS RHS)
+func binary& 6 (LHS RHS){
   if !LHS then
     0
   else
-    !!RHS;
+    !!RHS }

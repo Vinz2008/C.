@@ -4,7 +4,7 @@
 #include "color.h"
 
 
-#define NB_FILES 8
+#define NB_FILES 7
 
 int main(){
 	char exe[] = "../cpoint";

@@ -118,8 +118,10 @@ static void HandleObject() {
 
 static void MainLoop() {
   while (1) {
+    std::flush(file_log);
     //fprintf(stderr, "ready> ");
     if (last_line == true){
+      file_log << "exit" << "\n";
       return;
     }
     switch (CurTok) {

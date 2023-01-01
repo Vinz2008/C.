@@ -34,6 +34,11 @@ std::unique_ptr<ObjectDeclarAST> LogErrorO(const char *Str) {
   return nullptr;
 }
 
+std::unique_ptr<FunctionAST> LogErrorF(const char *Str) {
+  LogError(Str);
+  return nullptr;
+}
+
 
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
@@ -151,6 +156,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   case tok_string:
     std::cout << "tok string found" << std::endl;
     return ParseStrExpr();
+  case tok_addr:
+    return ParseAddrExpr();
   }
 }
 
@@ -243,10 +250,21 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken();  // eat func.
   auto Proto = ParsePrototype();
   if (!Proto) return nullptr;
-
-  if (auto E = ParseExpression())
-    return std::make_unique<FunctionAST>(std::move(Proto), std::move(E));
-  return nullptr;
+  if (CurTok != '{'){
+    LogErrorF("Expected '{' in function definition");
+  }
+  getNextToken();  // eat '{'
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  while (CurTok != '}'){
+    auto E = ParseExpression();
+    if (!E){
+       return nullptr;
+    }
+    Body.push_back(std::move(E));
+  }
+  getNextToken(); // eat }
+  std::cout << "end of function" << std::endl;
+  return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
 }
 
 std::unique_ptr<PrototypeAST> ParseExtern() {
@@ -260,6 +278,14 @@ std::unique_ptr<ExprAST> ParseStrExpr(){
   getNextToken();
   std::cout << "ParseStrExpr" << std::endl;
   return string;
+}
+
+std::unique_ptr<ExprAST> ParseAddrExpr(){
+  getNextToken();  // eat addr.
+  std::string Name = IdentifierStr;
+  auto addr = std::make_unique<AddrExprAST>(Name);
+  getNextToken();
+  return addr;
 }
 
 std::unique_ptr<ExprAST> ParseUnary() {
@@ -277,12 +303,14 @@ std::unique_ptr<ExprAST> ParseUnary() {
 
 std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   std::cout << "ParseTopLevelExpr" << std::endl;
-  if (auto E = ParseExpression()) {
-    // Make an anonymous proto.
-    auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::string>());
-    return std::make_unique<FunctionAST>(std::move(Proto), std::move(E));
+  auto E = ParseExpression();
+  if (!E){
+    return nullptr;
   }
-  return nullptr;
+  auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::string>());
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  Body.push_back(std::move(E));
+  return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {
@@ -391,7 +419,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     std::string Name = IdentifierStr;
     getNextToken(); // eat identifier.
     if (CurTok == ':'){
-      std::cout << "file declaration found" << std::endl;
+      std::cout << "type declaration found" << std::endl;
       getNextToken(); // eat the ':'
       if (CurTok != tok_identifier)
         return LogError("expected identifier after var");
@@ -399,7 +427,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
         type = get_type(IdentifierStr);
         std::cout << "Variable type : " << type << std::endl;
         getNextToken();
-        if (CurTok == tok_identifier && IdentifierStr.compare("ptr") == 0){
+        if (CurTok == tok_ptr){
           is_ptr = true;
           getNextToken();
         }

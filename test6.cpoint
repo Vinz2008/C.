@@ -1,5 +1,6 @@
-func test(x y)
+func test(x y){
   if x < 3 then
     1
   else 
-    return x + y;
+    return x + y; 
+}
