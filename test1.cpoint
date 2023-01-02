@@ -1,6 +1,8 @@
 extern printd(a);
 func function(x){
-  printd(x) }
+  printd(x)
+}
 func test(b){
-  printd(123) }
+  printd(123)
+}
 function(2);
