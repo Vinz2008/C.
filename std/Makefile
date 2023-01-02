@@ -16,4 +16,5 @@ c_api/%.o:
 	$(CCPOINT) -c -nostd $< -o $@
 
 clean:
+	make -C c_api clean
 	rm -f ./*.o ./*.a ./*.ll ./*.log

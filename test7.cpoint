@@ -1,9 +1,11 @@
 extern printd(x);
+extern printptr(x);
 func test(){
   var x : double = 1
   var y : int = 2
   var z : int ptr = 0
-  var b : int = y
+  var b : int ptr = addr y
+  printptr(z)
   printd(x)
 }
 func main(){
