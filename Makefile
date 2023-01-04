@@ -43,7 +43,7 @@ install:
 
 
 run:
-	./cpoint test3.cpoint -d
+	./cpoint test2.cpoint -d
 
 clean: clean-build
 	make -C std/c_api clean
