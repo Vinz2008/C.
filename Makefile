@@ -20,9 +20,9 @@ types.o \
 linker.o \
 main.o \
 
-all: cpoint std_lib
+all: $(OUTPUTBIN) std_lib
 
-cpoint: $(OBJS)
+$(OUTPUTBIN): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o:%.cpp
