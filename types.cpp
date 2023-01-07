@@ -26,6 +26,12 @@ Type* get_type_llvm(int t, bool is_ptr){
         } else {
             return Type::getFloatTy(*TheContext);
         }
+        case i8_type:
+        if (is_ptr){
+	    return Type::getInt8PtrTy(*TheContext);
+	} else {
+	    return Type::getInt8Ty(*TheContext);
+	}
     }
 }
 
@@ -33,6 +39,7 @@ std::vector<std::string> types{
     "double",
     "int",
     "float",
+    "i8",
 };
 
 bool is_type(std::string type){

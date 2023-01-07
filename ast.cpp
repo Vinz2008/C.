@@ -274,9 +274,9 @@ std::unique_ptr<PrototypeAST> ParseExtern() {
 
 
 std::unique_ptr<ExprAST> ParseStrExpr(){
+  std::cout << "ParseStrExpr " << strStatic << std::endl;
   auto string = std::make_unique<StringExprAST>(strStatic);
   getNextToken();
-  std::cout << "ParseStrExpr" << std::endl;
   return string;
 }
 

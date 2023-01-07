@@ -61,6 +61,7 @@ Value *NumberExprAST::codegen() {
 }
 
 Value* StringExprAST::codegen() {
+  std::cout << "StringExprAST codegenn" << std::endl;
   Value* string = Builder->CreateGlobalStringPtr(StringRef(str.c_str()));
   return string;
 }

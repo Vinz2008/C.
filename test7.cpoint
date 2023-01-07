@@ -5,6 +5,7 @@ func test(){
   var y : int = 2
   var z : int ptr = 0
   var b : int ptr = addr y
+  var c : i8 ptr = "hello"
   printptr(z)
   printd(x)
 }

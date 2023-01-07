@@ -4,7 +4,8 @@
 enum types {
     double_type = -1,
     int_type = -2,
-    float_type = -3
+    float_type = -3,
+    i8_type = -4,
 };
 
 bool is_type(std::string type);

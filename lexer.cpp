@@ -113,9 +113,11 @@ static int gettok() {
   if (isdigit(LastChar) || LastChar == '.') { // Number: [0-9.]+
     std::string NumStr;
     do {
-      NumStr += LastChar;
+      if (LastChar != '_'){
+          NumStr += LastChar;
+      }
       LastChar = getCharLine();
-    } while (isdigit(LastChar) || LastChar == '.');
+    } while (isdigit(LastChar) || LastChar == '.' || LastChar == '_');
 
     NumVal = strtod(NumStr.c_str(), nullptr);
     return tok_number;
