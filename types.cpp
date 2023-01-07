@@ -15,23 +15,23 @@ Type* get_type_llvm(int t, bool is_ptr){
             return Type::getDoubleTy(*TheContext);
             }
         case int_type:
-        if (is_ptr){
+            if (is_ptr){
             return Type::getInt32PtrTy(*TheContext);
-        } else {
+            } else {
             return Type::getInt32Ty(*TheContext);
-        }
+            }
         case float_type:
-        if (is_ptr){
+            if (is_ptr){
             return Type::getFloatPtrTy(*TheContext);
-        } else {
+            } else {
             return Type::getFloatTy(*TheContext);
-        }
+            }
         case i8_type:
-        if (is_ptr){
-	    return Type::getInt8PtrTy(*TheContext);
-	} else {
-	    return Type::getInt8Ty(*TheContext);
-	}
+            if (is_ptr){
+	        return Type::getInt8PtrTy(*TheContext);
+	        } else {
+	        return Type::getInt8Ty(*TheContext);
+	        }
     }
 }
 

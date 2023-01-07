@@ -12,4 +12,5 @@ double putchard(double X) {
 
 double printptr(void* ptr){
   fprintf(stderr, "%p\n", ptr);
+  return 0;
 }

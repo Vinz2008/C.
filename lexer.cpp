@@ -25,7 +25,6 @@ int getLine(std::istream &__is, std::string &__str){
   if (!getline(__is, __str)){
       last_line = true;
       file_log << "end of file" << "\n";
-      
   }
   return 0;
 }
@@ -68,10 +67,12 @@ start_backslash_zero:
 
 static int gettok() {
   static int LastChar = ' ';
-
+  //std::cout << "start gettok" << std::endl;
   // Skip any whitespace.
-  while (isspace(LastChar))
+  while (isspace(LastChar)){
+    //cout << "SPACE" << endl;
     LastChar = getCharLine();
+  }
 
   if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*
     IdentifierStr = LastChar;
@@ -133,12 +134,15 @@ static int gettok() {
       return gettok();
   }
   if (LastChar == '\"'){
+    std::cout << "gettok" << std::endl;
     LastChar = getCharLine();
     do {
       strStatic += LastChar;
       LastChar = getCharLine();
     } while (LastChar != '\"');
+    LastChar = getCharLine();
     cout << "strStatic : " << strStatic << endl;
+    cout << "LastChar : " << (char)LastChar << endl;
     return tok_string;
   }
 
@@ -153,6 +157,7 @@ static int gettok() {
 }
 
 int getNextToken() {
+  //std::cout << "Before CurTok" << std::endl;
   CurTok = gettok();
   //cout << "CurTok : " << CurTok << endl;
   return CurTok;

@@ -1,4 +1,5 @@
 CC=gcc
+CFLAGS=-Wall
 SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
 
@@ -8,7 +9,7 @@ libc_api.a: $(OBJECTS)
 	ar -rc $@ $^
 
 %.o: %.c
-	$(CC) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
 	rm -f ./*.o ./*.a

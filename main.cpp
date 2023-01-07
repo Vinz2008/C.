@@ -238,7 +238,7 @@ int main(int argc, char **argv){
     auto CPU = "generic";
     auto Features = "";
     TargetOptions opt;
-    auto RM = Optional<Reloc::Model>();
+    auto RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
     auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
     std::error_code EC;

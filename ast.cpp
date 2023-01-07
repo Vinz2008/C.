@@ -63,8 +63,16 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 
   getNextToken();  // eat identifier.
 
-  if (CurTok != '(') // Simple variable ref.
+  if (CurTok != '('){ // Simple variable ref.
+    for (int i = 0; i < IdName.length(); i++){
+      if (IdName.at(i) == '.'){
+        std::string ObjectName =  IdName.substr(0, i-1);
+        std::string MemberName =  IdName.substr(i+1, IdName.length()-1);
+        return std::make_unique<ObjectMemberExprAST>(ObjectName, MemberName);
+      }
+    }
     return std::make_unique<VariableExprAST>(IdName, double_type);
+  }
 
   // Call.
   getNextToken();  // eat (
@@ -159,6 +167,25 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   case tok_addr:
     return ParseAddrExpr();
   }
+}
+
+std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr){
+  std::cout << "type declaration found" << std::endl;
+  getNextToken(); // eat the ':'
+  if (CurTok != tok_identifier)
+    return LogError("expected identifier after var");
+  if (is_type(IdentifierStr)){
+    *type = get_type(IdentifierStr);
+    std::cout << "Variable type : " << *type << std::endl;
+    getNextToken();
+    if (CurTok == tok_ptr){
+      *is_ptr = true;
+      getNextToken();
+    }
+  } else {
+    return LogError("wrong type found");
+  }
+  return nullptr;
 }
 
 static std::unique_ptr<PrototypeAST> ParsePrototype() {
@@ -276,6 +303,7 @@ std::unique_ptr<PrototypeAST> ParseExtern() {
 std::unique_ptr<ExprAST> ParseStrExpr(){
   std::cout << "ParseStrExpr " << strStatic << std::endl;
   auto string = std::make_unique<StringExprAST>(strStatic);
+  std::cout << "Before getNextToken" << std::endl;
   getNextToken();
   return string;
 }
@@ -290,7 +318,7 @@ std::unique_ptr<ExprAST> ParseAddrExpr(){
 
 std::unique_ptr<ExprAST> ParseUnary() {
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':')
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string)
     return ParsePrimary();
 
   // If this is a unary operator, read it.
@@ -414,25 +442,13 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   // At least one variable name is required.
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
-
   while (true) {
     std::string Name = IdentifierStr;
     getNextToken(); // eat identifier.
     if (CurTok == ':'){
-      std::cout << "type declaration found" << std::endl;
-      getNextToken(); // eat the ':'
-      if (CurTok != tok_identifier)
-        return LogError("expected identifier after var");
-      if (is_type(IdentifierStr)){
-        type = get_type(IdentifierStr);
-        std::cout << "Variable type : " << type << std::endl;
-        getNextToken();
-        if (CurTok == tok_ptr){
-          is_ptr = true;
-          getNextToken();
-        }
-      } else {
-        return LogError("wrong type found");
+      auto a = ParseTypeDeclaration(&type, &is_ptr);
+      if (a != nullptr){
+        return a;
       }
     }
     // Read the optional initializer.

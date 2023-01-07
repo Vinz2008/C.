@@ -56,6 +56,14 @@ public:
   const std::string &getName() const { return Name; }
 };
 
+class ObjectMemberExprAST : public ExprAST {
+  std::string ObjectName;
+  std::string MemberName;
+public:
+  ObjectMemberExprAST(const std::string &ObjectName, const std::string &MemberName) : ObjectName(ObjectName), MemberName(MemberName) {}
+  Value *codegen() override;
+};
+
 class BinaryExprAST : public ExprAST {
   char Op;
   std::unique_ptr<ExprAST> LHS, RHS;
@@ -145,6 +153,16 @@ public:
               std::vector<std::unique_ptr<ExprAST>> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *codegen();
+};
+
+class ClassExprAST {
+  std::string Name;
+  std::vector<std::unique_ptr<FunctionAST>> Functions;
+  std::vector<std::unique_ptr<ExprAST>> Vars;
+public:
+  ClassExprAST(const std::string &name, std::vector<std::unique_ptr<ExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
+    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
+  Type *codegen();
 };
 
 class IfExprAST : public ExprAST {

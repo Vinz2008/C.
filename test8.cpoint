@@ -1,4 +1,7 @@
-object test {
-  var x : double = 1
-  var z : double = 2 
+extern printd(x)
+extern printptr(x)
+func main(){
+  var c : i8 ptr = "hello"
+  var a = 1
+  printd(a)
 }

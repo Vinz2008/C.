@@ -74,6 +74,14 @@ Value *VariableExprAST::codegen() {
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
 }
 
+Value* ObjectMemberExprAST::codegen() {
+
+}
+
+Type* ClassExprAST::codegen(){
+  
+}
+
 Type* ObjectDeclarAST::codegen(){
   std::cout << "codegen object" << std::endl;
   StructType* objectType = StructType::create(*TheContext);

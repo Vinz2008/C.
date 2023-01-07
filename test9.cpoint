@@ -1,0 +1,7 @@
+object test {
+  var x : double
+  var z : double 
+}
+void main(){
+  var x : double = 2
+}
