@@ -17,6 +17,7 @@
 #include "codegen.h"
 #include "debuginfo.h"
 #include "linker.h"
+#include "utils.h"
 
 using namespace std;
 using namespace llvm;
@@ -227,6 +228,7 @@ int main(int argc, char **argv){
     } else {
     TargetTriple = sys::getDefaultTargetTriple();
     }
+    std::string os_name = get_os_from_target_triplet(TargetTriple);
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();

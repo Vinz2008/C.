@@ -18,6 +18,7 @@ codegen.o \
 debuginfo.o \
 types.o \
 linker.o \
+utils.o \
 main.o \
 
 all: $(OUTPUTBIN) std_lib
