@@ -15,6 +15,7 @@
 #include "lexer.h"
 #include "ast.h"
 #include "codegen.h"
+#include "preprocessor.h"
 #include "debuginfo.h"
 #include "linker.h"
 #include "target-triplet.h"
@@ -206,6 +207,7 @@ int main(int argc, char **argv){
     BinopPrecedence['-'] = 20;
     BinopPrecedence['*'] = 40;  // highest.
     //fprintf(stderr, "ready> ");
+    setup_preprocessor();
     getNextToken();
     InitializeModule(filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
