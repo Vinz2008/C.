@@ -15,10 +15,11 @@ OBJS=\
 lexer.o \
 ast.o \
 codegen.o \
+preprocessor.o \
 debuginfo.o \
 types.o \
 linker.o \
-utils.o \
+target-triplet.o \
 main.o \
 
 all: $(OUTPUTBIN) std_lib
