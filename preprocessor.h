@@ -21,6 +21,22 @@ public:
     void add_variable(std::unique_ptr<Variable> var){
         variables.push_back(std::move(var));
     }
+    int get_variable_pos(std::string name){
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i)->getName() == name){
+                return i;
+            }
+        }
+        return -1;
+    }
+    std::string get_variable_value(std::string name){
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i)->getName() == name){
+                return variables.at(i)->getValue();
+            }
+        }
+        return "";
+    }
     void replace_variable_preprocessor(std::string str){
         std::string variable_name;
         for (int i = 0; i < variables.size(); i++){
@@ -33,4 +49,6 @@ public:
 
 }
 
-void setup_preprocessor();
+void setup_preprocessor(std::string target_triplet);
+void preprocess_instruction(std::string str);
+void preprocess_replace_variable(std::string str);

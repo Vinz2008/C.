@@ -207,7 +207,14 @@ int main(int argc, char **argv){
     BinopPrecedence['-'] = 20;
     BinopPrecedence['*'] = 40;  // highest.
     //fprintf(stderr, "ready> ");
-    setup_preprocessor();
+    string TargetTriple;
+    if (target_triplet_found_bool){
+    TargetTriple = target_triplet_found;
+    } else {
+    TargetTriple = sys::getDefaultTargetTriple();
+    }
+    std::string os_name = get_os(TargetTriple);
+    setup_preprocessor(TargetTriple);
     getNextToken();
     InitializeModule(filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
@@ -224,13 +231,6 @@ int main(int argc, char **argv){
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
-    string TargetTriple;
-    if (target_triplet_found_bool){
-    TargetTriple = target_triplet_found;
-    } else {
-    TargetTriple = sys::getDefaultTargetTriple();
-    }
-    std::string os_name = get_os(TargetTriple);
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();

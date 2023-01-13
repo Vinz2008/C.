@@ -1,14 +1,19 @@
 CC=g++
 DESTDIR ?= /usr/bin
 PREFIX ?= /usr/local
-
+NO_OPTI ?= false
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CFLAGS = -c -g -Wall -O2 $(shell llvm-config --cxxflags)
+CFLAGS = -c -g -Wall $(shell llvm-config --cxxflags)
+ifeq ($(NO_OPTI),true)
+CFLAGS += -O0
+else
+CFLAGS += -O2
+endif
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 
 OBJS=\

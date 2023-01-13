@@ -2,6 +2,7 @@
 #include <map>
 #include <fstream>
 #include "lexer.h"
+#include "preprocessor.h"
 
 using namespace std;
 
@@ -29,10 +30,25 @@ int getLine(std::istream &__is, std::string &__str){
   return 0;
 }
 
+std::string get_line_returned(){
+  return *line;
+}
+
+void go_to_next_line(){
+  getLine(file_in, *line);
+}
+
 int getCharLine(){
   if (line == NULL){
     line = new string("");
     getLine(file_in, *line);
+if_preprocessor_first:
+    if (line->at(0) == '?' && line->at(1) == '['){
+      cout << "FOUND PREPROCESSOR INSTRUCTION" << endl;
+      preprocess_instruction(*line);
+      getLine(file_in, *line);
+      goto if_preprocessor_first;
+    }
     /*if (!getline(file_in, *line)){
       last_line = true;
     }*/
@@ -51,6 +67,15 @@ start_backslash_zero:
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line->c_str())){
     file_log << "new line" << "\n";
     getLine(file_in, *line);
+if_preprocessor:
+    if (line->size() >= 2){
+    if (line->at(0) == '?' && line->at(1) == '['){
+      cout << "FOUND PREPROCESSOR INSTRUCTION" << endl;
+      getLine(file_in, *line);
+      goto if_preprocessor;
+    }
+    }
+    std::cout << "TEST2" << std::endl;
     /*if (!getline(file_in, *line)){
       last_line = true;
     }*/
@@ -66,6 +91,7 @@ start_backslash_zero:
 }
 
 static int gettok() {
+  std::cout << "TEST" << std::endl;
   static int LastChar = ' ';
   //std::cout << "start gettok" << std::endl;
   // Skip any whitespace.

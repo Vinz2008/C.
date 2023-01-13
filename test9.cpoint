@@ -1,7 +1,9 @@
-object test {
-  var x : double
-  var z : double 
-}
-void main(){
+?[if arch == x86_64]
+?[if os == linux]
+?[endif]
+?[if os == windows]
+jdfjdjdjh
+?[endif]
+func main(){
   var x : double = 2
 }

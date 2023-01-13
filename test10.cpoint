@@ -1,0 +1,7 @@
+object test {
+  var x : double
+  var z : double 
+}
+func main(){
+  var x : double = 2
+}
