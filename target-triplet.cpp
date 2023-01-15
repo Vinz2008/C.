@@ -1,7 +1,8 @@
 #include <iostream>
+std::string r;
 
 static std::string get_word(std::string str, int p){
-    std::string r;
+    r.clear();
     int nb = 0;
     int pos = -1;
     if (p == 0){
@@ -17,14 +18,14 @@ static std::string get_word(std::string str, int p){
     }
     }
     }
-    for (int i = pos; str.at(i) != '-'; i++){
+    for (int i = pos; i < str.size() - 1 && str.at(i) != '-'; i++){
     r += str.at(i);
     }
     return r;
 }
 
 std::string get_os(std::string str){
-    std::string r = get_word(str, 2);;
+    std::string r = get_word(str, 2);
     std::cout << "os from target triplet : " << r << std::endl;
     return r;
 }

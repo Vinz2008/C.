@@ -1,3 +1,4 @@
+#ifndef __WASM__
 #include <stdio.h>
 
 double printd(double X){
@@ -14,3 +15,4 @@ double printptr(void* ptr){
   fprintf(stderr, "%p\n", ptr);
   return 0;
 }
+#endif

@@ -1,7 +1,12 @@
-CC=gcc
+CC=clang
 CFLAGS=-Wall
 SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
+TARGET ?= $(shell gcc -dumpmachine)
+CFLAGS=-Wall -target $(TARGET)
+ifneq (,$(findstring wasm,$(TARGET)))
+CFLAGS+=-D__WASM__
+endif
 
 all: libc_api.a 
 

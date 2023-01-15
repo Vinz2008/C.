@@ -261,12 +261,14 @@ int main(int argc, char **argv){
     dest.flush();
     outs() << "Wrote " << object_filename << "\n";
     if (std_mode){
-      if (build_std(std_path) == -1){
+      if (build_std(std_path, TargetTriple) == -1){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);
       }
     }
     if (link_files_mode){
+      std::vector<string> vect_obj_files;
+      if (TargetTriple.find("wasm") == std::string::npos){
       std::string std_static_path = std_path;
       if (std_path.back() != '/'){
         std_static_path.append("/");
@@ -275,9 +277,11 @@ int main(int argc, char **argv){
       /*std::string std_static_path = "-L";
       std_static_path.append(std_path);
       std_static_path.append(" -lstd");*/
-
-
-      std::vector<string> vect_obj_files{object_filename, std_static_path};
+      vect_obj_files.push_back(object_filename);
+      vect_obj_files.push_back(std_static_path);
+      } else {
+        vect_obj_files.push_back(object_filename);
+      }
       link_files(vect_obj_files, exe_filename, TargetTriple);
     }
     return return_status;

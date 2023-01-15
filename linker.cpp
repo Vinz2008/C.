@@ -4,9 +4,17 @@
 
 using namespace std;
 
-int build_std(string path){
+int build_std(string path, string target_triplet){
+    string cmd_clean = "make clean -C ";
+    cmd_clean.append(path);
+    cout << "cmd clean : " << cmd_clean << endl;
+    FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+    pclose(pipe_clean);
     int retcode = -1;
-    string cmd = "make -C ";
+
+    string cmd = "TARGET=";
+    cmd.append(target_triplet);
+    cmd.append(" make -C ");
     cmd.append(path);
     cout << "cmd : " << cmd << endl;
     FILE* pipe = popen(cmd.c_str(), "r");
@@ -25,6 +33,9 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     cmd.append(filename_out);
     cmd.append(" -target ");
     cmd.append(target_triplet);
+    if (target_triplet.find("wasm") != string::npos){
+        cmd.append(" --no-standard-libraries -Wl,--export-all -Wl,--no-entry ");
+    }
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");
         cmd.append(list_files.at(i));
