@@ -19,3 +19,4 @@ test-llvm
 *.a
 test
 a.out
+*.wasm

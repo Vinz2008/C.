@@ -244,6 +244,17 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   getNextToken();  // eat ')'.
   if (Kind && ArgNames.size() != Kind)
     return LogErrorP("Invalid number of operands for operator");
+  std::cout << "Tok : " << CurTok << std::endl;
+  if (CurTok == tok_return_arrow){
+    getNextToken(); // eat '~'
+    std::cout << "Tok after ~ : " << CurTok << std::endl;
+    exit(0);
+    if (CurTok != tok_identifier){
+      return LogErrorP("No type parameter to function");
+    }
+    int type = get_type(IdentifierStr);
+    getNextToken(); // eat type
+  }
 
   return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), Kind != 0, BinaryPrecedence);
 }

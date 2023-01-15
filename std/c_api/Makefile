@@ -5,7 +5,8 @@ OBJECTS := $(patsubst %.c, %.o, $(SRC))
 TARGET ?= $(shell gcc -dumpmachine)
 CFLAGS=-Wall -target $(TARGET)
 ifneq (,$(findstring wasm,$(TARGET)))
-CFLAGS+=-D__WASM__
+WASI_SYSROOT ?= /usr/share/wasi-sysroot
+CFLAGS+=-D__WASM__ --sysroot $(WASI_SYSROOT)
 endif
 
 all: libc_api.a 

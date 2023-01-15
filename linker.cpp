@@ -5,10 +5,15 @@
 using namespace std;
 
 int build_std(string path, string target_triplet){
-    string cmd_clean = "make clean -C ";
+    string cmd_clean = "make -C ";
     cmd_clean.append(path);
+    cmd_clean.append(" clean");
     cout << "cmd clean : " << cmd_clean << endl;
     FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+    char* out_clean = (char*)malloc(1000 * sizeof(char));
+	fread(out_clean, 1, 1000, pipe_clean);
+    string out_cpp_clean = out_clean;
+    cout << out_cpp_clean << endl;
     pclose(pipe_clean);
     int retcode = -1;
 
@@ -18,8 +23,8 @@ int build_std(string path, string target_triplet){
     cmd.append(path);
     cout << "cmd : " << cmd << endl;
     FILE* pipe = popen(cmd.c_str(), "r");
-    char* out = (char*)malloc(1000 * sizeof(char));
-	fread(out, 1, 1000, pipe);
+    char* out = (char*)malloc(10000 * sizeof(char));
+	fread(out, 1, 10000, pipe);
     string out_cpp = out;
     cout << out_cpp << endl;
     retcode = pclose(pipe);
@@ -34,7 +39,8 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     cmd.append(" -target ");
     cmd.append(target_triplet);
     if (target_triplet.find("wasm") != string::npos){
-        cmd.append(" --no-standard-libraries -Wl,--export-all -Wl,--no-entry ");
+        //cmd.append(" --no-standard-libraries -Wl,--export-all -Wl,--no-entry ");
+        cmd.append("-Wl,--export-all --no-standard-libraries -Wl,--no-entry");
     }
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");

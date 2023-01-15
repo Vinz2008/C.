@@ -137,6 +137,10 @@ static int gettok() {
     return tok_identifier;
   }
 
+  if (LastChar == '~'){
+    return tok_return_arrow;
+  }
+
   if (isdigit(LastChar) || LastChar == '.') { // Number: [0-9.]+
     std::string NumStr;
     do {

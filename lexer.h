@@ -28,6 +28,7 @@ enum Token {
   tok_object = -16,
   tok_addr = -17,
   tok_ptr = -19,
+  tok_return_arrow = -20,
 };
 
 int getNextToken();
