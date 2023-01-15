@@ -27,9 +27,14 @@ linker.o \
 target-triplet.o \
 main.o \
 
-all: $(OUTPUTBIN) std_lib
+all: std_lib_plus_compiler
 
-$(OUTPUTBIN): $(OBJS)
+std_lib_plus_compiler: std_lib
+
+std_lib: $(OUTPUTBIN)
+	+make -C std
+
+$(OUTPUTBIN): $(OBJS) std_lib
 	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o:%.cpp
@@ -58,8 +63,6 @@ clean: clean-build
 	make -C tests clean
 	rm -rf cpoint out.ll out.ll.* cpoint.*
 
-std_lib:
-	make -C std
 
 test: all
 	make -C tests run

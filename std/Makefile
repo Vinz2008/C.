@@ -12,7 +12,7 @@ libstd.a: $(OBJECTS) $(OBJECTS_C)
 	ar -rc $@ $^
 
 c_api/%.o:
-	TARGET=$(TARGET) make -C c_api
+	+TARGET=$(TARGET) make -C c_api
 
 %.o: %.cpoint
 	$(CCPOINT) $(CPOINTFLAGS) $< -o $@
