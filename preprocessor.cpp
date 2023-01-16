@@ -1,5 +1,6 @@
 #include "preprocessor.h"
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
+#include <sstream>
 #include "target-triplet.h"
 #include "lexer.h"
 

@@ -34,7 +34,7 @@ std_lib_plus_compiler: std_lib
 std_lib: $(OUTPUTBIN)
 	+make -C std
 
-$(OUTPUTBIN): $(OBJS) std_lib
+$(OUTPUTBIN): $(OBJS)
 	$(CC) $(LDFLAGS) -o $@ $^
 
 %.o:%.cpp
@@ -64,5 +64,5 @@ clean: clean-build
 	rm -rf cpoint out.ll out.ll.* cpoint.*
 
 
-test: all
+test:
 	make -C tests run
