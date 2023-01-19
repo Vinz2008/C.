@@ -32,6 +32,10 @@ Type* get_type_llvm(int t, bool is_ptr){
 	        } else {
 	        return Type::getInt8Ty(*TheContext);
 	        }
+        case void_type:
+            return Type::getVoidTy(*TheContext);
+        case argv_type:
+            return Type::getInt8PtrTy(*TheContext)->getPointerTo();
     }
 }
 
@@ -40,12 +44,13 @@ std::vector<std::string> types{
     "int",
     "float",
     "i8",
+    "void",
 };
 
 bool is_type(std::string type){
     for (int i = 0; i < types.size(); i++){
        if (type.compare(types.at(i)) == 0){
-	return true;
+	    return true;
        }
     }
     return false;

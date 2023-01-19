@@ -128,10 +128,11 @@ class PrototypeAST {
   std::vector<std::string> Args;
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
+  int type;
 
 public:
-  PrototypeAST(const std::string &name, std::vector<std::string> Args, bool IsOperator = false, unsigned Prec = 0)
-    : Name(name), Args(std::move(Args)), IsOperator(IsOperator), Precedence(Prec) {}
+  PrototypeAST(const std::string &name, std::vector<std::string> Args, int type = -1, bool IsOperator = false, unsigned Prec = 0)
+    : Name(name), Args(std::move(Args)), type(type), IsOperator(IsOperator), Precedence(Prec) {}
 
   const std::string &getName() const { return Name; }
   Function *codegen();

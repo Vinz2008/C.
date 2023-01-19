@@ -1,6 +1,6 @@
-func average(x y){
+func average(x y) int {
   return (x + y) * 0.5;
 }
-func absolute(v){
+func absolute(v) int {
   if v < 0 then 0 - v else return v
 }

@@ -5,6 +5,10 @@ double printd(double X){
     return 0;
 }
 
+void printi(int x){
+  fprintf(stderr, "%d\n", x);
+}
+
 double putchard(double X) {
   fputc((char)X, stderr);
   return 0;

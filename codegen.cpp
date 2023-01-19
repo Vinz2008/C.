@@ -175,9 +175,17 @@ Value* AddrExprAST::codegen(){
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.
   std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
-  FunctionType *FT =
-      FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
-
+  FunctionType *FT;
+  //FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
+  if (Name == "main"){
+  std::vector<Type*> args_type_main;
+  std::string test = "test";
+  args_type_main.push_back(get_type_llvm(-2, false));
+  args_type_main.push_back(get_type_llvm(-4, true)->getPointerTo());
+  FT = FunctionType::get(get_type_llvm(type, false), args_type_main, false);
+  } else {
+  FT = FunctionType::get(get_type_llvm(type, false), Doubles, false);
+  }
   Function *F =
       Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
 
@@ -208,10 +216,26 @@ Function *FunctionAST::codegen() {
 
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
+  if (P.getName() == "main"){
+    int i = 0;
+    for (auto &Arg : TheFunction->args()){
+      int type;
+      if (i == 1){
+        type = argv_type;
+      } else {
+        type = int_type;
+      }
+      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), type, false);
+      Builder->CreateStore(&Arg, Alloca);
+      NamedValues[std::string(Arg.getName())] = Alloca;
+      i++;
+    }
+  } else {
   for (auto &Arg : TheFunction->args()){
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), double_type, false);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = Alloca;
+  }
   }
   Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;

@@ -235,8 +235,14 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
 
   // Read the list of argument names.
   std::vector<std::string> ArgNames;
+  if (FnName == "main"){
+    while (getNextToken() == tok_identifier);
+    ArgNames.push_back("argc");
+    ArgNames.push_back("argv");
+  } else {
   while (getNextToken() == tok_identifier)
     ArgNames.push_back(IdentifierStr);
+  }
   if (CurTok != ')')
     return LogErrorP("Expected ')' in prototype");
 
@@ -245,18 +251,15 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   if (Kind && ArgNames.size() != Kind)
     return LogErrorP("Invalid number of operands for operator");
   std::cout << "Tok : " << CurTok << std::endl;
-  if (CurTok == tok_return_arrow){
-    getNextToken(); // eat '~'
-    std::cout << "Tok after ~ : " << CurTok << std::endl;
-    exit(0);
-    if (CurTok != tok_identifier){
-      return LogErrorP("No type parameter to function");
-    }
-    int type = get_type(IdentifierStr);
+  int type = -1;
+  if (CurTok == tok_identifier){
+    std::cout << "Tok type : " << CurTok << std::endl;
+    std::cout << "type : " << IdentifierStr << std::endl;
+    type = get_type(IdentifierStr);
     getNextToken(); // eat type
   }
 
-  return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), Kind != 0, BinaryPrecedence);
+  return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), type, Kind != 0, BinaryPrecedence);
 }
 
 std::unique_ptr<ObjectDeclarAST> ParseObject(){
