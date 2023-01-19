@@ -18,3 +18,7 @@ double printptr(void* ptr){
   fprintf(stderr, "%p\n", ptr);
   return 0;
 }
+
+void printstr(double x){
+  return;
+}

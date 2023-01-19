@@ -1,4 +1,5 @@
 extern printi(x) void;
 func main(){
-  printi(argc) 
+  printi(argc)
+  return 0
 }

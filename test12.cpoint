@@ -1,0 +1,4 @@
+extern printstr(x) void;
+func main() {
+    var str : i8 ptr = "hello world"
+}

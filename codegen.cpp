@@ -179,7 +179,6 @@ Function *PrototypeAST::codegen() {
   //FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
   if (Name == "main"){
   std::vector<Type*> args_type_main;
-  std::string test = "test";
   args_type_main.push_back(get_type_llvm(-2, false));
   args_type_main.push_back(get_type_llvm(-4, true)->getPointerTo());
   FT = FunctionType::get(get_type_llvm(type, false), args_type_main, false);

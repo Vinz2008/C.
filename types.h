@@ -1,3 +1,4 @@
+#pragma once
 #include <iostream>
 #include "llvm/IR/Type.h"
 
