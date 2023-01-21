@@ -1,6 +1,10 @@
+extern puts(a : i8 ptr) int;
 object str {
     var pointer : i8 ptr
     var len : int
     var maxlength : int
     var factor : int
+}
+func printstr(x : i8 ptr){
+  puts(x)
 }

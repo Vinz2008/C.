@@ -19,7 +19,7 @@ double printptr(void* ptr){
   return 0;
 }
 
-void printstr(char* x){
+/*void printstr(char* x){
   puts(x);
   return;
-}
+}*/
