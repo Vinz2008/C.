@@ -1,4 +1,6 @@
 #include <map>
+#include <iostream>
+#include <utility>
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
@@ -234,14 +236,23 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     return LogErrorP("Expected '(' in prototype");
 
   // Read the list of argument names.
-  std::vector<std::string> ArgNames;
+  std::vector<std::pair<std::string,Cpoint_Type>> ArgNames;
   if (FnName == "main"){
     while (getNextToken() == tok_identifier);
-    ArgNames.push_back("argc");
-    ArgNames.push_back("argv");
+    ArgNames.push_back(std::make_pair("argc", Cpoint_Type(double_type, false)));
+    ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
   } else {
-  while (getNextToken() == tok_identifier)
-    ArgNames.push_back(IdentifierStr);
+  getNextToken();
+  while (CurTok == tok_identifier){
+    std::string ArgName = IdentifierStr;
+    getNextToken();
+    int type = double_type;
+    bool is_ptr = false;
+    if (CurTok == ':'){
+      ParseTypeDeclaration(&type, &is_ptr);
+    }
+    ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr)));
+  }
   }
   if (CurTok != ')')
     return LogErrorP("Expected ')' in prototype");
@@ -349,7 +360,7 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   if (!E){
     return nullptr;
   }
-  auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::string>());
+  auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::pair<std::string, Cpoint_Type>>());
   std::vector<std::unique_ptr<ExprAST>> Body;
   Body.push_back(std::move(E));
   return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
