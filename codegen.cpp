@@ -78,6 +78,10 @@ Value* ObjectMemberExprAST::codegen() {
 
 }
 
+Value* ArrayMemberExprAST::codegen() {
+  
+}
+
 Type* ClassExprAST::codegen(){
   
 }

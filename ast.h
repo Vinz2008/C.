@@ -65,6 +65,14 @@ public:
   Value *codegen() override;
 };
 
+class ArrayMemberExprAST : public ExprAST {
+  std::string ArrayName;
+  int pos;
+public:
+  ArrayMemberExprAST(const std::string &ArrayName, int pos) : ArrayName(ArrayName), pos(pos) {}
+  Value *codegen() override;
+};
+
 class BinaryExprAST : public ExprAST {
   char Op;
   std::unique_ptr<ExprAST> LHS, RHS;
@@ -217,6 +225,6 @@ std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<ObjectDeclarAST> ParseObject();
 std::unique_ptr<ExprAST> ParseAddrExpr();
-
+std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 
 #endif

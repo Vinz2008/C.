@@ -10,6 +10,8 @@ string IdentifierStr;
 double NumVal;
 string strStatic;
 extern std::map<char, int> BinopPrecedence;
+string strPosArray;
+int posArrayNb;
 
 int CurTok;
 
@@ -133,6 +135,15 @@ static int gettok() {
       return tok_addr;
     if (IdentifierStr == "ptr")
       return tok_ptr;
+    std::cout << "TEST lastChar : " << LastChar << endl;
+    if (LastChar == '['){
+      do {
+        strPosArray += LastChar;
+        LastChar = getCharLine();
+      } while (isdigit(LastChar));
+      posArrayNb = strtod(strPosArray.c_str(), nullptr);
+      return tok_array_member;
+    }
     cout << "IdentifierStr : " << IdentifierStr << endl;
     return tok_identifier;
   }

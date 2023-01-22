@@ -10,6 +10,8 @@ extern int CurTok;
 extern std::string strStatic;
 extern std::string IdentifierStr;
 extern int return_status;
+extern std::string strPosArray;
+extern int posArrayNb;
 bool isInObject = false;;
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
@@ -168,7 +170,13 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseStrExpr();
   case tok_addr:
     return ParseAddrExpr();
+  case tok_array_member:
+    return ParseArrayMemberExpr();
   }
+}
+
+std::unique_ptr<ExprAST> ParseArrayMemberExpr(){
+  return std::make_unique<ArrayMemberExprAST>(strPosArray, posArrayNb);
 }
 
 std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr){
