@@ -35,7 +35,7 @@ std_lib: $(OUTPUTBIN)
 	+make -C std
 
 $(OUTPUTBIN): $(OBJS)
-	$(CC) $(LDFLAGS) -o $@ $^
+	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.o:%.cpp
 	$(CC) $(CFLAGS) -o $@ $^
