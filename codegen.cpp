@@ -79,7 +79,7 @@ Value* ObjectMemberExprAST::codegen() {
 }
 
 Value* ArrayMemberExprAST::codegen() {
-  
+  //Value* ptr = Builder->CreateGEP(double_type, ); //  TODO : make the code find the type of the array
 }
 
 Type* ClassExprAST::codegen(){
