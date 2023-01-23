@@ -211,6 +211,12 @@ public:
   Value *codegen() override;
 };
 
+class WhileExprAST : public ExprAST {
+  std::unique_ptr<ExprAST> Cond, Body;
+public:
+  WhileExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Body) : Cond(std::move(Cond)), Body(std::move(Body)) {}
+  Value *codegen() override;
+};
 
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
@@ -226,5 +232,6 @@ std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<ObjectDeclarAST> ParseObject();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
+std::unique_ptr<ExprAST> ParseWhileExpr();
 
 #endif

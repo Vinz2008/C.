@@ -130,6 +130,9 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  case '>':
+    L = Builder->CreateFCmpULT(R, L, "cmptmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   default:
     //return LogErrorV("invalid binary operator");
     break;
@@ -323,6 +326,21 @@ Value* ReturnAST::codegen(){
   Value* value_returned = returned_expr->codegen();
   return value_returned;
   //return ConstantFP::get(*TheContext, APFloat(Val));
+}
+
+Value* WhileExprAST::codegen(){
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
+  Value *CondV = Cond->codegen();
+  if (!CondV)
+    return nullptr;
+  CondV = Builder->CreateFCmpONE(
+      CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
+  BasicBlock *AfterBB =
+      BasicBlock::Create(*TheContext, "afterloop", TheFunction);
+  Builder->CreateCondBr(CondV, LoopBB, AfterBB);
+  Builder->SetInsertPoint(AfterBB);
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
 Value *ForExprAST::codegen(){

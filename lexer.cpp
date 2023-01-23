@@ -135,6 +135,8 @@ static int gettok() {
       return tok_addr;
     if (IdentifierStr == "ptr")
       return tok_ptr;
+    if (IdentifierStr == "while")
+      return tok_while;
     std::cout << "TEST lastChar : " << LastChar << endl;
     if (LastChar == '['){
       do {

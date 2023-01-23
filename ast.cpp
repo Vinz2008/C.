@@ -172,6 +172,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseAddrExpr();
   case tok_array_member:
     return ParseArrayMemberExpr();
+  case tok_while:
+    return ParseWhileExpr();
   }
 }
 
@@ -417,6 +419,27 @@ std::unique_ptr<ExprAST> ParseReturn(){
   std::cout << "CurTok : " << CurTok << std::endl;
   return std::make_unique<ReturnAST>(std::move(return_value));
   //return std::move(Result);
+}
+
+std::unique_ptr<ExprAST> ParseWhileExpr(){ 
+  getNextToken();  // eat the while.
+  auto Cond = ParseExpression();
+  if (!Cond)
+    return nullptr;
+  std::cout << "CurTok : " << CurTok << std::endl;
+  if (CurTok != '{'){
+    return LogError("expected {");
+  }
+  getNextToken();
+  auto Body = ParseExpression();
+  if (!Body)
+    return nullptr;
+  std::cout << "CurTok : " << CurTok << std::endl;
+  if (CurTok != '}'){
+    return LogError("expected }");
+  }
+  getNextToken();
+  return std::make_unique<WhileExprAST>(std::move(Cond), std::move(Body));
 }
 
 std::unique_ptr<ExprAST> ParseForExpr() {

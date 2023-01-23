@@ -1,0 +1,10 @@
+extern printd(x);
+func test(x){
+    var i = 1
+    while i < x {
+    printd(i)
+    }
+}
+func main(){
+    test(10)
+}
