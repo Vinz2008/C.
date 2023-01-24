@@ -153,6 +153,8 @@ int main(int argc, char **argv){
     string filename ="";
     string object_filename = "out.o";
     string exe_filename = "a.out";
+    string temp_output = "";
+    bool output_temp_found = false;
     string std_path = DEFAULT_STD_PATH;
     string target_triplet_found;
     bool target_triplet_found_bool = false;
@@ -166,8 +168,9 @@ int main(int argc, char **argv){
             debug_mode = true;
         } else if (arg.compare("-o") == 0){
           i++;
-          object_filename = argv[i];
+          temp_output = argv[i];
           cout << "object_filename " << object_filename << endl;
+          output_temp_found = true;
         } else if (arg.compare("-std") == 0){
           i++;
           std_path = argv[i];
@@ -185,6 +188,13 @@ int main(int argc, char **argv){
             cout << "filename : " << arg << endl;
             filename = arg;
         }
+    }
+    if (output_temp_found){
+      if (link_files_mode){
+        exe_filename = temp_output;
+      } else {
+        object_filename = temp_output;
+      }
     }
     std::error_code ec;
     if (debug_mode == false ){
