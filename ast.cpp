@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
+#include "errors.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -13,9 +14,12 @@ extern int return_status;
 extern std::string strPosArray;
 extern int posArrayNb;
 bool isInObject = false;;
+extern std::unique_ptr<Compiler_context> Comp_context;
+
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
-  fprintf(stderr, "LogError: %s\n", Str);
+  //fprintf(stderr, "LogError: %s\n", Str);
+  logErrorExit(std::move(Comp_context), Str);
   return_status = 1;
   return nullptr;
 }

@@ -21,6 +21,7 @@ lexer.o \
 ast.o \
 codegen.o \
 preprocessor.o \
+errors.o \
 debuginfo.o \
 types.o \
 linker.o \

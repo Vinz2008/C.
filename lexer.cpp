@@ -3,6 +3,7 @@
 #include <fstream>
 #include "lexer.h"
 #include "preprocessor.h"
+#include "errors.h"
 
 using namespace std;
 
@@ -12,6 +13,7 @@ string strStatic;
 extern std::map<char, int> BinopPrecedence;
 string strPosArray;
 int posArrayNb;
+extern std::unique_ptr<Compiler_context> Comp_context;
 
 int CurTok;
 
@@ -29,6 +31,8 @@ int getLine(std::istream &__is, std::string &__str){
       last_line = true;
       file_log << "end of file" << "\n";
   }
+  Comp_context->line_nb++;
+  Comp_context->line = __str;
   return 0;
 }
 

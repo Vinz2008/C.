@@ -16,6 +16,7 @@
 #include "ast.h"
 #include "codegen.h"
 #include "preprocessor.h"
+#include "errors.h"
 #include "debuginfo.h"
 #include "linker.h"
 #include "target-triplet.h"
@@ -36,6 +37,7 @@ int return_status = 0;
 
 extern std::unique_ptr<DIBuilder> DBuilder;
 struct DebugInfo CpointDebugInfo;
+std::unique_ptr<Compiler_context> Comp_context;
 
 /// putchard - putchar that takes a double and returns 0.
 extern "C" DLLEXPORT double putchard(double X) {
@@ -67,7 +69,6 @@ static void HandleDefinition() {
     //fprintf(stderr, "Parsed a function definition.\n");
     //FnIR->print(*file_out_ostream);
     //fprintf(stderr, "\n");
-    
     }
   } else {
     // Skip token for error recovery.
@@ -150,6 +151,7 @@ static void MainLoop() {
 
 
 int main(int argc, char **argv){
+    Comp_context = std::make_unique<Compiler_context>(0, "<empty line>");
     string filename ="";
     string object_filename = "out.o";
     string exe_filename = "a.out";
