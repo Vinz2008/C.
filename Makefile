@@ -66,4 +66,5 @@ clean: clean-build
 
 
 test:
-	make -C tests run
+	make -C tests python
+#	make -C tests run

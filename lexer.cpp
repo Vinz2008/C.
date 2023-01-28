@@ -4,6 +4,7 @@
 #include "lexer.h"
 #include "preprocessor.h"
 #include "errors.h"
+#include "log.h"
 
 using namespace std;
 
@@ -23,6 +24,7 @@ extern ofstream file_log;
 static int pos = 0;
 
 string* line = NULL;
+string last_line_str = "";
 
 extern bool last_line;
 
@@ -32,6 +34,8 @@ int getLine(std::istream &__is, std::string &__str){
       file_log << "end of file" << "\n";
   }
   Comp_context->line_nb++;
+  /*Comp_context->line = last_line_str;
+  last_line_str = __str*/;
   Comp_context->line = __str;
   return 0;
 }
@@ -50,7 +54,7 @@ int getCharLine(){
     getLine(file_in, *line);
 if_preprocessor_first:
     if (line->at(0) == '?' && line->at(1) == '['){
-      cout << "FOUND PREPROCESSOR INSTRUCTION" << endl;
+      Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
       preprocess_instruction(*line);
       getLine(file_in, *line);
       goto if_preprocessor_first;
@@ -76,12 +80,11 @@ start_backslash_zero:
 if_preprocessor:
     if (line->size() >= 2){
     if (line->at(0) == '?' && line->at(1) == '['){
-      cout << "FOUND PREPROCESSOR INSTRUCTION" << endl;
+      Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
       getLine(file_in, *line);
       goto if_preprocessor;
     }
     }
-    std::cout << "TEST2" << std::endl;
     /*if (!getline(file_in, *line)){
       last_line = true;
     }*/
@@ -97,7 +100,6 @@ if_preprocessor:
 }
 
 static int gettok() {
-  std::cout << "TEST" << std::endl;
   static int LastChar = ' ';
   //std::cout << "start gettok" << std::endl;
   // Skip any whitespace.
@@ -141,7 +143,7 @@ static int gettok() {
       return tok_ptr;
     if (IdentifierStr == "while")
       return tok_while;
-    std::cout << "TEST lastChar : " << LastChar << endl;
+    Log::Info() << "lastChar : " << LastChar << "\n";
     if (LastChar == '['){
       do {
         strPosArray += LastChar;
@@ -150,7 +152,7 @@ static int gettok() {
       posArrayNb = strtod(strPosArray.c_str(), nullptr);
       return tok_array_member;
     }
-    cout << "IdentifierStr : " << IdentifierStr << endl;
+    Log::Info() << "IdentifierStr : " << IdentifierStr << "\n";
     return tok_identifier;
   }
 
@@ -178,15 +180,14 @@ static int gettok() {
       return gettok();
   }
   if (LastChar == '\"'){
-    std::cout << "gettok" << std::endl;
     LastChar = getCharLine();
     do {
       strStatic += LastChar;
       LastChar = getCharLine();
     } while (LastChar != '\"');
     LastChar = getCharLine();
-    cout << "strStatic : " << strStatic << endl;
-    cout << "LastChar : " << (char)LastChar << endl;
+    Log::Info() << "strStatic : " << strStatic << "\n";
+    Log::Info() << "LastChar : " << (char)LastChar << "\n";
     return tok_string;
   }
 

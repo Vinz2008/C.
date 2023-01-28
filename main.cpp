@@ -20,6 +20,7 @@
 #include "debuginfo.h"
 #include "linker.h"
 #include "target-triplet.h"
+#include "log.h"
 
 using namespace std;
 using namespace llvm;
@@ -65,7 +66,7 @@ bool last_line = false;
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
     if (auto *FnIR = FnAST->codegen()) {
-    cout << "Parsed a function definition." << endl;
+    Log::Info() << "Parsed a function definition." << "\n";
     //fprintf(stderr, "Parsed a function definition.\n");
     //FnIR->print(*file_out_ostream);
     //fprintf(stderr, "\n");
@@ -80,7 +81,7 @@ static void HandleExtern() {
   if (auto ProtoAST = ParseExtern()) {
     if (auto *FnIR = ProtoAST->codegen()) {
       //fprintf(stderr, "Read extern: ");
-      cout << "Read Extern" << endl;
+      Log::Info() << "Read Extern" << "\n";
       //FnIR->print(*file_out_ostream);
       //fprintf(stderr, "\n");
     }
@@ -96,7 +97,7 @@ static void HandleTopLevelExpression() {
   if (auto FnAST = ParseTopLevelExpr()) {
     if (auto *FnIR = FnAST->codegen()) {
       //fprintf(stderr, "Read top-level expression:");
-      cout << "Read top-level expression" << endl;
+      Log::Info() << "Read top-level expression" << "\n";
       //FnIR->print(*file_out_ostream);
       //fprintf(stderr, "\n");
 
@@ -151,7 +152,6 @@ static void MainLoop() {
 
 
 int main(int argc, char **argv){
-    Comp_context = std::make_unique<Compiler_context>(0, "<empty line>");
     string filename ="";
     string object_filename = "out.o";
     string exe_filename = "a.out";
@@ -163,6 +163,7 @@ int main(int argc, char **argv){
     bool debug_mode = false;
     bool link_files_mode = true;
     bool std_mode = true;
+    bool verbose_std_build = false;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -186,9 +187,11 @@ int main(int argc, char **argv){
           i++;
           target_triplet_found = argv[i];
           cout << "target triplet : " << target_triplet_found << endl;
+        } else if (arg.compare("-verbose-std-build") == 0){
+          verbose_std_build = true;
         } else {
-            cout << "filename : " << arg << endl;
-            filename = arg;
+          cout << "filename : " << arg << endl;
+          filename = arg;
         }
     }
     if (output_temp_found){
@@ -198,6 +201,7 @@ int main(int argc, char **argv){
         object_filename = temp_output;
       }
     }
+    Comp_context = std::make_unique<Compiler_context>(filename, 0, "<empty line>");
     std::error_code ec;
     if (debug_mode == false ){
 #ifdef _WIN32
@@ -274,7 +278,7 @@ int main(int argc, char **argv){
     dest.flush();
     outs() << "Wrote " << object_filename << "\n";
     if (std_mode){
-      if (build_std(std_path, TargetTriple) == -1){
+      if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);
       }

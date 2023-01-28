@@ -16,3 +16,6 @@ clean:
 
 run: all
 	./test
+
+python:
+	python3 tests.py

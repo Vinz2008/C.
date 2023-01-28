@@ -5,6 +5,7 @@
 #include "lexer.h"
 #include "types.h"
 #include "errors.h"
+#include "log.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -31,14 +32,14 @@ std::unique_ptr<PrototypeAST> LogErrorP(const char *Str) {
 
 std::unique_ptr<ReturnAST> LogErrorR(const char *Str) {
   LogError(Str);
-  std::cout << "token : " << CurTok << std::endl;
+  Log::Info() << "token : " << CurTok << "\n";
   return nullptr;
 }
 
 
 std::unique_ptr<ObjectDeclarAST> LogErrorO(const char *Str) {
   LogError(Str);
-  std::cout << "token : " << CurTok << std::endl;
+  Log::Info() << "token : " << CurTok << "\n";
   return nullptr;
 }
 
@@ -153,7 +154,7 @@ std::unique_ptr<ExprAST> ParseExpression() {
 std::unique_ptr<ExprAST> ParsePrimary() {
   switch (CurTok) {
   default:
-    std::cout << "tok : " << CurTok << std::endl;
+    Log::Info() << "tok : " << CurTok << "\n";
     return LogError("unknown token when expecting an expression");
   case tok_identifier:
     return ParseIdentifierExpr();
@@ -170,7 +171,7 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   case tok_var:
     return ParseVarExpr();
   case tok_string:
-    std::cout << "tok string found" << std::endl;
+    Log::Info() << "tok string found" << "\n";
     return ParseStrExpr();
   case tok_addr:
     return ParseAddrExpr();
@@ -186,13 +187,13 @@ std::unique_ptr<ExprAST> ParseArrayMemberExpr(){
 }
 
 std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr){
-  std::cout << "type declaration found" << std::endl;
+  Log::Info() << "type declaration found" << "\n";
   getNextToken(); // eat the ':'
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
   if (is_type(IdentifierStr)){
     *type = get_type(IdentifierStr);
-    std::cout << "Variable type : " << *type << std::endl;
+    Log::Info() << "Variable type : " << *type << "\n";
     getNextToken();
     if (CurTok == tok_ptr){
       *is_ptr = true;
@@ -275,11 +276,11 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   getNextToken();  // eat ')'.
   if (Kind && ArgNames.size() != Kind)
     return LogErrorP("Invalid number of operands for operator");
-  std::cout << "Tok : " << CurTok << std::endl;
+  Log::Info() << "Tok : " << CurTok << "\n";
   int type = -1;
   if (CurTok == tok_identifier){
-    std::cout << "Tok type : " << CurTok << std::endl;
-    std::cout << "type : " << IdentifierStr << std::endl;
+    Log::Info() << "Tok type : " << CurTok << "\n";
+    Log::Info() << "type : " << IdentifierStr << "\n";
     type = get_type(IdentifierStr);
     getNextToken(); // eat type
   }
@@ -292,7 +293,7 @@ std::unique_ptr<ObjectDeclarAST> ParseObject(){
   std::vector<std::unique_ptr<ExprAST>> VarList;
   getNextToken(); // eat object
   std::string objectName = IdentifierStr;
-  std::cout << "Object Name : " << objectName << std::endl;
+  Log::Info() << "Object Name : " << objectName << "\n";
   getNextToken();
   if (CurTok != '{')
     return LogErrorO("Expected '{' in prototype");
@@ -329,7 +330,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
     Body.push_back(std::move(E));
   }
   getNextToken(); // eat }
-  std::cout << "end of function" << std::endl;
+  Log::Info() << "end of function" << "\n";
   return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
 }
 
@@ -340,9 +341,9 @@ std::unique_ptr<PrototypeAST> ParseExtern() {
 
 
 std::unique_ptr<ExprAST> ParseStrExpr(){
-  std::cout << "ParseStrExpr " << strStatic << std::endl;
+  Log::Info() << "ParseStrExpr " << strStatic << "\n";
   auto string = std::make_unique<StringExprAST>(strStatic);
-  std::cout << "Before getNextToken" << std::endl;
+  Log::Info() << "Before getNextToken" << "\n";
   getNextToken();
   return string;
 }
@@ -369,7 +370,7 @@ std::unique_ptr<ExprAST> ParseUnary() {
 }
 
 std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
-  std::cout << "ParseTopLevelExpr" << std::endl;
+  Log::Info() << "ParseTopLevelExpr" << "\n";
   auto E = ParseExpression();
   if (!E){
     return nullptr;
@@ -395,7 +396,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   auto Then = ParseExpression();
   if (!Then)
     return nullptr;
-  std::cout << "CurTok : " << CurTok << std::endl;
+  Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != tok_else)
     return LogError("expected else");
 
@@ -412,7 +413,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
 
 std::unique_ptr<ExprAST> ParseReturn(){
   getNextToken(); // eat the return
-  std::cout << "CurTok : " << CurTok << " " << NumVal << std::endl;
+  Log::Info() << "CurTok : " << CurTok << " " << NumVal << "\n";
 
   auto return_value = ParseExpression();
   //auto Result = std::make_unique<ReturnAST>(NumVal);
@@ -420,7 +421,7 @@ std::unique_ptr<ExprAST> ParseReturn(){
     return nullptr;
   }
   getNextToken();
-  std::cout << "CurTok : " << CurTok << std::endl;
+  Log::Info() << "CurTok : " << CurTok << "\n";
   return std::make_unique<ReturnAST>(std::move(return_value));
   //return std::move(Result);
 }
@@ -430,7 +431,7 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   auto Cond = ParseExpression();
   if (!Cond)
     return nullptr;
-  std::cout << "CurTok : " << CurTok << std::endl;
+  Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '{'){
     return LogError("expected {");
   }
@@ -438,7 +439,7 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   auto Body = ParseExpression();
   if (!Body)
     return nullptr;
-  std::cout << "CurTok : " << CurTok << std::endl;
+  Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
     return LogError("expected }");
   }

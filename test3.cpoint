@@ -1,3 +1,5 @@
 extern printd(a);
 extern unary!(v);
-printd(!1)
+func main(){
+    printd(!1)
+}

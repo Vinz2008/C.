@@ -12,6 +12,7 @@
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
+#include "log.h"
 #include <iostream>
 #include <map>
 
@@ -61,7 +62,6 @@ Value *NumberExprAST::codegen() {
 }
 
 Value* StringExprAST::codegen() {
-  std::cout << "StringExprAST codegenn" << std::endl;
   Value* string = Builder->CreateGlobalStringPtr(StringRef(str.c_str()));
   return string;
 }
@@ -87,7 +87,7 @@ Type* ClassExprAST::codegen(){
 }
 
 Type* ObjectDeclarAST::codegen(){
-  std::cout << "codegen object" << std::endl;
+  Log::Info() << "codegen object" << "\n";
   StructType* objectType = StructType::create(*TheContext);
   objectType->setName(Name);
   std::vector<Type*> dataTypes;
@@ -146,7 +146,7 @@ Value *BinaryExprAST::codegen() {
 
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
-  std::cout << "function called " << Callee << std::endl;
+  Log::Info() << "function called " << Callee << "\n";
 
   Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
@@ -167,13 +167,12 @@ Value *CallExprAST::codegen() {
 }
 
 Value* AddrExprAST::codegen(){
-  std::cout << "ADDR" << std::endl;
- std:: map<std::string, llvm::AllocaInst *>::iterator it;
+  std:: map<std::string, llvm::AllocaInst *>::iterator it;
   for (it = NamedValues.begin(); it != NamedValues.end(); it++){
-    std::cout << "name value : " << it->first << std::endl;
+    Log::Info() << "name value : " << it->first << "\n";
   }
   AllocaInst *A = NamedValues[Name];
-  std::cout << "VARNAME: " << Name << std::endl;
+  Log::Info() << "VARNAME: " << Name << "\n";
   if (!A)
     return LogErrorV("Addr Unknown variable name");
   return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Name.c_str());
@@ -420,7 +419,7 @@ Value *UnaryExprAST::codegen() {
 
   Function *F = getFunction(std::string("unary") + Opcode);
   if (!F){
-    std::cout << "UnaryExprAST : " << Opcode << std::endl;
+    Log::Info() << "UnaryExprAST : " << Opcode << "\n";
     return LogErrorV("Unknown unary operator");
   }
 
@@ -428,7 +427,7 @@ Value *UnaryExprAST::codegen() {
 }
 
 Value *VarExprAST::codegen() {
-  std::cout << "VAR CODEGEN " << VarNames.at(0).first << std::endl;
+  Log::Info() << "VAR CODEGEN " << VarNames.at(0).first << "\n";
   std::vector<AllocaInst *> OldBindings;
 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();

@@ -3,6 +3,7 @@
 #include <sstream>
 #include "target-triplet.h"
 #include "lexer.h"
+#include "log.h"
 
 std::unique_ptr<Preprocessor::Context> context;
 std::string word;
@@ -32,7 +33,7 @@ void preprocess_instruction(std::string str){
     for (int i = 2; i < str.size() && str.at(i) != ']' ; i++){
     instruction += str.at(i);
     }
-    std::cout << "instruction : " << instruction << std::endl;
+    Log::Preprocessor_Info() << "instruction : " << instruction << "\n";
     init_parser(instruction);
     get_next_word();
     if (word == "if"){
@@ -48,9 +49,9 @@ void preprocess_instruction(std::string str){
         } else {
             if (op == "=="){
             if (context->get_variable_value(r) == l){
-                std::cout << "if true" << std::endl;
+                Log::Preprocessor_Info() << "if true" << "\n";
             } else {
-                std::cout << "if false" << std::endl;
+                Log::Preprocessor_Info() << "if false" << "\n";
                 while (get_line_returned() != "?[endif]"){
                     //std::cout << "line passed " << get_line_returned() << std::endl;
                     go_to_next_line();
@@ -62,7 +63,7 @@ void preprocess_instruction(std::string str){
         }
 
     } else if (word == "endif"){
-        std::cout << "endif" << std::endl;
+        Log::Preprocessor_Info() << "endif" << "\n";
     }
 
 }

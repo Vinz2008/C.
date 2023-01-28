@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int build_std(string path, string target_triplet){
+int build_std(string path, string target_triplet, bool verbose_std_build){
     string cmd_clean = "make -C ";
     cmd_clean.append(path);
     cmd_clean.append(" clean");
@@ -26,7 +26,10 @@ int build_std(string path, string target_triplet){
     char* out = (char*)malloc(10000 * sizeof(char));
 	fread(out, 1, 10000, pipe);
     string out_cpp = out;
-    cout << out_cpp << endl;
+    if (verbose_std_build){
+        cout << out_cpp << endl;
+    }
+    free(out);
     retcode = pclose(pipe);
     cout << "retcode : " << retcode << endl;
     return retcode;
