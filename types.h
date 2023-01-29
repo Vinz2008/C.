@@ -19,5 +19,5 @@ class Cpoint_Type {
 public:
     int type;
     bool is_ptr;
-    Cpoint_Type(int type, bool is_ptr) : type(type), is_ptr(is_ptr) {}
+    Cpoint_Type(int type, bool is_ptr = false) : type(type), is_ptr(is_ptr) {}
 };

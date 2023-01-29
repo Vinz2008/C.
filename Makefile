@@ -53,6 +53,7 @@ install:
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint
 	cp -r std/* $(PREFIX)/lib/cpoint
+	chmod a=rwx -R $(PREFIX)/lib/cpoint/
 
 
 run:

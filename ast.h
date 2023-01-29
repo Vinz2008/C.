@@ -134,12 +134,11 @@ public:
 /// of arguments the function takes).
 class PrototypeAST {
   std::string Name;
-  std::vector<std::pair<std::string,Cpoint_Type>> Args;
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
   int type;
-
 public:
+  std::vector<std::pair<std::string,Cpoint_Type>> Args;
   PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, int type = -1, bool IsOperator = false, unsigned Prec = 0)
     : Name(name), Args(std::move(Args)), type(type), IsOperator(IsOperator), Precedence(Prec) {}
 

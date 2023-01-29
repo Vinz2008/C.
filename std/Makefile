@@ -1,4 +1,8 @@
-CCPOINT=../cpoint
+ifneq ("$(wildcard $(../cpoint))","")
+    CCPOINT=../cpoint
+else
+    CCPOINT=cpoint
+endif
 SRC := $(wildcard *.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 SRC_C := $(wildcard c_api/*.c)

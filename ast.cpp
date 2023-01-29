@@ -6,6 +6,7 @@
 #include "types.h"
 #include "errors.h"
 #include "log.h"
+#include "codegen.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -16,6 +17,7 @@ extern std::string strPosArray;
 extern int posArrayNb;
 bool isInObject = false;;
 extern std::unique_ptr<Compiler_context> Comp_context;
+extern std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
@@ -80,7 +82,13 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         return std::make_unique<ObjectMemberExprAST>(ObjectName, MemberName);
       }
     }
-    return std::make_unique<VariableExprAST>(IdName, double_type);
+    int type;
+    if (NamedValues[IdName] == nullptr){
+      type = double_type;
+    } else {
+    int type = NamedValues[IdName]->type.type;
+    }
+    return std::make_unique<VariableExprAST>(IdName, type);
   }
 
   // Call.
@@ -152,6 +160,7 @@ std::unique_ptr<ExprAST> ParseExpression() {
 }
 
 std::unique_ptr<ExprAST> ParsePrimary() {
+  Log::Info() << "not operator " << CurTok << " " << IdentifierStr << "\n";
   switch (CurTok) {
   default:
     Log::Info() << "tok : " << CurTok << "\n";
@@ -362,6 +371,7 @@ std::unique_ptr<ExprAST> ParseUnary() {
     return ParsePrimary();
 
   // If this is a unary operator, read it.
+  Log::Info() << "Not an operator " << CurTok << "\n";
   int Opc = CurTok;
   getNextToken();
   if (auto Operand = ParseUnary())
@@ -467,7 +477,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   if (CurTok != ',')
     return LogError("expected ',' after for start value");
   getNextToken();
-
+  Log::Info() << "Before parse expression for" << "\n";
   auto End = ParseExpression();
   if (!End)
     return nullptr;

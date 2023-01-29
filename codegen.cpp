@@ -22,7 +22,7 @@ using namespace llvm;
 std::unique_ptr<LLVMContext> TheContext;
 std::unique_ptr<Module> TheModule;
 static std::unique_ptr<IRBuilder<>> Builder;
-static std::map<std::string, AllocaInst *> NamedValues;
+std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 static std::map<std::string, std::unique_ptr<ObjectDeclarAST>> ObjectDeclarations;
 
@@ -69,7 +69,7 @@ Value* StringExprAST::codegen() {
 
 Value *VariableExprAST::codegen() {
   // Look this variable up in the function.
-  AllocaInst *A = NamedValues[Name];
+  AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
     return LogErrorV("Unknown variable name");
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
@@ -108,7 +108,7 @@ Value *BinaryExprAST::codegen() {
     Value *Val = RHS->codegen();
     if (!Val)
       return nullptr;
-    Value *Variable = NamedValues[LHSE->getName()];
+    Value *Variable = NamedValues[LHSE->getName()]->alloca_inst;
     if (!Variable)
       return LogErrorV("Unknown variable name");
 
@@ -168,11 +168,7 @@ Value *CallExprAST::codegen() {
 }
 
 Value* AddrExprAST::codegen(){
-  std:: map<std::string, llvm::AllocaInst *>::iterator it;
-  for (it = NamedValues.begin(); it != NamedValues.end(); it++){
-    Log::Info() << "name value : " << it->first << "\n";
-  }
-  AllocaInst *A = NamedValues[Name];
+  AllocaInst *A = NamedValues[Name]->alloca_inst;
   Log::Info() << "VARNAME: " << Name << "\n";
   if (!A)
     return LogErrorV("Addr Unknown variable name");
@@ -237,14 +233,17 @@ Function *FunctionAST::codegen() {
       }
       AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), type, false);
       Builder->CreateStore(&Arg, Alloca);
-      NamedValues[std::string(Arg.getName())] = Alloca;
+      NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(type, false));
       i++;
     }
   } else {
+  int i = 0;
   for (auto &Arg : TheFunction->args()){
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), double_type, false);
+    Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg.type, cpoint_type_arg.is_ptr);
     Builder->CreateStore(&Arg, Alloca);
-    NamedValues[std::string(Arg.getName())] = Alloca;
+    NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
+    i++;
   }
   }
   Value *RetVal = nullptr;
@@ -355,8 +354,13 @@ Value *ForExprAST::codegen(){
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
   Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
-  AllocaInst *OldVal = NamedValues[VarName];
-  NamedValues[VarName] = Alloca;
+  AllocaInst *OldVal;
+  if (NamedValues[VarName] == nullptr){
+    OldVal = nullptr;
+  } else {
+    OldVal = NamedValues[VarName]->alloca_inst;
+  }
+  NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(double_type));
   /*PHINode *Variable = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, VarName);
   Variable->addIncoming(StartVal, PreheaderBB);
   Value *OldVal = NamedValues[VarName];
@@ -405,7 +409,7 @@ Value *ForExprAST::codegen(){
 
   // Restore the unshadowed variable.
   if (OldVal)
-    NamedValues[VarName] = OldVal;
+    NamedValues[VarName] = std::make_unique<NamedValue>(OldVal, Cpoint_Type(double_type));
   else
     NamedValues.erase(VarName);
 
@@ -457,10 +461,10 @@ Value *VarExprAST::codegen() {
 
     // Remember the old variable binding so that we can restore the binding when
     // we unrecurse.
-    OldBindings.push_back(NamedValues[VarName]);
+    OldBindings.push_back(NamedValues[VarName]->alloca_inst);
 
     // Remember this binding.
-    NamedValues[VarName] = Alloca;
+    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(type, is_ptr));
   }
 
   // Codegen the body, now that all vars are in scope.
