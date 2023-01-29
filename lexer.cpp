@@ -33,10 +33,10 @@ int getLine(std::istream &__is, std::string &__str){
       last_line = true;
       file_log << "end of file" << "\n";
   }
-  Comp_context->line_nb++;
+  //Comp_context->line_nb++;
   /*Comp_context->line = last_line_str;
   last_line_str = __str*/;
-  Comp_context->line = __str;
+  //Comp_context->line = __str;
   return 0;
 }
 
@@ -51,7 +51,10 @@ void go_to_next_line(){
 int getCharLine(){
   if (line == NULL){
     line = new string("");
+    Comp_context->line_nb++;
+    Comp_context->col_nb = 0;
     getLine(file_in, *line);
+    Comp_context->line = *line;
 if_preprocessor_first:
     if (line->at(0) == '?' && line->at(1) == '['){
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
@@ -76,7 +79,10 @@ start_backslash_zero:
   }
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line->c_str())){
     file_log << "new line" << "\n";
+    Comp_context->line_nb++;
+    Comp_context->col_nb = 0;
     getLine(file_in, *line);
+    Comp_context->line = *line;
 if_preprocessor:
     if (line->size() >= 2){
     if (line->at(0) == '?' && line->at(1) == '['){
@@ -92,6 +98,7 @@ if_preprocessor:
     file_log << "next char in line : " << (*line)[pos] << "\n";
   } else {
      pos++;
+     Comp_context->col_nb++;
   }
   file_log << "line : " << *line << "\n";
   file_log << "c : " << (char)c << "\n";

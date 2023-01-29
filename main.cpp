@@ -201,7 +201,7 @@ int main(int argc, char **argv){
         object_filename = temp_output;
       }
     }
-    Comp_context = std::make_unique<Compiler_context>(filename, 0, "<empty line>");
+    Comp_context = std::make_unique<Compiler_context>(filename, 0, 0, "<empty line>");
     std::error_code ec;
     if (debug_mode == false ){
 #ifdef _WIN32
