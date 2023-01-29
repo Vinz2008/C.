@@ -6,37 +6,35 @@ using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
 
-Type* get_type_llvm(int t, bool is_ptr){
+Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements){
+    Type* type;
     switch (t){
+        default:
         case double_type:
-            if (is_ptr){
-            return Type::getDoublePtrTy(*TheContext);
-            } else {
-            return Type::getDoubleTy(*TheContext);
-            }
+            type = Type::getDoubleTy(*TheContext);
+            break;
         case int_type:
-            if (is_ptr){
-            return Type::getInt32PtrTy(*TheContext);
-            } else {
-            return Type::getInt32Ty(*TheContext);
-            }
+            type = Type::getInt32Ty(*TheContext);
+            break;
         case float_type:
-            if (is_ptr){
-            return Type::getFloatPtrTy(*TheContext);
-            } else {
-            return Type::getFloatTy(*TheContext);
-            }
+            type = Type::getFloatTy(*TheContext);
+            break;
         case i8_type:
-            if (is_ptr){
-	        return Type::getInt8PtrTy(*TheContext);
-	        } else {
-	        return Type::getInt8Ty(*TheContext);
-	        }
+           type = Type::getInt8Ty(*TheContext);
+           break;
         case void_type:
             return Type::getVoidTy(*TheContext);
         case argv_type:
             return Type::getInt8PtrTy(*TheContext)->getPointerTo();
     }
+    if (is_ptr){
+        type = type->getPointerTo();
+    }
+    if (is_array){
+        type = llvm::ArrayType::get(type, nb_aray_elements);
+    }
+    return type;
+    
 }
 
 std::vector<std::string> types{

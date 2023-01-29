@@ -510,12 +510,37 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   int type = -1;
   bool is_ptr = false;
+  int nb_element = 0;
+  bool is_array = false;
   // At least one variable name is required.
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
   while (true) {
     std::string Name = IdentifierStr;
     getNextToken(); // eat identifier.
+    // if declaration of array
+    if (Name.find('[') != std::string::npos){
+      is_array = true;
+      std::string nb_element_str = "";
+      std::string Var_Name ="";
+      int i = 0;
+      for (i = 0; i < Name.size(); i++){
+        if (Name.at(i) == '['){
+          break;
+        } else {
+          Var_Name += Name.at(i);
+        }
+      }
+      for (int j = i; j < Name.size(); j++){
+        if (Name.at(j) == ']'){
+          break;
+        } else {
+          nb_element_str += Name.at(j);
+        }
+      }
+      nb_element = std::stoi(nb_element_str);
+      Name = Var_Name;
+    }
     if (CurTok == ':'){
       auto a = ParseTypeDeclaration(&type, &is_ptr);
       if (a != nullptr){
@@ -552,5 +577,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, type, is_ptr);
+ std::unique_ptr<Cpoint_Type> cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr);
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type));
 }

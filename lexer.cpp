@@ -151,14 +151,14 @@ static int gettok() {
     if (IdentifierStr == "while")
       return tok_while;
     Log::Info() << "lastChar : " << LastChar << "\n";
-    if (LastChar == '['){
+    /*if (LastChar == '['){
       do {
         strPosArray += LastChar;
         LastChar = getCharLine();
       } while (isdigit(LastChar));
       posArrayNb = strtod(strPosArray.c_str(), nullptr);
       return tok_array_member;
-    }
+    }*/
     Log::Info() << "IdentifierStr : " << IdentifierStr << "\n";
     return tok_identifier;
   }

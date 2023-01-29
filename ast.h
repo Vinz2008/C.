@@ -108,14 +108,13 @@ public:
 
 class VarExprAST : public ExprAST {
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-  int type;
-  bool is_ptr;
+  std::unique_ptr<Cpoint_Type> cpoint_type;
   //std::unique_ptr<ExprAST> Body;
 
 public:
-  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, int type, bool is_ptr
+  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, std::unique_ptr<Cpoint_Type> cpoint_type
              /*,std::unique_ptr<ExprAST> Body*/)
-    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, type(type), is_ptr(is_ptr) {}
+    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(std::move(cpoint_type)) {}
 
   Value *codegen() override;
 };

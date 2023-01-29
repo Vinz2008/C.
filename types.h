@@ -13,7 +13,7 @@ enum types {
 
 bool is_type(std::string type);
 int get_type(std::string type);
-llvm::Type* get_type_llvm(int t, bool is_ptr);
+llvm::Type* get_type_llvm(int t, bool is_ptr = false, bool is_array = false, int nb_aray_elements = 0);
 
 class Cpoint_Type {
 public:

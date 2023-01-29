@@ -186,11 +186,11 @@ Function *PrototypeAST::codegen() {
   //FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
   if (Name == "main"){
   std::vector<Type*> args_type_main;
-  args_type_main.push_back(get_type_llvm(-2, false));
+  args_type_main.push_back(get_type_llvm(-2));
   args_type_main.push_back(get_type_llvm(-4, true)->getPointerTo());
-  FT = FunctionType::get(get_type_llvm(type, false), args_type_main, false);
+  FT = FunctionType::get(get_type_llvm(type), args_type_main, false);
   } else {
-  FT = FunctionType::get(get_type_llvm(type, false), type_args, false);
+  FT = FunctionType::get(get_type_llvm(type), type_args, false);
   }
   Function *F =
       Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
@@ -440,6 +440,7 @@ Value *VarExprAST::codegen() {
   // Register all variables and emit their initializer.
   for (unsigned i = 0, e = VarNames.size(); i != e; ++i) {
     const std::string &VarName = VarNames[i].first;
+    
     ExprAST *Init = VarNames[i].second.get();
 
     // Emit the initializer before adding the variable to scope, this prevents
@@ -456,7 +457,7 @@ Value *VarExprAST::codegen() {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, type, is_ptr);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when
@@ -464,7 +465,7 @@ Value *VarExprAST::codegen() {
     OldBindings.push_back(NamedValues[VarName]->alloca_inst);
 
     // Remember this binding.
-    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(type, is_ptr));
+    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type);
   }
 
   // Codegen the body, now that all vars are in scope.
