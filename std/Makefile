@@ -1,4 +1,5 @@
-ifneq ("$(wildcard $(../cpoint))","")
+#ifneq ("$(wildcard $(../cpoint))","")
+ifneq (,$(wildcard ../cpoint))
     CCPOINT=../cpoint
 else
     CCPOINT=cpoint
