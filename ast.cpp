@@ -577,6 +577,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
- std::unique_ptr<Cpoint_Type> cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr);
+ std::unique_ptr<Cpoint_Type> cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element);
   return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type));
 }

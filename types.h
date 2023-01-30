@@ -19,5 +19,7 @@ class Cpoint_Type {
 public:
     int type;
     bool is_ptr;
-    Cpoint_Type(int type, bool is_ptr = false) : type(type), is_ptr(is_ptr) {}
+    bool is_array;
+    int nb_element;
+    Cpoint_Type(int type, bool is_ptr = false, bool is_array = false, int nb_element = 0) : type(type), is_ptr(is_ptr), is_array(is_array), nb_element(nb_element) {}
 };
