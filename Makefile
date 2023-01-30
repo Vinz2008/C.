@@ -33,7 +33,7 @@ all: std_lib_plus_compiler
 std_lib_plus_compiler: std_lib
 
 std_lib: $(OUTPUTBIN)
-	+make -C std
+	+TARGET=$(shell gcc -dumpmachine) make -C std
 
 $(OUTPUTBIN): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)

@@ -1,10 +1,11 @@
 ifneq (,$(findstring android,$(TARGET)))
+# have if which works in termux
 ifneq (,$(wildcard ../cpoint))
     CCPOINT=../cpoint
 else
     CCPOINT=cpoint
 endif
-else 
+else
 ifneq ("$(wildcard $(../cpoint))","")
     CCPOINT=../cpoint
 else
