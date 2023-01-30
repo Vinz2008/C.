@@ -15,6 +15,6 @@ def test_file(name):
 		exit(1)
 	nb_test += 1
 
-for i in range(1,12):
+for i in range(1,14):
 	test_file("../test" + str(i) + ".cpoint")
 print(colored("All " + str(nb_test) + " tests succeeded", "green"))

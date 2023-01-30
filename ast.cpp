@@ -531,7 +531,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
           Var_Name += Name.at(i);
         }
       }
-      for (int j = i; j < Name.size(); j++){
+      for (int j = i + 1; j < Name.size(); j++){
         if (Name.at(j) == ']'){
           break;
         } else {

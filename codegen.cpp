@@ -46,10 +46,10 @@ Function *getFunction(std::string Name) {
 }
 
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                                          StringRef VarName, int type, bool is_ptr) {
+                                          StringRef VarName, int type, bool is_ptr = false, bool is_array = false, int nb_element = 0) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
-  return TmpB.CreateAlloca(get_type_llvm(type, is_ptr), 0,
+  return TmpB.CreateAlloca(get_type_llvm(type, is_ptr, is_array, nb_element), 0,
                            VarName);
 }
 
@@ -457,12 +457,17 @@ Value *VarExprAST::codegen() {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when
     // we unrecurse.
+    if (NamedValues[VarName] == nullptr){
+
+      OldBindings.push_back(nullptr);
+    } else {
     OldBindings.push_back(NamedValues[VarName]->alloca_inst);
+    }
 
     // Remember this binding.
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type);
