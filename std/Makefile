@@ -1,3 +1,5 @@
+TARGET ?= $(shell gcc -dumpmachine)
+
 ifneq (,$(findstring android,$(TARGET)))
 # have if which works in termux
 ifneq (,$(wildcard ../cpoint))
@@ -17,7 +19,6 @@ SRC := $(wildcard *.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 SRC_C := $(wildcard c_api/*.c)
 OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
-TARGET ?= $(shell gcc -dumpmachine)
 CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)
 
 all: libstd.a
