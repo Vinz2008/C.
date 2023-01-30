@@ -1,9 +1,17 @@
-#ifneq ("$(wildcard $(../cpoint))","")
+ifneq (,$(findstring android,$(TARGET)))
 ifneq (,$(wildcard ../cpoint))
     CCPOINT=../cpoint
 else
     CCPOINT=cpoint
 endif
+else 
+ifneq ("$(wildcard $(../cpoint))","")
+    CCPOINT=../cpoint
+else
+    CCPOINT=cpoint
+endif
+endif
+
 SRC := $(wildcard *.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 SRC_C := $(wildcard c_api/*.c)
