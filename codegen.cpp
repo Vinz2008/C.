@@ -180,7 +180,9 @@ Function *PrototypeAST::codegen() {
   //std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
   std::vector<Type *> type_args;
   for (int i = 0; i < Args.size(); i++){
+    //if (Args.at(i).first != "..."){
     type_args.push_back(get_type_llvm(Args.at(i).second.type,Args.at(i).second.is_ptr));
+    //}
   }
   FunctionType *FT;
   //FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
@@ -190,7 +192,7 @@ Function *PrototypeAST::codegen() {
   args_type_main.push_back(get_type_llvm(-4, true)->getPointerTo());
   FT = FunctionType::get(get_type_llvm(type), args_type_main, false);
   } else {
-  FT = FunctionType::get(get_type_llvm(type), type_args, false);
+  FT = FunctionType::get(get_type_llvm(type), type_args, is_variable_number_args);
   }
   Function *F =
       Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
@@ -198,7 +200,9 @@ Function *PrototypeAST::codegen() {
   // Set names for all arguments.
   unsigned Idx = 0;
   for (auto &Arg : F->args()){
+    //if (Args[Idx++].first != "..."){
     Arg.setName(Args[Idx++].first);
+    //}
   }
   return F;
 }

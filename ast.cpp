@@ -219,6 +219,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     return LogErrorP("Expected function name in prototype");*/
 
   std::string FnName;
+  bool is_variable_number_args = false;
   unsigned Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.
   unsigned BinaryPrecedence = 30;
   switch (CurTok){
@@ -268,6 +269,12 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   } else {
   getNextToken();
   while (CurTok == tok_identifier){
+    if (IdentifierStr == "..."){
+      is_variable_number_args = true;
+      //ArgNames.push_back(std::make_pair("...", Cpoint_Type(double_type)));
+      getNextToken();
+      break;
+    } else {
     std::string ArgName = IdentifierStr;
     getNextToken();
     int type = double_type;
@@ -276,6 +283,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       ParseTypeDeclaration(&type, &is_ptr);
     }
     ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr)));
+    }
   }
   }
   if (CurTok != ')')
@@ -294,7 +302,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     getNextToken(); // eat type
   }
 
-  return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), type, Kind != 0, BinaryPrecedence);
+  return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), type, Kind != 0, BinaryPrecedence, is_variable_number_args);
 }
 
 std::unique_ptr<ObjectDeclarAST> ParseObject(){
