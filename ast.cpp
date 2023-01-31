@@ -73,7 +73,15 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
 
   getNextToken();  // eat identifier.
-
+  if (CurTok == '='){
+    Log::Info() << "IdName " << IdName << "\n";
+    if (NamedValues[IdName] == nullptr){
+    LogError("Couldn't find variable");
+    }
+    getNextToken();
+    auto V = ParseExpression();
+    return std::make_unique<RedeclarationExprAST>(IdName, std::move(V));
+  }
   if (CurTok != '('){ // Simple variable ref.
     for (int i = 0; i < IdName.length(); i++){
       if (IdName.at(i) == '.'){
@@ -446,6 +454,7 @@ std::unique_ptr<ExprAST> ParseReturn(){
 
 std::unique_ptr<ExprAST> ParseWhileExpr(){ 
   getNextToken();  // eat the while.
+  Log::Info() << "Before Parse Expression" << "\n";
   auto Cond = ParseExpression();
   if (!Cond)
     return nullptr;
@@ -586,5 +595,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
  std::unique_ptr<Cpoint_Type> cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element);
+  NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, *cpoint_type);
   return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type));
 }

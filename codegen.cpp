@@ -331,14 +331,31 @@ Value* ReturnAST::codegen(){
   //return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
+Value* RedeclarationExprAST::codegen(){
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  Value* ValDeclared = Val->codegen();
+  Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type.type, cpoint_type.is_ptr, cpoint_type.is_array, cpoint_type.nb_element);
+  Builder->CreateStore(ValDeclared, Alloca);
+  NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+}
+
 Value* WhileExprAST::codegen(){
+  // TODO generate some sort of if to verify if condition is true for the first run
+  // now it is more of a do {} while(...) than a classic while(...){}
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
+  Builder->CreateBr(LoopBB);
+  Builder->SetInsertPoint(LoopBB);
+  if (!Body->codegen())
+    return nullptr;
+  // testing condition
   Value *CondV = Cond->codegen();
   if (!CondV)
     return nullptr;
   CondV = Builder->CreateFCmpONE(
-      CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
+    CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond");
   BasicBlock *AfterBB =
       BasicBlock::Create(*TheContext, "afterloop", TheFunction);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);

@@ -119,6 +119,15 @@ public:
   Value *codegen() override;
 };
 
+class RedeclarationExprAST : public ExprAST {
+  std::string VariableName;
+  std::unique_ptr<ExprAST> Val;
+public:
+  RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val) 
+: VariableName(VariableName), Val(std::move(Val)) {}
+  Value *codegen() override;
+};
+
 class ObjectDeclarAST {
   std::string Name;
   std::vector<std::unique_ptr<ExprAST>> Vars;
