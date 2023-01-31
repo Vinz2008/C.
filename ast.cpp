@@ -89,6 +89,24 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         std::string MemberName =  IdName.substr(i+1, IdName.length()-1);
         return std::make_unique<ObjectMemberExprAST>(ObjectName, MemberName);
       }
+      if (IdName.at(i) == '['){
+        if (IdName.back() != ']')
+          return LogError("Couldn't find ]");
+        std::string VarName = IdName.substr(0, i);
+        std::string pos_str = "";
+        for (int j = i + 1; j < IdName.length(); j++){
+          if (IdName.at(j) == ']'){
+            break;
+          } else {
+            pos_str += IdName.at(j);
+          }
+        }
+        //std::string pos_str = IdName.substr(i+1, IdName.length()-2);
+        Log::Info() << "NAME LENGTH " << IdName.length() << "\n";
+        Log::Info() << "ARRAY MEMBER " << VarName << " " << pos_str << "\n";
+        int pos = std::stoi(pos_str);
+        return std::make_unique<ArrayMemberExprAST>(VarName, pos);
+      }
     }
     int type;
     if (NamedValues[IdName] == nullptr){
@@ -192,15 +210,9 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseStrExpr();
   case tok_addr:
     return ParseAddrExpr();
-  case tok_array_member:
-    return ParseArrayMemberExpr();
   case tok_while:
     return ParseWhileExpr();
   }
-}
-
-std::unique_ptr<ExprAST> ParseArrayMemberExpr(){
-  return std::make_unique<ArrayMemberExprAST>(strPosArray, posArrayNb);
 }
 
 std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr){

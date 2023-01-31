@@ -80,7 +80,16 @@ Value* ObjectMemberExprAST::codegen() {
 }
 
 Value* ArrayMemberExprAST::codegen() {
+  Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
+  AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
+  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+  //auto ptr = GetElementPtrInst::Create(Alloca, { zero, index}, "", );
+  Type* type_llvm = get_type_llvm(cpoint_type.type, cpoint_type.is_ptr, cpoint_type.is_array, cpoint_type.nb_element);
+  Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
+  Value* value = Builder->CreateLoad(type_llvm, ptr, ArrayName);
   //Value* ptr = Builder->CreateGEP(double_type, ); //  TODO : make the code find the type of the array
+  return value;
 }
 
 Type* ClassExprAST::codegen(){

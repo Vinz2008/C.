@@ -1,0 +1,5 @@
+extern printstr(x : i8 ptr) void;
+func main(){
+    var test[10] : i8 ptr
+    var out : i8 ptr = test[0]
+}
