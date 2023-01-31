@@ -1,5 +1,5 @@
 extern printstr(x : i8 ptr) void;
 func main() {
-    var str : i8 ptr = "hello world"
-    printstr(str)
+    var strnot : i8 ptr = "not hello world"
+    printstr("hello world")
 }

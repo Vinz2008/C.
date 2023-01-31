@@ -188,10 +188,10 @@ static int gettok() {
   }
   if (LastChar == '\"'){
     LastChar = getCharLine();
-    do {
+    strStatic = LastChar;
+    while ((LastChar = getCharLine()) != '\"') {
       strStatic += LastChar;
-      LastChar = getCharLine();
-    } while (LastChar != '\"');
+    }
     LastChar = getCharLine();
     Log::Info() << "strStatic : " << strStatic << "\n";
     Log::Info() << "LastChar : " << (char)LastChar << "\n";
