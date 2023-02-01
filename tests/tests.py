@@ -2,7 +2,7 @@ from termcolor import colored
 import subprocess
 import os
 
-nb_test = 1
+nb_test = 0
 
 def test_file(name):
 	global nb_test
@@ -15,6 +15,7 @@ def test_file(name):
 		exit(1)
 	nb_test += 1
 
-for i in range(1,14):
-	test_file("../test" + str(i) + ".cpoint")
+for i in range(0,18):
+	print(i+1)
+	test_file("../test" + str(i+1) + ".cpoint")
 print(colored("All " + str(nb_test) + " tests succeeded", "green"))

@@ -1,7 +1,12 @@
 extern open(pathname : i8 ptr flags : int) int;
 extern write(fd : int buf : i8 ptr count : int) int;
 extern close(fd : int) int;
+extern malloc(size : int) int;
+extern free(pointer : void ptr) void;
+extern printptr(pointer : void ptr) void;
 func main(){
+    var pointer : void ptr = malloc(10)
+    printptr(pointer)
     var fd = open("test_io.txt", 0)
     write(fd, "test hello world", 17)
     close(fd)

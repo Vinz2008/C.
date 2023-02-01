@@ -1,5 +1,5 @@
 extern printd(x);
-func test(x : double ...) double {
+func test(x : double) double {
     printd(x)
 }
 func main(){

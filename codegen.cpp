@@ -23,7 +23,7 @@ std::unique_ptr<LLVMContext> TheContext;
 std::unique_ptr<Module> TheModule;
 static std::unique_ptr<IRBuilder<>> Builder;
 std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
-static std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 static std::map<std::string, std::unique_ptr<ObjectDeclarAST>> ObjectDeclarations;
 
 extern std::map<char, int> BinopPrecedence;
@@ -63,7 +63,10 @@ Value *NumberExprAST::codegen() {
 }
 
 Value* StringExprAST::codegen() {
+  Log::Info() << "Before Codegen " << (std::string)StringRef(str.c_str()) << '\n';
   Value* string = Builder->CreateGlobalStringPtr(StringRef(str.c_str()));
+  Log::Info() << "Codegen String" << "\n";
+  string->print(outs());
   return string;
 }
 
@@ -157,14 +160,23 @@ Value *BinaryExprAST::codegen() {
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   Log::Info() << "function called " << Callee << "\n";
-
   Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknown function referenced");
-
+  Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
+  Log::Info() << "Args.size : " << Args.size() << "\n";
   // If argument mismatch error.
+  if (FunctionProtos[Callee] == nullptr){
+    return LogErrorV("Incorrect Function");
+  }
+  if (FunctionProtos[Callee]->is_variable_number_args){
+    if (!(Args.size() >= CalleeF->arg_size())){
+      return LogErrorV("Incorrect # arguments passed");
+    }
+  } else {
   if (CalleeF->arg_size() != Args.size())
     return LogErrorV("Incorrect # arguments passed");
+  }
 
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -213,6 +225,7 @@ Function *PrototypeAST::codegen() {
     Arg.setName(Args[Idx++].first);
     //}
   }
+  FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(*this);
   return F;
 }
 

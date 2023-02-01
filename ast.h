@@ -145,8 +145,8 @@ class PrototypeAST {
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
   int type;
-  bool is_variable_number_args;
 public:
+  bool is_variable_number_args;
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
   PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, int type = -1, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false)
     : Name(name), Args(std::move(Args)), type(type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args) {}

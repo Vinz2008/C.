@@ -1,6 +1,6 @@
 extern printfmt(x : i8 ptr ...) void;
 func main(){
-    var x = 2
-    var str : i8 ptr = "hello world %d"
+    var x : double = 2
+    var str : i8 ptr = "hello world %f\n"
     printfmt(str, x)
 }

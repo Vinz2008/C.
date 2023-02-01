@@ -23,7 +23,15 @@ Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements){
            type = Type::getInt8Ty(*TheContext);
            break;
         case void_type:
-            return Type::getVoidTy(*TheContext);
+            if (!is_ptr){
+            type = Type::getVoidTy(*TheContext);
+            } else {
+            type = PointerType::get(*TheContext, 0);
+            if (is_array){
+                type = llvm::ArrayType::get(type, nb_aray_elements);
+            }
+            }
+            return type;
         case argv_type:
             return Type::getInt8PtrTy(*TheContext)->getPointerTo();
     }
