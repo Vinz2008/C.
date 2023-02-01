@@ -141,11 +141,11 @@ public:
 /// which captures its name, and its argument names (thus implicitly the number
 /// of arguments the function takes).
 class PrototypeAST {
-  std::string Name;
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
   int type;
 public:
+  std::string Name;
   bool is_variable_number_args;
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
   PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, int type = -1, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false)

@@ -156,6 +156,10 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     // Okay, we know this is a binop.
     int BinOp = CurTok;
     getNextToken(); // eat binop
+    if (BinOp == '=' && CurTok == '='){
+      BinOp = -1;
+      getNextToken();
+    }
 
     // Parse the primary expression after the binary operator.
     //auto RHS = ParsePrimary();
@@ -426,23 +430,36 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   auto Cond = ParseExpression();
   if (!Cond)
     return nullptr;
-
-  if (CurTok != tok_then)
-    return LogError("expected then");
-  getNextToken();  // eat the then
+  if (CurTok != '{'){
+    return LogError("expected {");
+  }
+  /*if (CurTok != tok_then)
+    return LogError("expected then");*/
+  getNextToken();  // eat the {
 
   auto Then = ParseExpression();
   if (!Then)
     return nullptr;
   Log::Info() << "CurTok : " << CurTok << "\n";
+  if (CurTok != '}'){
+    return LogError("expected }");
+  }
+  getNextToken();
   if (CurTok != tok_else)
     return LogError("expected else");
-
   getNextToken();
-
+  if (CurTok != '{'){
+    return LogError("expected {");
+  }
+  getNextToken();
   auto Else = ParseExpression();
   if (!Else)
     return nullptr;
+  
+  if (CurTok != '}'){
+    return LogError("expected }");
+  }
+  getNextToken();
 
   return std::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
                                       std::move(Else));

@@ -8,7 +8,7 @@ else
     CCPOINT=cpoint
 endif
 else
-ifneq ("$(wildcard $(../cpoint))","")
+ifneq (,$(wildcard ../cpoint))
     CCPOINT=../cpoint
 else
     CCPOINT=cpoint

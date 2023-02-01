@@ -7,6 +7,7 @@ extern printptr(pointer : void ptr) void;
 func main(){
     var pointer : void ptr = malloc(10)
     printptr(pointer)
+    free(pointer)
     var fd = open("test_io.txt", 0)
     write(fd, "test hello world", 17)
     close(fd)

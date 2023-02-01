@@ -26,7 +26,7 @@ Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements){
             if (!is_ptr){
             type = Type::getVoidTy(*TheContext);
             } else {
-            type = PointerType::get(*TheContext, 0);
+            type = PointerType::get(*TheContext, 0U);
             if (is_array){
                 type = llvm::ArrayType::get(type, nb_aray_elements);
             }

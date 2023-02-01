@@ -113,6 +113,14 @@ Type* ObjectDeclarAST::codegen(){
 }
 
 Value *BinaryExprAST::codegen() {
+  if (Op == -1){
+    Value *L = LHS->codegen();
+    Value *R = RHS->codegen();
+    if (!L || !R)
+      return nullptr;
+    L = Builder->CreateICmpEQ(L, R, "cmptmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
   if (Op == '=') {
     VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
     if (!LHSE)

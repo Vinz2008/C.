@@ -1,13 +1,15 @@
-func unary!(v){
-  if v then
+func unary ! (v){
+  if v {
     0
-  else
-    1
+  } else {
+    return 1
+  }
 }
 
 func binary& 6 (LHS RHS){
-  if !LHS then
+  if !LHS {
     0
-  else
-    !!RHS
+  } else {
+    return !!RHS
+  }
 }

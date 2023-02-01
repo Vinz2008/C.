@@ -1,6 +1,7 @@
 func test(x y){
-  if x < 3 then
+  if x < 3 {
     1
-  else 
-    return x + y; 
+  } else { 
+    return x + y
+  } 
 }
