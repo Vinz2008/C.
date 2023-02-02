@@ -2,6 +2,7 @@ extern printd(x);
 func test(x){
     var i : double = 2
     i = 2 + 2
+    i = i + 2
     printd(i)
 }
 func main(){

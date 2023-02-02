@@ -323,10 +323,12 @@ Value *IfExprAST::codegen() {
 
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
-
-  Value *ThenV = Then->codegen();
-  if (!ThenV)
-    return nullptr;
+  Value *ThenV;
+  for (int i = 0; i < Then.size(); i++){
+    ThenV = Then.at(i)->codegen();
+    if (!ThenV)
+      return nullptr;
+  }
 
   Builder->CreateBr(MergeBB);
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
@@ -335,10 +337,12 @@ Value *IfExprAST::codegen() {
   // Emit else block.
   TheFunction->getBasicBlockList().push_back(ElseBB);
   Builder->SetInsertPoint(ElseBB);
-
-  Value *ElseV = Else->codegen();
-  if (!ElseV)
-    return nullptr;
+  Value *ElseV;
+  for (int i = 0; i < Else.size(); i++){
+    ElseV = Else.at(i)->codegen();
+    if (!ElseV)
+      return nullptr;
+  }
 
   Builder->CreateBr(MergeBB);
   // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
@@ -378,8 +382,10 @@ Value* WhileExprAST::codegen(){
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
   Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
-  if (!Body->codegen())
-    return nullptr;
+  for (int i = 0; i < Body.size(); i++){
+    if (!Body.at(i)->codegen())
+      return nullptr;
+  }
   // testing condition
   Value *CondV = Cond->codegen();
   if (!CondV)
@@ -416,8 +422,10 @@ Value *ForExprAST::codegen(){
   Variable->addIncoming(StartVal, PreheaderBB);
   Value *OldVal = NamedValues[VarName];
   NamedValues[VarName] = Variable;*/
-  if (!Body->codegen())
-    return nullptr;
+  for (int i = 0; i < Body.size(); i++){
+    if (!Body.at(i)->codegen())
+      return nullptr;
+  }
   Value *StepVal = nullptr;
   if (Step) {
     StepVal = Step->codegen();

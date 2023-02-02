@@ -436,14 +436,17 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   /*if (CurTok != tok_then)
     return LogError("expected then");*/
   getNextToken();  // eat the {
-
-  auto Then = ParseExpression();
-  if (!Then)
-    return nullptr;
-  Log::Info() << "CurTok : " << CurTok << "\n";
-  if (CurTok != '}'){
-    return LogError("expected }");
+  std::vector<std::unique_ptr<ExprAST>> Then;
+  while (CurTok != '}'){
+    auto E = ParseExpression();
+    if (!E)
+      return nullptr;
+    Then.push_back(std::move(E));
   }
+  Log::Info() << "CurTok : " << CurTok << "\n";
+  /*if (CurTok != '}'){
+    return LogError("expected }");
+  }*/
   getNextToken();
   if (CurTok != tok_else)
     return LogError("expected else");
@@ -452,13 +455,16 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
     return LogError("expected {");
   }
   getNextToken();
-  auto Else = ParseExpression();
-  if (!Else)
-    return nullptr;
-  
-  if (CurTok != '}'){
-    return LogError("expected }");
+  std::vector<std::unique_ptr<ExprAST>> Else;
+  while (CurTok != '}'){
+    auto E2 = ParseExpression();
+    if (!E2)
+      return nullptr;
+    Else.push_back(std::move(E2));
   }
+  /*if (CurTok != '}'){
+    return LogError("expected }");
+  }*/
   getNextToken();
 
   return std::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
@@ -487,14 +493,18 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   auto Cond = ParseExpression();
   if (!Cond)
     return nullptr;
-  Log::Info() << "CurTok : " << CurTok << "\n";
+  Log::Info() << "first CurTok : " << CurTok << "\n";
   if (CurTok != '{'){
     return LogError("expected {");
   }
   getNextToken();
-  auto Body = ParseExpression();
-  if (!Body)
-    return nullptr;
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  while (CurTok != '}'){
+    auto E = ParseExpression();
+    if (!E)
+      return nullptr;
+    Body.push_back(std::move(E));
+  }
   Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
     return LogError("expected }");
@@ -537,13 +547,23 @@ std::unique_ptr<ExprAST> ParseForExpr() {
       return nullptr;
   }
 
-  if (CurTok != tok_in)
-    return LogError("expected 'in' after for");
-  getNextToken();  // eat 'in'.
-
-  auto Body = ParseExpression();
-  if (!Body)
-    return nullptr;
+  /*if (CurTok != tok_in)
+    return LogError("expected 'in' after for");*/
+  if (CurTok != '{'){
+    return LogError("expected { after for");
+  }
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  getNextToken();  // eat '{'.
+  while (CurTok != '}'){
+    auto E = ParseExpression();
+    if (!E)
+      return nullptr;
+    Body.push_back(std::move(E));
+  }
+  /*if (CurTok != '}'){
+    return LogError("expected } after for");
+  }*/
+  getNextToken();
 
   return std::make_unique<ForExprAST>(IdName, std::move(Start),
                                        std::move(End), std::move(Step),
