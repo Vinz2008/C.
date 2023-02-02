@@ -15,18 +15,11 @@ else
 CFLAGS += -O2
 endif
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
+SRCDIR=src
 
-OBJS=\
-lexer.o \
-ast.o \
-codegen.o \
-preprocessor.o \
-errors.o \
-debuginfo.o \
-types.o \
-linker.o \
-target-triplet.o \
-main.o \
+SRCS := $(wildcard $(SRCDIR)/*.cpp)
+OBJS = $(patsubst %.cpp,%.o,$(SRCS))
+
 
 all: std_lib_plus_compiler
 
@@ -38,14 +31,14 @@ std_lib: $(OUTPUTBIN)
 $(OUTPUTBIN): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-%.o:%.cpp
+$(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean-build:
 ifeq ($(OS),Windows_NT)
-	rmdir .\*.o /s /q
+	rmdir .\src\*.o /s /q
 else
-	rm -f ./*.o
+	rm -f ./src/*.o
 endif
 
 install:
@@ -57,7 +50,7 @@ install:
 
 
 run:
-	./cpoint -std ./std test2.cpoint
+	./cpoint -std ./std tests/test2.cpoint
 
 clean: clean-build
 	make -C std/c_api clean
