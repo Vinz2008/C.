@@ -71,7 +71,7 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
 
 static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
-
+  Log::Info() << "Parse Identifier Str" << "\n";
   getNextToken();  // eat identifier.
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
@@ -108,6 +108,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         return std::make_unique<ArrayMemberExprAST>(VarName, pos);
       }
     }
+    Log::Info() << "VariableExprAST" << "\n";
     int type;
     if (NamedValues[IdName] == nullptr){
       type = double_type;

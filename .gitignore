@@ -21,3 +21,4 @@ test
 a.out
 *.wasm
 test_io.txt
+*.temp

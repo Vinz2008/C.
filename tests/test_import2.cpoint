@@ -1,0 +1,5 @@
+func printtests(x){
+  for i = 1, i < x, 1.0 {
+    return 1
+  }
+}

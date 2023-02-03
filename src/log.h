@@ -21,4 +21,14 @@ namespace Log {
             return *this;
         }
     };
+    struct Imports_Info {
+        Imports_Info(){
+            std::cout << "[IMPORTS INFO] ";
+        }
+        template< class T >
+        Imports_Info &operator<<(const T& val){
+            std::cout<<val;
+            return *this;
+        }
+    };
 }

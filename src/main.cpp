@@ -20,6 +20,7 @@
 #include "debuginfo.h"
 #include "linker.h"
 #include "target-triplet.h"
+#include "imports.h"
 #include "log.h"
 
 using namespace std;
@@ -164,6 +165,7 @@ int main(int argc, char **argv){
     bool link_files_mode = true;
     bool std_mode = true;
     bool verbose_std_build = false;
+    bool remove_temp_file = true;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -189,11 +191,14 @@ int main(int argc, char **argv){
           cout << "target triplet : " << target_triplet_found << endl;
         } else if (arg.compare("-verbose-std-build") == 0){
           verbose_std_build = true;
+        } else if (arg.compare("-no-delete-import-file") == 0){
+          remove_temp_file = false;
         } else {
           cout << "filename : " << arg << endl;
           filename = arg;
         }
     }
+    
     if (output_temp_found){
       if (link_files_mode){
         exe_filename = temp_output;
@@ -202,6 +207,10 @@ int main(int argc, char **argv){
       }
     }
     Comp_context = std::make_unique<Compiler_context>(filename, 0, 0, "<empty line>");
+    std::string temp_filename = filename;
+    temp_filename.append(".temp");
+    generate_file_with_imports(filename, temp_filename);
+    filename = temp_filename;
     std::error_code ec;
     if (debug_mode == false ){
 #ifdef _WIN32
@@ -300,6 +309,9 @@ int main(int argc, char **argv){
         vect_obj_files.push_back(object_filename);
       }
       link_files(vect_obj_files, exe_filename, TargetTriple);
+    }
+    if (remove_temp_file){
+      remove(temp_filename.c_str());
     }
     return return_status;
 }

@@ -150,6 +150,10 @@ static int gettok() {
       return tok_ptr;
     if (IdentifierStr == "while")
       return tok_while;
+    if (IdentifierStr == "import"){
+      go_to_next_line();
+      return getNextToken();
+    }
     Log::Info() << "lastChar : " << LastChar << "\n";
     Log::Info() << "IdentifierStr : " << IdentifierStr << "\n";
     return tok_identifier;
