@@ -12,6 +12,7 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/IR/DIBuilder.h"
+#include "config.h"
 #include "lexer.h"
 #include "ast.h"
 #include "codegen.h"
@@ -27,8 +28,6 @@ using namespace std;
 using namespace llvm;
 using namespace llvm::sys;
 
-#define DEFAULT_STD_PATH "/usr/local/lib/cpoint"
-
 #ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)
 #else
@@ -40,6 +39,7 @@ int return_status = 0;
 extern std::unique_ptr<DIBuilder> DBuilder;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
+string std_path = DEFAULT_STD_PATH;
 
 /// putchard - putchar that takes a double and returns 0.
 extern "C" DLLEXPORT double putchard(double X) {
@@ -158,7 +158,6 @@ int main(int argc, char **argv){
     string exe_filename = "a.out";
     string temp_output = "";
     bool output_temp_found = false;
-    string std_path = DEFAULT_STD_PATH;
     string target_triplet_found;
     bool target_triplet_found_bool = false;
     bool debug_mode = false;

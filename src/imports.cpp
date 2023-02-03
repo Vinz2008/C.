@@ -12,6 +12,7 @@
 static std::string IdentifierStr;
 static std::string line;
 std::ofstream out_file;
+extern std::string std_path;
 
 class ArgVarImport {
     std::string name;
@@ -57,7 +58,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
 
 void getPath(std::string line, int& pos, std::string &Path){
     Path = "";
-    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || isdigit(line.at(pos)))){
+    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || isdigit(line.at(pos)))){
         Path += line.at(pos);
         pos++;
     }
@@ -93,6 +94,16 @@ void interpret_import(std::string line, int& pos_src){
     skip_spaces(line, pos_src);
     getPath(line, pos_src, Path);
     Log::Imports_Info() << "Path : " << Path << "\n";
+    if (Path.at(0) == '@'){
+    	int pos_path = 0;
+    	getIdentifierStr(Path, pos_path, IdentifierStr);
+	if (IdentifierStr == "std"){
+	    pos_path += IdentifierStr.size();
+ 	}
+	std::string Path_temp = std_path;
+        Path_temp.append(Path.substr(pos_path, Path.size()));
+	Path = Path_temp;
+    }
     int nb_line = get_nb_lines(imported_file, Path);
     imported_file.open(Path);
     if (imported_file.is_open()){
