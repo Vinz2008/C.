@@ -95,7 +95,7 @@ void interpret_import(std::string line, int& pos_src){
     getPath(line, pos_src, Path);
     Log::Imports_Info() << "Path : " << Path << "\n";
     if (Path.at(0) == '@'){
-    	int pos_path = 0;
+    	int pos_path = 1;
     	getIdentifierStr(Path, pos_path, IdentifierStr);
 	if (IdentifierStr == "std"){
 	    pos_path += IdentifierStr.size();
