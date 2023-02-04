@@ -23,8 +23,8 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     cmd.append(path);
     cout << "cmd : " << cmd << endl;
     FILE* pipe = popen(cmd.c_str(), "r");
-    char* out = (char*)malloc(10000 * sizeof(char));
-	fread(out, 1, 10000, pipe);
+    char* out = (char*)malloc(10000000 * sizeof(char));
+	fread(out, 1, 10000000, pipe);
     string out_cpp = out;
     if (verbose_std_build){
         cout << out_cpp << endl;

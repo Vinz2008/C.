@@ -40,6 +40,7 @@ extern std::unique_ptr<DIBuilder> DBuilder;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
+string filename ="";
 
 /// putchard - putchar that takes a double and returns 0.
 extern "C" DLLEXPORT double putchard(double X) {
@@ -153,7 +154,6 @@ static void MainLoop() {
 
 
 int main(int argc, char **argv){
-    string filename ="";
     string object_filename = "out.o";
     string exe_filename = "a.out";
     string temp_output = "";
@@ -197,7 +197,6 @@ int main(int argc, char **argv){
           filename = arg;
         }
     }
-    
     if (output_temp_found){
       if (link_files_mode){
         exe_filename = temp_output;

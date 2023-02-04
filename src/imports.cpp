@@ -13,6 +13,7 @@ static std::string IdentifierStr;
 static std::string line;
 std::ofstream out_file;
 extern std::string std_path;
+extern std::string filename;
 
 class ArgVarImport {
     std::string name;
@@ -62,6 +63,46 @@ void getPath(std::string line, int& pos, std::string &Path){
         Path += line.at(pos);
         pos++;
     }
+    if (Path.at(0) == '@'){
+    	int pos_path = 1;
+    	getIdentifierStr(Path, pos_path, IdentifierStr);
+        Log::Imports_Info() << "IdentifierStr : " << IdentifierStr << "\n";
+        std::string Path_temp;
+	    if (IdentifierStr == "std"){
+	    //pos_path += IdentifierStr.size();
+	    Path_temp = std_path;
+        } else {
+            import_error("couldn't find after @ a normal import\n");
+        }
+        Log::Imports_Info() << "Path_temp : " << Path_temp << "\n";
+        std::string end_str = Path.substr(pos_path, Path.size());
+        Log::Imports_Info() << "end_str : " << end_str << "\n";
+        Path_temp.append(end_str);
+	    Path = Path_temp;
+        Log::Imports_Info() << "Path : " << Path << "\n";
+    }
+
+}
+
+void getPathFromFilePOV(std::string& Path, std::string file_src){
+    Log::Imports_Info() << "file_src : " << file_src << "\n";
+    int pos_last_slash = 0;
+    for (int i = file_src.size() -1; i > 0; i--){
+        if (file_src.at(i) == '/'){
+            pos_last_slash = i;
+            break;
+        }
+    }
+    std::string Path_Temp = "";
+    if (pos_last_slash != 0){
+    std::string folder_src_path = file_src.substr(0, pos_last_slash);
+    Path_Temp.append(folder_src_path);
+    Log::Imports_Info() << "folder_src_path : " << folder_src_path << "\n";
+    }
+    Path_Temp.append(Path);
+    Path = Path_Temp;
+    Path = realpath(Path.c_str(), NULL);
+    Log::Imports_Info() << "Path after serialization : " << Path << "\n";
 }
 
 void interpret_func(std::string line, int& pos, int nb_line, int pos_line){
@@ -93,17 +134,8 @@ void interpret_import(std::string line, int& pos_src){
     std::ifstream imported_file;
     skip_spaces(line, pos_src);
     getPath(line, pos_src, Path);
+    getPathFromFilePOV(Path, filename);
     Log::Imports_Info() << "Path : " << Path << "\n";
-    if (Path.at(0) == '@'){
-    	int pos_path = 1;
-    	getIdentifierStr(Path, pos_path, IdentifierStr);
-	if (IdentifierStr == "std"){
-	    pos_path += IdentifierStr.size();
- 	}
-	std::string Path_temp = std_path;
-        Path_temp.append(Path.substr(pos_path, Path.size()));
-	Path = Path_temp;
-    }
     int nb_line = get_nb_lines(imported_file, Path);
     imported_file.open(Path);
     if (imported_file.is_open()){
@@ -117,7 +149,31 @@ void interpret_import(std::string line, int& pos_src){
     imported_file.close();
 }
 
-int find_import(std::string line){
+void interpret_include(std::string line, int& pos_src){
+    std::string Path;
+    std::ifstream included_file;
+    skip_spaces(line, pos_src);
+    getPath(line, pos_src, Path);
+    getPathFromFilePOV(Path, filename);
+    Log::Imports_Info() << "Path : " << Path << "\n";
+    int nb_line = get_nb_lines(included_file, Path);
+    included_file.open(Path);
+    if (included_file.is_open()){
+        int pos_line = 0;
+        while (std::getline(included_file, line)){
+            Log::Imports_Info() << line << "\n";
+            Log::Imports_Info() << "pos_line : " << pos_line << "\n";
+            out_file << line;
+            if (pos_line != nb_line - 1){
+                out_file << "\n";
+            }
+            pos_line++;
+        }
+    }
+    included_file.close();
+}
+
+int find_import_or_include(std::string line){
     int pos_src = 0;
     skip_spaces(line, pos_src);
     getIdentifierStr(line, pos_src, IdentifierStr);
@@ -125,6 +181,11 @@ int find_import(std::string line){
     if (IdentifierStr == "import"){
         interpret_import(line, pos_src);
         return 1;
+    } if (IdentifierStr == "include"){
+        interpret_include(line, pos_src);
+        return 1;
+    } else {
+
     }
     return 0;
 }
@@ -143,7 +204,7 @@ void generate_file_with_imports(std::string file_path, std::string out_path){
                 out_file << "\n";
             }
             Log::Imports_Info() << "line : " << line << "\n";
-            if (find_import(line) == 0){
+            if (find_import_or_include(line) == 0){
                 out_file << line;
             }
             pos_line++;

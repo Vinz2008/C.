@@ -1,0 +1,2 @@
+extern puts(s : i8 ptr) int;
+extern putchar(c : int) int;

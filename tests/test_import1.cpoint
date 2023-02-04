@@ -1,4 +1,4 @@
-import ../std/utils.cpoint
+import @std/utils.cpoint
 extern printd(x);
 func test(x){
   for i = 1, i < x, 1.0 {

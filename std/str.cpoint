@@ -1,5 +1,4 @@
-extern puts(s : i8 ptr) int;
-extern putchar(c : int) int;
+include libc.hpoint
 object str {
     var pointer : i8 ptr
     var len : int

@@ -1,0 +1,3 @@
+extern cprintd(x : double) double;
+extern cprinti(x : int) void;
+extern cputchard(x : double);
