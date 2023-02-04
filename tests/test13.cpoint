@@ -1,4 +1,4 @@
-extern printd(x);
+import @std/print.cpoint
 func test(x : double) double {
     printd(x)
 }

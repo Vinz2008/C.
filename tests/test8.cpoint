@@ -1,4 +1,4 @@
-extern printd(x)
+import @std/print.cpoint
 extern printptr(x)
 func main(){
   var c : i8 ptr = "hello"

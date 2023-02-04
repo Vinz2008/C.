@@ -14,6 +14,7 @@ static std::string line;
 std::ofstream out_file;
 extern std::string std_path;
 extern std::string filename;
+int pos_line_file = 0;
 
 class ArgVarImport {
     std::string name;
@@ -57,7 +58,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     skip_spaces(line, pos);
 }
 
-void getPath(std::string line, int& pos, std::string &Path){
+int getPath(std::string line, int& pos, std::string &Path){
     Path = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || isdigit(line.at(pos)))){
         Path += line.at(pos);
@@ -80,12 +81,14 @@ void getPath(std::string line, int& pos, std::string &Path){
         Path_temp.append(end_str);
 	    Path = Path_temp;
         Log::Imports_Info() << "Path : " << Path << "\n";
+        return 1;
     }
-
+    return 0;
 }
 
 void getPathFromFilePOV(std::string& Path, std::string file_src){
     Log::Imports_Info() << "file_src : " << file_src << "\n";
+    Log::Imports_Info() << "Path : " << Path << "\n";
     int pos_last_slash = 0;
     for (int i = file_src.size() -1; i > 0; i--){
         if (file_src.at(i) == '/'){
@@ -95,17 +98,18 @@ void getPathFromFilePOV(std::string& Path, std::string file_src){
     }
     std::string Path_Temp = "";
     if (pos_last_slash != 0){
-    std::string folder_src_path = file_src.substr(0, pos_last_slash);
+    std::string folder_src_path = file_src.substr(0, pos_last_slash+1);
     Path_Temp.append(folder_src_path);
     Log::Imports_Info() << "folder_src_path : " << folder_src_path << "\n";
     }
     Path_Temp.append(Path);
     Path = Path_Temp;
+    Log::Imports_Info() << "TEST " << Path << "\n";
     Path = realpath(Path.c_str(), NULL);
     Log::Imports_Info() << "Path after serialization : " << Path << "\n";
 }
 
-void interpret_func(std::string line, int& pos, int nb_line, int pos_line){
+void interpret_func(std::string line, int& pos, int nb_line, int& pos_line){
     std::string declar = "";
     for (int i = pos; i < line.size(); i++){
         if (line.at(i) != '{'){
@@ -113,13 +117,15 @@ void interpret_func(std::string line, int& pos, int nb_line, int pos_line){
         }
     }
     Log::Imports_Info() << "Declar : " << declar << "\n";
+    Log::Imports_Info() << "pos_line : " << pos_line << "\n";
     if (pos_line != 0 && pos_line != nb_line){
         out_file << "\n";
     }
     out_file << "extern " << declar << ";";
+    pos_line++;
 }
 
-void find_func(std::string line, int nb_line, int pos_line){
+void find_func(std::string line, int nb_line, int& pos_line){
     int pos = 0;
     skip_spaces(line, pos);
     getIdentifierStr(line, pos, IdentifierStr);
@@ -133,8 +139,9 @@ void interpret_import(std::string line, int& pos_src){
     std::string Path;
     std::ifstream imported_file;
     skip_spaces(line, pos_src);
-    getPath(line, pos_src, Path);
+    if (getPath(line, pos_src, Path) == 0){
     getPathFromFilePOV(Path, filename);
+    }
     Log::Imports_Info() << "Path : " << Path << "\n";
     int nb_line = get_nb_lines(imported_file, Path);
     imported_file.open(Path);
@@ -143,7 +150,6 @@ void interpret_import(std::string line, int& pos_src){
         while (std::getline(imported_file, line)){
             Log::Imports_Info() << line << "\n";
             find_func(line, nb_line, pos_line);
-            pos_line++;
         }
     }
     imported_file.close();
@@ -198,16 +204,16 @@ void generate_file_with_imports(std::string file_path, std::string out_path){
     out_file.open(out_path);
 
     if (file_code.is_open()){
-        int pos_line = 0;
+        //int pos_line = 0;
         while (std::getline(file_code, line)){
-            if (pos_line != nb_line && pos_line != 0){
+            if (pos_line_file != nb_line && pos_line_file != 0){
                 out_file << "\n";
             }
             Log::Imports_Info() << "line : " << line << "\n";
             if (find_import_or_include(line) == 0){
                 out_file << line;
             }
-            pos_line++;
+            pos_line_file++;
         }
     }
     file_code.close();

@@ -1,2 +1,2 @@
-extern printd(x);
+import @std/print.cpoint
 printd(3.2);

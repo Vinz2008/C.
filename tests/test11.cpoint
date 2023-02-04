@@ -1,4 +1,4 @@
-extern printi(x) void;
+import @std/print.cpoint
 func main(){
   printi(argc)
   return 0
