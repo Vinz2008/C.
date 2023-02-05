@@ -72,3 +72,20 @@ You can also make it an array by using square brackets and the number of element
 ```
 var x[10] : int 
 ```
+
+## Structs
+
+To declare a struct, put a ```struct``` keyword.
+
+```
+struct test {
+    var x : i8
+    var x : float
+}
+```
+
+ To declare a struct variable, put `struct` and then the name of the struct type in the type declaration of the variable
+
+```
+var x : struct test
+```
