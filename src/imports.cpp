@@ -9,6 +9,10 @@
 #include "log.h"
 #include "types.h"
 
+#ifdef _WIN32
+#define realpath(N,R) _fullpath((R),(N),PATH_MAX)
+#endif
+
 static std::string IdentifierStr;
 static std::string line;
 std::ofstream out_file;

@@ -36,7 +36,8 @@ $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 
 clean-build:
 ifeq ($(OS),Windows_NT)
-	rmdir .\src\*.o ./src/*.temp /s /q
+	Remove-Item -Recurse -Force -Path .\src\*.o
+	Remove-Item -Recurse -Force -Path .\src\*.temp
 else
 	rm -f ./src/*.o ./src/*.temp
 endif
