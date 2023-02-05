@@ -18,4 +18,4 @@ libc_api.a: $(OBJECTS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f ./*.o ./*.a
+	rm -f ./*.o ./*.a ./*.temp

@@ -24,10 +24,11 @@ std::unique_ptr<Module> TheModule;
 static std::unique_ptr<IRBuilder<>> Builder;
 std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
-static std::map<std::string, std::unique_ptr<ObjectDeclarAST>> ObjectDeclarations;
+std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
 extern std::map<char, int> BinopPrecedence;
-extern bool isInObject;
+extern bool isInStruct;
 
 
 Function *getFunction(std::string Name) {
@@ -46,10 +47,10 @@ Function *getFunction(std::string Name) {
 }
 
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                                          StringRef VarName, int type, bool is_ptr = false, bool is_array = false, int nb_element = 0) {
+                                          StringRef VarName, int type, bool is_ptr = false, bool is_array = false, int nb_element = 0, bool is_struct = false, std::string struct_name = "") {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
-  return TmpB.CreateAlloca(get_type_llvm(type, is_ptr, is_array, nb_element), 0,
+  return TmpB.CreateAlloca(get_type_llvm(type, is_ptr, is_array, nb_element, is_struct, struct_name), 0,
                            VarName);
 }
 
@@ -78,7 +79,7 @@ Value *VariableExprAST::codegen() {
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
 }
 
-Value* ObjectMemberExprAST::codegen() {
+Value* StructMemberExprAST::codegen() {
 
 }
 
@@ -99,17 +100,21 @@ Type* ClassExprAST::codegen(){
   
 }
 
-Type* ObjectDeclarAST::codegen(){
-  Log::Info() << "codegen object" << "\n";
-  StructType* objectType = StructType::create(*TheContext);
-  objectType->setName(Name);
+Type* StructDeclarAST::codegen(){
+  Log::Info() << "codegen struct" << "\n";
+  StructType* structType = StructType::create(*TheContext);
+  structType->setName(Name);
   std::vector<Type*> dataTypes;
   for (int i = 0; i < Vars.size(); i++){
-    dataTypes.push_back(Type::getDoubleTy(*TheContext));
+    std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
+    Type* var_type = get_type_llvm(VarExpr->cpoint_type->type, VarExpr->cpoint_type->is_ptr, VarExpr->cpoint_type->is_array, VarExpr->cpoint_type->nb_element);
+    dataTypes.push_back(var_type);
+    //dataTypes.push_back(Type::getDoubleTy(*TheContext));
   }
-  objectType->setBody(dataTypes);
-  ObjectDeclarations[Name] = std::make_unique<ObjectDeclarAST>(std::move(*this));
-  return objectType;
+  structType->setBody(dataTypes);
+  std::unique_ptr<StructDeclarAST> structDeclarASTTemp = std::make_unique<StructDeclarAST>(this->Name, std::move(this->Vars));
+  StructDeclarations[Name] = std::make_unique<StructDeclaration>(std::move(structDeclarASTTemp), structType);
+  return structType;
 }
 
 Value *BinaryExprAST::codegen() {
@@ -178,6 +183,7 @@ Value *CallExprAST::codegen() {
     return LogErrorV("Incorrect Function");
   }
   if (FunctionProtos[Callee]->is_variable_number_args){
+    Log::Info() << "Variable number of args" << "\n";
     if (!(Args.size() >= CalleeF->arg_size())){
       return LogErrorV("Incorrect # arguments passed");
     }
@@ -210,7 +216,7 @@ Function *PrototypeAST::codegen() {
   std::vector<Type *> type_args;
   for (int i = 0; i < Args.size(); i++){
     //if (Args.at(i).first != "..."){
-    type_args.push_back(get_type_llvm(Args.at(i).second.type,Args.at(i).second.is_ptr));
+    type_args.push_back(get_type_llvm(Args.at(i).second.type,Args.at(i).second.is_ptr, Args.at(i).second.is_array, Args.at(i).second.nb_element, Args.at(i).second.is_struct, Args.at(i).second.struct_name));
     //}
   }
   FunctionType *FT;
@@ -219,9 +225,9 @@ Function *PrototypeAST::codegen() {
   std::vector<Type*> args_type_main;
   args_type_main.push_back(get_type_llvm(-2));
   args_type_main.push_back(get_type_llvm(-4, true)->getPointerTo());
-  FT = FunctionType::get(get_type_llvm(type), args_type_main, false);
+  FT = FunctionType::get(get_type_llvm(cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct, cpoint_type->struct_name), args_type_main, false);
   } else {
-  FT = FunctionType::get(get_type_llvm(type), type_args, is_variable_number_args);
+  FT = FunctionType::get(get_type_llvm(cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct, cpoint_type->struct_name), type_args, is_variable_number_args);
   }
   Function *F =
       Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
@@ -233,7 +239,7 @@ Function *PrototypeAST::codegen() {
     Arg.setName(Args[Idx++].first);
     //}
   }
-  FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(*this);
+  FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(this->Name, this->Args, std::move(this->cpoint_type), this->IsOperator, this->Precedence, this->is_variable_number_args);
   return F;
 }
 
@@ -274,7 +280,7 @@ Function *FunctionAST::codegen() {
   int i = 0;
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg.type, cpoint_type_arg.is_ptr);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg.type, cpoint_type_arg.is_ptr, cpoint_type_arg.is_array, cpoint_type_arg.nb_element, cpoint_type_arg.is_struct, cpoint_type_arg.struct_name);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;
@@ -516,7 +522,7 @@ Value *VarExprAST::codegen() {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct ,cpoint_type->struct_name);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when

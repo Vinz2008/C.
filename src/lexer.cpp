@@ -117,7 +117,7 @@ static int gettok() {
 
   if (isalpha(LastChar) || LastChar == '.') { // identifier: [a-zA-Z][a-zA-Z0-9]*
     IdentifierStr = LastChar;
-    while (isalnum((LastChar = getCharLine())) || LastChar == '[' || LastChar == ']' || LastChar == '.')
+    while (isalnum((LastChar = getCharLine())) || LastChar == '[' || LastChar == ']' || LastChar == '.' || LastChar == '_')
       IdentifierStr += LastChar;
 
     if (IdentifierStr == "func")
@@ -142,8 +142,8 @@ static int gettok() {
       return tok_unary;
     if (IdentifierStr == "var")
       return tok_var;
-    if (IdentifierStr == "object")
-      return tok_object;
+    if (IdentifierStr == "struct")
+      return tok_struct;
     if (IdentifierStr == "addr")
       return tok_addr;
     if (IdentifierStr == "ptr")

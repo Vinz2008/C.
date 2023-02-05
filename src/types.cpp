@@ -1,13 +1,20 @@
 #include "types.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "codegen.h"
+#include "ast.h"
+#include <map>
 
 using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
+extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
-Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements){
+Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements, bool is_struct, std::string struct_name){
     Type* type;
+    if (is_struct){
+        type = StructDeclarations[struct_name]->struct_type;
+    } else {
     switch (t){
         default:
         case double_type:
@@ -34,6 +41,7 @@ Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements){
             return type;
         case argv_type:
             return Type::getInt8PtrTy(*TheContext)->getPointerTo();
+    }
     }
     if (is_ptr){
         type = type->getPointerTo();

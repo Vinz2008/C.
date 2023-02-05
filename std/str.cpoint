@@ -1,5 +1,5 @@
 include libc.hpoint
-object str {
+struct str {
     var pointer : i8 ptr
     var len : int
     var maxlength : int
@@ -9,5 +9,8 @@ func printstr(x : i8 ptr) void{
   puts(x)
 }
 func printc(x : i8) void{
+  putchar(x)
+}
+func test_string_function(x : i8) struct str {
   putchar(x)
 }

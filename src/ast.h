@@ -57,11 +57,11 @@ public:
   const std::string &getName() const { return Name; }
 };
 
-class ObjectMemberExprAST : public ExprAST {
-  std::string ObjectName;
+class StructMemberExprAST : public ExprAST {
+  std::string StructName;
   std::string MemberName;
 public:
-  ObjectMemberExprAST(const std::string &ObjectName, const std::string &MemberName) : ObjectName(ObjectName), MemberName(MemberName) {}
+  StructMemberExprAST(const std::string &StructName, const std::string &MemberName) : StructName(StructName), MemberName(MemberName) {}
   Value *codegen() override;
 };
 
@@ -107,11 +107,10 @@ public:
 };
 
 class VarExprAST : public ExprAST {
+public:
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   std::unique_ptr<Cpoint_Type> cpoint_type;
   //std::unique_ptr<ExprAST> Body;
-
-public:
   VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, std::unique_ptr<Cpoint_Type> cpoint_type
              /*,std::unique_ptr<ExprAST> Body*/)
     : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(std::move(cpoint_type)) {}
@@ -128,11 +127,11 @@ public:
   Value *codegen() override;
 };
 
-class ObjectDeclarAST {
+class StructDeclarAST {
   std::string Name;
-  std::vector<std::unique_ptr<ExprAST>> Vars;
+  std::vector<std::unique_ptr<VarExprAST>> Vars;
 public:
-  ObjectDeclarAST(const std::string &name, std::vector<std::unique_ptr<ExprAST>> Vars)
+  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars)
     : Name(name), Vars(std::move(Vars)) {}
   Type* codegen();
 };
@@ -143,13 +142,13 @@ public:
 class PrototypeAST {
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
-  int type;
+  std::unique_ptr<Cpoint_Type> cpoint_type;
 public:
   std::string Name;
   bool is_variable_number_args;
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
-  PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, int type = -1, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false)
-    : Name(name), Args(std::move(Args)), type(type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args) {}
+  PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, std::unique_ptr<Cpoint_Type> cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false)
+    : Name(name), Args(std::move(Args)), cpoint_type(std::move(cpoint_type)), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args) {}
 
   const std::string &getName() const { return Name; }
   Function *codegen();
@@ -240,7 +239,7 @@ std::unique_ptr<ExprAST> ParseForExpr();
 std::unique_ptr<ExprAST> ParseStrExpr();
 std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
-std::unique_ptr<ObjectDeclarAST> ParseObject();
+std::unique_ptr<StructDeclarAST> ParseStruct();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 std::unique_ptr<ExprAST> ParseWhileExpr();

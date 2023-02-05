@@ -12,7 +12,7 @@ test: $(OBJS)
 	$(CC) -c -g $^ -o $@
 
 clean:
-	rm -f ./*.o ./*.ll ./*.log test
+	rm -f ./*.o ./*.ll ./*.log test ./*.temp a.out
 
 run: all
 	./test

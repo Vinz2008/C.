@@ -14,12 +14,12 @@ struct struct_str_c create_string(char* s){
     return str;
 }
 
-double append_char(struct struct_str_c str, char c){
-    if (str.length >= str.maxlength){
-        str.ptr = realloc(str.ptr, (str.length + 1) * sizeof(char));
-        str.ptr[str.length++] = c;
+double append_char(struct struct_str_c* str, char c){
+    if (str->length >= str->maxlength){
+        str->ptr = realloc(str->ptr, (str->length + 1) * sizeof(char));
+        str->ptr[str->length++] = c;
     } else {
-        str.ptr[str.length++] = c;
+        str->ptr[str->length++] = c;
     }
     return 0;
 }

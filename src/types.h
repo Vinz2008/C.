@@ -13,13 +13,14 @@ enum types {
 
 bool is_type(std::string type);
 int get_type(std::string type);
-llvm::Type* get_type_llvm(int t, bool is_ptr = false, bool is_array = false, int nb_aray_elements = 0);
-
+llvm::Type* get_type_llvm(int t, bool is_ptr = false, bool is_array = false, int nb_aray_elements = 0, bool is_struct = false, std::string struct_name = "");
 class Cpoint_Type {
 public:
     int type;
     bool is_ptr;
     bool is_array;
     int nb_element;
-    Cpoint_Type(int type, bool is_ptr = false, bool is_array = false, int nb_element = 0) : type(type), is_ptr(is_ptr), is_array(is_array), nb_element(nb_element) {}
+    bool is_struct;
+    std::string struct_name;
+    Cpoint_Type(int type, bool is_ptr = false, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "") : type(type), is_ptr(is_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name) {}
 };

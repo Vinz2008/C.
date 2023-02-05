@@ -1,4 +1,4 @@
-object test {
+struct test {
   var x : double
   var z : double 
 }

@@ -36,9 +36,9 @@ $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 
 clean-build:
 ifeq ($(OS),Windows_NT)
-	rmdir .\src\*.o /s /q
+	rmdir .\src\*.o ./src/*.temp /s /q
 else
-	rm -f ./src/*.o
+	rm -f ./src/*.o ./src/*.temp
 endif
 
 install:
@@ -56,7 +56,7 @@ clean: clean-build
 	make -C std/c_api clean
 	make -C std clean
 	make -C tests clean
-	rm -rf cpoint out.ll out.ll.* cpoint.*
+	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
 
 
 test:

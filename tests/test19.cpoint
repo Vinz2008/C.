@@ -1,7 +1,6 @@
-import @std/print.cpoint
+struct a {
+    var b
+}
 func main(){
-    if 1 = 1 then
-        printd(100)
-    else 
-     printd(10)
+    var s : struct a
 }

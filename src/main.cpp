@@ -112,9 +112,9 @@ static void HandleTopLevelExpression() {
   }
 }
 
-static void HandleObject() {
-  if (auto ObjAST = ParseObject()){
-    if (auto* ObjIR = ObjAST->codegen()){
+static void HandleStruct() {
+  if (auto structAST = ParseStruct()){
+    if (auto* structIR = structAST->codegen()){
       //ObjIR->print(*file_out_ostream);
     }
   } else {
@@ -142,8 +142,8 @@ static void MainLoop() {
     case tok_extern:
       HandleExtern();
       break;
-    case tok_object:
-      HandleObject();
+    case tok_struct:
+      HandleStruct();
       break;
     default:
       HandleTopLevelExpression();
