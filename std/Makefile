@@ -8,7 +8,8 @@ else
     CCPOINT=cpoint
 endif
 else
-ifneq (,$(wildcard ../cpoint))
+#ifneq (,$(wildcard ../cpoint))
+ifeq ($(shell test ! -f ../cpoint || echo 'yes'),yes)
     CCPOINT=../cpoint
 else
     CCPOINT=cpoint

@@ -239,6 +239,7 @@ int main(int argc, char **argv){
     }
     std::string os_name = get_os(TargetTriple);
     setup_preprocessor(TargetTriple);
+    Log::Info() << "TEST" << "\n";
     getNextToken();
     InitializeModule(filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
@@ -246,7 +247,7 @@ int main(int argc, char **argv){
     if (Triple(sys::getProcessTriple()).isOSDarwin()){
       TheModule->addModuleFlag(llvm::Module::Warning, "Dwarf Version", 2);
     }
-    DBuilder = std::make_unique<DIBuilder>(*TheModule);
+    DBuilder = std::make_unique<DIBuilder>((*TheModule));
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
       dwarf::DW_LANG_C, DBuilder->createFile(filename, "."),
       "Cpoint Compiler", false, "", 0);
