@@ -1,7 +1,8 @@
-import @std/print.cpoint
+extern malloc(size : int) int;
+extern free(pointer : void ptr) void;
+extern printptr(pointer : void ptr) void;
 func main(){
-    if 1 = 1 then
-        printd(100)
-    else 
-     printd(10)
+    var pointer : int ptr = malloc(10)
+    printptr(pointer)
+    free(pointer)
 }

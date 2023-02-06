@@ -22,6 +22,7 @@ void printfmt(char* format, ...){
 	va_list va;
 	va_start(va,format);
 	vprintf(format,va);
+  va_end(va);
 }
 
 /*void printstr(char* x){
