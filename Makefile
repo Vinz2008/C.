@@ -1,4 +1,4 @@
-CC=g++
+CXX=g++
 DESTDIR ?= /usr/bin
 PREFIX ?= /usr/local
 NO_OPTI ?= false
@@ -8,11 +8,11 @@ OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CFLAGS = -c -g -Wall $(shell llvm-config --cxxflags)
+CXXFLAGS = -c -g -Wall $(shell llvm-config --cxxflags)
 ifeq ($(NO_OPTI),true)
-CFLAGS += -O0
+CXXFLAGS += -O0
 else
-CFLAGS += -O2
+CXXFLAGS += -O2
 endif
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 SRCDIR=src
@@ -29,10 +29,10 @@ std_lib: $(OUTPUTBIN)
 	+make -C std
 
 $(OUTPUTBIN): $(OBJS)
-	$(CC) -o $@ $^ $(LDFLAGS)
+	$(CXX) -o $@ $^ $(LDFLAGS)
 
 $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 clean-build:
 ifeq ($(OS),Windows_NT)
@@ -46,7 +46,9 @@ install:
 	cp cpoint $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint
-	cp -r std/* $(PREFIX)/lib/cpoint
+	mkdir $(PREFIX)/lib/cpoint/std
+	mkdir $(PREFIX)/lib/cpoint/packages
+	cp -r std/* $(PREFIX)/lib/cpoint/std
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
 
 

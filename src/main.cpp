@@ -37,6 +37,7 @@ using namespace llvm::sys;
 int return_status = 0;
 
 extern std::unique_ptr<DIBuilder> DBuilder;
+extern std::vector<std::string> PackagesAdded;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
@@ -306,6 +307,16 @@ int main(int argc, char **argv){
       vect_obj_files.push_back(std_static_path);
       } else {
         vect_obj_files.push_back(object_filename);
+      }
+      if (PackagesAdded.empty() == false){
+        std::string package_archive_path;
+        for (int i = 0; i < PackagesAdded.size(); i++){
+          package_archive_path = DEFAULT_PACKAGE_PATH;
+          package_archive_path.append("/");
+          package_archive_path.append(PackagesAdded.at(i));
+          package_archive_path.append("/lib.a");
+          vect_obj_files.push_back(package_archive_path);
+        }
       }
       link_files(vect_obj_files, exe_filename, TargetTriple);
     }

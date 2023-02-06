@@ -15,6 +15,7 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     string out_cpp_clean = out_clean;
     cout << out_cpp_clean << endl;
     pclose(pipe_clean);
+    free(out_clean);
     int retcode = -1;
 
     string cmd = "TARGET=";

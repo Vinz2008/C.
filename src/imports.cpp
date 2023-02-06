@@ -7,7 +7,9 @@
 #include <sstream>
 #include "errors.h"
 #include "log.h"
+#include "packages.h"
 #include "types.h"
+#include "config.h"
 
 #ifdef _WIN32
 #define realpath(N,R) _fullpath((R),(N),PATH_MAX)
@@ -55,7 +57,7 @@ void skip_spaces(std::string line, int& pos){
 }
 void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     IdentifierStr = "";
-    while (pos < line.size() && isalnum(line.at(pos))){
+    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '_')){
         IdentifierStr += line.at(pos);
         pos++;
     }
@@ -64,7 +66,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
 
 int getPath(std::string line, int& pos, std::string &Path){
     Path = "";
-    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || isdigit(line.at(pos)))){
+    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || isdigit(line.at(pos)))){
         Path += line.at(pos);
         pos++;
     }
@@ -76,6 +78,20 @@ int getPath(std::string line, int& pos, std::string &Path){
 	    if (IdentifierStr == "std"){
 	    //pos_path += IdentifierStr.size();
 	    Path_temp = std_path;
+        } else if (IdentifierStr == "github"){
+            pos_path += 1; // pass ':'
+            getIdentifierStr(Path, pos_path, IdentifierStr);
+            std::string username = IdentifierStr;
+            pos_path += 1; // pass ':'
+            getIdentifierStr(Path, pos_path, IdentifierStr);
+            std::string reponame = IdentifierStr;
+            download_package_github(username, reponame);
+            add_package(reponame);
+            //Log::Imports_Info() << "TEST" << "\n";
+            Path_temp = DEFAULT_PACKAGE_PATH;
+            Path_temp.append("/");
+            Path_temp.append(reponame);
+            build_package(Path_temp);
         } else {
             import_error("couldn't find after @ a normal import\n");
         }

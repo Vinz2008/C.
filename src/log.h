@@ -31,4 +31,14 @@ namespace Log {
             return *this;
         }
     };
+    struct Build_Info {
+        Build_Info(){
+            std::cout << "[BUILD INFO] ";
+        }
+        template< class T >
+        Build_Info &operator<<(const T& val){
+            std::cout<<val;
+            return *this;
+        }
+    };
 }
