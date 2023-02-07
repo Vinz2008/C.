@@ -14,6 +14,11 @@ CXXFLAGS += -O0
 else
 CXXFLAGS += -O2
 endif
+
+ifneq ($(shell echo | $(CXX) -dM -E - | grep clang),"")
+CXXFLAGS += -frtti
+endif
+
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 SRCDIR=src
 
@@ -23,7 +28,11 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: std_lib_plus_compiler
 
-std_lib_plus_compiler: std_lib
+std_lib_plus_compiler: std_lib gc
+
+gc:
+	cd bdwgc && ./autogen.sh && ./configure --enable-cplusplus
+	+make -C bdwgc
 
 std_lib: $(OUTPUTBIN)
 	+make -C std
@@ -48,7 +57,9 @@ install:
 	mkdir $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint/std
 	mkdir $(PREFIX)/lib/cpoint/packages
+	mkdir $(PREFIX)lib/cpoint/gc
 	cp -r std/* $(PREFIX)/lib/cpoint/std
+	cp -r gc/* $(PREFIX)lib/cpoint/gc
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
 
 
@@ -60,7 +71,7 @@ clean: clean-build
 	make -C std clean
 	make -C tests clean
 	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
-
+	make -C bdwgc clean
 
 test:
 	make -C tests python
