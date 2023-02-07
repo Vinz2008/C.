@@ -57,6 +57,8 @@ The available types are :
 
 - void
 
+(Note : i8 is the equivalent in c of a char)
+
 ```
 var x : float = 1.5
 ```
