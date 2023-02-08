@@ -240,7 +240,6 @@ int main(int argc, char **argv){
     }
     std::string os_name = get_os(TargetTriple);
     setup_preprocessor(TargetTriple);
-    Log::Info() << "TEST" << "\n";
     getNextToken();
     InitializeModule(filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
@@ -285,12 +284,17 @@ int main(int argc, char **argv){
     }
     pass.run(*TheModule);
     dest.flush();
+    std::string gc_path = DEFAULT_GC_PATH;
     outs() << "Wrote " << object_filename << "\n";
     if (std_mode){
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);
       }
+      gc_path = std_path;
+      gc_path.append("/../bdwgc");
+      //build_gc(gc_path, TargetTriple);
+      Log::Info() << "TEST" << "\n";
     }
     if (link_files_mode){
       std::vector<string> vect_obj_files;
@@ -300,6 +304,11 @@ int main(int argc, char **argv){
         std_static_path.append("/");
       }
       std_static_path.append("libstd.a");
+      std::string gc_static_path = gc_path;
+      if (gc_path.back() != '/'){
+      gc_static_path.append("/");
+      }
+
       /*std::string std_static_path = "-L";
       std_static_path.append(std_path);
       std_static_path.append(" -lstd");*/

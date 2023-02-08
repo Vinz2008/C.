@@ -32,8 +32,13 @@ std_lib_plus_compiler_plus_gc: gc
 
 
 gc: std_lib
-	cd bdwgc && ./autogen.sh && ./configure --enable-cplusplus
+#	cd bdwgc && ./autogen.sh && ./configure --enable-cplusplus
+	mkdir -p $(shell pwd)/bdwgc_prefix
+ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
+	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads
+endif
 	+make -C bdwgc
+	make -C bdwgc install
 
 std_lib: $(OUTPUTBIN)
 	+make -C std
@@ -58,9 +63,9 @@ install:
 	mkdir $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint/std
 	mkdir $(PREFIX)/lib/cpoint/packages
-	mkdir $(PREFIX)lib/cpoint/gc
+	mkdir $(PREFIX)/lib/cpoint/bdwgc
 	cp -r std/* $(PREFIX)/lib/cpoint/std
-	cp -r gc/* $(PREFIX)lib/cpoint/gc
+	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
 
 
@@ -73,6 +78,7 @@ clean: clean-build
 	make -C tests clean
 	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
 	make -C bdwgc clean
+	rm bdwgc/Makefile
 
 test:
 	make -C tests python

@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <vector>
+#include "config.h"
 
 using namespace std;
 
@@ -34,6 +35,33 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     retcode = pclose(pipe);
     cout << "retcode : " << retcode << endl;
     return retcode;
+}
+int build_gc(string path, string target_triplet){
+    std::string cmd_configure = "cd ";
+    cmd_configure.append(path);
+    cmd_configure.append(" && ./autogen.sh && ./configure --host=");
+    cmd_configure.append(target_triplet);
+    cmd_configure.append(" --prefix=");
+    cmd_configure.append(path);
+    cout << "cmd_configure : " << cmd_configure << endl;
+    FILE* pipe_configure = popen(cmd_configure.c_str(), "r");
+    pclose(pipe_configure);
+    std::string cmd_make = "make -C ";
+    cmd_make.append(path);
+    cout << "cmd_make : " << cmd_make << endl;
+    FILE* pipe_make = popen(cmd_make.c_str(), "r");
+    char* out = (char*)malloc(10000000 * sizeof(char));
+	fread(out, 1, 10000000, pipe_make);
+    string out_cpp = out;
+    cout << out_cpp << endl;
+    free(out);
+    pclose(pipe_make);
+    std::string cmd_install = cmd_make;
+    cmd_install.append(" install");
+    FILE* pipe_install = popen(cmd_install.c_str(), "r");
+    pclose(pipe_install);
+    std::cout << "end build gc" << std::endl;
+    return 0;
 }
 
 void link_files(vector<string> list_files, string filename_out, string target_triplet){
