@@ -1,9 +1,20 @@
 #include <iostream>
 #include <cstdlib>
+#include <fstream>
 #include <vector>
 #include "config.h"
 
 using namespace std;
+
+bool FileExists(string filename){
+    ifstream file(filename);
+    if(file.is_open()){
+    return 1;
+    file.close();
+    } else {
+    return 0;
+    }
+}
 
 int build_std(string path, string target_triplet, bool verbose_std_build){
     string cmd_clean = "make -C ";
@@ -37,15 +48,21 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     return retcode;
 }
 int build_gc(string path, string target_triplet){
+    std::string prefix_path = path;
+    prefix_path.append("/../bdwgc_prefix");
+    std::string makefile_path = path;
+    makefile_path.append("/Makefile");
+    if (!FileExists(makefile_path)){
     std::string cmd_configure = "cd ";
     cmd_configure.append(path);
-    cmd_configure.append(" && ./autogen.sh && ./configure --host=");
+    cmd_configure.append(" && ./autogen.sh && ./configure --enable-static --host=");
     cmd_configure.append(target_triplet);
     cmd_configure.append(" --prefix=");
-    cmd_configure.append(path);
+    cmd_configure.append(prefix_path);
     cout << "cmd_configure : " << cmd_configure << endl;
     FILE* pipe_configure = popen(cmd_configure.c_str(), "r");
     pclose(pipe_configure);
+    }
     std::string cmd_make = "make -C ";
     cmd_make.append(path);
     cout << "cmd_make : " << cmd_make << endl;

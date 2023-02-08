@@ -293,7 +293,7 @@ int main(int argc, char **argv){
       }
       gc_path = std_path;
       gc_path.append("/../bdwgc");
-      //build_gc(gc_path, TargetTriple);
+      build_gc(gc_path, TargetTriple);
       Log::Info() << "TEST" << "\n";
     }
     if (link_files_mode){
@@ -308,12 +308,15 @@ int main(int argc, char **argv){
       if (gc_path.back() != '/'){
       gc_static_path.append("/");
       }
-
+      gc_static_path.append("../bdwgc_prefix/lib/libgc.a");
       /*std::string std_static_path = "-L";
       std_static_path.append(std_path);
       std_static_path.append(" -lstd");*/
       vect_obj_files.push_back(object_filename);
+      if (std_mode){
       vect_obj_files.push_back(std_static_path);
+      vect_obj_files.push_back(gc_static_path);
+      }
       } else {
         vect_obj_files.push_back(object_filename);
       }

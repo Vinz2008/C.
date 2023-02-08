@@ -35,7 +35,7 @@ gc: std_lib
 #	cd bdwgc && ./autogen.sh && ./configure --enable-cplusplus
 	mkdir -p $(shell pwd)/bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
-	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads
+	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static
 endif
 	+make -C bdwgc
 	make -C bdwgc install
@@ -64,6 +64,7 @@ install:
 	mkdir $(PREFIX)/lib/cpoint/std
 	mkdir $(PREFIX)/lib/cpoint/packages
 	mkdir $(PREFIX)/lib/cpoint/bdwgc
+	mkdir $(PREFIX)/lib/cpoint/bdwgc_prefix
 	cp -r std/* $(PREFIX)/lib/cpoint/std
 	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
