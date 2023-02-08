@@ -26,11 +26,12 @@ SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
-all: std_lib_plus_compiler
+all: std_lib_plus_compiler_plus_gc
 
-std_lib_plus_compiler: std_lib gc
+std_lib_plus_compiler_plus_gc: gc
 
-gc:
+
+gc: std_lib
 	cd bdwgc && ./autogen.sh && ./configure --enable-cplusplus
 	+make -C bdwgc
 
