@@ -68,6 +68,16 @@ int build_gc(string path, string target_triplet){
     cout << out_configure_cpp << endl;
     free(out_configure);
     pclose(pipe_configure);
+    } else {
+        std::string cmd_clean = "make -C ";
+        cmd_clean.append(path);
+        cmd_clean.append(" clean");
+        FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+        char* out_clean = (char*)malloc(10000000 * sizeof(char));
+	    fread(out_clean, 1, 10000000, pipe_clean);
+        string out_clean_cpp = out_clean;
+        cout << out_clean_cpp << endl;
+        pclose(pipe_clean);
     }
     std::string cmd_make = "make -C ";
     cmd_make.append(path);

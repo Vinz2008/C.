@@ -57,6 +57,8 @@ else
 	rm -f ./src/*.o ./src/*.temp
 endif
 
+USERNAME=$(shell logname)
+
 install:
 	cp cpoint $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
@@ -68,6 +70,8 @@ install:
 	cp -r std/* $(PREFIX)/lib/cpoint/std
 	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
+	chown -R $(USERNAME):$(USERNAME) $(PREFIX)/lib/cpoint/
+
 
 
 run:
