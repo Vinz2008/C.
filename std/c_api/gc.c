@@ -9,6 +9,10 @@ void* gc_malloc(size_t size){
     return GC_malloc(size);
 }
 
+void* gc_realloc(void* ptr, size_t size){
+    return GC_realloc(ptr, size);
+}
+
 void set_pointer_int(int* ptr, int value){
     *ptr = value;
     printf("*ptr : %d\n", *ptr);

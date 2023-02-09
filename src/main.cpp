@@ -79,6 +79,10 @@ void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
   args_gc_malloc.push_back(make_pair("size", Cpoint_Type(int_type)));
   add_manually_extern("gc_malloc", std::make_unique<Cpoint_Type>(void_type, true), std::move(args_gc_malloc), 0, 30, false);
+  std::vector<std::pair<std::string, Cpoint_Type>> args_gc_realloc;
+  args_gc_realloc.push_back(make_pair("ptr", Cpoint_Type(void_type, true)));
+  args_gc_realloc.push_back(make_pair("size", Cpoint_Type(int_type)));
+  add_manually_extern("gc_realloc", std::make_unique<Cpoint_Type>(void_type, true), std::move(args_gc_realloc), 0, 30, false);
 }
 
 static void HandleDefinition() {
