@@ -54,6 +54,7 @@ int getCharLine(){
     Comp_context->line_nb++;
     Comp_context->col_nb = 0;
     getLine(file_in, *line);
+    preprocess_replace_variable(*line);
     Comp_context->line = *line;
 if_preprocessor_first:
     if (line->at(0) == '?' && line->at(1) == '['){
@@ -97,6 +98,23 @@ if_preprocessor:
     }*/
     pos = 0;
     file_log << "next char in line : " << (*line)[pos] << "\n";
+  } else if (c == '\\'){
+      switch ((*line)[pos+1]){
+        default:
+          break;
+        case 'n':
+          c = '\n';
+          pos+=2;
+          break;
+        case 't':
+          c = '\t';
+          pos+=2;
+          break;
+        case '0':
+          c = '\0';
+          pos+=2;
+          break;
+      }
   } else {
      pos++;
      Comp_context->col_nb++;

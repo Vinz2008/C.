@@ -4,6 +4,8 @@ extern linux_function();
 ?[if OS == windows]
 extern windows_function();
 ?[endif]
+?[define testvar test]
 func main(){
   var x : double = 2
+  var x : i8 ptr = "testvar"
 }

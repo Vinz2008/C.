@@ -40,17 +40,17 @@ public:
     void replace_variable_preprocessor(std::string& str){
         std::string variable_name;
         for (int i = 0; i < variables.size(); i++){
-        if (variables.at(i) != nullptr){
-        variable_name = variables.at(i)->getName();
-        size_t pos = 0;
-        while (pos != std::string::npos){
-        pos = str.find(variable_name, pos);
-        std::cout << "TEST PREPROCESSOR VAR" << std::endl;
-        if (pos != std::string::npos){
-        str.replace(pos, variable_name.length(), variables.at(i)->getValue());
-        }
-        }
-        }
+            if (variables.at(i) != nullptr){
+            variable_name = variables.at(i)->getName();
+            size_t pos = 0;
+            while (pos != std::string::npos){
+            pos = str.find(variable_name, pos);
+            std::cout << "TEST PREPROCESSOR VAR" << std::endl;
+            if (pos != std::string::npos){
+                str.replace(pos, variable_name.length(), variables.at(i)->getValue());
+            }
+            }
+            }
         }
     }
 };

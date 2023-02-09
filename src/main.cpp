@@ -304,7 +304,7 @@ int main(int argc, char **argv){
     dest.flush();
     std::string gc_path = DEFAULT_GC_PATH;
     outs() << "Wrote " << object_filename << "\n";
-    if (std_mode){
+    if (std_mode && link_files_mode){
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);

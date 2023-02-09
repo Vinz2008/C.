@@ -78,6 +78,14 @@ void preprocess_instruction(std::string str){
 
     } else if (word == "endif"){
         Log::Preprocessor_Info() << "endif" << "\n";
+    } else if (word == "define"){
+        get_next_word(instruction, pos);
+        std::string varName = word;
+        Log::Preprocessor_Info() << "varName : " << varName << "\n";
+        get_next_word(instruction, pos);
+        std::string value = word;
+        Log::Preprocessor_Info() << "value : " << value << "\n";
+        context->variables.push_back(std::make_unique<Preprocessor::Variable>(varName, value));
     }
 
 }
