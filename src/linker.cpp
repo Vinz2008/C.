@@ -58,9 +58,15 @@ int build_gc(string path, string target_triplet){
     cmd_configure.append(" && ./autogen.sh && ./configure --enable-static --host=");
     cmd_configure.append(target_triplet);
     cmd_configure.append(" --prefix=");
-    cmd_configure.append(prefix_path);
+    std::string complete_string_path = realpath(prefix_path.c_str(), NULL);
+    cmd_configure.append(complete_string_path);
     cout << "cmd_configure : " << cmd_configure << endl;
     FILE* pipe_configure = popen(cmd_configure.c_str(), "r");
+    char* out_configure = (char*)malloc(10000000 * sizeof(char));
+	fread(out_configure, 1, 10000000, pipe_configure);
+    string out_configure_cpp = out_configure;
+    cout << out_configure_cpp << endl;
+    free(out_configure);
     pclose(pipe_configure);
     }
     std::string cmd_make = "make -C ";
@@ -75,7 +81,12 @@ int build_gc(string path, string target_triplet){
     pclose(pipe_make);
     std::string cmd_install = cmd_make;
     cmd_install.append(" install");
+    cout << "cmd_install : " << cmd_install << endl;
     FILE* pipe_install = popen(cmd_install.c_str(), "r");
+    char* out_install = (char*)malloc(10000000 * sizeof(char));
+	fread(out_install, 1, 10000000, pipe_install);
+    string out_install_cpp = out_install;
+    cout << out_install_cpp << endl;
     pclose(pipe_install);
     std::cout << "end build gc" << std::endl;
     return 0;

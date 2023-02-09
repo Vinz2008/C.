@@ -42,6 +42,7 @@ struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
 string filename ="";
+bool std_mode = true;
 
 /// putchard - putchar that takes a double and returns 0.
 extern "C" DLLEXPORT double putchard(double X) {
@@ -65,6 +66,20 @@ llvm::raw_ostream* file_out_ostream;
 ifstream file_in;
 ofstream file_log;
 bool last_line = false;
+
+void add_manually_extern(std::string fnName, std::unique_ptr<Cpoint_Type> cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
+
+  auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
+  auto *FnIR = FnAST->codegen();
+}
+
+void add_externs_for_gc(){
+  std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
+  add_manually_extern("gc_init", std::make_unique<Cpoint_Type>(void_type), std::move(args_gc_init), 0, 30, false);
+  std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
+  args_gc_malloc.push_back(make_pair("size", Cpoint_Type(int_type)));
+  add_manually_extern("gc_malloc", std::make_unique<Cpoint_Type>(void_type, true), std::move(args_gc_malloc), 0, 30, false);
+}
 
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
@@ -163,7 +178,6 @@ int main(int argc, char **argv){
     bool target_triplet_found_bool = false;
     bool debug_mode = false;
     bool link_files_mode = true;
-    bool std_mode = true;
     bool verbose_std_build = false;
     bool remove_temp_file = true;
     for (int i = 1; i < argc; i++){
@@ -252,6 +266,9 @@ int main(int argc, char **argv){
       dwarf::DW_LANG_C, DBuilder->createFile(filename, "."),
       "Cpoint Compiler", false, "", 0);
     DBuilder->finalize();
+    if (std_mode){
+      add_externs_for_gc();
+    }
     MainLoop();
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();

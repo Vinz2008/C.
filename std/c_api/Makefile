@@ -3,7 +3,7 @@ CFLAGS=-Wall
 SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
 TARGET ?= $(shell gcc -dumpmachine)
-CFLAGS=-Wall -target $(TARGET)
+CFLAGS=-Wall -target $(TARGET) -I../../bdwgc_prefix
 ifneq (,$(findstring wasm,$(TARGET)))
 WASI_SYSROOT ?= /usr/share/wasi-sysroot
 CFLAGS+=-D__WASM__ --sysroot $(WASI_SYSROOT)
