@@ -87,6 +87,7 @@ if_preprocessor:
     if (line->size() >= 2){
     if (line->at(0) == '?' && line->at(1) == '['){
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
+      preprocess_instruction(*line);
       getLine(file_in, *line);
       goto if_preprocessor;
     }

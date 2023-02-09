@@ -9,6 +9,7 @@
 #include "log.h"
 #include "packages.h"
 #include "types.h"
+#include "preprocessor.h"
 #include "config.h"
 
 #ifdef _WIN32
@@ -50,7 +51,7 @@ int get_nb_lines(std::ifstream& file_code, std::string filename){
     return numLines;
 }
 
-void skip_spaces(std::string line, int& pos){
+static void skip_spaces(std::string line, int& pos){
     while (pos < line.size() && isspace(line.at(pos))){
         pos++;
     }
@@ -231,6 +232,7 @@ void generate_file_with_imports(std::string file_path, std::string out_path){
             }
             Log::Imports_Info() << "line : " << line << "\n";
             if (find_import_or_include(line) == 0){
+                preprocess_replace_variable(line);
                 out_file << line;
             }
             pos_line_file++;

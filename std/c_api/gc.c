@@ -1,4 +1,5 @@
 #include "gc.h"
+#include <stdio.h>
 
 void gc_init(){
     GC_INIT();

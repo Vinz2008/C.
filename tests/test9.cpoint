@@ -1,8 +1,8 @@
-?[if arch == x86_64]
-?[if os == linux]
+?[if OS == linux]
+extern linux_function();
 ?[endif]
-?[if os == windows]
-jdfjdjdjh
+?[if OS == windows]
+extern windows_function();
 ?[endif]
 func main(){
   var x : double = 2
