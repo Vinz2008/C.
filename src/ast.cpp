@@ -156,10 +156,11 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
       return LHS;
 
     // Okay, we know this is a binop.
-    int BinOp = CurTok;
+    std::string BinOp = "";
+    BinOp += (char)CurTok;
     getNextToken(); // eat binop
-    if (BinOp == '=' && CurTok == '='){
-      BinOp = -1;
+    if (CurTok == '='){
+      BinOp += (char)CurTok;
       getNextToken();
     }
 

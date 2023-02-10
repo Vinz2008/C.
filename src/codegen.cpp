@@ -118,7 +118,7 @@ Type* StructDeclarAST::codegen(){
 }
 
 Value *BinaryExprAST::codegen() {
-  if (Op == -1){
+  if (Op == "=="){
     Value *L = LHS->codegen();
     Value *R = RHS->codegen();
     if (!L || !R)
@@ -126,7 +126,7 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateICmpEQ(L, R, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   }
-  if (Op == '=') {
+  if (Op == "=") {
     VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
     if (!LHSE)
       return LogErrorV("destination of '=' must be a variable");
@@ -145,7 +145,7 @@ Value *BinaryExprAST::codegen() {
   if (!L || !R)
     return nullptr;
 
-  switch (Op) {
+  switch (Op.at(0)) {
   case '+':
     return Builder->CreateFAdd(L, R, "addtmp");
   case '-':
