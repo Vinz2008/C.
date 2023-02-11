@@ -81,6 +81,7 @@ install:
 	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
 	chown -R $(USERNAME):$(USERNAME) $(PREFIX)/lib/cpoint/
+	rm -f $(PREFIX)/lib/cpoint/bdwgc/Makefile
 
 
 
