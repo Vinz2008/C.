@@ -13,7 +13,7 @@
 #include "config.h"
 
 #ifdef _WIN32
-#define realpath(N,R) _fullpath((R),(N),PATH_MAX)
+#include "windows.h"
 #endif
 
 static std::string IdentifierStr;

@@ -7,14 +7,28 @@ ifneq (,$(wildcard ../cpoint))
 else
     CCPOINT=cpoint
 endif
+
 else
-#ifneq (,$(wildcard ../cpoint))
+ifeq ($(OS), Windows_NT)
+#$(warning $(shell Test-Path -Path ..\cpoint.exe -PathType Leaf))
+#ifeq ($(shell Test-Path -Path ..\cpoint.exe -PathType Leaf),True)
+	CCPOINT=../cpoint.exe
+#else
+#	CCPOINT=cpoint.exe
+#endif
+
+else
+
 ifeq ($(shell test ! -f ../cpoint || echo 'yes'),yes)
     CCPOINT=../cpoint
 else
     CCPOINT=cpoint
 endif
+
 endif
+
+endif
+
 
 SRC := $(wildcard *.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
