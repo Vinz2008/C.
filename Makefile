@@ -79,6 +79,7 @@ install:
 	mkdir $(PREFIX)/lib/cpoint/bdwgc_prefix
 	cp -r std/* $(PREFIX)/lib/cpoint/std
 	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
+	cp -r bdwgc_prefix/* $(PREFIX)/lib/cpoint/bdwgc_prefix
 	chmod a=rwx -R $(PREFIX)/lib/cpoint/
 	chown -R $(USERNAME):$(USERNAME) $(PREFIX)/lib/cpoint/
 	rm -f $(PREFIX)/lib/cpoint/bdwgc/Makefile

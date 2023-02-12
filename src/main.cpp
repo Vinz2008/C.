@@ -174,6 +174,7 @@ int main(int argc, char **argv){
     bool verbose_std_build = false;
     bool remove_temp_file = true;
     bool import_mode = true;
+    bool rebuild_gc = false;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -205,6 +206,8 @@ int main(int argc, char **argv){
           gc_mode = false;
         } else if (arg.compare("-no-imports") == 0){
           import_mode = false;
+        } else if (arg.compare("-rebuild-gc") == 0) {
+	  rebuild_gc = true;
         } else {
           cout << "filename : " << arg << endl;
           filename = arg;
@@ -312,8 +315,10 @@ int main(int argc, char **argv){
       }
       if (gc_mode == true){
       gc_path = std_path;
+      if (rebuild_gc){
       gc_path.append("/../bdwgc");
       build_gc(gc_path, TargetTriple);
+      }
       }
       Log::Info() << "TEST" << "\n";
     }

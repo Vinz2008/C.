@@ -29,7 +29,7 @@ std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
 extern std::map<char, int> BinopPrecedence;
 extern bool isInStruct;
-
+extern bool gc_mode;
 
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
@@ -52,6 +52,20 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                  TheFunction->getEntryBlock().begin());
   return TmpB.CreateAlloca(get_type_llvm(type, is_ptr, is_array, nb_element, is_struct, struct_name), 0,
                            VarName);
+}
+
+static void AllocateMemory(Function* function, std::string VarName, Cpoint_Type type){
+    // TODO return alloca ? because of different types, probably no return and add in function to table og alloca inst or pass pointer to variable instead of returning the value
+    if (gc_mode){
+    Function *CalleeF = getFunction("gc_malloc");
+    Type* llvm_type = get_type_llvm(type.type, type.is_ptr, type.is_array, type.nb_element, type.is_struct, type.struct_name);
+    auto size = llvm::ConstantInt::get(llvm::Type::getInt64Ty(*TheContext), TheModule->getDataLayout().getTypeAllocSize(llvm_type));
+    std::vector<Value *> ArgsV;
+    ArgsV.push_back(size);
+    Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+    } else {
+    CreateEntryBlockAlloca(function, VarName, type.type, type.is_ptr, type.is_array, type.nb_element, type.is_struct, type.struct_name);
+    }
 }
 
 Value *LogErrorV(const char *Str) {
