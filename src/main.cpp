@@ -43,18 +43,7 @@ std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
 string filename ="";
 bool std_mode = true;
-
-/// putchard - putchar that takes a double and returns 0.
-extern "C" DLLEXPORT double putchard(double X) {
-  fputc((char)X, stderr);
-  return 0;
-}
-
-/// printd - printf that takes a double prints it as "%f\n", returning 0.
-extern "C" DLLEXPORT double printd(double X) {
-  fprintf(stderr, "%f\n", X);
-  return 0;
-}
+bool gc_mode = true;
 
 
 std::map<char, int> BinopPrecedence;
@@ -184,6 +173,7 @@ int main(int argc, char **argv){
     bool link_files_mode = true;
     bool verbose_std_build = false;
     bool remove_temp_file = true;
+    bool import_mode = true;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -211,6 +201,10 @@ int main(int argc, char **argv){
           verbose_std_build = true;
         } else if (arg.compare("-no-delete-import-file") == 0){
           remove_temp_file = false;
+        } else if (arg.compare("-no-gc") == 0){
+          gc_mode = false;
+        } else if (arg.compare("-no-imports") == 0){
+          import_mode = false;
         } else {
           cout << "filename : " << arg << endl;
           filename = arg;
@@ -227,8 +221,10 @@ int main(int argc, char **argv){
     Comp_context = std::make_unique<Compiler_context>(filename, 0, 0, "<empty line>");
     std::string temp_filename = filename;
     temp_filename.append(".temp");
+    if (import_mode){
     generate_file_with_imports(filename, temp_filename);
     filename = temp_filename;
+    }
     std::error_code ec;
     if (debug_mode == false ){
 #ifdef _WIN32
@@ -271,7 +267,7 @@ int main(int argc, char **argv){
       dwarf::DW_LANG_C, DBuilder->createFile(filename, "."),
       "Cpoint Compiler", false, "", 0);
     DBuilder->finalize();
-    if (std_mode){
+    if (std_mode && gc_mode == true){
       add_externs_for_gc();
     }
     MainLoop();
@@ -313,9 +309,11 @@ int main(int argc, char **argv){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);
       }
+      if (gc_mode == true){
       gc_path = std_path;
       gc_path.append("/../bdwgc");
       build_gc(gc_path, TargetTriple);
+      }
       Log::Info() << "TEST" << "\n";
     }
     if (link_files_mode){
@@ -337,7 +335,9 @@ int main(int argc, char **argv){
       vect_obj_files.push_back(object_filename);
       if (std_mode){
       vect_obj_files.push_back(std_static_path);
+      if (gc_mode){
       vect_obj_files.push_back(gc_static_path);
+      }
       }
       } else {
         vect_obj_files.push_back(object_filename);

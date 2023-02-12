@@ -19,6 +19,7 @@ bool isInStruct = false;;
 extern std::unique_ptr<Compiler_context> Comp_context;
 extern std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 extern bool std_mode;
+extern bool gc_mode;
 
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
@@ -394,7 +395,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   }
   getNextToken();  // eat '{'
   std::vector<std::unique_ptr<ExprAST>> Body;
-  if (std_mode && Proto->Name == "main"){
+  if (std_mode && Proto->Name == "main" && gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
   auto E_gc_init = std::make_unique<CallExprAST>("gc_init", std::move(Args_gc_init));
   Body.push_back(std::move(E_gc_init));
