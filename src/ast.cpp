@@ -153,17 +153,20 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 
     // If this is a binop that binds at least as tightly as the current binop,
     // consume it, otherwise we are done.
+    if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
     if (TokPrec < ExprPrec)
       return LHS;
+    }
 
     // Okay, we know this is a binop.
     std::string BinOp = "";
     BinOp += (char)CurTok;
     getNextToken(); // eat binop
-    if (CurTok == '='){
+    if (CurTok == '=' || CurTok == '|'){
       BinOp += (char)CurTok;
       getNextToken();
     }
+    Log::Info() << "BinOP : " << BinOp << "\n";
 
     // Parse the primary expression after the binary operator.
     //auto RHS = ParsePrimary();

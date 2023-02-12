@@ -243,6 +243,7 @@ int main(int argc, char **argv){
     // 1 is lowest precedence.
     BinopPrecedence['<'] = 10;
     BinopPrecedence['>'] = 10;
+    BinopPrecedence['^'] = 10;
     BinopPrecedence['+'] = 20;
     BinopPrecedence['-'] = 20;
     BinopPrecedence['*'] = 40;  // highest.

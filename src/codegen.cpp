@@ -118,33 +118,33 @@ Type* StructDeclarAST::codegen(){
 }
 
 Value *BinaryExprAST::codegen() {
-  if (Op == "=="){
-    Value *L = LHS->codegen();
-    Value *R = RHS->codegen();
-    if (!L || !R)
-      return nullptr;
-    L = Builder->CreateICmpEQ(L, R, "cmptmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
-  }
-  if (Op == "=") {
-    VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
-    if (!LHSE)
-      return LogErrorV("destination of '=' must be a variable");
-    Value *Val = RHS->codegen();
-    if (!Val)
-      return nullptr;
-    Value *Variable = NamedValues[LHSE->getName()]->alloca_inst;
-    if (!Variable)
-      return LogErrorV("Unknown variable name");
-
-    Builder->CreateStore(Val, Variable);
-    return Val;
-  }
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
     return nullptr;
-
+  
+  if (Op == "=="){
+    Log::Info() << "Codegen ==" << "\n";
+    L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
+    Log::Info() << "TEST" << "\n";
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
+  if (Op == "||"){
+    L = Builder->CreateOr(L, R, "ortmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
+  if (Op == "!="){
+    L = Builder->CreateFCmpUNE(L, R, "cmptmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
+  if (Op == "<="){
+    L = Builder->CreateFCmpULE(L, R, "cmptmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
+  if (Op == ">="){
+    L = Builder->CreateFCmpUGE(L, R, "cmptmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
   switch (Op.at(0)) {
   case '+':
     return Builder->CreateFAdd(L, R, "addtmp");
@@ -157,8 +157,24 @@ Value *BinaryExprAST::codegen() {
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '>':
-    L = Builder->CreateFCmpULT(R, L, "cmptmp");
+    L = Builder->CreateFCmpUGT(R, L, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  case '^':
+    L = Builder->CreateXor(L, R, "ortmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  case '=': {
+    VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
+    if (!LHSE)
+      return LogErrorV("destination of '=' must be a variable");
+    Value *Val = RHS->codegen();
+    if (!Val)
+      return nullptr;
+    Value *Variable = NamedValues[LHSE->getName()]->alloca_inst;
+    if (!Variable)
+      return LogErrorV("Unknown variable name");
+    Builder->CreateStore(Val, Variable);
+    return Val;
+  } break;
   default:
     //return LogErrorV("invalid binary operator");
     break;
