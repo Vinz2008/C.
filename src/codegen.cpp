@@ -549,7 +549,12 @@ Value *VarExprAST::codegen() {
       if (!InitVal)
         return nullptr;
     } else { // If not specified, use 0.0.
+      if (cpoint_type->is_ptr){
+      //InitVal = ConstantPointerNull::get(get_type_llvm(cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct, cpoint_type->struct_name));
+      InitVal = ConstantPointerNull::get(PointerType::get(*TheContext, 0));
+      } else {
       InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
+      }
     }
 
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct ,cpoint_type->struct_name);
