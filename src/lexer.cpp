@@ -231,9 +231,6 @@ static int gettok() {
   Log::Info() << "LastChar : " << LastChar << " " << "ThisChar : " << ThisChar << "\n";
   // ThisChar : first character
   // LastChar : second character
-  if (ThisChar == '!' && LastChar == '='){
-    return create_multi_char_op(ThisChar, LastChar);
-  }
   if (ThisChar == '|'){
     return create_multi_char_op(ThisChar, LastChar);
   }
