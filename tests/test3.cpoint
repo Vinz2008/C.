@@ -1,5 +1,5 @@
-extern printd(a);
-extern unary!(v);
+import @std/print.cpoint
+import @std/operators.cpoint
 func main(){
     printd(!1)
 }
