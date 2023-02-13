@@ -8,7 +8,7 @@
 std::unique_ptr<Preprocessor::Context> context;
 std::string word;
 std::stringstream wordstrtream;
-static std::string line;
+//static std::string line;
 
 void init_context_preprocessor(){
     std::vector<std::unique_ptr<Preprocessor::Variable>> variables;
@@ -39,12 +39,13 @@ int get_next_word(std::string line, int& pos){
     return 0;
 }
 
-void preprocess_instruction(std::string str){
+void preprocess_instruction(std::string line){
+    Log::Info() << "LINE : " << line << "\n";
     std::string instruction;
     int pos_line = 0;
     skip_spaces(line, pos_line);
-    for (int i = pos_line + 2; i < str.size() && str.at(i) != ']' ; i++){
-    instruction += str.at(i);
+    for (int i = pos_line + 2; i < line.size() && line.at(i) != ']' ; i++){
+    instruction += line.at(i);
     }
     int pos = 0;
     Log::Preprocessor_Info() << "instruction : " << instruction << "\n";

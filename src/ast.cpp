@@ -14,6 +14,7 @@ extern std::string strStatic;
 extern std::string IdentifierStr;
 extern int return_status;
 extern std::string strPosArray;
+extern std::string OpStringMultiChar;
 extern int posArrayNb;
 bool isInStruct = false;;
 extern std::unique_ptr<Compiler_context> Comp_context;
@@ -147,25 +148,35 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
                                               std::unique_ptr<ExprAST> LHS) {
+  Log::Info() << "BinOp AST" << "\n";
   // If this is a binop, find its precedence.
   while (true) {
     int TokPrec = GetTokPrecedence();
 
     // If this is a binop that binds at least as tightly as the current binop,
     // consume it, otherwise we are done.
-    if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
+    //if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
+    Log::Info() << "CurTok before if : " << CurTok << "\n";
+    if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec)
       return LHS;
     }
+    Log::Info() << "TEST2" << "\n";
+    //}
 
     // Okay, we know this is a binop.
     std::string BinOp = "";
+    if (CurTok != tok_op_multi_char){
     BinOp += (char)CurTok;
-    getNextToken(); // eat binop
-    if (CurTok == '=' || CurTok == '|'){
-      BinOp += (char)CurTok;
+    } else {
+      BinOp += OpStringMultiChar;
       getNextToken();
     }
+    getNextToken(); // eat binop
+    /*if (CurTok == '=' || CurTok == '|'){
+      BinOp += (char)CurTok;
+      getNextToken();
+    }*/
     Log::Info() << "BinOP : " << BinOp << "\n";
 
     // Parse the primary expression after the binary operator.
@@ -471,6 +482,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   if (!Cond)
     return nullptr;
   if (CurTok != '{'){
+    Log::Info() << "CurTok : " << CurTok << "\n";
     return LogError("expected {");
   }
   /*if (CurTok != tok_then)

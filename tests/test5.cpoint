@@ -1,2 +1,4 @@
 import @std/print.cpoint
-printd(3.2);
+func main(){
+    printd(3.2)
+}

@@ -23,6 +23,7 @@
 #include "target-triplet.h"
 #include "imports.h"
 #include "log.h"
+#include "utils.h"
 
 using namespace std;
 using namespace llvm;
@@ -175,6 +176,7 @@ int main(int argc, char **argv){
     bool remove_temp_file = true;
     bool import_mode = true;
     bool rebuild_gc = false;
+    bool rebuild_std = true;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -207,12 +209,15 @@ int main(int argc, char **argv){
         } else if (arg.compare("-no-imports") == 0){
           import_mode = false;
         } else if (arg.compare("-rebuild-gc") == 0) {
-	  rebuild_gc = true;
+	        rebuild_gc = true;
+        } else if (arg.compare("-no-rebuild-std") == 0){
+          rebuild_std = false;
         } else {
           cout << "filename : " << arg << endl;
           filename = arg;
         }
     }
+    cout << "filename at end : " << filename << endl;
     if (output_temp_found){
       if (link_files_mode){
         exe_filename = temp_output;
@@ -259,6 +264,7 @@ int main(int argc, char **argv){
     }
     std::string os_name = get_os(TargetTriple);
     setup_preprocessor(TargetTriple);
+    Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
     InitializeModule(filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
@@ -308,10 +314,21 @@ int main(int argc, char **argv){
     dest.flush();
     std::string gc_path = DEFAULT_GC_PATH;
     outs() << "Wrote " << object_filename << "\n";
+    std::string std_static_path = std_path;
+    if (std_path.back() != '/'){
+      std_static_path.append("/");
+    }
+    std_static_path.append("libstd.a");
     if (std_mode && link_files_mode){
+      if (rebuild_std){
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);
+      }
+      } else {
+        if (!FileExists(std_static_path)){
+          fprintf(stderr, "std static library %s has not be builded. You need to at least compile a file one time without the -no-rebuild-std flag\n", std_static_path.c_str());
+        }
       }
       if (gc_mode == true){
       gc_path = std_path;
@@ -325,11 +342,6 @@ int main(int argc, char **argv){
     if (link_files_mode){
       std::vector<string> vect_obj_files;
       if (TargetTriple.find("wasm") == std::string::npos){
-      std::string std_static_path = std_path;
-      if (std_path.back() != '/'){
-        std_static_path.append("/");
-      }
-      std_static_path.append("libstd.a");
       std::string gc_static_path = gc_path;
       if (gc_path.back() != '/'){
       gc_static_path.append("/");

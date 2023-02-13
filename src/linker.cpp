@@ -3,22 +3,14 @@
 #include <fstream>
 #include <vector>
 #include "config.h"
+#include "utils.h"
+
 
 using namespace std;
 
 #ifdef _WIN32
 #include "windows.h"
 #endif
-
-bool FileExists(string filename){
-    ifstream file(filename);
-    if(file.is_open()){
-    return 1;
-    file.close();
-    } else {
-    return 0;
-    }
-}
 
 int build_std(string path, string target_triplet, bool verbose_std_build){
     string cmd_clean = "make -C ";

@@ -30,6 +30,7 @@ enum Token {
   tok_ptr = -19,
   tok_import = -20,
   tok_while = -21,
+  tok_op_multi_char = -22,
 };
 
 int getNextToken();

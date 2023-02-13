@@ -5,4 +5,3 @@ func function(x){
 func test(b){
   printd(123)
 }
-function(2);

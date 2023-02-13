@@ -1,4 +1,4 @@
-import @std/str.cpoint
+import @std/print.cpoint
 func main() {
     var strnot : i8 ptr = "not hello world"
     printstr("hello world")

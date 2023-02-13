@@ -14,6 +14,7 @@ string strStatic;
 extern std::map<char, int> BinopPrecedence;
 string strPosArray;
 int posArrayNb;
+string OpStringMultiChar;
 extern std::unique_ptr<Compiler_context> Comp_context;
 
 int CurTok;
@@ -57,6 +58,7 @@ int getCharLine(){
     preprocess_replace_variable(*line);
     Comp_context->line = *line;
 if_preprocessor_first:
+    Log::Info() << "Line : " << *line << "\n";
     if (line->at(0) == '?' && line->at(1) == '['){
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
       preprocess_instruction(*line);
@@ -123,6 +125,12 @@ if_preprocessor:
   file_log << "c : " << (char)c << "\n";
   file_log << "c int : " << c << "\n";
   return c;
+}
+
+static int create_multi_char_op(int FirsChar, int SecondChar){
+  OpStringMultiChar = FirsChar;
+  OpStringMultiChar += SecondChar;
+  return tok_op_multi_char;
 }
 
 static int gettok() {
@@ -220,6 +228,18 @@ static int gettok() {
   // Otherwise, just return the character as its ascii value.
   int ThisChar = LastChar;
   LastChar = getCharLine();
+  Log::Info() << "LastChar : " << LastChar << " " << "ThisChar : " << ThisChar << "\n";
+  // ThisChar : first character
+  // LastChar : second character
+  if (ThisChar == '!' && LastChar == '='){
+    return create_multi_char_op(ThisChar, LastChar);
+  }
+  if (ThisChar == '|'){
+    return create_multi_char_op(ThisChar, LastChar);
+  }
+  if (LastChar == '='){
+    return create_multi_char_op(ThisChar, LastChar);
+  }
   return ThisChar;
 }
 

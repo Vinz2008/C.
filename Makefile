@@ -69,7 +69,7 @@ ifneq ($(OS),Windows_NT)
 USERNAME=$(shell logname)
 endif
 
-install:
+install: std_lib
 	cp cpoint $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint

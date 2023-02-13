@@ -19,6 +19,9 @@ def test_file(name, verbose=True):
 	if (return_val == 1):
 		print(colored("TEST " + str(nb_test) + " FAILED", "red"))
 		exit(1)
+	if (return_val == -11):
+		print(colored("TEST " + str(nb_test) + " FAILED (segmentation fault)", "red"))
+		exit(1)
 	nb_test += 1
 
 verbose = False
@@ -27,7 +30,7 @@ for i, arg in enumerate(sys.argv):
 	if arg == "-v":
 		verbose = True
 
-for i in range(0,20):
+for i in range(0,21):
 	print(i+1)
 	test_file("./test" + str(i+1) + ".cpoint", verbose)
 print(colored("All " + str(nb_test) + " tests succeeded", "green"))
