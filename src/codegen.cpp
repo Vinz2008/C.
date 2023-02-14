@@ -47,10 +47,10 @@ Function *getFunction(std::string Name) {
 }
 
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
-                                          StringRef VarName, int type, bool is_ptr = false, bool is_array = false, int nb_element = 0, bool is_struct = false, std::string struct_name = "") {
+                                          StringRef VarName, Cpoint_Type type) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
-  return TmpB.CreateAlloca(get_type_llvm(type, is_ptr, is_array, nb_element, is_struct, struct_name), 0,
+  return TmpB.CreateAlloca(get_type_llvm(type), 0,
                            VarName);
 }
 
@@ -58,13 +58,13 @@ static void AllocateMemory(Function* function, std::string VarName, Cpoint_Type 
     // TODO return alloca ? because of different types, probably no return and add in function to table og alloca inst or pass pointer to variable instead of returning the value
     if (gc_mode){
     Function *CalleeF = getFunction("gc_malloc");
-    Type* llvm_type = get_type_llvm(type.type, type.is_ptr, type.is_array, type.nb_element, type.is_struct, type.struct_name);
+    Type* llvm_type = get_type_llvm(type);
     auto size = llvm::ConstantInt::get(llvm::Type::getInt64Ty(*TheContext), TheModule->getDataLayout().getTypeAllocSize(llvm_type));
     std::vector<Value *> ArgsV;
     ArgsV.push_back(size);
     Builder->CreateCall(CalleeF, ArgsV, "calltmp");
     } else {
-    CreateEntryBlockAlloca(function, VarName, type.type, type.is_ptr, type.is_array, type.nb_element, type.is_struct, type.struct_name);
+    CreateEntryBlockAlloca(function, VarName, type);
     }
 }
 
@@ -103,7 +103,7 @@ Value* ArrayMemberExprAST::codegen() {
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
   //auto ptr = GetElementPtrInst::Create(Alloca, { zero, index}, "", );
-  Type* type_llvm = get_type_llvm(cpoint_type.type, cpoint_type.is_ptr, cpoint_type.is_array, cpoint_type.nb_element);
+  Type* type_llvm = get_type_llvm(cpoint_type);
   Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
   Value* value = Builder->CreateLoad(type_llvm, ptr, ArrayName);
   //Value* ptr = Builder->CreateGEP(double_type, ); //  TODO : make the code find the type of the array
@@ -121,7 +121,7 @@ Type* StructDeclarAST::codegen(){
   std::vector<Type*> dataTypes;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
-    Type* var_type = get_type_llvm(VarExpr->cpoint_type->type, VarExpr->cpoint_type->is_ptr, VarExpr->cpoint_type->is_array, VarExpr->cpoint_type->nb_element);
+    Type* var_type = get_type_llvm(*(VarExpr->cpoint_type));
     dataTypes.push_back(var_type);
     //dataTypes.push_back(Type::getDoubleTy(*TheContext));
   }
@@ -246,18 +246,18 @@ Function *PrototypeAST::codegen() {
   std::vector<Type *> type_args;
   for (int i = 0; i < Args.size(); i++){
     //if (Args.at(i).first != "..."){
-    type_args.push_back(get_type_llvm(Args.at(i).second.type,Args.at(i).second.is_ptr, Args.at(i).second.is_array, Args.at(i).second.nb_element, Args.at(i).second.is_struct, Args.at(i).second.struct_name));
+    type_args.push_back(get_type_llvm(Args.at(i).second));
     //}
   }
   FunctionType *FT;
   //FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
   if (Name == "main"){
   std::vector<Type*> args_type_main;
-  args_type_main.push_back(get_type_llvm(-2));
-  args_type_main.push_back(get_type_llvm(-4, true)->getPointerTo());
-  FT = FunctionType::get(get_type_llvm(cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct, cpoint_type->struct_name), args_type_main, false);
+  args_type_main.push_back(get_type_llvm(Cpoint_Type(-2)));
+  args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
+  FT = FunctionType::get(get_type_llvm(*cpoint_type), args_type_main, false);
   } else {
-  FT = FunctionType::get(get_type_llvm(cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct, cpoint_type->struct_name), type_args, is_variable_number_args);
+  FT = FunctionType::get(get_type_llvm(*cpoint_type), type_args, is_variable_number_args);
   }
   Function *F =
       Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
@@ -301,7 +301,7 @@ Function *FunctionAST::codegen() {
       } else {
         type = int_type;
       }
-      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), type, false);
+      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), Cpoint_Type(type, false));
       Builder->CreateStore(&Arg, Alloca);
       NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(type, false));
       i++;
@@ -310,7 +310,7 @@ Function *FunctionAST::codegen() {
   int i = 0;
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg.type, cpoint_type_arg.is_ptr, cpoint_type_arg.is_array, cpoint_type_arg.nb_element, cpoint_type_arg.is_struct, cpoint_type_arg.struct_name);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;
@@ -405,7 +405,7 @@ Value* RedeclarationExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Value* ValDeclared = Val->codegen();
   Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
-  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type.type, cpoint_type.is_ptr, cpoint_type.is_array, cpoint_type.nb_element);
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
   Builder->CreateStore(ValDeclared, Alloca);
   NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -437,7 +437,7 @@ Value* WhileExprAST::codegen(){
 
 Value *ForExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, double_type, false);
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
   Value *StartVal = Start->codegen();
   if (!StartVal)
     return nullptr;
@@ -549,15 +549,10 @@ Value *VarExprAST::codegen() {
       if (!InitVal)
         return nullptr;
     } else { // If not specified, use 0.0.
-      if (cpoint_type->is_ptr){
-      //InitVal = ConstantPointerNull::get(get_type_llvm(cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct, cpoint_type->struct_name));
-      InitVal = ConstantPointerNull::get(PointerType::get(*TheContext, 0));
-      } else {
-      InitVal = ConstantFP::get(*TheContext, APFloat(0.0));
-      }
+      InitVal = get_default_value(*cpoint_type);
     }
 
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type->type, cpoint_type->is_ptr, cpoint_type->is_array, cpoint_type->nb_element, cpoint_type->is_struct ,cpoint_type->struct_name);
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when

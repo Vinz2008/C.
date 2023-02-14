@@ -1,6 +1,7 @@
 #include "types.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Value.h"
 #include "codegen.h"
 #include "ast.h"
 #include <map>
@@ -10,12 +11,12 @@ using namespace llvm;
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
-Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements, bool is_struct, std::string struct_name){
+Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
-    if (is_struct){
-        type = StructDeclarations[struct_name]->struct_type;
+    if (cpoint_type.is_struct){
+        type = StructDeclarations[cpoint_type.struct_name]->struct_type;
     } else {
-    switch (t){
+    switch (cpoint_type.type){
         default:
         case double_type:
             type = Type::getDoubleTy(*TheContext);
@@ -30,12 +31,12 @@ Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements, boo
            type = Type::getInt8Ty(*TheContext);
            break;
         case void_type:
-            if (!is_ptr){
+            if (!cpoint_type.is_ptr){
             type = Type::getVoidTy(*TheContext);
             } else {
             type = PointerType::get(*TheContext, 0U);
-            if (is_array){
-                type = llvm::ArrayType::get(type, nb_aray_elements);
+            if (cpoint_type.is_array){
+                type = llvm::ArrayType::get(type, cpoint_type.nb_element);
             }
             }
             return type;
@@ -43,14 +44,29 @@ Type* get_type_llvm(int t, bool is_ptr, bool is_array, int nb_aray_elements, boo
             return Type::getInt8PtrTy(*TheContext)->getPointerTo();
     }
     }
-    if (is_ptr){
+    if (cpoint_type.is_ptr){
         type = type->getPointerTo();
     }
-    if (is_array){
-        type = llvm::ArrayType::get(type, nb_aray_elements);
+    if (cpoint_type.is_array){
+        type = llvm::ArrayType::get(type, cpoint_type.nb_element);
     }
-    return type;
-    
+    return type;   
+}
+
+Value* get_default_value(Cpoint_Type type){
+    if (type.is_ptr){
+        return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
+    }
+    switch (type.type){
+        default:
+        case double_type:
+            return ConstantFP::get(*TheContext, APFloat(0.0));
+        case int_type:
+            return ConstantInt::get(*TheContext, APInt(32, 0, true));
+        case i8_type:
+            return ConstantInt::get(*TheContext, APInt(8, 0, true));
+    }
+    return ConstantFP::get(*TheContext, APFloat(0.0));
 }
 
 std::vector<std::string> types{
