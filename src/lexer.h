@@ -27,6 +27,7 @@ enum Token {
   tok_string = -15,
   tok_struct = -16,
   tok_addr = -17,
+  tok_class = -18,
   tok_ptr = -19,
   tok_import = -20,
   tok_while = -21,

@@ -110,8 +110,31 @@ Value* ArrayMemberExprAST::codegen() {
   return value;
 }
 
-Type* ClassExprAST::codegen(){
-  
+Type* ClassDeclarAST::codegen(){
+  StructType* classType = StructType::create(*TheContext);
+  classType->setName(Name);
+  std::vector<Type*> dataTypes;
+  for (int i = 0; i < Vars.size(); i++){
+    std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
+    Type* var_type = get_type_llvm(*(VarExpr->cpoint_type));
+    dataTypes.push_back(var_type);
+  }
+  classType->setBody(dataTypes);
+  for (int i = 0; i < Functions.size(); i++){
+    std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
+    std::string newNameFunc = "";
+    newNameFunc = Name;
+    newNameFunc.append("__");
+    if (FunctionExpr->Proto->Name == Name){
+    // Constructor
+    newNameFunc.append("Constructor__Default");
+    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", Cpoint_Type(double_type) /* TODO fix this by passing class type pointer as first arg */));
+    } else {
+    newNameFunc.append(FunctionExpr->Proto->Name);
+    }
+    FunctionExpr->Proto->Name = newNameFunc;
+    FunctionExpr->codegen();
+  }
 }
 
 Type* StructDeclarAST::codegen(){

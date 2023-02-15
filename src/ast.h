@@ -162,22 +162,21 @@ public:
 };
 
 class FunctionAST {
+public:
   std::unique_ptr<PrototypeAST> Proto;
   std::vector<std::unique_ptr<ExprAST>> Body;
-
-public:
   FunctionAST(std::unique_ptr<PrototypeAST> Proto,
               std::vector<std::unique_ptr<ExprAST>> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *codegen();
 };
 
-class ClassExprAST {
+class ClassDeclarAST {
   std::string Name;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
-  std::vector<std::unique_ptr<ExprAST>> Vars;
+  std::vector<std::unique_ptr<VarExprAST>> Vars;
 public:
-  ClassExprAST(const std::string &name, std::vector<std::unique_ptr<ExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
+  ClassDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
     : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
   Type *codegen();
 };
