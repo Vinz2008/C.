@@ -8,3 +8,8 @@ func absolute(v) int {
    return v
   }
 }
+
+struct utilstest {
+  var a : i8
+  var b : i8
+}

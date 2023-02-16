@@ -21,6 +21,7 @@ static std::string line;
 std::ofstream out_file;
 extern std::string std_path;
 extern std::string filename;
+std::ifstream imported_file;
 int pos_line_file = 0;
 
 class ArgVarImport {
@@ -146,19 +147,51 @@ void interpret_func(std::string line, int& pos, int nb_line, int& pos_line){
     pos_line++;
 }
 
-void find_func(std::string line, int nb_line, int& pos_line){
+void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
+    std::string struct_declar = "";
+    while (true){
+        for (int i = pos; i < line.size(); i++){
+        if (line.at(i) != '}'){
+        struct_declar += line.at(i);
+        } else {
+            struct_declar += line.at(i);
+            //struct_declar += '\n';
+            break;
+        }
+        }
+        pos = 0;
+        if (!std::getline(imported_file, line)){
+            break;
+        } else {
+            struct_declar += '\n';
+        }
+    }
+    Log::Imports_Info() << "struct_declar : " << struct_declar << "\n";
+    //std::getline(imported_file, line); //get new line
+    if (pos_line != 0 && pos_line != nb_line){
+        out_file << "\n";
+    }
+    out_file << "struct " << struct_declar;
+    pos_line++;
+}
+
+
+// find funcs, structs, etc
+void find_patterns(std::string line, int nb_line, int& pos_line){
     int pos = 0;
     skip_spaces(line, pos);
     getIdentifierStr(line, pos, IdentifierStr);
     Log::Imports_Info() << "IdentifierStr : " << IdentifierStr << "\n";
     if (IdentifierStr == "func"){
         interpret_func(line, pos, nb_line, pos_line);
+    } else if (IdentifierStr == "struct"){
+        Log::Imports_Info() << "STRUCT FOUND" << "\n";
+        interpret_struct(line, pos, nb_line, pos_line);
     }
 }
 
 void interpret_import(std::string line, int& pos_src){
     std::string Path;
-    std::ifstream imported_file;
     skip_spaces(line, pos_src);
     if (getPath(line, pos_src, Path) == 0){
     getPathFromFilePOV(Path, filename);
@@ -170,7 +203,7 @@ void interpret_import(std::string line, int& pos_src){
         int pos_line = 0;
         while (std::getline(imported_file, line)){
             Log::Imports_Info() << line << "\n";
-            find_func(line, nb_line, pos_line);
+            find_patterns(line, nb_line, pos_line);
         }
     }
     imported_file.close();

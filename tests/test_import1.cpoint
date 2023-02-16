@@ -8,4 +8,5 @@ func test(x){
 func main(){
   test(10) 
   absolute(3)
+  var a : struct utilstest
 }
