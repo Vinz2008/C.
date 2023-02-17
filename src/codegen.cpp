@@ -26,7 +26,7 @@ std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
-std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
+//std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
 extern std::map<char, int> BinopPrecedence;
 extern bool isInStruct;
@@ -95,7 +95,45 @@ Value *VariableExprAST::codegen() {
 }
 
 Value* StructMemberExprAST::codegen() {
+    AllocaInst* Alloca = NamedValues[StructName]->alloca_inst;
+    if (!NamedValues[StructName]->type.is_struct){
+      return LogErrorV("Using a member of variable even though it is not a struct");
+    }
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto members = std::move(StructDeclarations[NamedValues[StructName]->struct_declaration_name]->members);
+    int pos = -1;
+    for (int i = 0; i < members.size(); i++){
+      if (members.at(i).first == MemberName){
+        pos = i;
+        break;
+      }
+    }
+    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+    Type* type_llvm = NamedValues[StructName]->struct_type;
+    Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
+    Value* value = Builder->CreateLoad(type_llvm, ptr, StructName);
+    return value;
+}
+
+Value* ClassMemberExprAST::codegen(){
+  AllocaInst* Alloca = NamedValues[ClassName]->alloca_inst;
+  if (!NamedValues[ClassName]->type.is_class){
+    return LogErrorV("Using a member of variable even though it is not a class");
+  }
+  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  auto members = std::move(ClassDeclarations[NamedValues[ClassName]->struct_declaration_name]->members);
+  int pos = -1;
+  for (int i = 0; i < members.size(); i++){
+    if (members.at(i).first == MemberName){
+      pos = i;
+      break;
+    }
+  }
+  auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+  Type* type_llvm = NamedValues[ClassName]->struct_type;
+  Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
+  Value* value = Builder->CreateLoad(type_llvm, ptr, ClassName);
+  return value;
 }
 
 Value* ArrayMemberExprAST::codegen() {
@@ -556,7 +594,6 @@ Value *UnaryExprAST::codegen() {
 Value *VarExprAST::codegen() {
   Log::Info() << "VAR CODEGEN " << VarNames.at(0).first << "\n";
   std::vector<AllocaInst *> OldBindings;
-
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
   // Register all variables and emit their initializer.
@@ -592,7 +629,18 @@ Value *VarExprAST::codegen() {
     }
 
     // Remember this binding.
-    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type);
+    Type* struct_type_temp = get_type_llvm(Cpoint_Type(double_type));
+    std::string struct_declaration_name_temp = "";
+    if (cpoint_type->is_struct){
+      struct_type_temp = StructDeclarations[cpoint_type->struct_name]->struct_type;
+      struct_declaration_name_temp = cpoint_type->struct_name;
+    }
+    if (cpoint_type->is_class){
+      // use the same member in NamedValue class for structs and class
+      struct_type_temp = ClassDeclarations[cpoint_type->class_name]->class_type;
+      struct_declaration_name_temp = cpoint_type->class_name;
+    }
+    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type, struct_type_temp, struct_declaration_name_temp);
   }
 
   // Codegen the body, now that all vars are in scope.

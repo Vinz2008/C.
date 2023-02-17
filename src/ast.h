@@ -65,6 +65,15 @@ public:
   Value *codegen() override;
 };
 
+class ClassMemberExprAST : public ExprAST {
+  std::string ClassName;
+  std::string MemberName;
+public:
+  ClassMemberExprAST(const std::string &ClassName, const std::string &MemberName) : ClassName(ClassName), MemberName(MemberName) {}
+  Value *codegen() override;
+};
+
+
 class ArrayMemberExprAST : public ExprAST {
   std::string ArrayName;
   int pos;
