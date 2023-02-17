@@ -25,6 +25,7 @@ static std::unique_ptr<IRBuilder<>> Builder;
 std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
 extern std::map<char, int> BinopPrecedence;
@@ -94,7 +95,7 @@ Value *VariableExprAST::codegen() {
 }
 
 Value* StructMemberExprAST::codegen() {
-
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
 }
 
 Value* ArrayMemberExprAST::codegen() {
@@ -128,10 +129,10 @@ Type* ClassDeclarAST::codegen(){
     if (FunctionExpr->Proto->Name == Name){
     // Constructor
     newNameFunc.append("Constructor__Default");
-    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", Cpoint_Type(double_type) /* TODO fix this by passing class type pointer as first arg */));
     } else {
     newNameFunc.append(FunctionExpr->Proto->Name);
     }
+    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", Cpoint_Type(double_type) /* TODO fix this by passing class type pointer as first arg */));
     FunctionExpr->Proto->Name = newNameFunc;
     FunctionExpr->codegen();
   }
@@ -142,15 +143,18 @@ Type* StructDeclarAST::codegen(){
   StructType* structType = StructType::create(*TheContext);
   structType->setName(Name);
   std::vector<Type*> dataTypes;
+  std::vector<std::pair<std::string,Cpoint_Type>> members;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
     Type* var_type = get_type_llvm(*(VarExpr->cpoint_type));
+    std::string VarName = VarExpr->VarNames.at(0).first;
     dataTypes.push_back(var_type);
+    members.push_back(std::make_pair(VarName, *(VarExpr->cpoint_type)));
     //dataTypes.push_back(Type::getDoubleTy(*TheContext));
   }
   structType->setBody(dataTypes);
   std::unique_ptr<StructDeclarAST> structDeclarASTTemp = std::make_unique<StructDeclarAST>(this->Name, std::move(this->Vars));
-  StructDeclarations[Name] = std::make_unique<StructDeclaration>(std::move(structDeclarASTTemp), structType);
+  StructDeclarations[Name] = std::make_unique<StructDeclaration>(std::move(structDeclarASTTemp), structType, std::move(members));
   return structType;
 }
 
