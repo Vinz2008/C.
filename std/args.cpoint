@@ -1,0 +1,7 @@
+import print.cpoint
+func handle_args(argc : int argv : i8 ptr ptr) void {
+    for i = 0, i < argc, 1.0 {
+        printstr("arg")
+        printi(i)
+    }
+}
