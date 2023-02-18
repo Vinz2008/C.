@@ -78,7 +78,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   getNextToken();  // eat identifier.
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
-    if (NamedValues[IdName] == nullptr){
+    if (NamedValues[IdName] == nullptr && IdName.find('[') == std::string::npos && IdName.find('.') == std::string::npos){
     LogError("Couldn't find variable");
     }
     getNextToken();
@@ -88,8 +88,10 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   if (CurTok != '('){ // Simple variable ref.
     for (int i = 0; i < IdName.length(); i++){
       if (IdName.at(i) == '.'){
-        std::string StructName =  IdName.substr(0, i-1);
+        std::string StructName =  IdName.substr(0, i);
         std::string MemberName =  IdName.substr(i+1, IdName.length()-1);
+        Log::Info() << "StructName ast : " << StructName << "\n";
+        Log::Info() << "MemberName ast : " << MemberName << "\n";
         return std::make_unique<StructMemberExprAST>(StructName, MemberName);
       }
       if (IdName.at(i) == '['){
@@ -161,7 +163,6 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     if (TokPrec < ExprPrec)
       return LHS;
     }
-    Log::Info() << "TEST2" << "\n";
     //}
 
     // Okay, we know this is a binop.

@@ -95,12 +95,23 @@ Value *VariableExprAST::codegen() {
 }
 
 Value* StructMemberExprAST::codegen() {
+    Log::Info() << "STRUCT MEMBER CODEGEN" << "\n";
     AllocaInst* Alloca = NamedValues[StructName]->alloca_inst;
     if (!NamedValues[StructName]->type.is_struct){
       return LogErrorV("Using a member of variable even though it is not a struct");
     }
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    Log::Info() << "StructName : " << StructName << "\n";
+    Log::Info() << "StructName len : " << StructName.length() << "\n";
+    if (NamedValues[StructName] == nullptr){
+      Log::Info() << "NamedValues[StructName] nullptr" << "\n";
+    }
+    Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n";
+    if (StructDeclarations[NamedValues[StructName]->struct_declaration_name] == nullptr){
+      Log::Info() << "NULLPTR" << "\n";
+    }
     auto members = std::move(StructDeclarations[NamedValues[StructName]->struct_declaration_name]->members);
+    Log::Info() << "TEST" << "\n";
     int pos = -1;
     for (int i = 0; i < members.size(); i++){
       if (members.at(i).first == MemberName){
@@ -205,7 +216,6 @@ Value *BinaryExprAST::codegen() {
   if (Op == "=="){
     Log::Info() << "Codegen ==" << "\n";
     L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
-    Log::Info() << "TEST" << "\n";
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   }
   if (Op == "||"){
@@ -467,12 +477,74 @@ Value* ReturnAST::codegen(){
 }
 
 Value* RedeclarationExprAST::codegen(){
+  Log::Info() << "REDECLARATION CODEGEN" << "\n";
+  Log::Info() << "VariableName " << VariableName << "\n";
+  bool is_struct = false;
+  bool is_array = false;
+  std::string StructName = "";
+  std::string MemberName = "";
+  std::string ArrayName = "";
+  int pos_array = -1;
+  for (int i = 0; i < VariableName.length(); i++){
+    if (VariableName.at(i) == '.'){
+      Log::Info() << "i struct : " << i << "\n";
+      is_struct = true;
+      StructName =  VariableName.substr(0, i);
+      MemberName =  VariableName.substr(i+1, VariableName.length()-1);
+      break;
+    }
+    if (VariableName.at(i) == '['){
+      is_array = true;
+      ArrayName = VariableName.substr(0, i);
+      std::string pos_str = "";
+      for (int j = i + 1; j < VariableName.length(); j++){
+        if (VariableName.at(j) == ']'){
+          break;
+        } else {
+          pos_str += VariableName.at(j);
+        }
+      }
+      pos_array = std::stoi(pos_str);
+      break;
+    }
+  }
+  Log::Info() << "TEST" << "\n";
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Value* ValDeclared = Val->codegen();
+  if (is_struct){
+    Log::Info() << "StructName : " << StructName << "\n";
+    Log::Info() << "StructName len : " << StructName.length() << "\n";
+    auto members = std::move(StructDeclarations[NamedValues[StructName]->struct_declaration_name]->members);
+    Log::Info() << "TEST2" << "\n";
+    int pos_struct = -1;
+    for (int i = 0; i < members.size(); i++){
+      if (members.at(i).first == MemberName){
+        pos_struct = i;
+        break;
+      }
+    }
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
+    auto structPtr = NamedValues[StructName]->alloca_inst;
+    auto ptr = Builder->CreateGEP(get_type_llvm(NamedValues[StructName]->type), structPtr, {zero, index}, "get_struct");
+    Builder->CreateStore(ValDeclared, ptr);
+    Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+    NamedValues[StructName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
+  } else if (is_array) {
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
+    auto arrayPtr = NamedValues[ArrayName]->alloca_inst;
+    auto ptr = Builder->CreateGEP(get_type_llvm(NamedValues[ArrayName]->type), arrayPtr, {zero, index}, "get_array");
+    Builder->CreateStore(ValDeclared, ptr);
+    Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
+    NamedValues[ArrayName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
+    //auto ptr = llvm::GetElementPtrInst::Create(arrayPtr, { zero, index }, "", block);
+  } else {
   Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
   AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
   Builder->CreateStore(ValDeclared, Alloca);
   NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+  }
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
@@ -615,7 +687,6 @@ Value *VarExprAST::codegen() {
     } else { // If not specified, use 0.0.
       InitVal = get_default_value(*cpoint_type);
     }
-
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
     Builder->CreateStore(InitVal, Alloca);
 
@@ -637,9 +708,12 @@ Value *VarExprAST::codegen() {
     }
     if (cpoint_type->is_class){
       // use the same member in NamedValue class for structs and class
+      Log::Info() << "IS CLASS" << "\n";
       struct_type_temp = ClassDeclarations[cpoint_type->class_name]->class_type;
       struct_declaration_name_temp = cpoint_type->class_name;
     }
+    Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
+    Log::Info() << "VarName " << VarName << "\n";
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type, struct_type_temp, struct_declaration_name_temp);
   }
 

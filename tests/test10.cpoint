@@ -1,7 +1,9 @@
+import @std/print.cpoint
 struct test {
   var x : double
   var z : double 
 }
 func main(){
-  var x : double = 2
+  var x : struct test
+  x.z = 2
 }

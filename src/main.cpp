@@ -45,6 +45,7 @@ string std_path = DEFAULT_STD_PATH;
 string filename ="";
 bool std_mode = true;
 bool gc_mode = true;
+extern std::string IdentifierStr;
 
 
 std::map<char, int> BinopPrecedence;
@@ -155,8 +156,21 @@ static void MainLoop() {
     case tok_struct:
       HandleStruct();
       break;
+    case '#':
+      // FOR NOW NOT WORKING : TODO
+      Log::Info() << "# comment found" << "\n";
+      getNextToken();
+      Log::Info() << "CurTok : " << CurTok << "\n";
+      while (CurTok != tok_eof && CurTok != ';' && CurTok != tok_func && CurTok != tok_extern && CurTok != tok_struct){
+        Log::Info() << "next token" << "\n";
+        getNextToken();
+      } 
+      break;
     default:
-      HandleTopLevelExpression();
+      Log::Info() << "CurTok : " << CurTok << "\n";
+      Log::Info() << "identifier : " << IdentifierStr << "\n";
+      LogError("TOP LEVEL EXPRESSION FORBIDDEN");
+      //HandleTopLevelExpression();
       break;
     }
   }
