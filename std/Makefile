@@ -38,10 +38,10 @@ CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)
 
 all: libstd.a
 
-libstd.a: $(OBJECTS) $(OBJECTS_C)
-	ar -rc $@ $^
+libstd.a: $(OBJECTS) capi
+	ar -rc $@ $(OBJECTS) $(OBJECTS_C)
 
-c_api/%.o:
+capi:
 	+TARGET=$(TARGET) make -C c_api
 
 %.o: %.cpoint
