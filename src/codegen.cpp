@@ -106,19 +106,24 @@ Value* StructMemberExprAST::codegen() {
     if (NamedValues[StructName] == nullptr){
       Log::Info() << "NamedValues[StructName] nullptr" << "\n";
     }
-    Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n";
-    if (StructDeclarations[NamedValues[StructName]->struct_declaration_name] == nullptr){
+    //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
+    Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
+    Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
+    if (StructDeclarations[NamedValues[StructName]->type.struct_name] == nullptr){
       Log::Info() << "NULLPTR" << "\n";
     }
-    auto members = std::move(StructDeclarations[NamedValues[StructName]->struct_declaration_name]->members);
-    Log::Info() << "TEST" << "\n";
+    Log::Info() << "members.size() before moving : " << StructDeclarations[NamedValues[StructName]->type.struct_name]->members.size() << "\n";
+    auto members = std::move(StructDeclarations[NamedValues[StructName]->type.struct_name]->members);
+    Log::Info() << "members.size() : " << members.size() << "\n";
     int pos = -1;
     for (int i = 0; i < members.size(); i++){
+      Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
       if (members.at(i).first == MemberName){
         pos = i;
         break;
       }
     }
+    Log::Info() << "Pos for GEP struct member " << pos << "\n";
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
     Type* type_llvm = NamedValues[StructName]->struct_type;
     Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
@@ -193,6 +198,7 @@ Type* StructDeclarAST::codegen(){
   structType->setName(Name);
   std::vector<Type*> dataTypes;
   std::vector<std::pair<std::string,Cpoint_Type>> members;
+  members.clear();
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
     Type* var_type = get_type_llvm(*(VarExpr->cpoint_type));
@@ -203,6 +209,9 @@ Type* StructDeclarAST::codegen(){
   }
   structType->setBody(dataTypes);
   std::unique_ptr<StructDeclarAST> structDeclarASTTemp = std::make_unique<StructDeclarAST>(this->Name, std::move(this->Vars));
+  Log::Info() << "members size before : " << members.size() << "\n";
+  Log::Info() << "Name struct : " << Name << "\n";
+  Log::Info() << "Name struct length : " << Name.length() << "\n";
   StructDeclarations[Name] = std::make_unique<StructDeclaration>(std::move(structDeclarASTTemp), structType, std::move(members));
   return structType;
 }
@@ -514,6 +523,7 @@ Value* RedeclarationExprAST::codegen(){
   if (is_struct){
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
+    Log::Info() << "StructDeclarations len : " << StructDeclarations.size() << "\n"; 
     auto members = std::move(StructDeclarations[NamedValues[StructName]->struct_declaration_name]->members);
     Log::Info() << "TEST2" << "\n";
     int pos_struct = -1;
@@ -712,9 +722,10 @@ Value *VarExprAST::codegen() {
       struct_type_temp = ClassDeclarations[cpoint_type->class_name]->class_type;
       struct_declaration_name_temp = cpoint_type->class_name;
     }
-    Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
     Log::Info() << "VarName " << VarName << "\n";
+    Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type, struct_type_temp, struct_declaration_name_temp);
+    Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
   }
 
   // Codegen the body, now that all vars are in scope.

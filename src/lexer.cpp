@@ -228,7 +228,8 @@ static int gettok() {
   // Otherwise, just return the character as its ascii value.
   int ThisChar = LastChar;
   LastChar = getCharLine();
-  Log::Info() << "LastChar : " << LastChar << " " << "ThisChar : " << ThisChar << "\n";
+  // to debug multi-line operators
+  //Log::Info() << "LastChar : " << LastChar << " " << "ThisChar : " << ThisChar << "\n";
   // ThisChar : first character
   // LastChar : second character
   if (ThisChar == '|'){

@@ -14,7 +14,6 @@ extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarati
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
-    Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
         type = StructDeclarations[cpoint_type.struct_name]->struct_type;
     } else {
