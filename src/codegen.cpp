@@ -247,6 +247,12 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateFCmpUGE(L, R, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   }
+  if (Op == ">>"){
+    return Builder->CreateLShr(L, R, "shiftrtmp");
+  }
+  if (Op == "<<"){
+    return Builder->CreateShl(L, R, "shiftltmp");
+  }
   switch (Op.at(0)) {
   case '+':
     return Builder->CreateFAdd(L, R, "addtmp");

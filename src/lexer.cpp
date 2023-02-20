@@ -238,6 +238,12 @@ static int gettok() {
   if (LastChar == '='){
     return create_multi_char_op(ThisChar, LastChar);
   }
+  if (LastChar == '>'){
+    return create_multi_char_op(ThisChar, LastChar);
+  }
+  if (LastChar == '<'){
+    return create_multi_char_op(ThisChar, LastChar);
+  }
   return ThisChar;
 }
 
