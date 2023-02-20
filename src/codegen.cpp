@@ -268,7 +268,10 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateFCmpUGT(R, L, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '^':
-    L = Builder->CreateXor(L, R, "ortmp");
+    L = Builder->CreateXor(L, R, "xortmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  case '|':
+    L = Builder->CreateOr(L, R, "ortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '=': {
     VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
