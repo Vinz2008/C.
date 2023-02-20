@@ -436,10 +436,10 @@ Function *FunctionAST::codegen() {
 }
 
 GlobalVariable* GlobalVariableAST::codegen(){
-  /*if (!Init){
-    return nullptr;
-  }*/
   Constant* InitVal = get_default_constant(*cpoint_type);
+  if (Init){
+    InitVal = dyn_cast<ConstantFP>(Init->codegen());
+  }
   GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(*cpoint_type), /*is constant*/ is_const, GlobalValue::ExternalLinkage, InitVal, varName);
   GlobalVariables[varName] = std::make_unique <GlobalVariableValue>(*cpoint_type, globalVar);
   return globalVar;
