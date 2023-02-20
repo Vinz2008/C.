@@ -23,6 +23,7 @@ std::unique_ptr<LLVMContext> TheContext;
 std::unique_ptr<Module> TheModule;
 static std::unique_ptr<IRBuilder<>> Builder;
 std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
+std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
@@ -88,6 +89,9 @@ Value* StringExprAST::codegen() {
 
 Value *VariableExprAST::codegen() {
   // Look this variable up in the function.
+  if (GlobalVariables[Name] != nullptr){
+    return Builder->CreateLoad(get_type_llvm(type), GlobalVariables[Name]->globalVar, Name.c_str());
+  }
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
     return LogErrorV("Unknown variable name");
@@ -428,6 +432,7 @@ GlobalVariable* GlobalVariableAST::codegen(){
   }*/
   Constant* InitVal = get_default_constant(*cpoint_type);
   GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(*cpoint_type), /*is constant*/ false, GlobalValue::ExternalLinkage, InitVal, varName);
+  GlobalVariables[varName] = std::make_unique <GlobalVariableValue>(*cpoint_type, globalVar);
   return globalVar;
 }
 
@@ -503,6 +508,11 @@ Value* RedeclarationExprAST::codegen(){
   std::string MemberName = "";
   std::string ArrayName = "";
   int pos_array = -1;
+  bool is_global = false;
+  if (GlobalVariables[VariableName] != nullptr){
+    is_global = true;
+  }
+  Log::Info() << "is_global : " << is_global << "\n";
   for (int i = 0; i < VariableName.length(); i++){
     if (VariableName.at(i) == '.'){
       Log::Info() << "i struct : " << i << "\n";
@@ -545,24 +555,27 @@ Value* RedeclarationExprAST::codegen(){
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
     auto structPtr = NamedValues[StructName]->alloca_inst;
-    auto ptr = Builder->CreateGEP(get_type_llvm(NamedValues[StructName]->type), structPtr, {zero, index}, "get_struct");
-    Builder->CreateStore(ValDeclared, ptr);
     Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
     NamedValues[StructName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
   } else if (is_array) {
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto arrayPtr = NamedValues[ArrayName]->alloca_inst;
-    auto ptr = Builder->CreateGEP(get_type_llvm(NamedValues[ArrayName]->type), arrayPtr, {zero, index}, "get_array");
-    Builder->CreateStore(ValDeclared, ptr);
     Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
+    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), arrayPtr, {zero, index}, "get_array");
+    Builder->CreateStore(ValDeclared, ptr);
     NamedValues[ArrayName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
     //auto ptr = llvm::GetElementPtrInst::Create(arrayPtr, { zero, index }, "", block);
   } else {
-  Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+  Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
+  if (is_global){
+    Builder->CreateStore(ValDeclared, GlobalVariables[VariableName]->globalVar);
+  } else {
   AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
   Builder->CreateStore(ValDeclared, Alloca);
   NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+  }
   }
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }

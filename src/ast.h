@@ -50,9 +50,9 @@ public:
 
 class VariableExprAST : public ExprAST {
   std::string Name;
-  int type;
+  Cpoint_Type type;
 public:
-  VariableExprAST(const std::string &Name, int type) : Name(Name), type(type) {}
+  VariableExprAST(const std::string &Name, Cpoint_Type type) : Name(Name), type(type) {}
   Value *codegen() override;
   const std::string &getName() const { return Name; }
 };

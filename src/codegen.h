@@ -15,6 +15,13 @@ public:
     NamedValue(llvm::AllocaInst* alloca_inst, Cpoint_Type type, llvm::Type* struct_type = get_type_llvm(Cpoint_Type(double_type)), const std::string &struct_declaration_name = "") : alloca_inst(alloca_inst), type(std::move(type)), struct_type(struct_type), struct_declaration_name(struct_declaration_name) {}
 };
 
+class GlobalVariableValue {
+public:
+    Cpoint_Type type;
+    GlobalVariable* globalVar;
+    GlobalVariableValue(Cpoint_Type type, GlobalVariable* globalVar) : type(type), globalVar(globalVar) {}
+};
+
 class Struct {
 public:
     llvm::Type* struct_type;

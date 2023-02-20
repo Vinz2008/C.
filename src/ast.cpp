@@ -19,8 +19,10 @@ extern int posArrayNb;
 bool isInStruct = false;;
 extern std::unique_ptr<Compiler_context> Comp_context;
 extern std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
+extern std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 extern bool std_mode;
 extern bool gc_mode;
+extern std::unique_ptr<Module> TheModule;
 
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
@@ -83,8 +85,9 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   getNextToken();  // eat identifier.
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
-    if (NamedValues[IdName] == nullptr && IdName.find('[') == std::string::npos && IdName.find('.') == std::string::npos){
-    LogError("Couldn't find variable");
+
+    if ((GlobalVariables[IdName] == nullptr && IdName.find('[') == std::string::npos && IdName.find('.') == std::string::npos) && (NamedValues[IdName] == nullptr && IdName.find('[') == std::string::npos && IdName.find('.') == std::string::npos)) {
+      LogError("Couldn't find variable");
     }
     getNextToken();
     auto V = ParseExpression();
@@ -119,13 +122,15 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       }
     }
     Log::Info() << "VariableExprAST" << "\n";
-    int type;
-    if (NamedValues[IdName] == nullptr){
-      type = double_type;
-    } else {
-    int type = NamedValues[IdName]->type.type;
+    std::unique_ptr<Cpoint_Type> type;
+    if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
+      type = std::make_unique<Cpoint_Type>(double_type);
+    } else if (GlobalVariables[IdName] != nullptr){
+      type = std::make_unique<Cpoint_Type>(GlobalVariables[IdName]->type);
+    } else  {
+      type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
     }
-    return std::make_unique<VariableExprAST>(IdName, type);
+    return std::make_unique<VariableExprAST>(IdName, *type);
   }
 
   // Call.
