@@ -98,7 +98,7 @@ int build_gc(string path, string target_triplet){
     return 0;
 }
 
-void link_files(vector<string> list_files, string filename_out, string target_triplet){
+void link_files(vector<string> list_files, string filename_out, string target_triplet, std::string linker_additional_flags){
     int retcode = -1;
     string cmd = "clang -o ";
     cmd.append(filename_out);
@@ -108,6 +108,7 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
         //cmd.append(" --no-standard-libraries -Wl,--export-all -Wl,--no-entry ");
         cmd.append("-Wl,--export-all --no-standard-libraries -Wl,--no-entry");
     }
+    cmd.append(linker_additional_flags);
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");
         cmd.append(list_files.at(i));

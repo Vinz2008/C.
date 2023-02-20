@@ -191,6 +191,7 @@ int main(int argc, char **argv){
     bool import_mode = true;
     bool rebuild_gc = false;
     bool rebuild_std = true;
+    std::string linker_additional_flags = "";
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -226,6 +227,10 @@ int main(int argc, char **argv){
 	        rebuild_gc = true;
         } else if (arg.compare("-no-rebuild-std") == 0){
           rebuild_std = false;
+        } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
+          size_t pos = arg.find('=');
+          linker_additional_flags = arg.substr(pos+1, arg.size());
+          cout << "linker flag " << linker_additional_flags << endl; 
         } else {
           cout << "filename : " << arg << endl;
           filename = arg;
@@ -384,7 +389,7 @@ int main(int argc, char **argv){
           vect_obj_files.push_back(package_archive_path);
         }
       }
-      link_files(vect_obj_files, exe_filename, TargetTriple);
+      link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
     }
     if (remove_temp_file){
       remove(temp_filename.c_str());
