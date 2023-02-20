@@ -497,6 +497,11 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   bool is_array = false;
   std::string struct_name = "";
   int nb_ptr = 0;
+  bool is_const = false;
+  if (IdentifierStr == "const"){
+    is_const = true;
+    getNextToken();
+  }
   std::string Name = IdentifierStr;
   getNextToken(); // eat identifier.
   if (CurTok == ':'){
@@ -514,7 +519,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   }
   std::unique_ptr<Cpoint_Type> cpoint_type;
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
-  return std::make_unique<GlobalVariableAST>(Name, std::move(cpoint_type), std::move(Init));
+  return std::make_unique<GlobalVariableAST>(Name, is_const, std::move(cpoint_type), std::move(Init));
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {

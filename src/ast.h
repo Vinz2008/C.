@@ -184,10 +184,11 @@ public:
 class GlobalVariableAST {
 public:
   std::string varName;
+  bool is_const;
   std::unique_ptr<Cpoint_Type> cpoint_type;
   std::unique_ptr<ExprAST> Init;
-  GlobalVariableAST(const std::string& varName, std::unique_ptr<Cpoint_Type> cpoint_type, std::unique_ptr<ExprAST> Init) 
-    : varName(varName), cpoint_type(std::move(cpoint_type)), Init(std::move(Init)) {} 
+  GlobalVariableAST(const std::string& varName, bool is_const, std::unique_ptr<Cpoint_Type> cpoint_type, std::unique_ptr<ExprAST> Init) 
+    : varName(varName), is_const(is_const), cpoint_type(std::move(cpoint_type)), Init(std::move(Init)) {} 
   GlobalVariable* codegen();
 };
 
