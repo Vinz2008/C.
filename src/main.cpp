@@ -281,9 +281,10 @@ int main(int argc, char **argv){
     //file_out_ostream = raw_fd_ostream(llvm::StringRef(filename), &ec);
     // Install standard binary operators.
     // 1 is lowest precedence.
+    BinopPrecedence['^'] = 5;
+    BinopPrecedence['|'] = 7;
     BinopPrecedence['<'] = 10;
     BinopPrecedence['>'] = 10;
-    BinopPrecedence['^'] = 10;
     BinopPrecedence['+'] = 20;
     BinopPrecedence['-'] = 20;
     BinopPrecedence['*'] = 40;  // highest.
