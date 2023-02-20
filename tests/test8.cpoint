@@ -1,5 +1,6 @@
 import @std/print.cpoint
 extern printptr(x)
+var a : double = 2
 func main(){
   var c : i8 ptr = "hello"
   var a = 1

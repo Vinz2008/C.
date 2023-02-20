@@ -180,6 +180,18 @@ public:
   Function *codegen();
 };
 
+
+class GlobalVariableAST {
+public:
+  std::string varName;
+  std::unique_ptr<Cpoint_Type> cpoint_type;
+  std::unique_ptr<ExprAST> Init;
+  GlobalVariableAST(const std::string& varName, std::unique_ptr<Cpoint_Type> cpoint_type, std::unique_ptr<ExprAST> Init) 
+    : varName(varName), cpoint_type(std::move(cpoint_type)), Init(std::move(Init)) {} 
+  GlobalVariable* codegen();
+};
+
+
 class ClassDeclarAST {
   std::string Name;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
@@ -251,5 +263,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 std::unique_ptr<ExprAST> ParseWhileExpr();
+std::unique_ptr<GlobalVariableAST> ParseGlobalVariable();
 
 #endif

@@ -53,6 +53,11 @@ std::unique_ptr<FunctionAST> LogErrorF(const char *Str) {
   return nullptr;
 }
 
+std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str) {
+  LogError(Str);
+  return nullptr;
+}
+
 
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
@@ -477,6 +482,34 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   std::vector<std::unique_ptr<ExprAST>> Body;
   Body.push_back(std::move(E));
   return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
+}
+
+std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
+  getNextToken(); // eat the var.
+  int type = -1;
+  bool is_ptr = false;
+  int nb_element = 0;
+  bool is_array = false;
+  std::string struct_name = "";
+  int nb_ptr = 0;
+  std::string Name = IdentifierStr;
+  getNextToken(); // eat identifier.
+  if (CurTok == ':'){
+    auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, nb_ptr);
+    if (a != nullptr){
+      //return a;
+    }
+  }
+  std::unique_ptr<ExprAST> Init = nullptr;
+  if (CurTok == '=') {
+  getNextToken(); // eat the '='.
+  Init = ParseExpression();
+  if (!Init)
+    return nullptr;
+  }
+  std::unique_ptr<Cpoint_Type> cpoint_type;
+  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
+  return std::make_unique<GlobalVariableAST>(Name, std::move(cpoint_type), std::move(Init));
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {

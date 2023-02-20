@@ -123,6 +123,15 @@ static void HandleTopLevelExpression() {
   }
 }
 
+static void HandleGlobalVariable(){
+  if (auto GlobalVarAST = ParseGlobalVariable()){
+    GlobalVarAST->codegen();
+  } else {
+    getNextToken();
+  }
+
+}
+
 static void HandleStruct() {
   if (auto structAST = ParseStruct()){
     if (auto* structIR = structAST->codegen()){
@@ -155,6 +164,9 @@ static void MainLoop() {
       break;
     case tok_struct:
       HandleStruct();
+      break;
+    case tok_var:
+      HandleGlobalVariable();
       break;
     case '#':
       // FOR NOW NOT WORKING : TODO
@@ -229,7 +241,8 @@ int main(int argc, char **argv){
           rebuild_std = false;
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
-          linker_additional_flags = arg.substr(pos+1, arg.size());
+          linker_additional_flags += arg.substr(pos+1, arg.size());
+          linker_additional_flags += ' ';
           cout << "linker flag " << linker_additional_flags << endl; 
         } else {
           cout << "filename : " << arg << endl;

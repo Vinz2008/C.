@@ -422,6 +422,15 @@ Function *FunctionAST::codegen() {
   return nullptr;
 }
 
+GlobalVariable* GlobalVariableAST::codegen(){
+  /*if (!Init){
+    return nullptr;
+  }*/
+  Constant* InitVal = get_default_constant(*cpoint_type);
+  GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(*cpoint_type), /*is constant*/ false, GlobalValue::ExternalLinkage, InitVal, varName);
+  return globalVar;
+}
+
 Value *IfExprAST::codegen() {
   Value *CondV = Cond->codegen();
   if (!CondV)

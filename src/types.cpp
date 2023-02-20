@@ -72,6 +72,23 @@ Value* get_default_value(Cpoint_Type type){
     return ConstantFP::get(*TheContext, APFloat(0.0));
 }
 
+Constant* get_default_constant(Cpoint_Type type){
+    if (type.is_ptr){
+        return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
+    }
+    switch (type.type){
+        default:
+        case double_type:
+            return ConstantFP::get(*TheContext, APFloat(0.0));
+        case int_type:
+            return ConstantInt::get(*TheContext, APInt(32, 0, true));
+        case i8_type:
+            return ConstantInt::get(*TheContext, APInt(8, 0, true));
+    }
+    return ConstantFP::get(*TheContext, APFloat(0.0));
+}
+
+
 std::vector<std::string> types{
     "double",
     "int",

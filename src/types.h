@@ -30,3 +30,4 @@ public:
 
 llvm::Type* get_type_llvm(Cpoint_Type cpoint_type);
 llvm::Value* get_default_value(Cpoint_Type type);
+llvm::Constant* get_default_constant(Cpoint_Type type);
