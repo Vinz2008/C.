@@ -225,6 +225,9 @@ Value *BinaryExprAST::codegen() {
   Value *R = RHS->codegen();
   if (!L || !R)
     return nullptr;
+  if (L->getType() != R->getType()){
+    Log::Warning() << "Wrong type in Binary Expression" << "\n";
+  }
   
   if (Op == "=="){
     Log::Info() << "Codegen ==" << "\n";

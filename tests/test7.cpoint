@@ -2,7 +2,7 @@ import @std/print.cpoint
 extern printptr(x);
 func test(){
   var x : double = 1
-  var y : int = 2
+  var y : int = 1 + 1
   var z : int ptr = 0
   var b : int ptr = addr y
   printptr(z)

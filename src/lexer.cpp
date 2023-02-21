@@ -55,7 +55,6 @@ int getCharLine(){
     Comp_context->line_nb++;
     Comp_context->col_nb = 0;
     getLine(file_in, *line);
-    preprocess_replace_variable(*line);
     Comp_context->line = *line;
 if_preprocessor_first:
     Log::Info() << "Line : " << *line << "\n";
@@ -64,6 +63,8 @@ if_preprocessor_first:
       preprocess_instruction(*line);
       getLine(file_in, *line);
       goto if_preprocessor_first;
+    } else {
+    preprocess_replace_variable(*line);
     }
     /*if (!getline(file_in, *line)){
       last_line = true;

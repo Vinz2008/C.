@@ -52,17 +52,17 @@ void preprocess_instruction(std::string line){
     get_next_word(instruction, pos);
     if (word == "if"){
         get_next_word(instruction, pos);
-        std::string r = word;
+        std::string l = word;
         get_next_word(instruction, pos);
         std::string op = word;
         get_next_word(instruction, pos);
-        std::string l = word;
-        int pos = context->get_variable_pos(r);
+        std::string r = word;
+        int pos = context->get_variable_pos(l);
         if (pos == -1){
-            fprintf(stderr, "PREPROCESSOR : unknown variable\n");
+            fprintf(stderr, "PREPROCESSOR : unknown variable %s\n", l.c_str());
         } else {
             if (op == "=="){
-            if (context->get_variable_value(r) == l){
+            if (context->get_variable_value(l) == r){
                 Log::Preprocessor_Info() << "if true" << "\n";
                 //go_to_next_line();
             } else {
