@@ -56,6 +56,33 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                            VarName);
 }
 
+static void convertToType(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
+  Log::Info() << "Creating cast" << "\n";
+  switch (typeFrom.type)
+  {
+  case int_type:
+    if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+      Log::Info() << "From int to float/double" << "\n";
+      Log::Info() << "typeFrom " << typeFrom.type << "\n";
+      val = Builder->CreateSIToFP(val, typeTo, "cast");
+    } else if (typeTo == Type::getInt32Ty(*TheContext)){
+      break;
+    }
+    break;
+  case float_type:
+  case double_type:
+    if (typeTo == Type::getInt32Ty(*TheContext)){
+      Log::Info() << "From float/double to int" << "\n";
+      val = Builder->CreateFPToUI(val, typeTo, "cast");
+    } else if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+      break;
+    }
+    break;
+  default:
+    break;
+  }
+}
+
 static void AllocateMemory(Function* function, std::string VarName, Cpoint_Type type){
     // TODO return alloca ? because of different types, probably no return and add in function to table og alloca inst or pass pointer to variable instead of returning the value
     if (gc_mode){
@@ -226,7 +253,7 @@ Value *BinaryExprAST::codegen() {
   if (!L || !R)
     return nullptr;
   if (L->getType() != R->getType()){
-    Log::Warning() << "Wrong type in Binary Expression" << "\n";
+    convertToType(*get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
   }
   
   if (Op == "=="){
@@ -732,6 +759,9 @@ Value *VarExprAST::codegen() {
       InitVal = get_default_value(*cpoint_type);
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
+    if (InitVal->getType() != get_type_llvm(*cpoint_type)){
+      //convertToType(*cpoint_type, InitVal->getType(), InitVal);
+    }
     Builder->CreateStore(InitVal, Alloca);
 
     // Remember the old variable binding so that we can restore the binding when

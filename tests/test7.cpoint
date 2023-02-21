@@ -2,11 +2,14 @@ import @std/print.cpoint
 extern printptr(x);
 func test(){
   var x : double = 1
-  var y : int = 1 + 1
-  var z : int ptr = 0
-  var b : int ptr = addr y
-  printptr(z)
+  var i : int = 1
+  i = 1
+  var y : double = 1.2 + 1
+  var b : double ptr = addr y
+  printptr(b)
   printd(x)
+  printd(y)
+  printd(1+i)
 }
 func main(){
   var h = 2
