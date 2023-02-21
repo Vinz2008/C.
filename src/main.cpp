@@ -301,7 +301,7 @@ int main(int argc, char **argv){
     setup_preprocessor(TargetTriple);
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
-    InitializeModule(filename);
+    InitializeModule(first_filename);
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
                            DEBUG_METADATA_VERSION);
     if (Triple(sys::getProcessTriple()).isOSDarwin()){
