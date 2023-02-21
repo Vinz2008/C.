@@ -203,6 +203,7 @@ int main(int argc, char **argv){
     bool import_mode = true;
     bool rebuild_gc = false;
     bool rebuild_std = true;
+    std::string first_filename = "";
     std::string linker_additional_flags = "";
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
@@ -250,6 +251,7 @@ int main(int argc, char **argv){
         }
     }
     cout << "filename at end : " << filename << endl;
+    first_filename = filename;
     if (output_temp_found){
       if (link_files_mode){
         exe_filename = temp_output;
@@ -307,7 +309,7 @@ int main(int argc, char **argv){
     }
     DBuilder = std::make_unique<DIBuilder>((*TheModule));
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
-      dwarf::DW_LANG_C, DBuilder->createFile(filename, "."),
+      dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", false, "", 0);
     DBuilder->finalize();
     if (std_mode && gc_mode == true){
