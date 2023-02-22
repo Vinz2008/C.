@@ -347,7 +347,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     int type = double_type;
     bool is_ptr = false;
     std::string temp;
-    int temp_nb;
+    int temp_nb = -1;
     if (CurTok == ':'){
       ParseTypeDeclaration(&type, &is_ptr, temp, temp_nb);
     }
