@@ -46,6 +46,7 @@ string filename ="";
 bool std_mode = true;
 bool gc_mode = true;
 extern std::string IdentifierStr;
+bool debug_mode = false;
 
 
 std::map<char, int> BinopPrecedence;
@@ -144,10 +145,14 @@ static void HandleStruct() {
 
 static void MainLoop() {
   while (1) {
+    if (debug_mode){
     std::flush(file_log);
+    }
     //fprintf(stderr, "ready> ");
     if (last_line == true){
+      if (debug_mode){
       file_log << "exit" << "\n";
+      }
       return;
     }
     switch (CurTok) {
@@ -196,7 +201,6 @@ int main(int argc, char **argv){
     bool output_temp_found = false;
     string target_triplet_found;
     bool target_triplet_found_bool = false;
-    bool debug_mode = false;
     bool link_files_mode = true;
     bool verbose_std_build = false;
     bool remove_temp_file = true;
@@ -268,7 +272,7 @@ int main(int argc, char **argv){
     filename = temp_filename;
     }
     std::error_code ec;
-    if (debug_mode == false ){
+    if (debug_mode == false){
 #ifdef _WIN32
       file_log.open("nul");
 #else

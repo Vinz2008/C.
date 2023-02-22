@@ -17,10 +17,13 @@ def test_file(name, verbose=True):
 		return_val = subprocess.call(cmd, shell=True)
 	print("RETURN VALUE : " + str(return_val))
 	if (return_val == 1):
-		print(colored("TEST " + str(nb_test) + " FAILED", "red"))
+		print(colored("TEST " + str(nb_test+1) + " FAILED", "red"))
 		exit(1)
 	if (return_val == -11):
-		print(colored("TEST " + str(nb_test) + " FAILED (segmentation fault)", "red"))
+		print(colored("TEST " + str(nb_test+1) + " FAILED (segmentation fault)", "red"))
+		exit(1)
+	if (return_val == -6):
+		print(colored("TEST " + str(nb_test+1) + " FAILED (aborted : probably cpp error)", "red"))
 		exit(1)
 	nb_test += 1
 

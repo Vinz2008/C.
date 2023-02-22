@@ -58,16 +58,27 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
 
 Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){
     int type = -1;
+    bool is_ptr = false;
+    Type* not_ptr_type = llvm_type;
+    if (llvm_type->isPointerTy()){
+        is_ptr = true;
+    }
     if (llvm_type == Type::getDoubleTy(*TheContext)){
         type = double_type;
     } else if (llvm_type == Type::getInt32Ty(*TheContext)){
         type = int_type;
     } else if (llvm_type == Type::getFloatTy(*TheContext)){
         type = float_type;
+    } else if (llvm_type == Type::getInt8Ty(*TheContext)){
+        type = i8_type;
     } else {
+        if (is_ptr){
+            type = i8_type;
+        } else {
         Log::Warning() << "Unknown Type" << "\n";
+        }
     }
-    Cpoint_Type* cpoint_type = new Cpoint_Type(type);
+    Cpoint_Type* cpoint_type = new Cpoint_Type(type, is_ptr);
     return cpoint_type;
 }
 

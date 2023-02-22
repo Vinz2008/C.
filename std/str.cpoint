@@ -8,6 +8,3 @@ struct str {
 func printc(x : i8) void{
   putchar(x)
 }
-func test_string_function(x : i8) struct str {
-  putchar(x)
-}

@@ -351,7 +351,14 @@ Value *CallExprAST::codegen() {
 
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    ArgsV.push_back(Args[i]->codegen());
+    Value* temp_val = Args[i]->codegen();
+    if (i < FunctionProtos[Callee]->Args.size()){
+    if (temp_val->getType() != get_type_llvm(FunctionProtos[Callee]->Args.at(i).second)){
+      Log::Info() << "name of arg converting in call expr : " << FunctionProtos[Callee]->Args.at(i).first << "\n";
+      convertToType(*get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(FunctionProtos[Callee]->Args.at(i).second), temp_val);
+    }
+    }
+    ArgsV.push_back(temp_val);
     if (!ArgsV.back())
       return nullptr;
   }
@@ -760,7 +767,7 @@ Value *VarExprAST::codegen() {
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
     if (InitVal->getType() != get_type_llvm(*cpoint_type)){
-      //convertToType(*cpoint_type, InitVal->getType(), InitVal);
+      convertToType(*get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
     }
     Builder->CreateStore(InitVal, Alloca);
 

@@ -1,6 +1,7 @@
 import @std/print.cpoint
 func test(x){
     var i : double = 2
+    var d : int = 3
     i = 2 + 2
     i = i + 2
     printd(i)
