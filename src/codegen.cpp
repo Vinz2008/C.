@@ -585,6 +585,17 @@ Value* RedeclarationExprAST::codegen(){
   Log::Info() << "TEST" << "\n";
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Value* ValDeclared = Val->codegen();
+  Cpoint_Type* type = nullptr;
+  if (is_global){
+    type = new Cpoint_Type(GlobalVariables[VariableName]->type);
+  } else if (NamedValues[VariableName] != nullptr){
+    type = new Cpoint_Type(NamedValues[VariableName]->type);
+  }
+  if (type != nullptr){
+  if (ValDeclared->getType() != get_type_llvm(*type)){
+    convertToType(*get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(*type), ValDeclared);
+  }
+  }
   if (is_struct){
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
