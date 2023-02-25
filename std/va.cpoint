@@ -1,0 +1,9 @@
+struct va_list {
+    var gp_offset : int
+    var fp_offset : int
+    var overflow_arg_area : int ptr
+    var reg_save_area : int ptr
+}
+func printfmt_cpoint(format : i8 ptr ...){
+    var va : struct va_list 
+}
