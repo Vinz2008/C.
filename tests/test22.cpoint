@@ -2,6 +2,6 @@ import @std/print.cpoint
 func main() double {
     var a : double = 2
     if a == 2 {
-        printd(a)
+        printi(argc)
     }
 }

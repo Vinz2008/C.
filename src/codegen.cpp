@@ -502,7 +502,7 @@ Value *IfExprAST::codegen() {
 
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
-  Value *ThenV;
+  Value *ThenV = nullptr;
   for (int i = 0; i < Then.size(); i++){
     ThenV = Then.at(i)->codegen();
     if (!ThenV)
@@ -535,7 +535,9 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(MergeBB);
   PHINode *PN = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, "iftmp");
 
-
+  if (ThenV->getType() != Type::getDoubleTy(*TheContext)){
+    ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
+  }
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
   return PN;
