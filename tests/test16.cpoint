@@ -1,6 +1,9 @@
 import @std/print.cpoint
 func test(x){
     var i = 1
+    if 10 > i {
+        printstr("more little than 10")
+    }
     while 10 > i {
     i = i + 1
     printd(i)

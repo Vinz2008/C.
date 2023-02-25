@@ -293,11 +293,11 @@ Value *BinaryExprAST::codegen() {
   case '%':
     return Builder->CreateFRem(L, R, "remtmp");
   case '<':
-    L = Builder->CreateFCmpULT(L, R, "cmptmp");
+    L = Builder->CreateFCmpOLT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '>':
-    L = Builder->CreateFCmpUGT(R, L, "cmptmp");
+    L = Builder->CreateFCmpOGT(R, L, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '^':
     L = Builder->CreateXor(L, R, "xortmp");
@@ -649,17 +649,11 @@ Value* RedeclarationExprAST::codegen(){
 }
 
 Value* WhileExprAST::codegen(){
-  // TODO generate some sort of if to verify if condition is true for the first run
-  // now it is more of a do {} while(...) than a classic while(...){}
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  BasicBlock* whileBB = BasicBlock::Create(*TheContext, "while", TheFunction);
+  Builder->CreateBr(whileBB);
+  Builder->SetInsertPoint(whileBB);
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
-  Builder->CreateBr(LoopBB);
-  Builder->SetInsertPoint(LoopBB);
-  for (int i = 0; i < Body.size(); i++){
-    if (!Body.at(i)->codegen())
-      return nullptr;
-  }
-  // testing condition
   Value *CondV = Cond->codegen();
   if (!CondV)
     return nullptr;
@@ -668,6 +662,13 @@ Value* WhileExprAST::codegen(){
   BasicBlock *AfterBB =
       BasicBlock::Create(*TheContext, "afterloop", TheFunction);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
+  //Builder->CreateBr(LoopBB);
+  Builder->SetInsertPoint(LoopBB);
+  for (int i = 0; i < Body.size(); i++){
+    if (!Body.at(i)->codegen())
+      return nullptr;
+  }
+  Builder->CreateBr(whileBB);
   Builder->SetInsertPoint(AfterBB);
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
