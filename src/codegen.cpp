@@ -498,7 +498,6 @@ Value *IfExprAST::codegen() {
   BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then", TheFunction);
   BasicBlock *ElseBB = BasicBlock::Create(*TheContext, "else");
   BasicBlock *MergeBB = BasicBlock::Create(*TheContext, "ifcont");
-
   Builder->CreateCondBr(CondV, ThenBB, ElseBB);
 
   // Emit then value.
@@ -513,17 +512,20 @@ Value *IfExprAST::codegen() {
   Builder->CreateBr(MergeBB);
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
   ThenBB = Builder->GetInsertBlock();
-
+  Value *ElseV;
   // Emit else block.
   TheFunction->getBasicBlockList().push_back(ElseBB);
   Builder->SetInsertPoint(ElseBB);
-  Value *ElseV;
+  if (!Else.empty()){
   for (int i = 0; i < Else.size(); i++){
     ElseV = Else.at(i)->codegen();
     if (!ElseV)
       return nullptr;
   }
-
+  } else {
+    Log::Info() << "Else empty" << "\n";
+    ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
+  }
   Builder->CreateBr(MergeBB);
   // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
   ElseBB = Builder->GetInsertBlock();

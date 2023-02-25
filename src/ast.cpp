@@ -548,14 +548,13 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
     return LogError("expected }");
   }*/
   getNextToken();
-  if (CurTok != tok_else)
-    return LogError("expected else");
+  std::vector<std::unique_ptr<ExprAST>> Else;
+  if (CurTok == tok_else){
   getNextToken();
   if (CurTok != '{'){
     return LogError("expected {");
   }
   getNextToken();
-  std::vector<std::unique_ptr<ExprAST>> Else;
   while (CurTok != '}'){
     auto E2 = ParseExpression();
     if (!E2)
@@ -566,7 +565,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
     return LogError("expected }");
   }*/
   getNextToken();
-
+  }
   return std::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
                                       std::move(Else));
 }
