@@ -1,11 +1,14 @@
+import @std/print.cpoint
+include @std/libc.hpoint
 ?[if OS == linux]
 extern linux_function();
 ?[endif]
 ?[if OS == windows]
 extern windows_function();
 ?[endif]
-?[define testvar test]
 func main(){
-  var x : double = 2
-  var x : i8 ptr = "testvar"
+  var x : int = O_CREAT
+  var y : int = O_WRONLY
+  printi(x)
+  printi(y)
 }

@@ -1,15 +1,11 @@
 import @std/print.cpoint
-extern open(pathname : i8 ptr flags : int) int;
-extern write(fd : int buf : i8 ptr count : int) int;
-extern close(fd : int) int;
+import @std/file.cpoint
 func main(){
-    var flags : int = 01
-    var fd : int = open("test_io.txt", flags)
+    var fd : int = openfile("test_io.txt")
     printstr("fd : ")
     printi(fd)
-    var nb_char : int = 17
-    var out : int = write(fd, "test hello world", nb_char)
+    var out : int = writefile(fd, "test hello world\n")
     printstr("write output")
     printi(out)
-    close(fd)
+    closefile(fd)
 }

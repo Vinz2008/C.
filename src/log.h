@@ -1,4 +1,5 @@
 #include <iostream>
+#pragma once
 
 namespace Log {
     namespace Color {

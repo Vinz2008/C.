@@ -31,7 +31,7 @@ static void skip_spaces(std::string line, int& pos){
 
 int get_next_word(std::string line, int& pos){
     word = "";
-    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '=')){
+    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '=' || line.at(pos) == '\"' || line.at(pos) == '_')){
         word += line.at(pos);
         pos++;
     }
@@ -86,7 +86,8 @@ void preprocess_instruction(std::string line){
         get_next_word(instruction, pos);
         std::string value = word;
         Log::Preprocessor_Info() << "value : " << value << "\n";
-        context->variables.push_back(std::make_unique<Preprocessor::Variable>(varName, value));
+        context->add_variable(std::make_unique<Preprocessor::Variable>(varName, value));
+        Log::Preprocessor_Info() << "Number of variables in context : " << context->variables.size() << "\n";
     }
 
 }

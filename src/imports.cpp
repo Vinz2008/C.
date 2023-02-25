@@ -265,7 +265,7 @@ void generate_file_with_imports(std::string file_path, std::string out_path){
             }
             Log::Imports_Info() << "line : " << line << "\n";
             if (find_import_or_include(line) == 0){
-                preprocess_replace_variable(line);
+                //preprocess_replace_variable(line);
                 out_file << line;
             }
             pos_line_file++;
