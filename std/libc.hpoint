@@ -3,5 +3,5 @@
 ?[define S_IRWXU 448]
 extern puts(s : i8 ptr) int;
 extern putchar(c : int) int;
-extern open(path : i8 ptr flag : int ...) int;
+extern open(path : i8 ptr, flag : int ...) int;
 extern close(fd : int) int;

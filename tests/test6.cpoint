@@ -1,4 +1,4 @@
-func test(x y){
+func test(x, y){
   if x < 3 {
     1
   } else { 

@@ -6,7 +6,7 @@ func openfile(path : i8 ptr) int {
     var o_creat : int = O_CREAT
     open(path, o_wronly | o_creat, mode)
 }
-func writefile(fd : int buf : i8 ptr) int {
+func writefile(fd : int, buf : i8 ptr) int {
     cwritefile(fd, buf)
 }
 func closefile(fd : int){

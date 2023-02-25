@@ -329,34 +329,50 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   // Read the list of argument names.
   std::vector<std::pair<std::string,Cpoint_Type>> ArgNames;
   if (FnName == "main"){
-    while (getNextToken() == tok_identifier);
+    getNextToken();
+    while (CurTok == tok_identifier || CurTok == ':'){
+      getNextToken();
+    }
     ArgNames.push_back(std::make_pair("argc", Cpoint_Type(double_type, false)));
     ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
   } else {
   getNextToken();
-  while (CurTok == tok_identifier){
-    if (IdentifierStr == "..."){
+  if (CurTok != '('){
+    int arg_nb = 0;
+    while (1){
+      if (IdentifierStr == "..."){
       Log::Info() << "Found Variable number of args" << "\n";
       is_variable_number_args = true;
       //ArgNames.push_back(std::make_pair("...", Cpoint_Type(double_type)));
       getNextToken();
       break;
-    } else {
-    std::string ArgName = IdentifierStr;
-    getNextToken();
-    int type = double_type;
-    bool is_ptr = false;
-    std::string temp;
-    int temp_nb = -1;
-    if (CurTok == ':'){
-      ParseTypeDeclaration(&type, &is_ptr, temp, temp_nb);
-    }
-    ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, false, "", temp_nb)));
+      } else {
+      if (CurTok == ')'){
+        break;
+      }
+      if (arg_nb > 0){
+        if (CurTok != ','){
+          Log::Info() << "CurTok : " << CurTok << "\n";
+          return LogErrorP("Expected ')' or ',' in argument list");
+        }
+        getNextToken();
+      }
+      std::string ArgName = IdentifierStr;
+      getNextToken();
+      int type = double_type;
+      bool is_ptr = false;
+      std::string temp;
+      int temp_nb = -1;
+      if (CurTok == ':'){
+        ParseTypeDeclaration(&type, &is_ptr, temp, temp_nb);
+      }
+      arg_nb++;
+      ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, false, "", temp_nb)));
+      }
     }
   }
+
   }
-  if (CurTok != ')')
-    return LogErrorP("Expected ')' in prototype");
 
   // success.
   getNextToken();  // eat ')'.

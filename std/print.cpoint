@@ -4,7 +4,7 @@ func printd(d : double){
     cprintd(d)
     return 0;
 }
-func printi(i : int) void {
+func printi(i : int) void{
     cprinti(i)
 }
 func putchard(d : double) double{

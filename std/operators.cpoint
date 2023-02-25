@@ -6,7 +6,7 @@ func unary ! (v){
   }
 }
 
-func binary& 6 (LHS RHS){
+func binary& 6 (LHS, RHS){
   if !LHS {
     0
   } else {

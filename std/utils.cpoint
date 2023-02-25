@@ -1,4 +1,4 @@
-func average(x y) int {
+func average(x, y) int {
   return (x + y) * 0.5;
 }
 func absolute(v) int {
