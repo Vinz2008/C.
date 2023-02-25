@@ -290,6 +290,8 @@ Value *BinaryExprAST::codegen() {
     return Builder->CreateFSub(L, R, "subtmp");
   case '*':
     return Builder->CreateFMul(L, R, "multmp");
+  case '%':
+    return Builder->CreateFRem(L, R, "remtmp");
   case '<':
     L = Builder->CreateFCmpULT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
@@ -512,7 +514,7 @@ Value *IfExprAST::codegen() {
   Builder->CreateBr(MergeBB);
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
   ThenBB = Builder->GetInsertBlock();
-  Value *ElseV;
+  Value *ElseV = nullptr;
   // Emit else block.
   TheFunction->getBasicBlockList().push_back(ElseBB);
   Builder->SetInsertPoint(ElseBB);
@@ -522,10 +524,10 @@ Value *IfExprAST::codegen() {
     if (!ElseV)
       return nullptr;
   }
-  } else {
+  } /*else {
     Log::Info() << "Else empty" << "\n";
     ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
-  }
+  }*/
   Builder->CreateBr(MergeBB);
   // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
   ElseBB = Builder->GetInsertBlock();
@@ -537,6 +539,11 @@ Value *IfExprAST::codegen() {
 
   if (ThenV->getType() != Type::getDoubleTy(*TheContext)){
     ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
+  }
+  if (ElseV == nullptr){
+    ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
+  } else if (ElseV->getType() != Type::getDoubleTy(*TheContext)){
+    ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
   }
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);

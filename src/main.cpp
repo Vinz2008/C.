@@ -291,8 +291,10 @@ int main(int argc, char **argv){
     BinopPrecedence['|'] = 7;
     BinopPrecedence['<'] = 10;
     BinopPrecedence['>'] = 10;
+    BinopPrecedence['='] = 10;
     BinopPrecedence['+'] = 20;
     BinopPrecedence['-'] = 20;
+    BinopPrecedence['%'] = 40;
     BinopPrecedence['*'] = 40;  // highest.
     //fprintf(stderr, "ready> ");
     string TargetTriple;

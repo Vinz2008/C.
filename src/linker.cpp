@@ -109,6 +109,7 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
         cmd.append("-Wl,--export-all --no-standard-libraries -Wl,--no-entry");
     }
     cmd.append(linker_additional_flags);
+    cmd.append(" -lm ");
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");
         cmd.append(list_files.at(i));

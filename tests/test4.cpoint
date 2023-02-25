@@ -1,3 +1,19 @@
-func test(x, y) void {
-  return x + y * 0.5;
+import @std/print.cpoint
+func main(){
+  for i = 1, i <= 100, 1.0 {
+    if (i % 15) == 0 {
+      printstr("FizzBuzz\t")
+    } else {
+      if (i%3) == 0 {
+        printstr("Fizz\t")
+      } else {
+        if (i%5) == 0 {
+          printstr("Buzz\t")
+        } else {
+          printd(i)
+          printstr("\t")
+        }
+      }
+    }
+  }
 }
