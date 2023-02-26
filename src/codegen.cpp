@@ -119,6 +119,9 @@ Value *VariableExprAST::codegen() {
   if (GlobalVariables[Name] != nullptr){
     return Builder->CreateLoad(get_type_llvm(type), GlobalVariables[Name]->globalVar, Name.c_str());
   }
+  if (NamedValues[Name] == nullptr) {
+  return LogErrorV("Unknown variable name");
+  }
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
     return LogErrorV("Unknown variable name");
