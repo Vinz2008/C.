@@ -182,6 +182,10 @@ static int gettok() {
       return tok_ptr;
     if (IdentifierStr == "while")
       return tok_while;
+    if (IdentifierStr == "goto")
+      return tok_goto;
+    if (IdentifierStr.at(IdentifierStr.size() - 1) == ':')
+      return tok_label;
     if (IdentifierStr == "import"){
       go_to_next_line();
       return getNextToken();

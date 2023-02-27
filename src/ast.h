@@ -223,7 +223,16 @@ public:
   : returned_expr(std::move(returned_expr)) {}
   //ReturnAST(double val) : Val(val) {}
   Value *codegen() override;
+};
 
+class GotoExprAST : public ExprAST {
+  std::string label_name;
+  GotoExprAST(const std::string& label_name) : label_name(label_name) {}
+};
+
+class LabelExprAST : public ExprAST {
+  std::string label_name;
+  LabelExprAST(const std::string& label_name) : label_name(label_name) {}
 };
 
 class ForExprAST : public ExprAST {

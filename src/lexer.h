@@ -32,6 +32,8 @@ enum Token {
   tok_import = -20,
   tok_while = -21,
   tok_op_multi_char = -22,
+  tok_label = -23,
+  tok_goto = -24,
 };
 
 int getNextToken();
