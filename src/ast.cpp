@@ -60,7 +60,6 @@ std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str) {
   return nullptr;
 }
 
-
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -602,6 +601,12 @@ std::unique_ptr<ExprAST> ParseReturn(){
   //return std::move(Result);
 }
 
+std::unique_ptr<ExprAST> ParseGotoExpr(){
+ getNextToken();
+ std::string label_name = IdentifierStr.substr(0, IdentifierStr.size()-2);
+ return std::make_unique<GotoExprAST>(label_name);
+}
+
 std::unique_ptr<ExprAST> ParseWhileExpr(){ 
   getNextToken();  // eat the while.
   Log::Info() << "Before Parse Expression" << "\n";
@@ -689,12 +694,13 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   getNextToken(); // eat the var.
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-  int type = -1;
+  int type = double_type;
   bool is_ptr = false;
   int nb_element = 0;
   bool is_array = false;
   std::string struct_name = "";
   int nb_ptr = 0;
+  bool infer_type = false;
   // At least one variable name is required.
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
@@ -724,11 +730,14 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       nb_element = std::stoi(nb_element_str);
       Name = Var_Name;
     }
+    infer_type = false;
     if (CurTok == ':'){
       auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, nb_ptr);
       if (a != nullptr){
         return a;
       }
+    } else {
+      infer_type = true;
     }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;
@@ -738,6 +747,10 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       Init = ParseExpression();
       if (!Init)
         return nullptr;
+    }
+    if (infer_type && Init == nullptr){
+        Log::Info() << "Missing type declaration and default value to do type inference. Type defaults to double" << "\n";
+        type = double_type;
     }
     VarNames.push_back(std::make_pair(Name, std::move(Init)));
 
@@ -768,5 +781,5 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
  }
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, *cpoint_type);
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type));
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type), infer_type);
 }

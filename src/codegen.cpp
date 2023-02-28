@@ -56,6 +56,15 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                            VarName);
 }
 
+BasicBlock* get_basic_block(Function* TheFunction, std::string name){
+  for (Function::iterator b = TheFunction->begin(), be = TheFunction->end(); b != be; ++b){
+    BasicBlock* BB = b;
+    if (BB->getName() == name){
+      return BB;
+    }
+  }
+}
+
 static void convertToType(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   Log::Info() << "Creating cast" << "\n";
   switch (typeFrom.type)
@@ -559,6 +568,13 @@ Value* ReturnAST::codegen(){
   //return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
+Value* GotoExprAST::codegen(){
+   Function *TheFunction = Builder->GetInsertBlock()->getParent();
+   BasicBlock* bb = get_basic_block(TheFunction, label_name);
+   Builder->CreateBr(bb);
+   Constant::getNullValue(Type::getDoubleTy(*TheContext));
+}
+
 Value* RedeclarationExprAST::codegen(){
   Log::Info() << "REDECLARATION CODEGEN" << "\n";
   Log::Info() << "VariableName " << VariableName << "\n";
@@ -788,6 +804,9 @@ Value *VarExprAST::codegen() {
       InitVal = Init->codegen();
       if (!InitVal)
         return nullptr;
+      if (infer_type){
+        cpoint_type = std::make_unique<Cpoint_Type>(*get_cpoint_type_from_llvm(InitVal->getType()));
+      }
     } else { // If not specified, use 0.0.
       InitVal = get_default_value(*cpoint_type);
     }

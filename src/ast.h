@@ -119,10 +119,11 @@ class VarExprAST : public ExprAST {
 public:
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   std::unique_ptr<Cpoint_Type> cpoint_type;
+  bool infer_type;
   //std::unique_ptr<ExprAST> Body;
-  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, std::unique_ptr<Cpoint_Type> cpoint_type
+  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, std::unique_ptr<Cpoint_Type> cpoint_type, bool infer_type = false
              /*,std::unique_ptr<ExprAST> Body*/)
-    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(std::move(cpoint_type)) {}
+    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(std::move(cpoint_type)), infer_type(infer_type) {}
 
   Value *codegen() override;
 };
@@ -228,6 +229,7 @@ public:
 class GotoExprAST : public ExprAST {
   std::string label_name;
   GotoExprAST(const std::string& label_name) : label_name(label_name) {}
+  Value* codegen() override;
 };
 
 class LabelExprAST : public ExprAST {
