@@ -228,13 +228,16 @@ public:
 
 class GotoExprAST : public ExprAST {
   std::string label_name;
+public:
   GotoExprAST(const std::string& label_name) : label_name(label_name) {}
   Value* codegen() override;
 };
 
 class LabelExprAST : public ExprAST {
   std::string label_name;
+public:
   LabelExprAST(const std::string& label_name) : label_name(label_name) {}
+  Value* codegen() override;
 };
 
 class ForExprAST : public ExprAST {
@@ -275,6 +278,8 @@ std::unique_ptr<StructDeclarAST> ParseStruct();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 std::unique_ptr<ExprAST> ParseWhileExpr();
+std::unique_ptr<ExprAST> ParseGotoExpr();
+std::unique_ptr<ExprAST> ParseLabelExpr();
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable();
 
 #endif

@@ -184,7 +184,7 @@ static int gettok() {
       return tok_while;
     if (IdentifierStr == "goto")
       return tok_goto;
-    if (IdentifierStr.at(IdentifierStr.size() - 1) == ':')
+    if (IdentifierStr == "label")
       return tok_label;
     if (IdentifierStr == "import"){
       go_to_next_line();

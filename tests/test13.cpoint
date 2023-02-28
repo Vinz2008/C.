@@ -3,6 +3,8 @@ func test(x : double) double {
     printd(x)
 }
 func main(){
-    var x[10] : i8 ptr
+    var x[10] : i8 ptr 
+label lbl
     test(argc)
+    goto lbl
 }

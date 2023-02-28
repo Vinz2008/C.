@@ -58,11 +58,13 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
 
 BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   for (Function::iterator b = TheFunction->begin(), be = TheFunction->end(); b != be; ++b){
-    BasicBlock* BB = b;
+    BasicBlock* BB = &(*b);
+    Log::Info() << "BasicBlock : " << (std::string)BB->getName() << "\n";
     if (BB->getName() == name){
       return BB;
     }
   }
+  return nullptr;
 }
 
 static void convertToType(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
@@ -569,10 +571,22 @@ Value* ReturnAST::codegen(){
 }
 
 Value* GotoExprAST::codegen(){
-   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-   BasicBlock* bb = get_basic_block(TheFunction, label_name);
-   Builder->CreateBr(bb);
-   Constant::getNullValue(Type::getDoubleTy(*TheContext));
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  BasicBlock* bb = get_basic_block(TheFunction, label_name);
+  if (bb == nullptr){
+    Log::Warning() << "Basic block couldn't be found in goto" << "\n";
+    return nullptr;
+  }
+  Builder->CreateBr(bb);
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+}
+
+Value* LabelExprAST::codegen(){
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  BasicBlock* labelBB = BasicBlock::Create(*TheContext, label_name, TheFunction);
+  Builder->CreateBr(labelBB);
+  Builder->SetInsertPoint(labelBB);
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
 Value* RedeclarationExprAST::codegen(){

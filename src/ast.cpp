@@ -244,6 +244,10 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseAddrExpr();
   case tok_while:
     return ParseWhileExpr();
+  case tok_goto:
+    return ParseGotoExpr();
+  case tok_label:
+    return ParseLabelExpr();
   }
 }
 
@@ -603,8 +607,18 @@ std::unique_ptr<ExprAST> ParseReturn(){
 
 std::unique_ptr<ExprAST> ParseGotoExpr(){
  getNextToken();
- std::string label_name = IdentifierStr.substr(0, IdentifierStr.size()-2);
+ std::string label_name = IdentifierStr;
+ Log::Info() << "label_name in goto : " << label_name << "\n";
+ getNextToken();
  return std::make_unique<GotoExprAST>(label_name);
+}
+
+std::unique_ptr<ExprAST> ParseLabelExpr(){
+  getNextToken(); // eat the label
+  std::string label_name = IdentifierStr.substr(0, IdentifierStr.size());
+  Log::Info() << "label_name in label : " << label_name << "\n";
+  getNextToken();
+  return std::make_unique<LabelExprAST>(label_name);
 }
 
 std::unique_ptr<ExprAST> ParseWhileExpr(){ 
