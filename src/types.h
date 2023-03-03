@@ -7,8 +7,11 @@ enum types {
     double_type = -1,
     int_type = -2,
     float_type = -3,
-    i8_type = -4,
-    void_type = -5,
+    void_type = -4,
+    i8_type = -5,
+    i16_type = -6,
+    i32_type = -7,
+    i64_type = -8,
     argv_type = -1000,
 };
 

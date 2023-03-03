@@ -22,6 +22,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         case double_type:
             type = Type::getDoubleTy(*TheContext);
             break;
+        case i32_type:
         case int_type:
             type = Type::getInt32Ty(*TheContext);
             break;
@@ -31,6 +32,10 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         case i8_type:
            type = Type::getInt8Ty(*TheContext);
            break;
+        case i16_type:
+            type = Type::getInt16Ty(*TheContext);
+        case i64_type:
+            type = Type::getInt64Ty(*TheContext);
         case void_type:
             if (!cpoint_type.is_ptr){
             type = Type::getVoidTy(*TheContext);
@@ -71,6 +76,10 @@ Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){
         type = float_type;
     } else if (llvm_type == Type::getInt8Ty(*TheContext)){
         type = i8_type;
+    } else if (llvm_type == Type::getInt16Ty(*TheContext)){
+        type = i16_type;
+    } else if (llvm_type == Type::getInt64Ty(*TheContext)){
+        type = i64_type;
     } else {
         if (is_ptr){
             type = i8_type;
@@ -90,10 +99,15 @@ Value* get_default_value(Cpoint_Type type){
         default:
         case double_type:
             return ConstantFP::get(*TheContext, APFloat(0.0));
+        case i32_type:
         case int_type:
             return ConstantInt::get(*TheContext, APInt(32, 0, true));
         case i8_type:
             return ConstantInt::get(*TheContext, APInt(8, 0, true));
+        case i16_type:
+            return ConstantInt::get(*TheContext, APInt(16, 0, true));
+        case i64_type:
+            return ConstantInt::get(*TheContext, APInt(64, 0, true));
     }
     return ConstantFP::get(*TheContext, APFloat(0.0));
 }

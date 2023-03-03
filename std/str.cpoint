@@ -5,6 +5,3 @@ struct str {
     var maxlength : int
     var factor : int
 }
-func printc(x : i8) void{
-  putchar(x)
-}
