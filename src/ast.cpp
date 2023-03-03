@@ -227,6 +227,10 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseIdentifierExpr();
   case tok_number:
     return ParseNumberExpr();
+  case tok_true:
+    return ParseBool(true);
+  case tok_false:
+    return ParseBool(false);
   case '(':
     return ParseParenExpr();
   case tok_if:
@@ -281,6 +285,10 @@ std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::stri
     return LogError("wrong type found");
   }
   return nullptr;
+}
+
+std::unique_ptr<ExprAST> ParseBool(bool bool_value){
+  return std::make_unique<BoolExprAST>(bool_value);
 }
 
 static std::unique_ptr<PrototypeAST> ParsePrototype() {

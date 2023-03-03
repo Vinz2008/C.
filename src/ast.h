@@ -41,6 +41,13 @@ public:
   Value *codegen() override;
 };
 
+class BoolExprAST : public ExprAST {
+  bool val;
+public:
+  BoolExprAST(bool val) : val(val) {}
+  Value *codegen() override;
+};
+
 class AddrExprAST : public ExprAST {
   std::string Name;
 public:
@@ -281,5 +288,6 @@ std::unique_ptr<ExprAST> ParseWhileExpr();
 std::unique_ptr<ExprAST> ParseGotoExpr();
 std::unique_ptr<ExprAST> ParseLabelExpr();
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable();
+std::unique_ptr<ExprAST> ParseBool(bool bool_value);
 
 #endif
