@@ -133,8 +133,11 @@ std::vector<std::string> types{
     "double",
     "int",
     "float",
-    "i8",
     "void",
+    "i8",
+    "i16",
+    "i32",
+    "i64",
 };
 
 bool is_type(std::string type){

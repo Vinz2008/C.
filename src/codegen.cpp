@@ -399,7 +399,8 @@ Value* BoolExprAST::codegen(){
 }
 
 Value* CharExprAST::codegen(){
-  return ConstantInt::get(*TheContext, APInt(8, (uint64_t)c, true));
+  Log::Info() << "Char Codegen : " << c << "\n";
+  return ConstantInt::get(*TheContext, APInt(8, c, true));
 }
 
 Function *PrototypeAST::codegen() {

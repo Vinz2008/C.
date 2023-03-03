@@ -11,7 +11,7 @@ using namespace std;
 string IdentifierStr;
 double NumVal;
 string strStatic;
-char charStatic;
+int charStatic;
 extern std::map<char, int> BinopPrecedence;
 string strPosArray;
 int posArrayNb;
@@ -236,12 +236,19 @@ static int gettok() {
   }
 
   if (LastChar == '\''){
+    Log::Info() << "LastChar : " << LastChar << "\n";
     LastChar = getCharLine();
     charStatic = LastChar;
+    Log::Info() << "LastChar2 : " << LastChar << "\n";
+    /*charStatic = LastChar;
+    Log::Info() << "charStatic : " << LastChar << "\n";
     LastChar = getCharLine();
+    Log::Info() << "LastChar : " << LastChar << "\n";
     if (LastChar != '\''){
       LogError("Missing '");
-    }
+    }*/
+    LastChar = getCharLine();
+    LastChar = getCharLine();
     return tok_char;
   }
 

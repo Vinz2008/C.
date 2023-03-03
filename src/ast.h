@@ -42,9 +42,9 @@ public:
 };
 
 class CharExprAST : public ExprAST {
-  char c;
+  int c;
 public:
-  CharExprAST(char c) : c(c) {}
+  CharExprAST(int c) : c(c) {}
   Value *codegen() override;
 };
 

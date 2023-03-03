@@ -1,4 +1,5 @@
 import @std/print.cpoint
 func main(){
+    var c : i8 = 'b'
     printd(3.2)
 }

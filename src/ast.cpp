@@ -11,7 +11,7 @@
 extern double NumVal;
 extern int CurTok;
 extern std::string strStatic;
-extern char charStatic;
+extern int charStatic;
 extern std::string IdentifierStr;
 extern int return_status;
 extern std::string strPosArray;
@@ -486,7 +486,9 @@ std::unique_ptr<ExprAST> ParseStrExpr(){
 }
 
 std::unique_ptr<ExprAST> ParseCharExpr(){
+  Log::Info() << "ParseChar : " << charStatic << "\n";
   auto charAST = std::make_unique<CharExprAST>(charStatic);
+  getNextToken();
   return charAST;
 }
 
