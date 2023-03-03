@@ -41,6 +41,13 @@ public:
   Value *codegen() override;
 };
 
+class CharExprAST : public ExprAST {
+  char c;
+public:
+  CharExprAST(char c) : c(c) {}
+  Value *codegen() override;
+};
+
 class BoolExprAST : public ExprAST {
   bool val;
 public:
@@ -289,5 +296,6 @@ std::unique_ptr<ExprAST> ParseGotoExpr();
 std::unique_ptr<ExprAST> ParseLabelExpr();
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable();
 std::unique_ptr<ExprAST> ParseBool(bool bool_value);
+std::unique_ptr<ExprAST> ParseCharExpr();
 
 #endif

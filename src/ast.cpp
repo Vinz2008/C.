@@ -11,6 +11,7 @@
 extern double NumVal;
 extern int CurTok;
 extern std::string strStatic;
+extern char charStatic;
 extern std::string IdentifierStr;
 extern int return_status;
 extern std::string strPosArray;
@@ -244,6 +245,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   case tok_string:
     Log::Info() << "tok string found" << "\n";
     return ParseStrExpr();
+  case tok_char:
+    return ParseCharExpr();
   case tok_addr:
     return ParseAddrExpr();
   case tok_while:
@@ -480,6 +483,11 @@ std::unique_ptr<ExprAST> ParseStrExpr(){
   Log::Info() << "Before getNextToken" << "\n";
   getNextToken();
   return string;
+}
+
+std::unique_ptr<ExprAST> ParseCharExpr(){
+  auto charAST = std::make_unique<CharExprAST>(charStatic);
+  return charAST;
 }
 
 std::unique_ptr<ExprAST> ParseAddrExpr(){

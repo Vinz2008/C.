@@ -11,6 +11,7 @@ using namespace std;
 string IdentifierStr;
 double NumVal;
 string strStatic;
+char charStatic;
 extern std::map<char, int> BinopPrecedence;
 string strPosArray;
 int posArrayNb;
@@ -232,6 +233,16 @@ static int gettok() {
     Log::Info() << "strStatic : " << strStatic << "\n";
     Log::Info() << "LastChar : " << (char)LastChar << "\n";
     return tok_string;
+  }
+
+  if (LastChar == '\''){
+    LastChar = getCharLine();
+    charStatic = LastChar;
+    LastChar = getCharLine();
+    if (LastChar != '\''){
+      LogError("Missing '");
+    }
+    return tok_char;
   }
 
   // Check for end of file.  Don't eat the EOF.

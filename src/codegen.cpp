@@ -398,6 +398,10 @@ Value* BoolExprAST::codegen(){
   }
 }
 
+Value* CharExprAST::codegen(){
+  return ConstantInt::get(*TheContext, APInt(8, (uint64_t)c, true));
+}
+
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.
   //std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));

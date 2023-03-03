@@ -36,6 +36,7 @@ enum Token {
   tok_goto = -24,
   tok_true = -25,
   tok_false = -26,
+  tok_char = -27
 };
 
 int getNextToken();
