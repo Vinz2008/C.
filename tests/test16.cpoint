@@ -3,6 +3,10 @@ func test(x){
     var i = 1
     if 10 > i {
         printstr("more little than 10")
+    } else if 10 < i {
+        printstr("bigger than 10")
+    } else {
+        printstr("nothing")
     }
     while 10 > i {
     i = i + 1

@@ -586,8 +586,20 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   }*/
   getNextToken();
   std::vector<std::unique_ptr<ExprAST>> Else;
+else_start:
   if (CurTok == tok_else){
   getNextToken();
+  if (CurTok == tok_if){
+    auto else_if_expr = ParseIfExpr();
+    if (!else_if_expr){
+      return nullptr;
+    }
+    Else.push_back(std::move(else_if_expr));
+    //getNextToken();
+    if (CurTok == tok_else){
+      goto else_start;
+    }
+  } else {
   if (CurTok != '{'){
     return LogError("expected {");
   }
@@ -602,6 +614,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
     return LogError("expected }");
   }*/
   getNextToken();
+  }
   }
   return std::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
                                       std::move(Else));
