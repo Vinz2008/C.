@@ -45,7 +45,13 @@ std::unique_ptr<ReturnAST> LogErrorR(const char *Str) {
 }
 
 
-std::unique_ptr<StructDeclarAST> LogErrorO(const char *Str) {
+std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str) {
+  LogError(Str);
+  Log::Info() << "token : " << CurTok << "\n";
+  return nullptr;
+}
+
+std::unique_ptr<ClassDeclarAST> LogErrorC(const char *Str) {
   LogError(Str);
   Log::Info() << "token : " << CurTok << "\n";
   return nullptr;
@@ -397,7 +403,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   bool is_ptr = false;
   std::string struct_name = "";
   int nb_ptr = 0;
-  if (CurTok == tok_identifier || CurTok == tok_struct){
+  if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class){
     Log::Info() << "Tok type : " << CurTok << "\n";
     Log::Info() << "type : " << IdentifierStr << "\n";
     ParseTypeDeclaration(&type, &is_ptr, struct_name, nb_ptr, false);
@@ -421,13 +427,13 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   Log::Info() << "Struct Name : " << structName << "\n";
   getNextToken();
   if (CurTok != '{')
-    return LogErrorO("Expected '{' in prototype");
+    return LogErrorS("Expected '{' in prototype");
   getNextToken();
   while (CurTok == tok_var){
     auto exprAST = ParseVarExpr();
     VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
     if (varExprAST == nullptr){
-      return LogErrorO("Error in struct declaration vars");
+      return LogErrorS("Error in struct declaration vars");
     }
     std::unique_ptr<VarExprAST> declar;
     exprAST.release();
@@ -438,11 +444,56 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
   }
   if (CurTok != '}'){
-    return LogErrorO("Expected '}' in prototype");
+    return LogErrorS("Expected '}' in prototype");
   }
   getNextToken();  // eat '}'.
   isInStruct = false;
   return std::make_unique<StructDeclarAST>(structName, std::move(VarList));
+}
+
+std::unique_ptr<ClassDeclarAST> ParseClass(){
+  isInStruct = true;
+  std::vector<std::unique_ptr<VarExprAST>> VarList;
+  std::vector<std::unique_ptr<FunctionAST>> Functions;
+  getNextToken(); // eat class
+  std::string className = IdentifierStr;
+  Log::Info() << "Struct Name : " << className << "\n";
+  getNextToken();
+  if (CurTok != '{')
+    return LogErrorC("Expected '{' in prototype");
+  getNextToken();
+  while (CurTok == tok_var || CurTok == tok_class){
+    if (CurTok == tok_var){
+    auto exprAST = ParseVarExpr();
+    VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
+    if (varExprAST == nullptr){
+      return LogErrorC("Error in class declaration vars");
+    }
+    std::unique_ptr<VarExprAST> declar;
+    exprAST.release();
+    declar.reset(varExprAST);
+    if (!declar){return nullptr;}
+    VarList.push_back(std::move(declar));
+    //getNextToken();
+    //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
+    } else if (CurTok == tok_func){
+      auto funcAST = ParseDefinition();
+      FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
+      if (functionAST == nullptr){
+      return LogErrorC("Error in class declaration funcs");
+      }
+      std::unique_ptr<FunctionAST> declar;
+      funcAST.release();
+      if (!declar){return nullptr;}
+      Functions.push_back(std::move(declar));
+    }
+  }
+  if (CurTok != '}'){
+    return LogErrorC("Expected '}' in prototype");
+  }
+  getNextToken();  // eat '}'.
+  isInStruct = false;
+  return std::make_unique<ClassDeclarAST>(className, std::move(VarList), std::move(Functions));
 }
 
 std::unique_ptr<FunctionAST> ParseDefinition() {

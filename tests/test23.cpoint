@@ -1,0 +1,9 @@
+import @std/print.cpoint
+class test {
+  var x : double 
+  var z : double 
+}
+func main(){
+  var x : double
+  x = 2
+}

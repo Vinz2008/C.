@@ -177,6 +177,8 @@ static int gettok() {
       return tok_var;
     if (IdentifierStr == "struct")
       return tok_struct;
+    if (IdentifierStr == "class")
+      return tok_class;
     if (IdentifierStr == "addr")
       return tok_addr;
     if (IdentifierStr == "ptr")

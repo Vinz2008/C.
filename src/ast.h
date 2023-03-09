@@ -289,6 +289,7 @@ std::unique_ptr<ExprAST> ParseStrExpr();
 std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<StructDeclarAST> ParseStruct();
+std::unique_ptr<ClassDeclarAST> ParseClass();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 std::unique_ptr<ExprAST> ParseWhileExpr();
