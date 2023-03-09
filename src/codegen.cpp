@@ -145,7 +145,6 @@ Value* StructMemberExprAST::codegen() {
     if (!NamedValues[StructName]->type.is_struct){
       return LogErrorV("Using a member of variable even though it is not a struct");
     }
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
     if (NamedValues[StructName] == nullptr){
@@ -157,8 +156,7 @@ Value* StructMemberExprAST::codegen() {
     if (StructDeclarations[NamedValues[StructName]->type.struct_name] == nullptr){
       Log::Info() << "NULLPTR" << "\n";
     }
-    Log::Info() << "members.size() before moving : " << StructDeclarations[NamedValues[StructName]->type.struct_name]->members.size() << "\n";
-    auto members = std::move(StructDeclarations[NamedValues[StructName]->type.struct_name]->members);
+    auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
     int pos = -1;
     for (int i = 0; i < members.size(); i++){
@@ -169,10 +167,11 @@ Value* StructMemberExprAST::codegen() {
       }
     }
     Log::Info() << "Pos for GEP struct member " << pos << "\n";
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
-    Type* type_llvm = NamedValues[StructName]->struct_type;
-    Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
-    Value* value = Builder->CreateLoad(type_llvm, ptr, StructName);
+    Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});
+    Value* value = Builder->CreateLoad(get_type_llvm(cpoint_type), ptr, StructName);
     return value;
 }
 
@@ -657,20 +656,23 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
     Log::Info() << "StructDeclarations len : " << StructDeclarations.size() << "\n"; 
-    auto members = std::move(StructDeclarations[NamedValues[StructName]->struct_declaration_name]->members);
+    auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
     Log::Info() << "TEST2" << "\n";
     int pos_struct = -1;
+    Log::Info() << "members.size() : " << members.size() << "\n";
     for (int i = 0; i < members.size(); i++){
       if (members.at(i).first == MemberName){
         pos_struct = i;
         break;
       }
     }
+    Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
     auto structPtr = NamedValues[StructName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[StructName]->type;
     auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
+    Builder->CreateStore(ValDeclared, ptr);
     NamedValues[StructName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
   } else if (is_array) {
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));

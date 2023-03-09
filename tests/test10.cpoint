@@ -5,5 +5,8 @@ struct test {
 }
 func main(){
   var x : struct test
+  var v : double = 1
+  printd(v)
   x.z = 2
+  printd(x.z)
 }
