@@ -1,9 +1,10 @@
 import @std/print.cpoint
-class test {
-  var x : double 
-  var z : double 
-}
 func main(){
-  var x : double
-  x = 2
+    var test[10] : i8 ptr 
+    test[0] = "test"
+    test[1] = "world"
+    test[2] = "hello"
+    var out : i8 ptr = test[0]
+    printstr(out)
+    out = test[1]
 }

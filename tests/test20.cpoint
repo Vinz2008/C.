@@ -1,9 +1,10 @@
-extern printptr(pointer : void ptr) void;
-extern size_of_int() int;
-extern set_pointer_int(pointer : int ptr, value : int) void;
 import @std/print.cpoint
 func main(){
-    var pointer : int ptr = gc_malloc(size_of_int())
-    printptr(pointer)
-    set_pointer_int(pointer, 3)
+    if 1 != 1 {
+        printd(100)
+    } else { 
+        printd(5 ^ 9)
+        printd(1 == 0 || 1 == 1)
+        printd(1 << 2)
+    }
 }

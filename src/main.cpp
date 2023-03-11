@@ -60,7 +60,6 @@ ofstream file_log;
 bool last_line = false;
 
 void add_manually_extern(std::string fnName, std::unique_ptr<Cpoint_Type> cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
-
   auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
   auto *FnIR = FnAST->codegen();
 }

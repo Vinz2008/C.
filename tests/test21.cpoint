@@ -1,10 +1,7 @@
 import @std/print.cpoint
-func main(){
-    if 1 != 1 {
-        printd(100)
-    } else { 
-        printd(5 ^ 9)
-        printd(1 == 0 || 1 == 1)
-        printd(1 << 2)
+func main() double {
+    var a : double = 2
+    if a == 2 {
+        printi(argc)
     }
 }

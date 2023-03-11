@@ -264,17 +264,25 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   }
 }
 
-std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::string& struct_Name, int& nb_ptr , bool eat_token = true){
+std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::string& struct_Name, std::string& class_Name, int& nb_ptr , bool eat_token = true){
   Log::Info() << "type declaration found" << "\n";
   if (eat_token){
   getNextToken(); // eat the ':'
   }
-  if (CurTok != tok_identifier && CurTok != tok_struct)
+  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class)
     return LogError("expected identifier after var in type declaration");
   if (CurTok == tok_struct){
     getNextToken();
     struct_Name = IdentifierStr;
     Log::Info() << "struct_Name " << struct_Name << "\n";
+    getNextToken();
+    if (CurTok == tok_ptr){
+      *is_ptr = true;
+      getNextToken();
+    }
+  } else if (CurTok == tok_class){
+    getNextToken();
+    class_Name = IdentifierStr;
     getNextToken();
     if (CurTok == tok_ptr){
       *is_ptr = true;
@@ -381,13 +389,14 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       getNextToken();
       int type = double_type;
       bool is_ptr = false;
-      std::string temp;
+      std::string temp_struct;
+      std::string temp_class;
       int temp_nb = -1;
       if (CurTok == ':'){
-        ParseTypeDeclaration(&type, &is_ptr, temp, temp_nb);
+        ParseTypeDeclaration(&type, &is_ptr, temp_struct, temp_class, temp_nb);
       }
       arg_nb++;
-      ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, false, "", temp_nb)));
+      ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, false, "", false, "", temp_nb)));
       }
     }
   }
@@ -402,20 +411,24 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   int type = -1;
   bool is_ptr = false;
   std::string struct_name = "";
+  std::string class_name = "";
   int nb_ptr = 0;
   if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class){
     Log::Info() << "Tok type : " << CurTok << "\n";
     Log::Info() << "type : " << IdentifierStr << "\n";
-    ParseTypeDeclaration(&type, &is_ptr, struct_name, nb_ptr, false);
+    ParseTypeDeclaration(&type, &is_ptr, struct_name, class_name, nb_ptr, false);
     //type = get_type(IdentifierStr);
     //getNextToken(); // eat type
   }
   std::unique_ptr<Cpoint_Type> cpoint_type;
-  if (struct_name != ""){
+  bool is_struct = struct_name != "";
+  bool is_class = class_name != "";
+  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
+  /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, false, "", nb_ptr);
-  }
+  }*/
   return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
 }
 
@@ -457,12 +470,12 @@ std::unique_ptr<ClassDeclarAST> ParseClass(){
   std::vector<std::unique_ptr<FunctionAST>> Functions;
   getNextToken(); // eat class
   std::string className = IdentifierStr;
-  Log::Info() << "Struct Name : " << className << "\n";
+  Log::Info() << "Class Name : " << className << "\n";
   getNextToken();
   if (CurTok != '{')
     return LogErrorC("Expected '{' in prototype");
   getNextToken();
-  while (CurTok == tok_var || CurTok == tok_class){
+  while (CurTok == tok_var || /*CurTok == tok_class ||*/ CurTok == tok_func){
     if (CurTok == tok_var){
     auto exprAST = ParseVarExpr();
     VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
@@ -477,22 +490,28 @@ std::unique_ptr<ClassDeclarAST> ParseClass(){
     //getNextToken();
     //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
     } else if (CurTok == tok_func){
+      Log::Info() << "function found in class" << "\n";
       auto funcAST = ParseDefinition();
+      Log::Info() << "AFTER ParseDefinition" << "\n";
       FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
       if (functionAST == nullptr){
       return LogErrorC("Error in class declaration funcs");
       }
       std::unique_ptr<FunctionAST> declar;
       funcAST.release();
+      declar.reset(functionAST);
       if (!declar){return nullptr;}
       Functions.push_back(std::move(declar));
+      Log::Info() << "Parsed Function" << "\n";
     }
   }
+  Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
     return LogErrorC("Expected '}' in prototype");
   }
   getNextToken();  // eat '}'.
   isInStruct = false;
+  Log::Info() << "RETURNED ClassDeclarAST" << "\n";
   return std::make_unique<ClassDeclarAST>(className, std::move(VarList), std::move(Functions));
 }
 
@@ -584,6 +603,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   int nb_element = 0;
   bool is_array = false;
   std::string struct_name = "";
+  std::string class_name = "";
   int nb_ptr = 0;
   bool is_const = false;
   if (IdentifierStr == "const"){
@@ -593,7 +613,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   std::string Name = IdentifierStr;
   getNextToken(); // eat identifier.
   if (CurTok == ':'){
-    auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, nb_ptr);
+    auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, class_name, nb_ptr);
     if (a != nullptr){
       //return a;
     }
@@ -606,7 +626,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
     return nullptr;
   }
   std::unique_ptr<Cpoint_Type> cpoint_type;
-  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
+  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", false, "", nb_ptr);
   return std::make_unique<GlobalVariableAST>(Name, is_const, std::move(cpoint_type), std::move(Init));
 }
 
@@ -795,6 +815,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   int nb_element = 0;
   bool is_array = false;
   std::string struct_name = "";
+  std::string class_name = "";
   int nb_ptr = 0;
   bool infer_type = false;
   // At least one variable name is required.
@@ -828,7 +849,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     infer_type = false;
     if (CurTok == ':'){
-      auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, nb_ptr);
+      auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, class_name, nb_ptr);
       if (a != nullptr){
         return a;
       }
@@ -869,13 +890,16 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
- std::unique_ptr<Cpoint_Type> cpoint_type;
- Log::Info() << "NB PTR : " << nb_ptr << "\n";
- if (struct_name != ""){
+  std::unique_ptr<Cpoint_Type> cpoint_type;
+  Log::Info() << "NB PTR : " << nb_ptr << "\n";
+  bool is_struct = struct_name != "";
+  bool is_class = class_name != "";
+  cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
+  /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
- } else {
+  } else {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
- }
+  }*/
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, *cpoint_type);
   return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type), infer_type);
 }

@@ -1,10 +1,9 @@
+extern printptr(pointer : void ptr) void;
+extern size_of_int() int;
+extern set_pointer_int(pointer : int ptr, value : int) void;
 import @std/print.cpoint
 func main(){
-    var test[10] : i8 ptr
-    test[0] = "test"
-    test[1] = "world"
-    test[2] = "hello"
-    var out : i8 ptr = test[0]
-    printstr(out)
-    out = test[1]
+    var pointer : int ptr = gc_malloc(size_of_int())
+    printptr(pointer)
+    set_pointer_int(pointer, 3)
 }

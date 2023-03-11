@@ -65,7 +65,7 @@ if_preprocessor_first:
       getLine(file_in, *line);
       goto if_preprocessor_first;
     } else {
-    Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
+    //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
     preprocess_replace_variable(*line);
     }
     /*if (!getline(file_in, *line)){
@@ -97,7 +97,7 @@ if_preprocessor:
       getLine(file_in, *line);
       goto if_preprocessor;
     } else {
-      Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
+      //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
       preprocess_replace_variable(*line);
     }
     }

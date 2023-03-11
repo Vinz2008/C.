@@ -1,7 +1,15 @@
 import @std/print.cpoint
-func main() double {
-    var a : double = 2
-    if a == 2 {
-        printi(argc)
-    }
+class test {
+  var x : double 
+  var z : double 
+func test(){
+  2
+}
+func test_function(){ 
+  return 1 
+}
+}
+func main(){
+  var x : class test
+  x.z = 2
 }
