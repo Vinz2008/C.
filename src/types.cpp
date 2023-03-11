@@ -71,7 +71,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
 }
 
 Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){
-    int type = -1;
+    int type = double_type;
     bool is_ptr = false;
     Type* not_ptr_type = llvm_type;
     if (llvm_type->isPointerTy()){

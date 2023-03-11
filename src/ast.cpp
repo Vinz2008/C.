@@ -466,6 +466,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
 
 std::unique_ptr<ClassDeclarAST> ParseClass(){
   isInStruct = true;
+  int i = 0;
   std::vector<std::unique_ptr<VarExprAST>> VarList;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
   getNextToken(); // eat class
@@ -475,7 +476,8 @@ std::unique_ptr<ClassDeclarAST> ParseClass(){
   if (CurTok != '{')
     return LogErrorC("Expected '{' in prototype");
   getNextToken();
-  while (CurTok == tok_var || /*CurTok == tok_class ||*/ CurTok == tok_func){
+  while ((CurTok == tok_var || /*CurTok == tok_class ||*/ CurTok == tok_func) && CurTok != '}'){
+    Log::Info() << "Curtok in class parsing : " << CurTok << "\n";
     if (CurTok == tok_var){
     auto exprAST = ParseVarExpr();
     VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
@@ -500,9 +502,10 @@ std::unique_ptr<ClassDeclarAST> ParseClass(){
       std::unique_ptr<FunctionAST> declar;
       funcAST.release();
       declar.reset(functionAST);
-      if (!declar){return nullptr;}
+      if (declar == nullptr){return nullptr;}
       Functions.push_back(std::move(declar));
-      Log::Info() << "Parsed Function" << "\n";
+      Log::Info() << "Function Number in class : " << i+1 << "\n";
+      i++;
     }
   }
   Log::Info() << "CurTok : " << CurTok << "\n";

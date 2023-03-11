@@ -223,20 +223,21 @@ Type* ClassDeclarAST::codegen(){
     members.push_back(std::make_pair(VarName, *(VarExpr->cpoint_type)));
   }
   classType->setBody(dataTypes);
-    ClassDeclarations[Name] = std::make_unique<ClassDeclaration>(classType, std::move(members));
+  ClassDeclarations[Name] = std::make_unique<ClassDeclaration>(classType, std::move(members));
   Log::Info() << "added class declaration name " << Name << " to ClassDeclarations" << "\n";
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
     std::string newNameFunc = "";
     newNameFunc = Name;
     newNameFunc.append("__");
+    Log::Info() << "FunctionExpr->Proto->Name : " << FunctionExpr->Proto->Name << "\n";
     if (FunctionExpr->Proto->Name == Name){
     // Constructor
     newNameFunc.append("Constructor__Default");
     } else {
     newNameFunc.append(FunctionExpr->Proto->Name);
     }
-    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", Cpoint_Type(double_type) /* TODO fix this by passing class type pointer as first arg */));
+    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", *get_cpoint_type_from_llvm(classType->getPointerTo()) /* TODO fix this by passing class type pointer as first arg */));
     FunctionExpr->Proto->Name = newNameFunc;
     FunctionExpr->codegen();
     
@@ -445,6 +446,7 @@ Function *PrototypeAST::codegen() {
 
 Function *FunctionAST::codegen() {
   auto &P = *Proto;
+  Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
   FunctionProtos[Proto->getName()] = std::move(Proto);
   // First, check for an existing function from a previous 'extern' declaration.
   Function *TheFunction = getFunction(P.getName());

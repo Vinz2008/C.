@@ -2,12 +2,12 @@ import @std/print.cpoint
 class test {
   var x : double 
   var z : double 
-func test(){
-  2
-}
-func test_function(){ 
-  return 1 
-}
+  func test(){
+    2
+  }
+  func test_function(){ 
+    1 
+  } 
 }
 func main(){
   var x : class test
