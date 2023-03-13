@@ -62,6 +62,13 @@ public:
   Value *codegen() override;
 };
 
+class SizeofExprAST : public ExprAST {
+  std::string Name;
+public:
+  SizeofExprAST(const std::string &Name) : Name(Name) {}
+  Value* codegen() override;
+};
+
 class VariableExprAST : public ExprAST {
   std::string Name;
   Cpoint_Type type;
@@ -291,6 +298,7 @@ std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<StructDeclarAST> ParseStruct();
 std::unique_ptr<ClassDeclarAST> ParseClass();
 std::unique_ptr<ExprAST> ParseAddrExpr();
+std::unique_ptr<ExprAST> ParseSizeofExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 std::unique_ptr<ExprAST> ParseWhileExpr();
 std::unique_ptr<ExprAST> ParseGotoExpr();

@@ -255,6 +255,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseCharExpr();
   case tok_addr:
     return ParseAddrExpr();
+  case tok_sizeof:
+    return ParseSizeofExpr();
   case tok_while:
     return ParseWhileExpr();
   case tok_goto:
@@ -571,6 +573,15 @@ std::unique_ptr<ExprAST> ParseAddrExpr(){
   auto addr = std::make_unique<AddrExprAST>(Name);
   getNextToken();
   return addr;
+}
+
+std::unique_ptr<ExprAST> ParseSizeofExpr(){
+  getNextToken();
+  std::string Name = IdentifierStr;
+  auto Sizeof = std::make_unique<SizeofExprAST>(Name);
+  Log::Info() << "after sizeof : " << Name << "\n";
+  getNextToken();
+  return Sizeof;
 }
 
 std::unique_ptr<ExprAST> ParseUnary() {

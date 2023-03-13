@@ -398,6 +398,31 @@ Value* AddrExprAST::codegen(){
   return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Name.c_str());
 }
 
+Value* SizeofExprAST::codegen(){
+  if (is_type(Name)){
+    int type = get_type(Name);
+    Cpoint_Type cpoint_type = Cpoint_Type(type);
+    Type* llvm_type = get_type_llvm(cpoint_type);
+    Type* llvm_type_ptr = llvm_type->getPointerTo();
+    Value* size = Builder->CreateGEP(llvm_type_ptr->getContainedType(0UL), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt8Ty(), 0), llvm_type_ptr), ConstantInt::get(Builder->getInt8Ty(), 1));
+    return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
+  } else {
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  AllocaInst *A = NamedValues[Name]->alloca_inst;
+  if (!A){
+    return LogErrorV("Addr Unknown variable name");
+  }
+  Type* llvm_type = A->getAllocatedType();
+  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+  AllocaInst* temp_ptr = CreateEntryBlockAlloca(TheFunction, "temp_sizeof", *get_cpoint_type_from_llvm(llvm_type->getPointerTo()));
+  Value* Val = Builder->CreateLoad(llvm_type->getPointerTo(), A, "temp_load_sizeof");
+  Builder->CreateStore(Val, temp_ptr);
+  Value* size = Builder->CreateGEP(Val->getType(), temp_ptr, {zero, one}, "sizeof");
+  return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
+  } 
+}
+
 Value* BoolExprAST::codegen(){
   if (val){
     return ConstantInt::get(*TheContext, APInt(8, 1, true));

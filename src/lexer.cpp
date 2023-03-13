@@ -181,6 +181,8 @@ static int gettok() {
       return tok_class;
     if (IdentifierStr == "addr")
       return tok_addr;
+    if (IdentifierStr == "sizeof")
+      return tok_sizeof;
     if (IdentifierStr == "ptr")
       return tok_ptr;
     if (IdentifierStr == "while")

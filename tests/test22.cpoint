@@ -1,3 +1,4 @@
+include @std/libc.hpoint
 import @std/print.cpoint
 class test {
   var x : double 
@@ -10,6 +11,9 @@ class test {
   } 
 }
 func main(){
-  var x : class test
-  x.z = 2
+  var x : class test 
+  var y : class test ptr 
+  var a : double = 2 
+  y = malloc(12)
+  x.z = 2 
 }
