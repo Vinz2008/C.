@@ -59,6 +59,22 @@ namespace Log {
             return *this;
         }
     };
+    struct Preprocessor_Error {
+        Preprocessor_Error(){
+            Color::Modifier red(Color::FG_RED);
+            std::cout<<red;
+            std::cout << "[PREPROCESSOR ERROR] ";
+        }
+        template< class T >
+        Preprocessor_Error &operator<<(const T& val){
+            std::cout<<val;
+            return *this;
+        }
+        ~Preprocessor_Error(){
+            Color::Modifier def(Color::FG_DEFAULT);
+            std::cout<<def;
+        }
+    };
     struct Imports_Info {
         Imports_Info(){
             std::cout << "[IMPORTS INFO] ";

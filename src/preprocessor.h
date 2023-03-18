@@ -1,6 +1,7 @@
 #include <vector>
 #include <iostream>
 #include <memory>
+#include <bits/stdc++.h>
 #include "log.h"
 
 namespace Preprocessor {
@@ -21,6 +22,13 @@ public:
     Context(std::vector<std::unique_ptr<Variable>> variables) : variables(std::move(variables)) {}
     void add_variable(std::unique_ptr<Variable> var){
         variables.push_back(std::move(var));
+    }
+    void remove_variable(std::string name){
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i)->getName() == name){
+                variables.erase(variables.begin() + i);
+            }
+        }
     }
     int get_variable_pos(std::string name){
         for (int i = 0; i < variables.size(); i++){

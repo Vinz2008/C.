@@ -1,0 +1,5 @@
+import @std/print.cpoint
+?[error "this is an error"]
+func main(){
+    printd(10)
+}
