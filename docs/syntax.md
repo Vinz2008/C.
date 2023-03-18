@@ -43,6 +43,17 @@ You can also select the type of the variable by putting a colon and then a type 
 var x : int = 2
 ```
 
+If you don't select manually the type, it will be infered
+
+```
+func main(){
+    var a = "test"
+    var b = 2
+}
+```
+
+Here, the variable a will be an i8 ptr (technically just an opaque pointer in the backend because llvm is removing typed pointers) and the variable b will be a double
+
 ## Global Variables
 
 You can also have global variables
@@ -62,10 +73,6 @@ func main(){
     printd(a)
 }
 ```
-
-
-
-
 
 ## Types
 
