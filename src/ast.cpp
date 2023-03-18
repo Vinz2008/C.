@@ -824,7 +824,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   getNextToken(); // eat the var.
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-  int type = double_type;
+  int type = 0;
   bool is_ptr = false;
   int nb_element = 0;
   bool is_array = false;
@@ -908,7 +908,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   Log::Info() << "NB PTR : " << nb_ptr << "\n";
   bool is_struct = struct_name != "";
   bool is_class = class_name != "";
-  cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
+  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
   /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {

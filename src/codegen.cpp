@@ -920,6 +920,9 @@ Value *VarExprAST::codegen() {
       InitVal = get_default_value(*cpoint_type);
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
+    if (!get_type_llvm(*cpoint_type)->isPointerTy()){
+    Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
+    }
     if (InitVal->getType() != get_type_llvm(*cpoint_type)){
       convertToType(*get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
     }

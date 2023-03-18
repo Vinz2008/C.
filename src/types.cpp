@@ -59,9 +59,10 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     }
     }
     if (cpoint_type.is_ptr){
-        for (int i = 0; i < cpoint_type.nb_ptr; i++){
+        /*for (int i = 0; i < cpoint_type.nb_ptr; i++){
         type = type->getPointerTo();
-        }
+        }*/
+        type = PointerType::get(*TheContext, 0);
     }
     if (cpoint_type.is_array){
         Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << type << "\n";

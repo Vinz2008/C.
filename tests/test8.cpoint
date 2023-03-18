@@ -2,7 +2,8 @@ import @std/print.cpoint
 extern printptr(x)
 var z : double = 2
 func main(){
-  var c : i8 ptr = "hello"
+  var c = "hello"
+  printstr(c)
   var a = 1
   printd(a)
   z = 3
