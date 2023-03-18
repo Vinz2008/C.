@@ -31,7 +31,7 @@ fun main(){
 
 ## Variables
 
-You can declare variables with the ```var``` and the select a default value
+You can declare variables with the ```var``` keyword sand select a default value
 
 ```
 var x = 1
