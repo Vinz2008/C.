@@ -112,6 +112,8 @@ You can also make it an array by using square brackets and the number of element
 var x[10] : int 
 ```
 
+(The array implementation if for now broken, so using array for now is not recommended)
+
 ## Structs
 
 To declare a struct, put a ```struct``` keyword.
