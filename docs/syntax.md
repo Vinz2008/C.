@@ -43,6 +43,30 @@ You can also select the type of the variable by putting a colon and then a type 
 var x : int = 2
 ```
 
+## Global Variables
+
+You can also have global variables
+
+```
+var a : double = 2
+func main(){
+    printd(a)
+}
+```
+
+You can also have variables that are constants
+
+```
+var const a : double = 2
+func main(){
+    printd(a)
+}
+```
+
+
+
+
+
 ## Types
 
 The available types are : 
@@ -54,6 +78,12 @@ The available types are :
 - float
 
 - i8
+
+- i16
+
+- i32
+
+- i64
 
 - void
 
@@ -135,5 +165,16 @@ You can just use argc and argv in the main function without having to declare th
 ```
 func main() int {
     printi(argc)
+}
+```
+
+## Labels and gotos
+
+You can use goto to jump to labels that you put in your code. It can be useful for error handling.
+
+```
+func main(){
+label test
+    goto test
 }
 ```

@@ -14,4 +14,18 @@
 
 **-no-delete-import-file** : make the compiler not delete the temporary source file which where the includes and the imports are replaced
 
+**-verbose-std-build** : make the build of the standard library verbose
+
+**-no-delete-import-file** : make the compiler not delete the temporary file with imports replaced with externs
+
+**-no-gc** : make the compiler not add the functions for garbage collection
+
+**-no-imports** : desactivate imports in the compiler
+
+**-rebuild-gc** : force rebuilding the garbage collector source code
+
+**-no-rebuild-std** : make the compiler not rebuild the standard library. You probably only need to rebuild it when you change the target
+
+**-linker-flags=** : select additional linker flags
+
 
