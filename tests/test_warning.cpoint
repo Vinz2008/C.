@@ -1,0 +1,5 @@
+import @std/print.cpoint
+?[warning "this is a warning"]
+func main(){
+    printd(10)
+}

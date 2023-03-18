@@ -88,6 +88,14 @@ void preprocess_instruction(std::string line){
         Log::Preprocessor_Info() << "value : " << value << "\n";
         context->add_variable(std::make_unique<Preprocessor::Variable>(varName, value));
         Log::Preprocessor_Info() << "Number of variables in context : " << context->variables.size() << "\n";
+    } else if (word == "warning"){
+        std::string warning = "";
+        get_next_word(instruction, pos);
+        while (word != ""){
+            warning += (" " + word);
+            get_next_word(instruction, pos);
+        }
+        Log::Warning() << warning << "\n";
     }
 
 }
