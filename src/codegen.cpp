@@ -641,8 +641,6 @@ Value* RedeclarationExprAST::codegen(){
   Log::Info() << "VariableName " << VariableName << "\n";
   bool is_object = false;
   bool is_array = false;
-  std::string ObjectName = "";
-  std::string MemberName = "";
   std::string ArrayName = "";
   int pos_array = -1;
   bool is_global = false;
@@ -651,13 +649,13 @@ Value* RedeclarationExprAST::codegen(){
   }
   Log::Info() << "is_global : " << is_global << "\n";
   for (int i = 0; i < VariableName.length(); i++){
-    if (VariableName.at(i) == '.'){
+    /*if (VariableName.at(i) == '.'){
       Log::Info() << "i struct : " << i << "\n";
       is_object = true;
       ObjectName =  VariableName.substr(0, i);
       MemberName =  VariableName.substr(i+1, VariableName.length()-1);
       break;
-    }
+    }*/
     if (VariableName.at(i) == '['){
       is_array = true;
       ArrayName = VariableName.substr(0, i);
@@ -691,19 +689,19 @@ Value* RedeclarationExprAST::codegen(){
   }
   bool is_struct = false;
   bool is_class = false;
-  if (ObjectName != ""){
-  Log::Info() << "objectName : " << ObjectName << "\n";
-  if (NamedValues[ObjectName] != nullptr){
-    if (ClassDeclarations[NamedValues[ObjectName]->type.class_name] != nullptr){
+  if (member != ""){
+  Log::Info() << "objectName : " << VariableName << "\n";
+  if (NamedValues[VariableName] != nullptr){
+    if (ClassDeclarations[NamedValues[VariableName]->type.class_name] != nullptr){
       Log::Info() << "IS_CLASS" << "\n";
       is_class = true;
     }
-    if (StructDeclarations[NamedValues[ObjectName]->type.struct_name] != nullptr){
+    if (StructDeclarations[NamedValues[VariableName]->type.struct_name] != nullptr){
       Log::Info() << "IS_STRUCT" << "\n";
       is_struct = true;
     }
   }
-  Log::Info() << "className Declar " << NamedValues[ObjectName]->type.class_name << "\n";
+  Log::Info() << "className Declar " << NamedValues[VariableName]->type.class_name << "\n";
   /*if (StructDeclarations[ObjectName] != nullptr){
     is_struct = true;
   }
@@ -712,15 +710,15 @@ Value* RedeclarationExprAST::codegen(){
   }*/
   }
   if (is_struct){
-    Log::Info() << "StructName : " << ObjectName << "\n";
-    Log::Info() << "StructName len : " << ObjectName.length() << "\n";
+    Log::Info() << "StructName : " << VariableName << "\n";
+    Log::Info() << "StructName len : " << VariableName.length() << "\n";
     Log::Info() << "StructDeclarations len : " << StructDeclarations.size() << "\n"; 
-    auto members = StructDeclarations[NamedValues[ObjectName]->type.struct_name]->members;
+    auto members = StructDeclarations[NamedValues[VariableName]->type.struct_name]->members;
     Log::Info() << "TEST2" << "\n";
     int pos_struct = -1;
     Log::Info() << "members.size() : " << members.size() << "\n";
     for (int i = 0; i < members.size(); i++){
-      if (members.at(i).first == MemberName){
+      if (members.at(i).first == member){
         pos_struct = i;
         break;
       }
@@ -728,18 +726,18 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
-    auto structPtr = NamedValues[ObjectName]->alloca_inst;
-    Cpoint_Type cpoint_type = NamedValues[ObjectName]->type;
+    auto structPtr = NamedValues[VariableName]->alloca_inst;
+    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
     auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
     Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[ObjectName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
+    NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
   } else if (is_class){
     Log::Info() << "class redeclaration" << "\n";
-    auto members = ClassDeclarations[NamedValues[ObjectName]->type.class_name]->members;
+    auto members = ClassDeclarations[NamedValues[VariableName]->type.class_name]->members;
     int pos_class = -1;
     for (int i = 0; i < members.size(); i++){
       Log::Info() << "member nb " << i << " " << members.at(i).first << "\n";
-      if (members.at(i).first == MemberName){
+      if (members.at(i).first == member){
         pos_class = i;
         break;
       }
@@ -747,11 +745,11 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "Pos for GEP class member redeclaration : " << pos_class << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_class, true));
-    auto classPtr = NamedValues[ObjectName]->alloca_inst;
-    Cpoint_Type cpoint_type = NamedValues[ObjectName]->type;
+    auto classPtr = NamedValues[VariableName]->alloca_inst;
+    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
     auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), classPtr, {zero, index}, "get_class");
     Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[ObjectName] = std::make_unique<NamedValue>(classPtr, cpoint_type);
+    NamedValues[VariableName] = std::make_unique<NamedValue>(classPtr, cpoint_type);
   } else if (is_array) {
     Log::Info() << "array redeclaration" << "\n";
     Log::Info() << "Pos for GEP : " << pos_array << "\n";
@@ -921,7 +919,7 @@ Value *VarExprAST::codegen() {
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
     if (!get_type_llvm(*cpoint_type)->isPointerTy()){
-    Log::Warning() << "cpoint_type in var " << VarNames[i].first << "is not ptr" << "\n";
+    Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
     }
     if (InitVal->getType() != get_type_llvm(*cpoint_type)){
       convertToType(*get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);

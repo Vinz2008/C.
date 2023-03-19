@@ -152,9 +152,11 @@ public:
 class RedeclarationExprAST : public ExprAST {
   std::string VariableName;
   std::unique_ptr<ExprAST> Val;
+  bool has_member;
+  std::string member;
 public:
-  RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val) 
-: VariableName(VariableName), Val(std::move(Val)) {}
+  RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val, const std::string &member) 
+: VariableName(VariableName), Val(std::move(Val)), member(member) {}
   Value *codegen() override;
 };
 

@@ -147,10 +147,9 @@ static int gettok() {
     //cout << "SPACE" << endl;
     LastChar = getCharLine();
   }
-
-  if (isalpha(LastChar) || LastChar == '.') { // identifier: [a-zA-Z][a-zA-Z0-9]*
+  if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*
     IdentifierStr = LastChar;
-    while (isalnum((LastChar = getCharLine())) || LastChar == '[' || LastChar == ']' || LastChar == '.' || LastChar == '_')
+    while (isalnum((LastChar = getCharLine())) || LastChar == '[' || LastChar == ']' || /*LastChar == '.' ||*/ LastChar == '_')
       IdentifierStr += LastChar;
 
     if (IdentifierStr == "func")
@@ -205,7 +204,7 @@ static int gettok() {
   }
 
 
-  if (isdigit(LastChar) || LastChar == '.') { // Number: [0-9.]+
+  if (isdigit(LastChar)) { // Number: [0-9.]+
     std::string NumStr;
     do {
       if (LastChar != '_'){
@@ -254,6 +253,20 @@ static int gettok() {
     LastChar = getCharLine();
     LastChar = getCharLine();
     return tok_char;
+  }
+  if (LastChar == '.'){
+    std::string format = "";
+    do {
+      format += LastChar;
+    } while ((LastChar = getCharLine()) == '.');
+    if (format == "..."){
+      return tok_format;
+    } else if (format == "."){
+      return '.';
+    } else {
+      Log::Info() << "format : " << format << "\n";
+      LogError("error in format\n");
+    }
   }
 
   // Check for end of file.  Don't eat the EOF.

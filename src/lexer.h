@@ -38,6 +38,7 @@ enum Token {
   tok_false = -26,
   tok_char = -27,
   tok_sizeof = -28,
+  tok_format = -29,
 };
 
 int getNextToken();

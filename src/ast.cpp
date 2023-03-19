@@ -89,6 +89,13 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
   Log::Info() << "Parse Identifier Str" << "\n";
   getNextToken();  // eat identifier.
+  std::string member = "";
+  if (CurTok == '.'){
+    Log::Info() << "Struct member found" << "\n";
+    getNextToken();
+    member = IdentifierStr;
+    getNextToken();
+  }
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
 
@@ -97,17 +104,14 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     getNextToken();
     auto V = ParseExpression();
-    return std::make_unique<RedeclarationExprAST>(IdName, std::move(V));
+    return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member);
   }
   if (CurTok != '('){ // Simple variable ref.
+    if (member != ""){
+      Log::Info() << "Struct member returned" << "\n";
+      return std::make_unique<StructMemberExprAST>(IdName, member);
+    }
     for (int i = 0; i < IdName.length(); i++){
-      if (IdName.at(i) == '.'){
-        std::string StructName =  IdName.substr(0, i);
-        std::string MemberName =  IdName.substr(i+1, IdName.length()-1);
-        Log::Info() << "StructName ast : " << StructName << "\n";
-        Log::Info() << "MemberName ast : " << MemberName << "\n";
-        return std::make_unique<StructMemberExprAST>(StructName, MemberName);
-      }
       if (IdName.at(i) == '['){
         if (IdName.back() != ']')
           return LogError("Couldn't find ]");
@@ -370,7 +374,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   if (CurTok != '('){
     int arg_nb = 0;
     while (1){
-      if (IdentifierStr == "..."){
+      if (CurTok == tok_format){
       Log::Info() << "Found Variable number of args" << "\n";
       is_variable_number_args = true;
       //ArgNames.push_back(std::make_pair("...", Cpoint_Type(double_type)));
