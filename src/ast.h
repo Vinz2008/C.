@@ -97,9 +97,9 @@ public:
 
 class ArrayMemberExprAST : public ExprAST {
   std::string ArrayName;
-  int pos;
+  std::unique_ptr<ExprAST> posAST;
 public:
-  ArrayMemberExprAST(const std::string &ArrayName, int pos) : ArrayName(ArrayName), pos(pos) {}
+  ArrayMemberExprAST(const std::string &ArrayName, std::unique_ptr<ExprAST> posAST) : ArrayName(ArrayName), posAST(std::move(posAST)) {}
   Value *codegen() override;
 };
 
@@ -140,23 +140,25 @@ class VarExprAST : public ExprAST {
 public:
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   std::unique_ptr<Cpoint_Type> cpoint_type;
+  std::unique_ptr<ExprAST> index;
   bool infer_type;
   //std::unique_ptr<ExprAST> Body;
-  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, std::unique_ptr<Cpoint_Type> cpoint_type, bool infer_type = false
+  VarExprAST(std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames, std::unique_ptr<Cpoint_Type> cpoint_type, std::unique_ptr<ExprAST> index, bool infer_type = false
              /*,std::unique_ptr<ExprAST> Body*/)
-    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(std::move(cpoint_type)), infer_type(infer_type) {}
+    : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(std::move(cpoint_type)), index(std::move(index)), infer_type(infer_type) {}
 
   Value *codegen() override;
 };
 
 class RedeclarationExprAST : public ExprAST {
   std::string VariableName;
+  std::unique_ptr<ExprAST> index;
   std::unique_ptr<ExprAST> Val;
   bool has_member;
   std::string member;
 public:
-  RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val, const std::string &member) 
-: VariableName(VariableName), Val(std::move(Val)), member(member) {}
+  RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val, const std::string &member, std::unique_ptr<ExprAST> index = nullptr) 
+: VariableName(VariableName), Val(std::move(Val)), member(member), index(std::move(index)) {}
   Value *codegen() override;
 };
 

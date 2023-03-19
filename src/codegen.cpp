@@ -197,10 +197,17 @@ Value* ClassMemberExprAST::codegen(){
 }
 
 Value* ArrayMemberExprAST::codegen() {
+  auto index = posAST->codegen();
+  if (!index){
+    return LogErrorV("error in array index");
+  }
+  if (!is_llvm_type_number(index->getType())){
+    return LogErrorV("index for array is not a number\n");
+  }
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
   AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-  auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+  //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
   //auto ptr = GetElementPtrInst::Create(Alloca, { zero, index}, "", );
   Type* type_llvm = get_type_llvm(cpoint_type);
   Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
@@ -648,14 +655,14 @@ Value* RedeclarationExprAST::codegen(){
     is_global = true;
   }
   Log::Info() << "is_global : " << is_global << "\n";
-  for (int i = 0; i < VariableName.length(); i++){
-    /*if (VariableName.at(i) == '.'){
+  /*for (int i = 0; i < VariableName.length(); i++){
+    if (VariableName.at(i) == '.'){
       Log::Info() << "i struct : " << i << "\n";
       is_object = true;
       ObjectName =  VariableName.substr(0, i);
       MemberName =  VariableName.substr(i+1, VariableName.length()-1);
       break;
-    }*/
+    }
     if (VariableName.at(i) == '['){
       is_array = true;
       ArrayName = VariableName.substr(0, i);
@@ -670,9 +677,13 @@ Value* RedeclarationExprAST::codegen(){
       pos_array = std::stoi(pos_str);
       break;
     }
-  }
+  }*/
   Log::Info() << "VariableName : " << VariableName << "\n";
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  Log::Info() << "TEST\n";
+  if (Val == nullptr){
+    return LogErrorV("Val is Nullptr\n");
+  }
   Value* ValDeclared = Val->codegen();
   Cpoint_Type* type = nullptr;
   if (is_global && GlobalVariables[VariableName] != nullptr){
@@ -917,12 +928,23 @@ Value *VarExprAST::codegen() {
     } else { // If not specified, use 0.0.
       InitVal = get_default_value(*cpoint_type);
     }
+    llvm::Value* indexVal = nullptr;
+    double indexD = -1;
+    if (index != nullptr){
+    indexVal = index->codegen();
+    auto constFP = dyn_cast<ConstantFP>(indexVal);
+    double indexD = constFP->getValueAPF().convertToDouble();
+    Log::Info() << "index for varexpr array : " << indexD << "\n";
+    cpoint_type->nb_element = indexD;
+    }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
     if (!get_type_llvm(*cpoint_type)->isPointerTy()){
     Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
     }
+    if (index != nullptr){
     if (InitVal->getType() != get_type_llvm(*cpoint_type)){
       convertToType(*get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
+    }
     }
     Builder->CreateStore(InitVal, Alloca);
 

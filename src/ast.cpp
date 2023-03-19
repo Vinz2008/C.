@@ -90,6 +90,20 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   Log::Info() << "Parse Identifier Str" << "\n";
   getNextToken();  // eat identifier.
   std::string member = "";
+  std::unique_ptr<ExprAST> indexAST;
+  bool is_array = false;
+  if (CurTok == '['){
+    getNextToken();
+    indexAST = ParseExpression();
+    if (!indexAST){
+      return LogError("Couldn't find index for array"); 
+    }
+    if (CurTok != ']'){
+      return LogError("Missing '['"); 
+    }
+    getNextToken();
+    is_array = true;
+  }
   if (CurTok == '.'){
     Log::Info() << "Struct member found" << "\n";
     getNextToken();
@@ -98,9 +112,11 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
+    for (int i = 0; i < GlobalVariables.size(); i++){
 
-    if ((GlobalVariables[IdName] == nullptr && IdName.find('[') == std::string::npos && IdName.find('.') == std::string::npos) && (NamedValues[IdName] == nullptr && IdName.find('[') == std::string::npos && IdName.find('.') == std::string::npos)) {
-      LogError("Couldn't find variable");
+    }
+    if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr) {
+      return LogError("Couldn't find variable in redeclaration");
     }
     getNextToken();
     auto V = ParseExpression();
@@ -111,7 +127,10 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       Log::Info() << "Struct member returned" << "\n";
       return std::make_unique<StructMemberExprAST>(IdName, member);
     }
-    for (int i = 0; i < IdName.length(); i++){
+    if (is_array){
+      return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
+    }
+    /*for (int i = 0; i < IdName.length(); i++){
       if (IdName.at(i) == '['){
         if (IdName.back() != ']')
           return LogError("Couldn't find ]");
@@ -130,7 +149,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         int pos = std::stoi(pos_str);
         return std::make_unique<ArrayMemberExprAST>(VarName, pos);
       }
-    }
+    }*/
     Log::Info() << "VariableExprAST" << "\n";
     std::unique_ptr<Cpoint_Type> type;
     if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
@@ -835,6 +854,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   std::string struct_name = "";
   std::string class_name = "";
   int nb_ptr = 0;
+  std::unique_ptr<ExprAST> index = nullptr;
   bool infer_type = false;
   // At least one variable name is required.
   if (CurTok != tok_identifier)
@@ -843,7 +863,16 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     std::string Name = IdentifierStr;
     getNextToken(); // eat identifier.
     // if declaration of array
-    if (Name.find('[') != std::string::npos){
+    if (CurTok == '['){
+      is_array = true;
+      getNextToken();
+      index = ParseNumberExpr();
+      if (CurTok != ']'){
+        return LogError("missing ']'");
+      }
+      getNextToken();
+    }
+    /*if (Name.find('[') != std::string::npos){
       is_array = true;
       std::string nb_element_str = "";
       std::string Var_Name ="";
@@ -864,7 +893,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       }
       nb_element = std::stoi(nb_element_str);
       Name = Var_Name;
-    }
+    }*/
     infer_type = false;
     if (CurTok == ':'){
       auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, class_name, nb_ptr);
@@ -912,12 +941,12 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   Log::Info() << "NB PTR : " << nb_ptr << "\n";
   bool is_struct = struct_name != "";
   bool is_class = class_name != "";
-  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
+  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, 0 /*deprecated*/, is_struct, struct_name, is_class, class_name, nb_ptr);
   /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
   }*/
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, *cpoint_type);
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type), infer_type);
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type), std::move(index), infer_type);
 }

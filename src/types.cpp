@@ -64,11 +64,20 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         }*/
         type = PointerType::get(*TheContext, 0);
     }
+    // code that should not be used except in var creation. The index is not found when doing the codegen
     if (cpoint_type.is_array){
-        Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << type << "\n";
+        Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << cpoint_type.type << "\n";
         type = llvm::ArrayType::get(type, cpoint_type.nb_element);
     }
     return type;   
+}
+
+bool is_llvm_type_number(Type* llvm_type){
+    return llvm_type == Type::getDoubleTy(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt64Ty(*TheContext);
+}
+
+Type* get_array_llvm_type(Type* type, int nb_element){
+    return llvm::ArrayType::get(type, nb_element);
 }
 
 Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){

@@ -35,3 +35,5 @@ llvm::Type* get_type_llvm(Cpoint_Type cpoint_type);
 llvm::Value* get_default_value(Cpoint_Type type);
 llvm::Constant* get_default_constant(Cpoint_Type type);
 Cpoint_Type* get_cpoint_type_from_llvm(llvm::Type* llvm_type);
+bool is_llvm_type_number(llvm::Type* llvm_type);
+llvm::Type* get_array_llvm_type(llvm::Type* type, int nb_element);
