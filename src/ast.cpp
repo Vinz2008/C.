@@ -90,7 +90,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   Log::Info() << "Parse Identifier Str" << "\n";
   getNextToken();  // eat identifier.
   std::string member = "";
-  std::unique_ptr<ExprAST> indexAST;
+  std::unique_ptr<ExprAST> indexAST = nullptr;
   bool is_array = false;
   if (CurTok == '['){
     getNextToken();
@@ -112,15 +112,13 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
-    for (int i = 0; i < GlobalVariables.size(); i++){
-
-    }
+    Log::Info() << "RedeclarationExpr Parsing" << "\n";
     if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr) {
       return LogError("Couldn't find variable in redeclaration");
     }
     getNextToken();
     auto V = ParseExpression();
-    return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member);
+    return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member, std::move(indexAST));
   }
   if (CurTok != '('){ // Simple variable ref.
     if (member != ""){

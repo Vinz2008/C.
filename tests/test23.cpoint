@@ -1,5 +1,6 @@
 import @std/print.cpoint
 func main(){
-    var test[10] : i8 ptr 
+    var test[10] : i8 ptr  
     test[0] = "test"
+    test[2] = "test2"
 }

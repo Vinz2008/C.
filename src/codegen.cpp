@@ -648,6 +648,9 @@ Value* RedeclarationExprAST::codegen(){
   Log::Info() << "VariableName " << VariableName << "\n";
   bool is_object = false;
   bool is_array = false;
+  if (index != nullptr){
+    is_array = true;
+  }
   std::string ArrayName = "";
   int pos_array = -1;
   bool is_global = false;
@@ -763,14 +766,20 @@ Value* RedeclarationExprAST::codegen(){
     NamedValues[VariableName] = std::make_unique<NamedValue>(classPtr, cpoint_type);
   } else if (is_array) {
     Log::Info() << "array redeclaration" << "\n";
-    Log::Info() << "Pos for GEP : " << pos_array << "\n";
+    //Log::Info() << "Pos for GEP : " << pos_array << "\n";
+    Log::Info() << "ArrayName : " << VariableName << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
-    auto arrayPtr = NamedValues[ArrayName]->alloca_inst;
-    Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
-    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), arrayPtr, {zero, index}, "get_array");
+    //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
+    auto indexVal = index->codegen();
+    if (!index){
+      return LogErrorV("couldn't find index for array");
+    }
+    auto arrayPtr = NamedValues[VariableName]->alloca_inst;
+    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+    Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
+    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), arrayPtr, {zero, indexVal}, "get_array");
     Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[ArrayName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
+    NamedValues[VariableName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
     //auto ptr = llvm::GetElementPtrInst::Create(arrayPtr, { zero, index }, "", block);
   } else {
   Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
