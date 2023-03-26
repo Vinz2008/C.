@@ -4,5 +4,4 @@
 [submodule "build/tomlplusplus"]
 	path = build/tomlplusplus
 	url = https://github.com/marzer/tomlplusplus.git
-[submodule "tomlplusplus"]
 	shallow = true
