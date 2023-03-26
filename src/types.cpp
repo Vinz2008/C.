@@ -73,7 +73,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
 }
 
 bool is_llvm_type_number(Type* llvm_type){
-    return llvm_type == Type::getDoubleTy(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt64Ty(*TheContext);
+    return llvm_type == Type::getDoubleTy(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt32Ty(*TheContext) || llvm_type == Type::getInt64Ty(*TheContext);
 }
 
 Type* get_array_llvm_type(Type* type, int nb_element){

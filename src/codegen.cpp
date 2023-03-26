@@ -203,9 +203,9 @@ Value* ArrayMemberExprAST::codegen() {
     return LogErrorV("error in array index");
   }
   index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
-  /*if (!is_llvm_type_number(index->getType())){
+  if (!is_llvm_type_number(index->getType())){
     return LogErrorV("index for array is not a number\n");
-  }*/
+  }
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
   AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
