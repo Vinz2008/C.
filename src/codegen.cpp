@@ -197,13 +197,15 @@ Value* ClassMemberExprAST::codegen(){
 }
 
 Value* ArrayMemberExprAST::codegen() {
+  Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
   auto index = posAST->codegen();
   if (!index){
     return LogErrorV("error in array index");
   }
-  if (!is_llvm_type_number(index->getType())){
+  index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
+  /*if (!is_llvm_type_number(index->getType())){
     return LogErrorV("index for array is not a number\n");
-  }
+  }*/
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
   AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
