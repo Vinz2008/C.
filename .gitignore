@@ -1,7 +1,6 @@
 cpoint
 .vscode/
 *.exe
-build/
 out.c
 *.ll
 *.bc
