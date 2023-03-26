@@ -1,7 +1,8 @@
 import @std/print.cpoint
-func function(x){
-  printd(x)
-}
-func test(b){
-  printd(123)
+func main(){
+  var i : int = 2
+  var temp : int = 3
+  var p : int ptr = addr i
+  p = temp
+  printi(i)
 }
