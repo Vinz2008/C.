@@ -769,15 +769,20 @@ Value* RedeclarationExprAST::codegen(){
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto indexVal = index->codegen();
+    indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
     if (!index){
       return LogErrorV("couldn't find index for array");
     }
     auto arrayPtr = NamedValues[VariableName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
     Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
-    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), arrayPtr, {zero, indexVal}, "get_array");
+    Type* llvm_type = get_type_llvm(cpoint_type);
+    Log::Info() << "Get LLVM TYPE" << "\n";
+    auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, {zero, indexVal}, "get_array");
+    Log::Info() << "Create GEP" << "\n";
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
     //auto ptr = llvm::GetElementPtrInst::Create(arrayPtr, { zero, index }, "", block);
