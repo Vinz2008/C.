@@ -187,19 +187,24 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
                                               std::unique_ptr<ExprAST> LHS) {
-  Log::Info() << "BinOp AST" << "\n";
+  Log::Info() << "PARSING BINOP" << "\n";
   // If this is a binop, find its precedence.
   while (true) {
-    int TokPrec = GetTokPrecedence();
+    int TokPrec = 0;
+    if (CurTok != tok_op_multi_char){
+    TokPrec = GetTokPrecedence();
+    } else {
+    TokPrec = getTokPrecedenceMultiChar(OpStringMultiChar);
+    }
 
     // If this is a binop that binds at least as tightly as the current binop,
     // consume it, otherwise we are done.
     //if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
     Log::Info() << "CurTok before if : " << CurTok << "\n";
-    if (CurTok != tok_op_multi_char){
+    //if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec)
       return LHS;
-    }
+    //}
     //}
 
     // Okay, we know this is a binop.
@@ -239,6 +244,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 }
 
 std::unique_ptr<ExprAST> ParseExpression() {
+  Log::Info() << "Parsing Expression" << "\n";
   auto LHS = ParseUnary();
   if (!LHS)
     return nullptr;
@@ -606,12 +612,13 @@ std::unique_ptr<ExprAST> ParseSizeofExpr(){
 }
 
 std::unique_ptr<ExprAST> ParseUnary() {
+  Log::Info() << "PARSE UNARY" << "\n";
   // If the current token is not an operator, it must be a primary expr.
   if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string)
     return ParsePrimary();
 
   // If this is a unary operator, read it.
-  Log::Info() << "Not an operator " << CurTok << "\n";
+  Log::Info() << "Is an unary operator " << CurTok << "\n";
   int Opc = CurTok;
   getNextToken();
   if (auto Operand = ParseUnary())
@@ -821,6 +828,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   /*if (CurTok != tok_in)
     return LogError("expected 'in' after for");*/
   if (CurTok != '{'){
+    Log::Info() << "token befor : " << CurTok << "\n";
     return LogError("expected { after for");
   }
   std::vector<std::unique_ptr<ExprAST>> Body;

@@ -29,7 +29,7 @@ std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 //std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
-extern std::map<char, int> BinopPrecedence;
+extern std::map<std::string, int> BinopPrecedence;
 extern bool isInStruct;
 extern bool gc_mode;
 
@@ -296,6 +296,10 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateOr(L, R, "ortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   }
+  if (Op == "&&"){
+    L = Builder->CreateAnd(L, R, "andtmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  }
   if (Op == "!="){
     L = Builder->CreateFCmpUNE(L, R, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
@@ -489,8 +493,11 @@ Function *FunctionAST::codegen() {
 
   if (!TheFunction)
     return nullptr;
-  if (P.isBinaryOp())
-    BinopPrecedence[P.getOperatorName()] = P.getBinaryPrecedence();
+  if (P.isBinaryOp()){
+    std::string op = "";
+    op += P.getOperatorName();
+    BinopPrecedence[op] = P.getBinaryPrecedence();
+  }
 
   // Create a new basic block to start insertion into.
   BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
@@ -539,8 +546,11 @@ Function *FunctionAST::codegen() {
 
   // Error reading body, remove function.
   TheFunction->eraseFromParent();
-  if (P.isBinaryOp())
-    BinopPrecedence.erase(P.getOperatorName());
+  if (P.isBinaryOp()){
+    std::string op = "";
+    op += P.getOperatorName();
+    BinopPrecedence.erase(op);
+  }
   return nullptr;
 }
 

@@ -43,6 +43,7 @@ enum Token {
 
 int getNextToken();
 int GetTokPrecedence();
+int getTokPrecedenceMultiChar(std::string op);
 std::unique_ptr<ExprAST> LogError(const char *Str);
 void go_to_next_line();
 std::string get_line_returned();

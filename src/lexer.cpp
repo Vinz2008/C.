@@ -12,7 +12,7 @@ string IdentifierStr;
 double NumVal;
 string strStatic;
 int charStatic;
-extern std::map<char, int> BinopPrecedence;
+extern std::map<std::string, int> BinopPrecedence;
 string strPosArray;
 int posArrayNb;
 string OpStringMultiChar;
@@ -292,6 +292,9 @@ static int gettok() {
   if (LastChar == '<'){
     return create_multi_char_op(ThisChar, LastChar);
   }
+  if (LastChar == '&'){
+    return create_multi_char_op(ThisChar, LastChar);
+  }
   return ThisChar;
 }
 
@@ -307,7 +310,15 @@ int GetTokPrecedence() {
     return -1;
 
   // Make sure it's a declared binop.
-  int TokPrec = BinopPrecedence[CurTok];
+  std::string op = "";
+  op += CurTok;
+  int TokPrec = BinopPrecedence[op];
+  if (TokPrec <= 0) return -1;
+  return TokPrec;
+}
+
+int getTokPrecedenceMultiChar(std::string op){
+  int TokPrec = BinopPrecedence[op];
   if (TokPrec <= 0) return -1;
   return TokPrec;
 }
