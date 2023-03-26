@@ -22,3 +22,4 @@ a.out
 test_io.txt
 *.temp
 bdwgc_prefix
+cpoint-build
