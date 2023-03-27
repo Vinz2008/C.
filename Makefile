@@ -28,10 +28,10 @@ SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
-all: std_lib_plus_compiler_plus_gc
+all: std_lib_plus_compiler_plus_gc cpoint-build
 
 cpoint-build:
-	make -C build
+	+make -C build
 
 std_lib_plus_compiler_plus_gc: std_lib
 
