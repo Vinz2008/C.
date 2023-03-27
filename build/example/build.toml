@@ -1,2 +1,4 @@
 [project]
 name = "test"
+homepage = "https://github.com/test"
+license = "GPL"

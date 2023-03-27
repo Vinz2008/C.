@@ -10,7 +10,9 @@ namespace fs = std::filesystem;
 enum mode {
     BUILD_MODE = -1,
     CLEAN_MODE = -2,
+    INFO_MODE = -3,
 };
+
 
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
@@ -25,6 +27,8 @@ int main(int argc, char** argv){
         modeBuild = BUILD_MODE;
     } else if (arg == "clean"){
         modeBuild = CLEAN_MODE;
+    } else if (arg == "info"){
+        modeBuild = INFO_MODE;
     }
     }
     fs::path f{ filename_config };
@@ -33,8 +37,6 @@ int main(int argc, char** argv){
         exit(1);
     }
     auto config = toml::parse_file(filename_config);
-    std::string_view project_name = config["project"]["name"].value_or("");
-    std::cout << "project name : " << project_name << "\n";
     std::string_view src_folder_temp = config["project"]["src_folder"].value_or("");
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
@@ -47,13 +49,21 @@ int main(int argc, char** argv){
             std::cout << object_path << ' ';
             remove(object_path.c_str());
         }
+    } else if (modeBuild == INFO_MODE){
+        std::string_view project_name = config["project"]["name"].value_or("");
+        std::cout << "project name : " << project_name << "\n";
+        std::string_view homepage = config["project"]["homepage"].value_or("");
+        std::cout << "homepage : " << homepage << "\n";
+        std::string_view license = config["project"]["license"].value_or("");
+        std::cout << "license : " << license << "\n";
     } else if (modeBuild == BUILD_MODE) {
     std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", "src/");
     for (auto const& path : PathList){
         std::cout << path << ' ';
-        compileFile("", "", path);
+        compileFile("", "-no-gc", path);
     }
     std::cout << std::endl;
+    linkFiles(PathList);
     }
 
 }

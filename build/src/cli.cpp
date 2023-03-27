@@ -2,6 +2,7 @@
 #include <iostream>
 #include <memory>
 #include <array>
+#include <vector>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -38,5 +39,16 @@ void compileFile(std::string target, std::string arguments, std::string path){
         cmd += "-target " + target;
     }
     std::cout << "cmd : " << cmd << std::endl;
+    runCommand(cmd);
+}
+void linkFiles(std::vector<std::string> PathList){
+    std::string cmd = "clang -o a.out ";
+    for (int i = 0; i < PathList.size(); i++){
+        fs::path path_fs{ PathList.at(i) };
+        std::string out_path = path_fs.replace_extension(".o");
+        cmd += out_path + " ";
+    }
+    cmd += " /usr/local/lib/cpoint/std/libstd.a",
+    std::cout << "link cmd : " << cmd << std::endl;
     runCommand(cmd);
 }
