@@ -30,6 +30,9 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: std_lib_plus_compiler_plus_gc
 
+cpoint-build:
+	make -C build
+
 std_lib_plus_compiler_plus_gc: std_lib
 
 
@@ -93,6 +96,7 @@ clean: clean-build
 	make -C std/c_api clean
 	make -C std clean
 	make -C tests clean
+	make -C build clean
 ifeq ($(OS),Windows_NT)
 	Remove-Item -Recurse -Force -Path cpoint.*
 	Remove-Item -Recurse -Force -Path out.o
