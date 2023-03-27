@@ -57,10 +57,11 @@ int main(int argc, char** argv){
         std::string_view license = config["project"]["license"].value_or("");
         std::cout << "license : " << license << "\n";
     } else if (modeBuild == BUILD_MODE) {
+    std::string_view arguments = config["build"]["arguments"].value_or("");
     std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", "src/");
     for (auto const& path : PathList){
         std::cout << path << ' ';
-        compileFile("", "-no-gc", path);
+        compileFile("", "-no-gc" + (std::string)arguments, path);
     }
     std::cout << std::endl;
     linkFiles(PathList);

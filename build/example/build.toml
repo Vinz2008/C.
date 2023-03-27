@@ -4,3 +4,6 @@ homepage = "https://github.com/test"
 license = "GPL"
 
 [dependencies]
+
+[build]
+arguments = ""
