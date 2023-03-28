@@ -1,6 +1,7 @@
 #include "../../src/config.h"
 #include "cli.h"
 #include "files.h"
+#include "dependencies.h"
 #include <toml++/toml.h>
 #include <iostream>
 #include <filesystem>
@@ -11,8 +12,23 @@ enum mode {
     BUILD_MODE = -1,
     CLEAN_MODE = -2,
     INFO_MODE = -3,
+    DOWNLOAD_MODE = -4,
 };
 
+
+void downloadDependencies(toml::v3::table config){
+    auto github_dependencies = config["dependencies"]["github"];
+    if (toml::array* arr = github_dependencies.as_array()){
+        arr->for_each([](auto&& dep){
+            if constexpr (toml::is_string<decltype(dep)>){
+            std::string dependency = *dep;
+            std::string username = dependency.substr(0, dependency.find('/'));
+            std::string repo_name = dependency.substr(dependency.find('/'), dependency.size());
+            cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
+            }
+        });
+    }
+}
 
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
@@ -29,6 +45,8 @@ int main(int argc, char** argv){
         modeBuild = CLEAN_MODE;
     } else if (arg == "info"){
         modeBuild = INFO_MODE;
+    } else if (arg == "download"){
+        modeBuild = DOWNLOAD_MODE;
     }
     }
     fs::path f{ filename_config };
@@ -38,6 +56,7 @@ int main(int argc, char** argv){
     }
     auto config = toml::parse_file(filename_config);
     std::string_view src_folder_temp = config["project"]["src_folder"].value_or("");
+    std::string_view type = config["project"]["type"].value_or("");
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
@@ -56,7 +75,11 @@ int main(int argc, char** argv){
         std::cout << "homepage : " << homepage << "\n";
         std::string_view license = config["project"]["license"].value_or("");
         std::cout << "license : " << license << "\n";
+        std::cout << "type : " << type << "\n";
+    } else if (modeBuild == DOWNLOAD_MODE){
+        downloadDependencies(config);
     } else if (modeBuild == BUILD_MODE) {
+    downloadDependencies(config);
     std::string_view arguments = config["build"]["arguments"].value_or("");
     std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", "src/");
     for (auto const& path : PathList){

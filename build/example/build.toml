@@ -2,8 +2,10 @@
 name = "test"
 homepage = "https://github.com/test"
 license = "GPL"
+type = "exe"
 
 [dependencies]
+github = ["Vinz2008/test_cpoint_package"]
 
 [build]
 arguments = ""

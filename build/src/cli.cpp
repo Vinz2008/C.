@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <filesystem>
+#include "../../src/config.h"
 
 namespace fs = std::filesystem;
 
@@ -48,7 +49,7 @@ void linkFiles(std::vector<std::string> PathList){
         std::string out_path = path_fs.replace_extension(".o");
         cmd += out_path + " ";
     }
-    cmd += " /usr/local/lib/cpoint/std/libstd.a",
+    cmd += " " DEFAULT_STD_PATH "/libstd.a",
     std::cout << "link cmd : " << cmd << std::endl;
     runCommand(cmd);
 }
