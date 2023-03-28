@@ -87,7 +87,11 @@ int main(int argc, char** argv){
         compileFile("", "-no-gc" + (std::string)arguments, path);
     }
     std::cout << std::endl;
+    if (type == "exe"){
     linkFiles(PathList);
+    } else if (type == "library"){
+        
+    }
     }
 
 }
