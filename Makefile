@@ -74,6 +74,7 @@ endif
 
 install: std_lib
 	cp cpoint $(DESTDIR)/
+	cp build/cpoint-build $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint
 	mkdir $(PREFIX)/lib/cpoint/std
