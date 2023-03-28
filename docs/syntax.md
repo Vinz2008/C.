@@ -169,7 +169,7 @@ include @std/libc.hpoint
 
 ## Arguments
 
-You can just use argc and argv in the main function without having to declare them anywhere (to see more about it, see [this part of the docs](./theory.md#Args-(Argc-and-Argv))
+You can just use argc and argv in the main function without having to declare them anywhere (to see more about it, see [this part of the docs](./theory.md#Args-(Argc-and-Argv)))
 
 ```
 func main() int {
