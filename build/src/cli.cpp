@@ -50,6 +50,17 @@ void linkFiles(std::vector<std::string> PathList){
         cmd += out_path + " ";
     }
     cmd += " " DEFAULT_STD_PATH "/libstd.a",
-    std::cout << "link cmd : " << cmd << std::endl;
+    std::cout << "exe link cmd : " << cmd << std::endl;
+    runCommand(cmd);
+}
+
+void linkLibrary(std::vector<std::string> PathList){
+    std::string cmd = "ar rcs lib.a ";
+    for (int i = 0; i < PathList.size(); i++){
+        fs::path path_fs{ PathList.at(i) };
+        std::string out_path = path_fs.replace_extension(".o");
+        cmd += out_path + " ";
+    }
+    std::cout << "lib link cmd : " << cmd << std::endl;
     runCommand(cmd);
 }

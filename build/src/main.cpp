@@ -23,7 +23,7 @@ void downloadDependencies(toml::v3::table config){
             if constexpr (toml::is_string<decltype(dep)>){
             std::string dependency = *dep;
             std::string username = dependency.substr(0, dependency.find('/'));
-            std::string repo_name = dependency.substr(dependency.find('/'), dependency.size());
+            std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
             cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
             }
         });
@@ -33,7 +33,7 @@ void downloadDependencies(toml::v3::table config){
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
     std::string filename_config = "build.toml";
-    std::string src_folder = "src";
+    std::string src_folder = "src/";
     for (int i = 0; i < argc; i++){
     std::string arg = argv[i];
     if (arg == "-f"){
@@ -61,7 +61,7 @@ int main(int argc, char** argv){
         src_folder = src_folder_temp;
     }
     if (modeBuild == CLEAN_MODE){
-        std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", "src/");
+        std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", src_folder);
         for (auto const& path : PathList){
             fs::path path_fs{ path };
             std::string object_path = path_fs.replace_extension(".o");
@@ -76,12 +76,13 @@ int main(int argc, char** argv){
         std::string_view license = config["project"]["license"].value_or("");
         std::cout << "license : " << license << "\n";
         std::cout << "type : " << type << "\n";
+        std::cout << "src folder : " << src_folder_temp << "\n";
     } else if (modeBuild == DOWNLOAD_MODE){
         downloadDependencies(config);
     } else if (modeBuild == BUILD_MODE) {
     downloadDependencies(config);
     std::string_view arguments = config["build"]["arguments"].value_or("");
-    std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", "src/");
+    std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", src_folder);
     for (auto const& path : PathList){
         std::cout << path << ' ';
         compileFile("", "-no-gc" + (std::string)arguments, path);
@@ -90,7 +91,7 @@ int main(int argc, char** argv){
     if (type == "exe"){
     linkFiles(PathList);
     } else if (type == "library"){
-        
+        linkLibrary(PathList);
     }
     }
 
