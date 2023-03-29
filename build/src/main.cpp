@@ -4,6 +4,7 @@
 #include "dependencies.h"
 #include <toml++/toml.h>
 #include <iostream>
+#include <fstream>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -13,8 +14,10 @@ enum mode {
     CLEAN_MODE = -2,
     INFO_MODE = -3,
     DOWNLOAD_MODE = -4,
+    ADD_DEPENDENCY_MODE = -5,
 };
 
+std::string filename_config = "build.toml";
 
 void downloadDependencies(toml::v3::table config){
     auto github_dependencies = config["dependencies"]["github"];
@@ -30,10 +33,27 @@ void downloadDependencies(toml::v3::table config){
     }
 }
 
+void addDependency(std::string dependency_name, toml::v3::table& config){
+    auto github_dependencies = config["dependencies"]["github"];
+    if (toml::array* arr = github_dependencies.as_array()){
+        arr->for_each([dependency_name](auto&& dep){
+            if constexpr (toml::is_string<decltype(dep)>){
+                std::cout << "add dependency : " << dependency_name << std::endl;
+                std::cout << "dep : " << dep << std::endl;
+            }
+        });
+        arr->insert(arr->end(), dependency_name);
+        //std::cout << config << std::endl; 
+        std::ofstream configFstream(filename_config);
+        configFstream << config;
+        configFstream.close();
+    }
+}
+
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
-    std::string filename_config = "build.toml";
     std::string src_folder = "src/";
+    std::string dependency_to_add = "";
     for (int i = 0; i < argc; i++){
     std::string arg = argv[i];
     if (arg == "-f"){
@@ -47,6 +67,10 @@ int main(int argc, char** argv){
         modeBuild = INFO_MODE;
     } else if (arg == "download" || arg == "update"){
         modeBuild = DOWNLOAD_MODE;
+    } else if (arg == "add"){
+        modeBuild = ADD_DEPENDENCY_MODE;
+        i++;
+        dependency_to_add = argv[i];
     }
     }
     fs::path f{ filename_config };
@@ -79,6 +103,8 @@ int main(int argc, char** argv){
         std::cout << "src folder : " << src_folder_temp << "\n";
     } else if (modeBuild == DOWNLOAD_MODE){
         downloadDependencies(config);
+    } else if (modeBuild == ADD_DEPENDENCY_MODE){
+        addDependency(dependency_to_add, config);
     } else if (modeBuild == BUILD_MODE) {
     downloadDependencies(config);
     std::string_view arguments = config["build"]["arguments"].value_or("");
