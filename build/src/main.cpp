@@ -45,7 +45,7 @@ int main(int argc, char** argv){
         modeBuild = CLEAN_MODE;
     } else if (arg == "info"){
         modeBuild = INFO_MODE;
-    } else if (arg == "download"){
+    } else if (arg == "download" || arg == "update"){
         modeBuild = DOWNLOAD_MODE;
     }
     }
