@@ -11,6 +11,7 @@
 #include "types.h"
 #include "preprocessor.h"
 #include "config.h"
+#include "utils.h"
 
 #ifdef _WIN32
 #include "windows.h"
@@ -95,7 +96,15 @@ int getPath(std::string line, int& pos, std::string &Path){
             Path_temp.append(reponame);
             build_package(Path_temp);
         } else {
+            std::string path_repo = DEFAULT_PACKAGE_PATH;
+            path_repo += '/';
+            path_repo += IdentifierStr;
+            Log::Imports_Info() << "if folder exists " << path_repo << "\n";
+            if (FolderExists(path_repo)){
+                Path_temp = path_repo;
+            } else {
             import_error("couldn't find after @ a normal import\n");
+            }
         }
         Log::Imports_Info() << "Path_temp : " << Path_temp << "\n";
         std::string end_str = Path.substr(pos_path, Path.size());
