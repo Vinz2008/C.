@@ -44,7 +44,7 @@ ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)
 	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static
 endif
 else
-	rmdir bdwgc_prefix
+	rm -rf bdwgc_prefix
 	mkdir bdwgc_prefix
 	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static
 endif
@@ -61,12 +61,8 @@ $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
 clean-build:
-ifeq ($(OS),Windows_NT)
-	Remove-Item -Recurse -Force -Path .\src\*.o
-	Remove-Item -Recurse -Force -Path .\src\*.temp
-else
 	rm -f ./src/*.o ./src/*.temp
-endif
+
 
 ifneq ($(OS),Windows_NT)
 USERNAME=$(shell logname)
@@ -98,12 +94,7 @@ clean: clean-build
 	make -C std clean
 	make -C tests clean
 	make -C build clean
-ifeq ($(OS),Windows_NT)
-	Remove-Item -Recurse -Force -Path cpoint.*
-	Remove-Item -Recurse -Force -Path out.o
-else
 	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
-endif
 	make -C bdwgc clean
 	rm bdwgc/Makefile
 
