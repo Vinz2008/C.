@@ -102,6 +102,7 @@ int getPath(std::string line, int& pos, std::string &Path){
             Log::Imports_Info() << "if folder exists " << path_repo << "\n";
             if (FolderExists(path_repo)){
                 Path_temp = path_repo;
+                build_package(Path_temp);
             } else {
             import_error("couldn't find after @ a normal import\n");
             }
