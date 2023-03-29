@@ -37,9 +37,16 @@ int download_package_github(std::string username, std::string reponame){
 
 int build_package(std::string path){
     Log::Build_Info() << "Building package at " << path << "\n";
+
+
+    std::string cmd_build = "cd " + path + " && ";
+    cmd_build += "cpoint-build build";
+
+
+
     std::string cmd = "make -C ";
     cmd.append(path);
-    FILE* pipe = popen(cmd.c_str(), "r");
+    FILE* pipe = popen(cmd_build.c_str(), "r");
     char* out = (char*)malloc(100000 * sizeof(char));
     fread(out, 1, 100000, pipe);
     std::string out_cpp = out;
