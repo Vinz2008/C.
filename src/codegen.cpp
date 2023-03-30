@@ -412,13 +412,19 @@ Value* AddrExprAST::codegen(){
 }
 
 Value* SizeofExprAST::codegen(){
+  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
   if (is_type(Name)){
     int type = get_type(Name);
     Cpoint_Type cpoint_type = Cpoint_Type(type);
     Type* llvm_type = get_type_llvm(cpoint_type);
-    Type* llvm_type_ptr = llvm_type->getPointerTo();
-    Value* size = Builder->CreateGEP(llvm_type_ptr->getContainedType(0UL), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt8Ty(), 0), llvm_type_ptr), ConstantInt::get(Builder->getInt8Ty(), 1));
-    return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
+    Value* size = Builder->CreateGEP(llvm_type->getPointerTo(), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
+    size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
+    size  = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+    return size;
+    //Type* llvm_type_ptr = llvm_type->getPointerTo();
+    //Value* size = Builder->CreateGEP(llvm_type_ptr->getContainedType(0UL), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt8Ty(), 0), llvm_type_ptr), ConstantInt::get(Builder->getInt8Ty(), 1));
+    //return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
   } else {
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   AllocaInst *A = NamedValues[Name]->alloca_inst;
@@ -426,13 +432,17 @@ Value* SizeofExprAST::codegen(){
     return LogErrorV("Addr Unknown variable name");
   }
   Type* llvm_type = A->getAllocatedType();
-  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  Value* size = Builder->CreateGEP(llvm_type->getPointerTo(), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
+  size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
+  size  = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+  return size;
+  /*auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
   AllocaInst* temp_ptr = CreateEntryBlockAlloca(TheFunction, "temp_sizeof", *get_cpoint_type_from_llvm(llvm_type->getPointerTo()));
   Value* Val = Builder->CreateLoad(llvm_type->getPointerTo(), A, "temp_load_sizeof");
   Builder->CreateStore(Val, temp_ptr);
   Value* size = Builder->CreateGEP(Val->getType(), temp_ptr, {zero, one}, "sizeof");
-  return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
+  return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));*/
   } 
 }
 
@@ -999,6 +1009,14 @@ Value *VarExprAST::codegen() {
       }
       struct_type_temp = ClassDeclarations[cpoint_type->class_name]->class_type;
       struct_declaration_name_temp = cpoint_type->class_name;
+      if (!cpoint_type->is_ptr){
+      Function* constructorF = getFunction(cpoint_type->class_name + "__Constructor__Default");
+      std::vector<Value *> ArgsV;
+      /*auto A = NamedValues[VarName]->alloca_inst;
+      Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
+      ArgsV.push_back(thisClass);*/
+      Builder->CreateCall(constructorF, ArgsV, "calltmp");
+      }
     }
     Log::Info() << "VarName " << VarName << "\n";
     Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
