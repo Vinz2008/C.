@@ -3,5 +3,7 @@ import @std/print.cpoint
 import @std/str.cpoint
 func main(){
   var s : struct str = createString("aa")
+  var s2 = createString("abc")
   printstring(s)
+  printstring(s2)
 }
