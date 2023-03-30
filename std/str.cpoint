@@ -1,7 +1,22 @@
 include libc.hpoint
+import print.cpoint
+extern gc_strdup(s : i8 ptr) i8 ptr;
 struct str {
     var pointer : i8 ptr
     var len : int
     var maxlength : int
     var factor : int
+}
+func createString(string : i8 ptr) struct str ptr {
+    var s : struct str ptr
+    var i : double = sizeof int
+    s = gc_malloc(i * 5)
+    s.pointer = gc_strdup(string)
+    s
+}
+func printstring(string : struct str) {
+    printstr(string.pointer)
+}
+func appendChar(string : struct str ptr){
+    1
 }

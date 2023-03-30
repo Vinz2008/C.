@@ -1,21 +1,7 @@
 include @std/libc.hpoint
 import @std/print.cpoint
-class test {
-  var x : double 
-  var z : double 
-  func test(){
-    2
-  }
-  func test_function(){ 
-    1 
-  } 
-}
+import @std/str.cpoint
 func main(){
-  var x : class test 
-  var y : class test ptr 
-  var z : int ptr 
-  z = malloc(sizeof int)
-  y = malloc(12)
-  x.z = 2 
-  printd(sizeof x)
+  var s : struct str = createString("aa")
+  printstring(s)
 }

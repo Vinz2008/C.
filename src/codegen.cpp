@@ -170,6 +170,9 @@ Value* StructMemberExprAST::codegen() {
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
     Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+    if (cpoint_type.is_ptr){
+      cpoint_type.is_ptr = false;
+    }
     Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});
     Value* value = Builder->CreateLoad(get_type_llvm(cpoint_type), ptr, StructName);
     return value;
@@ -764,6 +767,9 @@ Value* RedeclarationExprAST::codegen(){
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
     auto structPtr = NamedValues[VariableName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+    if (cpoint_type.is_ptr){
+      cpoint_type.is_ptr = false;
+    }
     auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);

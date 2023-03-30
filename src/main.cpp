@@ -53,6 +53,7 @@ std::map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<Module> TheModule;
 
 extern int CurTok;
+extern std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 //std::unique_ptr<llvm::raw_fd_ostream> file_out_ostream;
 llvm::raw_ostream* file_out_ostream;
 ifstream file_in;
@@ -61,6 +62,8 @@ bool last_line = false;
 
 void add_manually_extern(std::string fnName, std::unique_ptr<Cpoint_Type> cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
   auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
+  FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
+  Log::Info() << "add extern name " << fnName << "\n";
   auto *FnIR = FnAST->codegen();
 }
 
@@ -217,6 +220,7 @@ int main(int argc, char **argv){
     bool import_mode = true;
     bool rebuild_gc = false;
     bool rebuild_std = true;
+    bool explicit_with_gc = false; // add gc even with -no-std
     std::string first_filename = "";
     std::string linker_additional_flags = "";
     for (int i = 1; i < argc; i++){
@@ -248,6 +252,8 @@ int main(int argc, char **argv){
           remove_temp_file = false;
         } else if (arg.compare("-no-gc") == 0){
           gc_mode = false;
+        } else if (arg.compare("-with-gc") == 0){
+          explicit_with_gc = true;
         } else if (arg.compare("-no-imports") == 0){
           import_mode = false;
         } else if (arg.compare("-rebuild-gc") == 0) {
@@ -354,7 +360,7 @@ int main(int argc, char **argv){
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", false, "", 0);
     DBuilder->finalize();
-    if (std_mode && gc_mode == true){
+    if ((std_mode || explicit_with_gc) && gc_mode){
       add_externs_for_gc();
     }
     MainLoop();

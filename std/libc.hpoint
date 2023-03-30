@@ -6,3 +6,4 @@ extern putchar(c : int) int;
 extern open(path : i8 ptr, flag : int ...) int;
 extern close(fd : int) int;
 extern malloc(size : int) void ptr;
+extern strdup(s : i8 ptr) i8 ptr;

@@ -1,5 +1,7 @@
 #include "gc.h"
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
 
 void gc_init(){
     GC_INIT();
@@ -20,4 +22,12 @@ void set_pointer_int(int* ptr, int value){
 
 size_t size_of_int(){
     return sizeof(int);
+}
+
+char* gc_strdup(char* s){
+    char* s2 = malloc(strlen(s)+1);
+    if (s2){
+    strcpy(s2, s);
+    }
+    return s2;
 }

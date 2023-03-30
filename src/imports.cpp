@@ -166,7 +166,8 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
         } else {
             struct_declar += line.at(i);
             //struct_declar += '\n';
-            break;
+            //break;
+            goto after_while;
         }
         }
         pos = 0;
@@ -176,6 +177,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
             struct_declar += '\n';
         }
     }
+after_while:
     Log::Imports_Info() << "struct_declar : " << struct_declar << "\n";
     //std::getline(imported_file, line); //get new line
     if (pos_line != 0 && pos_line != nb_line){

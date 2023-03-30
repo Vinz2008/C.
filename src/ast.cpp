@@ -425,7 +425,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
         ParseTypeDeclaration(&type, &is_ptr, temp_struct, temp_class, temp_nb);
       }
       arg_nb++;
-      ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, false, "", false, "", temp_nb)));
+      ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, temp_struct != "", temp_struct, false, "", temp_nb)));
       }
     }
   }
