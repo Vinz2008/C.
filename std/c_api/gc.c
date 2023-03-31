@@ -15,6 +15,10 @@ void* gc_realloc(void* ptr, size_t size){
     return GC_realloc(ptr, size);
 }
 
+void gc_free(void* ptr){
+    GC_free(ptr);
+}
+
 void set_pointer_int(int* ptr, int value){
     *ptr = value;
     printf("*ptr : %d\n", *ptr);
