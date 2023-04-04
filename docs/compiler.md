@@ -16,8 +16,6 @@
 
 **-verbose-std-build** : make the build of the standard library verbose
 
-**-no-delete-import-file** : make the compiler not delete the temporary file with imports replaced with externs
-
 **-no-gc** : make the compiler not add the functions for garbage collection
 
 **-no-imports** : desactivate imports in the compiler

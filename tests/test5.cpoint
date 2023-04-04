@@ -1,5 +1,7 @@
 import @std/print.cpoint
+include @std/libc.hpoint
 func main(){
     var c : i8 = 'b'
     printd(3.2)
+    printd(O_WRONLY)
 }
