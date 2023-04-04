@@ -827,19 +827,46 @@ Value* RedeclarationExprAST::codegen(){
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
+Value* LoopExprAST::codegen(){
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  if (is_infinite_loop){
+  BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
+  Builder->CreateBr(loopBB);
+  Builder->SetInsertPoint(loopBB);
+  for (int i = 0; i < Body.size(); i++){
+    if (!Body.at(i)->codegen())
+      return nullptr;
+  }
+  Builder->CreateBr(loopBB);
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+  } else {
+    return LogErrorV("Functionnality not finished to be implemented");
+    if (NamedValues[VarName] != nullptr){
+      return LogErrorV("variable for loop already exists in the context");
+    }
+    AllocaInst *allocaPos = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
+    Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
+    Builder->CreateStore(StartVal, allocaPos);
+    
+    BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
+    Builder->CreateBr(LoopBB);
+    Builder->SetInsertPoint(LoopBB);
+  }
+}
+
 Value* WhileExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   BasicBlock* whileBB = BasicBlock::Create(*TheContext, "while", TheFunction);
   Builder->CreateBr(whileBB);
   Builder->SetInsertPoint(whileBB);
-  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
+  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_while", TheFunction);
   Value *CondV = Cond->codegen();
   if (!CondV)
     return nullptr;
   CondV = Builder->CreateFCmpONE(
-    CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond");
+    CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_while");
   BasicBlock *AfterBB =
-      BasicBlock::Create(*TheContext, "afterloop", TheFunction);
+      BasicBlock::Create(*TheContext, "afterloop_while", TheFunction);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
   //Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
@@ -861,7 +888,7 @@ Value *ForExprAST::codegen(){
   Builder->CreateStore(StartVal, Alloca);
 
   //BasicBlock *PreheaderBB = Builder->GetInsertBlock();
-  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop", TheFunction);
+  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
   Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
   AllocaInst *OldVal;
@@ -898,12 +925,12 @@ Value *ForExprAST::codegen(){
 
   Value *CurVar =
       Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, VarName.c_str());
-  Value *NextVar = Builder->CreateFAdd(CurVar, StepVal, "nextvar");
+  Value *NextVar = Builder->CreateFAdd(CurVar, StepVal, "nextvar_for");
   Builder->CreateStore(NextVar, Alloca);
 
   // Convert condition to a bool by comparing non-equal to 0.0.
   EndCond = Builder->CreateFCmpONE(
-      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond");
+      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");
 
   // Create the "after loop" block and insert it.
   //BasicBlock *LoopEndBB = Builder->GetInsertBlock();

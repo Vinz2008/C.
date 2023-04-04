@@ -1,12 +1,6 @@
 import @std/print.cpoint
-func test(x){
-    var i : double = 2
-    var d : int = 3
-    d = 2
-    i = 2 + 2
-    i = i + 2
-    printd(i)
-}
 func main(){
-    test(10)
+    loop {
+        printd(2)
+    }
 }

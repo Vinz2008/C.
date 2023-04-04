@@ -67,6 +67,11 @@ std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str) {
   return nullptr;
 }
 
+std::unique_ptr<LoopExprAST> LogErrorL(const char* Str){
+  LogError(Str);
+  return nullptr;
+}
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -286,6 +291,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseSizeofExpr();
   case tok_while:
     return ParseWhileExpr();
+  case tok_loop:
+    return ParseLoopExpr();
   case tok_goto:
     return ParseGotoExpr();
   case tok_label:
@@ -763,6 +770,34 @@ std::unique_ptr<ExprAST> ParseLabelExpr(){
   Log::Info() << "label_name in label : " << label_name << "\n";
   getNextToken();
   return std::make_unique<LabelExprAST>(label_name);
+}
+
+std::unique_ptr<ExprAST> ParseLoopExpr(){
+  getNextToken();  // eat the loop.
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  if (CurTok == '{'){
+    // infinite loop like in rust
+    getNextToken();
+    while (CurTok != '}'){
+      auto E = ParseExpression();
+      if (!E)
+        return nullptr;
+      Body.push_back(std::move(E));
+    }
+    return std::make_unique<LoopExprAST>("", nullptr, std::move(Body), true);
+  } else {
+    if (CurTok != tok_identifier){
+      return LogErrorL("not an identifier or '{' after the loop");
+    }
+    std::string VarName = IdentifierStr;
+    getNextToken();
+    if (CurTok != tok_in){
+      return LogErrorL("missing 'in' in loop");
+    }
+    getNextToken();
+    auto Array = ParseExpression();
+    return std::make_unique<LoopExprAST>(VarName, std::move(Array), std::move(Body));
+  }
 }
 
 std::unique_ptr<ExprAST> ParseWhileExpr(){ 

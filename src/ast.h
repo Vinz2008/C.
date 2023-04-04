@@ -288,6 +288,16 @@ public:
   Value *codegen() override;
 };
 
+class LoopExprAST : public ExprAST {
+  std::string VarName;
+  std::unique_ptr<ExprAST> Array;
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  bool is_infinite_loop;
+public:
+  LoopExprAST(std::string VarName, std::unique_ptr<ExprAST> Array, std::vector<std::unique_ptr<ExprAST>> Body, bool is_infinite_loop = false) : VarName(VarName), Array(std::move(Array)), Body(std::move(Body)), is_infinite_loop(is_infinite_loop) {}
+  Value *codegen() override;
+};
+
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
@@ -310,5 +320,6 @@ std::unique_ptr<ExprAST> ParseLabelExpr();
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable();
 std::unique_ptr<ExprAST> ParseBool(bool bool_value);
 std::unique_ptr<ExprAST> ParseCharExpr();
+std::unique_ptr<ExprAST> ParseLoopExpr();
 
 #endif

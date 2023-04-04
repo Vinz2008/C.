@@ -13,7 +13,7 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 CXXFLAGS = -c -g -Wall -Itomlplusplus/include -std=c++17
 
-all: clean $(OUTPUTBIN)
+all: $(OUTPUTBIN)
 
 $(OUTPUTBIN): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
@@ -21,5 +21,8 @@ $(OUTPUTBIN): $(OBJS)
 $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^
 
-clean:
-	rm -f $(OUTPUTBIN) src/*.o
+clean-build:
+	rm -f src/*.o
+
+clean: clean-build
+	rm -f $(OUTPUTBIN)

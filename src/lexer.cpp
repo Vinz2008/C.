@@ -186,6 +186,8 @@ static int gettok() {
       return tok_ptr;
     if (IdentifierStr == "while")
       return tok_while;
+    if (IdentifierStr == "loop")
+      return tok_loop;
     if (IdentifierStr == "goto")
       return tok_goto;
     if (IdentifierStr == "label")
