@@ -1,6 +1,6 @@
-extern printi(x) void;
+import @std/print.cpoint
 func main(){
   printi(argc)
-  hhygfttggfr €
+  hhygfttggfr
   return 0
 }

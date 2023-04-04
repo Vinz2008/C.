@@ -25,6 +25,9 @@ extern std::string filename;
 std::ifstream imported_file;
 int pos_line_file = 0;
 
+// will be negative
+int modifier_for_line_count = 0; 
+
 class ArgVarImport {
     std::string name;
     int type;
@@ -155,6 +158,7 @@ void interpret_func(std::string line, int& pos, int nb_line, int& pos_line){
     }
     out_file << "extern " << declar << ";";
     pos_line++;
+    modifier_for_line_count--;
 }
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){

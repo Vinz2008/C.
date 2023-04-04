@@ -60,6 +60,8 @@ ifstream file_in;
 ofstream file_log;
 bool last_line = false;
 
+extern int modifier_for_line_count;
+
 void add_manually_extern(std::string fnName, std::unique_ptr<Cpoint_Type> cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
   auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
   FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
@@ -285,6 +287,7 @@ int main(int argc, char **argv){
     temp_filename.append(".temp");
     if (import_mode){
     generate_file_with_imports(filename, temp_filename);
+    Comp_context->line_nb += modifier_for_line_count;
     filename = temp_filename;
     }
     std::error_code ec;
