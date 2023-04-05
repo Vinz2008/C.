@@ -57,6 +57,9 @@ void gotToNextLine(std::istream &__is, std::string &__str){
   getLine(__is, __str);
   Comp_context->line = __str;
   file_log << "line size : " << __str.size() << "\n";
+  /*while (line.size == 0){
+  goToNextLine(__is,__str);
+  }*/
 }
 
 int getCharLine(){
