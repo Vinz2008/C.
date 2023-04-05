@@ -8,7 +8,6 @@
 ?[define R_OK 4]
 ?[define W_OK 2]
 ?[define X_OK 1]
-
 extern puts(s : i8 ptr) int;
 extern putchar(c : int) int;
 extern open(path : i8 ptr, flag : int ...) int;

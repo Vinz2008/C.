@@ -12,6 +12,9 @@
 #include "llvm/Support/Host.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/IR/DIBuilder.h"
+#include "llvm/Transforms/InstCombine/InstCombine.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/Scalar/GVN.h"
 #include "config.h"
 #include "lexer.h"
 #include "ast.h"
@@ -222,6 +225,8 @@ int main(int argc, char **argv){
     bool import_mode = true;
     bool rebuild_gc = false;
     bool rebuild_std = true;
+    bool asm_mode = false;
+    bool is_optimised = false;
     bool explicit_with_gc = false; // add gc even with -no-std
     std::string first_filename = "";
     std::string linker_additional_flags = "";
@@ -241,6 +246,10 @@ int main(int argc, char **argv){
           cout << "custom path std : " << std_path << endl;
         } else if (arg.compare("-c") == 0){
           link_files_mode = false;
+        } else if (arg.compare("-S") == 0){
+          asm_mode = true;
+        } else if (arg.compare("-O") == 0){
+          is_optimised = true;
         } else if (arg.compare("-nostd") == 0){
           std_mode = false;
         } else if(arg.compare("-target-triplet") == 0){
@@ -343,6 +352,7 @@ int main(int argc, char **argv){
     BinopPrecedence["*"] = 40;*/  // highest.
     //fprintf(stderr, "ready> ");
     string TargetTriple;
+    legacy::PassManager pass;
     if (target_triplet_found_bool){
     TargetTriple = target_triplet_found;
     } else {
@@ -353,6 +363,12 @@ int main(int argc, char **argv){
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
     InitializeModule(first_filename);
+    if (is_optimised){
+    pass.add(createInstructionCombiningPass());
+    pass.add(createReassociatePass());
+    pass.add(createGVNPass());
+    pass.add(createCFGSimplificationPass());
+    }
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
                            DEBUG_METADATA_VERSION);
     if (Triple(sys::getProcessTriple()).isOSDarwin()){
@@ -361,7 +377,7 @@ int main(int argc, char **argv){
     DBuilder = std::make_unique<DIBuilder>((*TheModule));
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
-      "Cpoint Compiler", false, "", 0);
+      "Cpoint Compiler", is_optimised, "", 0);
     DBuilder->finalize();
     if ((std_mode || explicit_with_gc) && gc_mode){
       add_externs_for_gc();
@@ -390,8 +406,11 @@ int main(int argc, char **argv){
     return 1;
     }
     raw_fd_ostream dest(llvm::StringRef(object_filename), EC, sys::fs::OF_None);
-    legacy::PassManager pass;
-    auto FileType = CGFT_ObjectFile;
+
+    llvm::CodeGenFileType FileType = CGFT_ObjectFile;
+    if (asm_mode){
+      FileType = CGFT_AssemblyFile;
+    }
     if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
     errs() << "TheTargetMachine can't emit a file of this type";
     return 1;
