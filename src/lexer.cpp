@@ -87,6 +87,14 @@ int getCharLine(){
   }
   int c = line[pos];
   if (c == '\0'){
+  while (c == '\0'){
+    pos++;
+    file_log << "\\0 found" << "\n";
+    c = line[pos];
+  }
+  file_log << "next char after \\0 : " << line[pos] << "\n";
+  }
+  /*if (c == '\0'){
 start_backslash_zero:
     pos++;
     file_log << "\\0 found" << "\n";
@@ -95,7 +103,7 @@ start_backslash_zero:
       goto start_backslash_zero;
     }
     file_log << "next char after \\0 : " << line[pos] << "\n";
-  }
+  }*/
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line.c_str())){
     gotToNextLine(file_in, line);
     while (true){
