@@ -9,7 +9,8 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
     printf("cursor %s kind : %s\n", clang_getCString(clang_getCursorSpelling(cursor)), clang_getCString(clang_getCursorKindSpelling(cursorKind)));
     switch(cursorKind){
         case CXCursor_FunctionDecl:
-            fprintf(outf, "func %s();", clang_getCString(clang_getCursorSpelling(cursor)));
+            fprintf(outf, "func %s();\n", clang_getCString(clang_getCursorSpelling(cursor)));
+            break;
         default:
             break;
     }
