@@ -84,22 +84,6 @@ int getCharLine(){
           break;
       }
     }
-
-
-/*if_preprocessor_first:
-    Log::Info() << "Line : " << line << "\n";
-    if (line.at(0) == '?' && line.at(1) == '['){
-      Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
-      preprocess_instruction(line);
-      getLine(file_in, line);
-      goto if_preprocessor_first;
-    } else {
-    //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
-    preprocess_replace_variable(line);
-    }*/
-    /*if (!getline(file_in, *line)){
-      last_line = true;
-    }*/
   }
   int c = line[pos];
   if (c == '\0'){
@@ -116,7 +100,6 @@ start_backslash_zero:
     gotToNextLine(file_in, line);
     while (true){
       if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
-        
           Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
           preprocess_instruction(line);
           gotToNextLine(file_in, line);
@@ -126,21 +109,6 @@ start_backslash_zero:
           break;
       }
     }
-/*if_preprocessor:
-    if (line.size() >= 2){
-    if (line.at(0) == '?' && line.at(1) == '['){
-      Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
-      preprocess_instruction(line);
-      gotToNextLine(file_in, line);
-      goto if_preprocessor;
-    } else {
-      //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
-      preprocess_replace_variable(line);
-    }
-    }*/
-    /*if (!getline(file_in, *line)){
-      last_line = true;
-    }*/
     pos = 0;
     file_log << "next char in line : " << line[pos] << "\n";
   } else if (c == '\\'){
