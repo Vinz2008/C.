@@ -57,6 +57,7 @@ void gotToNextLine(std::istream &__is, std::string &__str){
   getLine(__is, __str);
   Comp_context->line = __str;
   file_log << "line size : " << __str.size() << "\n";
+  pos = 0;
   /*while (line.size == 0){
   goToNextLine(__is,__str);
   }*/
@@ -107,7 +108,7 @@ int getCharLine(){
           break;
       }
     }
-    pos = 0;
+    //pos = 0;
     file_log << "next char in line : " << line[pos] << "\n";
   } else if (c == '\\'){
       switch (line[pos+1]){
@@ -130,6 +131,10 @@ int getCharLine(){
      pos++;
      Comp_context->col_nb++;
   }
+  /*if (line.size() == 0){
+    gotToNextLine(file_in, line);
+    //pos = 0;
+  }*/
   /*if (line->size() == 0 && (*line)[pos] == '\0'){
     file_log << "empty line" << "\n";
     gotToNextLine(file_in, *line);

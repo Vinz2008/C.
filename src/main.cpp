@@ -172,6 +172,7 @@ static void MainLoop() {
     }
     switch (CurTok) {
     case tok_eof:
+      last_line = true; 
       return;
     case ';': // ignore top-level semicolons.
       getNextToken();
