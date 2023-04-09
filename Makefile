@@ -28,10 +28,13 @@ SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
-all: std_lib_plus_compiler_plus_gc cpoint-build
+all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen
 
 cpoint-build:
 	+make -C build
+
+cpoint-bindgen:
+	+make -C tools/bindgen
 
 std_lib_plus_compiler_plus_gc: std_lib
 
@@ -94,6 +97,7 @@ clean: clean-build
 	make -C std clean
 	make -C tests clean
 	make -C build clean
+	make -C tools/bindgen clean
 	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
 	make -C bdwgc clean
 	rm bdwgc/Makefile
