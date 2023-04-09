@@ -25,7 +25,7 @@ extern ofstream file_log;
 
 static int pos = 0;
 
-string* line = NULL;
+string line = "<empty line>";
 string last_line_str = "";
 
 extern bool last_line;
@@ -43,11 +43,11 @@ int getLine(std::istream &__is, std::string &__str){
 }
 
 std::string get_line_returned(){
-  return *line;
+  return line;
 }
 
 void go_to_next_line(){
-  getLine(file_in, *line);
+  getLine(file_in, line);
 }
 
 void gotToNextLine(std::istream &__is, std::string &__str){
@@ -62,60 +62,63 @@ void gotToNextLine(std::istream &__is, std::string &__str){
   }*/
 }
 
+void init_line(){
+  Comp_context->line_nb++;
+  Comp_context->col_nb = 0;
+  getLine(file_in, line);
+  Comp_context->line = line;
+}
+
 int getCharLine(){
-  if (line == NULL){
-    line = new string("");
-    Comp_context->line_nb++;
-    Comp_context->col_nb = 0;
-    getLine(file_in, *line);
-    Comp_context->line = *line;
+  if (line == "<empty line>"){
+    init_line();
 if_preprocessor_first:
-    Log::Info() << "Line : " << *line << "\n";
-    if (line->at(0) == '?' && line->at(1) == '['){
+    Log::Info() << "Line : " << line << "\n";
+    if (line.at(0) == '?' && line.at(1) == '['){
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
-      preprocess_instruction(*line);
-      getLine(file_in, *line);
+      preprocess_instruction(line);
+      getLine(file_in, line);
       goto if_preprocessor_first;
     } else {
     //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
-    preprocess_replace_variable(*line);
+    preprocess_replace_variable(line);
     }
     /*if (!getline(file_in, *line)){
       last_line = true;
     }*/
   }
-  int c = (*line)[pos];
+  int c = line[pos];
   if (c == '\0'){
 start_backslash_zero:
     pos++;
     file_log << "\\0 found" << "\n";
-    c = (*line)[pos];
+    c = line[pos];
     if (c == '\0'){
       goto start_backslash_zero;
     }
-    file_log << "next char after \\0 : " << (*line)[pos] << "\n";
+    file_log << "next char after \\0 : " << line[pos] << "\n";
   }
-  if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line->c_str())){
-    gotToNextLine(file_in, *line);
+  if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line.c_str())){
+    gotToNextLine(file_in, line);
 if_preprocessor:
-    if (line->size() >= 2){
-    if (line->at(0) == '?' && line->at(1) == '['){
+    if (line.size() >= 2){
+    if (line.at(0) == '?' && line.at(1) == '['){
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
-      preprocess_instruction(*line);
-      gotToNextLine(file_in, *line);
+      preprocess_instruction(line);
+      gotToNextLine(file_in, line);
       goto if_preprocessor;
     } else {
       //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
-      preprocess_replace_variable(*line);
+      preprocess_replace_variable(line);
     }
     }
     /*if (!getline(file_in, *line)){
       last_line = true;
     }*/
     pos = 0;
-    file_log << "next char in line : " << (*line)[pos] << "\n";
+    file_log << "next char in line : " << line[pos] << "\n";
   } else if (c == '\\'){
-      switch ((*line)[pos+1]){
+      switch (line[pos+1]){
         default:
           break;
         case 'n':
@@ -139,7 +142,7 @@ if_preprocessor:
     file_log << "empty line" << "\n";
     gotToNextLine(file_in, *line);
   }*/
-  file_log << "line : " << *line << "\n";
+  file_log << "line : " << line << "\n";
   file_log << "c : " << (char)c << "\n";
   file_log << "c int : " << c << "\n";
   return c;
