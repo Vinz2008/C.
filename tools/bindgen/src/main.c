@@ -29,14 +29,14 @@ const char* get_type_string_from_type_libclang(CXType type){
 }
 
 void close_previous_blocks(){
-    pass_block = false;
     if (in_function_declaration){
         fprintf(outf,");\n");
         in_function_declaration = false;
-    } else if (in_struct_declaration){
+    } else if (in_struct_declaration && !pass_block){
         fprintf(outf,"}\n");
         in_struct_declaration = false;
     }
+    pass_block = false;
 }
 
 enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data){
