@@ -1,0 +1,4 @@
+type new_type int;
+func main(){
+  var hello : new_type = 2
+}

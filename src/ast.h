@@ -218,6 +218,14 @@ public:
   GlobalVariable* codegen();
 };
 
+class TypeDefAST {
+public:
+  std::string new_type;
+  std::string value_type;
+  TypeDefAST(const std::string& new_type, const std::string& value_type) :  new_type(new_type), value_type(value_type) {}
+  void codegen();
+};
+
 
 class ClassDeclarAST {
   std::string Name;
@@ -318,6 +326,7 @@ std::unique_ptr<ExprAST> ParseWhileExpr();
 std::unique_ptr<ExprAST> ParseGotoExpr();
 std::unique_ptr<ExprAST> ParseLabelExpr();
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable();
+std::unique_ptr<TypeDefAST> ParseTypeDef();
 std::unique_ptr<ExprAST> ParseBool(bool bool_value);
 std::unique_ptr<ExprAST> ParseCharExpr();
 std::unique_ptr<ExprAST> ParseLoopExpr();

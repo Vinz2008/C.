@@ -40,6 +40,7 @@ enum Token {
   tok_sizeof = -28,
   tok_format = -29,
   tok_loop = -30,
+  tok_typedef = -31,
 };
 
 int getNextToken();

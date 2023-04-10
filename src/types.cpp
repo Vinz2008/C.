@@ -12,9 +12,14 @@ using namespace llvm;
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
+std::vector<std::string> typeDefTable;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
+    if (cpoint_type.type >= 0){
+        Log::Info() << "Typedef type used to declare variable" << "\n";
+        return get_type_llvm(get_type(typeDefTable.at(cpoint_type.type)));
+    }
     Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
         type = StructDeclarations[cpoint_type.struct_name]->struct_type;
@@ -159,6 +164,7 @@ std::vector<std::string> types{
     "i64",
 };
 
+
 bool is_type(std::string type){
     for (int i = 0; i < types.size(); i++){
        if (type.compare(types.at(i)) == 0){
@@ -171,6 +177,9 @@ bool is_type(std::string type){
 int get_type(std::string type){
     for (int i = 0; i < types.size(); i++){
        if (type.compare(types.at(i)) == 0){
+        if (i >= 8){
+            return i+1-9;
+        }
         return -(i + 1);
        }
     }

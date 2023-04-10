@@ -24,6 +24,8 @@ extern std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariabl
 extern bool std_mode;
 extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
+extern std::vector<std::string> types;
+extern std::vector<std::string> typeDefTable;
 
 
 std::unique_ptr<ExprAST> LogError(const char *Str) {
@@ -643,6 +645,17 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   std::vector<std::unique_ptr<ExprAST>> Body;
   Body.push_back(std::move(E));
   return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
+}
+
+std::unique_ptr<TypeDefAST> ParseTypeDef(){
+  getNextToken(); // eat the 'type'
+  std::string new_type = IdentifierStr;
+  getNextToken();
+  std::string value_type = IdentifierStr;
+  getNextToken();
+  types.push_back(new_type);
+  typeDefTable.push_back(value_type);
+  return std::make_unique<TypeDefAST>(new_type, value_type);
 }
 
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){

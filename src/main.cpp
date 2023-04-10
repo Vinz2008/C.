@@ -131,6 +131,14 @@ static void HandleTopLevelExpression() {
   }
 }
 
+static void HandleTypeDef(){
+  if (auto TypeDefAST = ParseTypeDef()){
+    TypeDefAST->codegen();
+  } else {
+    getNextToken();
+  }
+}
+
 static void HandleGlobalVariable(){
   if (auto GlobalVarAST = ParseGlobalVariable()){
     GlobalVarAST->codegen();
@@ -192,6 +200,8 @@ static void MainLoop() {
     case tok_var:
       HandleGlobalVariable();
       break;
+    case tok_typedef:
+      HandleTypeDef();
     case '#':
       // FOR NOW NOT WORKING : TODO
       Log::Info() << "# comment found" << "\n";

@@ -567,6 +567,10 @@ Function *FunctionAST::codegen() {
   return nullptr;
 }
 
+void TypeDefAST::codegen(){
+  return;
+}
+
 GlobalVariable* GlobalVariableAST::codegen(){
   Constant* InitVal = get_default_constant(*cpoint_type);
   if (Init){

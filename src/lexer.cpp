@@ -204,6 +204,8 @@ static int gettok() {
       return tok_goto;
     if (IdentifierStr == "label")
       return tok_label;
+    if (IdentifierStr == "type")
+      return tok_typedef;
     if (IdentifierStr == "true")
       return tok_true;
     if (IdentifierStr == "false")
