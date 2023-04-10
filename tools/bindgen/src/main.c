@@ -10,6 +10,7 @@ bool in_struct_declaration = false;
 enum CXCursorKind cursorKind;
 int param_number = 0;
 bool pass_block = false;
+CXType return_type;
 
 const char* get_type_string_from_type_libclang(CXType type){
     switch(type.kind){
@@ -30,7 +31,8 @@ const char* get_type_string_from_type_libclang(CXType type){
 
 void close_previous_blocks(){
     if (in_function_declaration){
-        fprintf(outf,");\n");
+        printf("return type enum : %d\n", return_type.kind);
+        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
         in_function_declaration = false;
     } else if (in_struct_declaration && !pass_block){
         fprintf(outf,"}\n");
@@ -45,6 +47,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
     switch(cursorKind){
         case CXCursor_FunctionDecl:
             close_previous_blocks();
+            return_type = clang_getResultType(clang_getCursorType(cursor));
             param_number = 0;
             fprintf(outf, "extern func %s(", clang_getCString(clang_getCursorSpelling(cursor)));
             in_function_declaration = true;
