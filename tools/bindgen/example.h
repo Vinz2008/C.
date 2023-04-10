@@ -1,4 +1,6 @@
-#include <stdlib.h>
+#include <stdio.h>
+#define hello_world "hello world"
+#define a(b) b + 2
 char test(char* test_str);
 double test2(int number);
 void test3(char c);
@@ -7,3 +9,4 @@ struct hello {
     int a;
     double b;
 };
+typedef int test_t;
