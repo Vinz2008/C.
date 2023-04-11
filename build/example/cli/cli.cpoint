@@ -1,0 +1,4 @@
+import @std/print.cpoint
+func cli_function() void {
+    printstr("do things with cli")
+}
