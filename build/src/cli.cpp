@@ -42,6 +42,7 @@ void compileFile(std::string target, std::string arguments, std::string path){
     std::cout << "cmd : " << cmd << std::endl;
     runCommand(cmd);
 }
+
 void linkFiles(std::vector<std::string> PathList){
     std::string cmd = "clang -o a.out ";
     for (int i = 0; i < PathList.size(); i++){

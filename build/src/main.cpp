@@ -9,6 +9,9 @@
 
 namespace fs = std::filesystem;
 
+void buildSubfolders(toml::v3::table& config);
+void buildFolder(std::string src_folder, toml::v3::table& config);
+
 enum mode {
     BUILD_MODE = -1,
     CLEAN_MODE = -2,
@@ -18,6 +21,7 @@ enum mode {
 };
 
 std::string filename_config = "build.toml";
+std::vector<std::string> PathList;
 
 void downloadDependencies(toml::v3::table config){
     auto github_dependencies = config["dependencies"]["github"];
@@ -48,6 +52,30 @@ void addDependency(std::string dependency_name, toml::v3::table& config){
         configFstream << config;
         configFstream.close();
     }
+}
+
+void buildSubfolders(toml::v3::table& config){
+    auto subfolders = config["subfolders"]["folders"];
+    if (toml::array* arr = subfolders.as_array()){
+        arr->for_each([&config](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                std::cout << "sub : " << sub << std::endl;
+                buildFolder((std::string)sub, config);
+            }
+        });
+    }
+}
+
+void buildFolder(std::string src_folder, toml::v3::table& config){
+    std::string_view arguments = config["build"]["arguments"].value_or("");
+
+    std::vector<std::string> localPathList = getFilenamesWithExtension(".cpoint", src_folder);
+    PathList.insert(PathList.end(), localPathList.begin(), localPathList.end());
+    for (auto const& path : localPathList){
+        std::cout << path << ' ';
+        compileFile("", "-no-gc" + (std::string)arguments, path);
+    }
+    std::cout << std::endl;
 }
 
 int main(int argc, char** argv){
@@ -84,6 +112,7 @@ int main(int argc, char** argv){
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
+    PathList.clear();
     if (modeBuild == CLEAN_MODE){
         std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", src_folder);
         for (auto const& path : PathList){
@@ -106,19 +135,14 @@ int main(int argc, char** argv){
     } else if (modeBuild == ADD_DEPENDENCY_MODE){
         addDependency(dependency_to_add, config);
     } else if (modeBuild == BUILD_MODE) {
-    downloadDependencies(config);
-    std::string_view arguments = config["build"]["arguments"].value_or("");
-    std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", src_folder);
-    for (auto const& path : PathList){
-        std::cout << path << ' ';
-        compileFile("", "-no-gc" + (std::string)arguments, path);
-    }
-    std::cout << std::endl;
-    if (type == "exe"){
-    linkFiles(PathList);
-    } else if (type == "library"){
+        downloadDependencies(config);
+        buildSubfolders(config);
+        buildFolder(src_folder, config);
+        if (type == "exe"){
+        linkFiles(PathList);
+        } else if (type == "library"){
         linkLibrary(PathList);
-    }
+        }
     }
 
 }
