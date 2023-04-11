@@ -5,6 +5,7 @@
 #include "codegen.h"
 #include "ast.h"
 #include "log.h"
+#include "lexer.h"
 #include <map>
 
 using namespace llvm;
@@ -18,6 +19,10 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
     if (cpoint_type.type >= 0){
         Log::Info() << "Typedef type used to declare variable" << "\n";
+        if (typeDefTable.size() <= cpoint_type.type){
+            Log::Info() << "type number " << cpoint_type.type << "\n";
+            LogError("couldn't find type from typedef");
+        }
         return get_type_llvm(get_type(typeDefTable.at(cpoint_type.type)));
     }
     Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";

@@ -901,7 +901,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   getNextToken(); // eat the var.
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-  int type = 0;
+  int type = double_type;
   bool is_ptr = false;
   int nb_element = 0;
   bool is_array = false;
