@@ -4,6 +4,9 @@ homepage = "https://github.com/test"
 license = "GPL"
 type = "exe"
 
+[subfolders]
+folders = ["cli"]
+
 [dependencies]
 github = ["Vinz2008/test_cpoint_package"]
 
