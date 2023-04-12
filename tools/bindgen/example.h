@@ -10,3 +10,6 @@ struct hello {
     double b;
 };
 typedef int test_t;
+int testfunction(){
+    return 1;
+}

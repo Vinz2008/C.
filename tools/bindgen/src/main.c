@@ -11,10 +11,14 @@ enum CXCursorKind cursorKind;
 int param_number = 0;
 bool pass_block = false;
 bool is_in_typedef = false;
+bool is_variable_number_args = false;
 CXType return_type;
 const char* get_type_string_from_type_libclang(CXType type){
     printf("get_type  type enum : %d\n", type.kind);
     switch(type.kind){
+        case CXType_Float:
+        case CXType_Float16:
+            return "float";
         case CXType_Int:
             return "int";
         case CXType_Char_S:
@@ -33,6 +37,9 @@ const char* get_type_string_from_type_libclang(CXType type){
 void close_previous_blocks(){
     if (in_function_declaration){
         printf("return type enum : %d\n", return_type.kind);
+        if (is_variable_number_args){
+            fprintf(outf, ", ...");
+        }
         fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
         in_function_declaration = false;
     } else if (in_struct_declaration && !pass_block){
@@ -41,6 +48,7 @@ void close_previous_blocks(){
     }
     pass_block = false;
     is_in_typedef = false;
+    is_variable_number_args = false;
 }
 
 enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data){
@@ -52,6 +60,9 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             break;
         case CXCursor_FunctionDecl:
             close_previous_blocks();
+            if (clang_Cursor_isVariadic(cursor) != 0){
+                is_variable_number_args = true;
+            }
             return_type = clang_getResultType(clang_getCursorType(cursor));
             param_number = 0;
             fprintf(outf, "extern %s(", clang_getCString(clang_getCursorSpelling(cursor)));
@@ -125,11 +136,16 @@ int main(int argc, char** argv){
     }
     CXCursor cursor = clang_getTranslationUnitCursor(unit);
     clang_visitChildren(cursor, cursorVisitor, NULL);
-    if (cursorKind == CXCursor_ParmDecl){
+    if (cursorKind == CXCursor_FieldDecl){
+        fprintf(outf, "}\n");
+    } else {
+        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
+    }
+    /*if (cursorKind == CXCursor_ParmDecl){
         fprintf(outf, ");\n");
     } else if (cursorKind == CXCursor_FieldDecl){
         fprintf(outf, "}\n");
-    }
+    }*/
     clang_disposeTranslationUnit(unit);
     clang_disposeIndex(index);
     fclose(outf);
