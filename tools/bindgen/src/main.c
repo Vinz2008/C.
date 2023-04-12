@@ -54,7 +54,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             close_previous_blocks();
             return_type = clang_getResultType(clang_getCursorType(cursor));
             param_number = 0;
-            fprintf(outf, "extern func %s(", clang_getCString(clang_getCursorSpelling(cursor)));
+            fprintf(outf, "extern %s(", clang_getCString(clang_getCursorSpelling(cursor)));
             in_function_declaration = true;
             break;
         case CXCursor_ParmDecl:
