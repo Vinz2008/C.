@@ -370,6 +370,32 @@ Value *BinaryExprAST::codegen() {
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   Log::Info() << "function called " << Callee << "\n";
+  std::string internal_func_prefix = "cpoint_internal_";
+  bool is_internal = false;
+  if (Callee.rfind(internal_func_prefix, 0) == 0){
+    is_internal = true;
+    Callee = Callee.substr(internal_func_prefix.size(), Callee.size());
+    Log::Info() << "internal function called " << Callee << "\n";
+    if (Callee.rfind("llvm_", 0) == 0){
+      Log::Info() << "llvm intrisic called" << "\n";
+      Callee = Callee.substr(4, Callee.size());
+      llvm::Intrinsic::IndependentIntrinsics intrisicId;
+      if (Callee == "va_start"){
+        intrisicId = Intrinsic::vastart;
+      } else if (Callee == "va_end"){
+        intrisicId = Intrinsic::vaend;
+      }
+      Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
+      std::vector<Value *> ArgsV;
+      for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+        Value* temp_val = Args[i]->codegen();
+        ArgsV.push_back(temp_val);
+        if (!ArgsV.back())
+          return nullptr;
+      }
+      return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+    }
+  }
   Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknown function referenced");
@@ -388,7 +414,6 @@ Value *CallExprAST::codegen() {
   if (CalleeF->arg_size() != Args.size())
     return LogErrorV("Incorrect # arguments passed");
   }
-
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     Value* temp_val = Args[i]->codegen();

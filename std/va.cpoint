@@ -1,9 +1,10 @@
 struct va_list {
     var gp_offset : int
     var fp_offset : int
-    var overflow_arg_area : int ptr
-    var reg_save_area : int ptr
+    var overflow_arg_area : i8 ptr
+    var reg_save_area : i8 ptr
 }
 func printfmt_cpoint(format : i8 ptr ...){
     var va : struct va_list 
+    cpoint_internal_llvm_va_start(va)
 }
