@@ -4,7 +4,7 @@ func main(){
         printd(100)
     } else { 
         printd(5 ^ 9)
-        printd(1 == 0 || 1 == 1)
+        printd((argc == 0) || (1 == 1))
         printd(1 << 2)
     }
 }

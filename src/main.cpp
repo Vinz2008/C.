@@ -325,6 +325,7 @@ int main(int argc, char **argv){
     //file_out_ostream = std::make_unique<llvm::raw_fd_ostream>(llvm::StringRef(filename), &ec);
     //file_out_ostream = raw_fd_ostream(llvm::StringRef(filename), &ec);
     // Install standard binary operators.
+    // TODO : règler problèmes de priorité des opérateurs (voir test20.cpoint)
     // 1 is lowest precedence.
     BinopPrecedence["="] = 5;
 
