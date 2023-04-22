@@ -1,11 +1,10 @@
-func unary ! (v){
+func unary!(v){
   if v {
-    0
+    return 0
   } else {
     return 1
   }
 }
-
 func binary& 6 (LHS, RHS){
   if !LHS {
     0

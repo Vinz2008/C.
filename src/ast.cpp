@@ -756,15 +756,15 @@ else_start:
 
 std::unique_ptr<ExprAST> ParseReturn(){
   getNextToken(); // eat the return
-  Log::Info() << "CurTok : " << CurTok << " " << NumVal << "\n";
+  Log::Info() << "CurTok return : " << CurTok << " " << NumVal << "\n";
 
   auto return_value = ParseExpression();
   //auto Result = std::make_unique<ReturnAST>(NumVal);
   if (!return_value){
     return nullptr;
   }
-  getNextToken();
-  Log::Info() << "CurTok : " << CurTok << "\n";
+  //getNextToken();
+  Log::Info() << "CurTok return after : " << CurTok << "\n";
   return std::make_unique<ReturnAST>(std::move(return_value));
   //return std::move(Result);
 }
