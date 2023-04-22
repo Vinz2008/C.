@@ -5,6 +5,7 @@ func unary!(v){
     return 1
   }
 }
+
 func binary& 6 (LHS, RHS){
   if !LHS {
     0

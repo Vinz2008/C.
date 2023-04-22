@@ -4,6 +4,7 @@ struct va_list {
     var overflow_arg_area : i8 ptr
     var reg_save_area : i8 ptr
 }
+
 func printfmt_cpoint(format : i8 ptr ...){
     var va : struct va_list 
     cpoint_internal_llvm_va_start(va)

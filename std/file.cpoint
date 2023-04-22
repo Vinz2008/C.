@@ -1,14 +1,17 @@
 include capi.hpoint
 include libc.hpoint
+
 func openfile(path : i8 ptr) int {
     var mode : int = S_IRWXU
     var o_wronly : int = O_WRONLY
     var o_creat : int = O_CREAT
     open(path, o_wronly | o_creat, mode)
 }
+
 func writefile(fd : int, buf : i8 ptr) int {
     cwritefile(fd, buf)
 }
+
 func closefile(fd : int){
     close(fd)
 }

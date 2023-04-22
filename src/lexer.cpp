@@ -70,10 +70,36 @@ void init_line(){
   Comp_context->line = line;
 }
 
+void handleEmptyLine();
+
+void handlePreprocessor(){
+  while (true){
+    if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){  
+      Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
+      preprocess_instruction(line);
+      gotToNextLine(file_in, line);
+    } else {
+      handleEmptyLine();
+      //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
+      preprocess_replace_variable(line);
+      break;
+    }
+  }
+}
+
+void handleEmptyLine(){
+  if (line.size() == 0){
+    gotToNextLine(file_in, line);
+    handlePreprocessor();
+    //pos = 0;
+  }
+}
+
 int getCharLine(){
   if (line == "<empty line>"){
     init_line();
-    while (true){
+    handlePreprocessor();
+    /*while (true){
       if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
         
           Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
@@ -84,7 +110,7 @@ int getCharLine(){
           preprocess_replace_variable(line);
           break;
       }
-    }
+    }*/
   }
   int c = line[pos];
   if (c == '\0'){
@@ -97,7 +123,8 @@ int getCharLine(){
   }
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line.c_str())){
     gotToNextLine(file_in, line);
-    while (true){
+    handlePreprocessor();
+    /*while (true){
       if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
           Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
           preprocess_instruction(line);
@@ -107,7 +134,7 @@ int getCharLine(){
           preprocess_replace_variable(line);
           break;
       }
-    }
+    }*/
     //pos = 0;
     file_log << "next char in line : " << line[pos] << "\n";
   } else if (c == '\\'){
@@ -131,10 +158,7 @@ int getCharLine(){
      pos++;
      Comp_context->col_nb++;
   }
-  if (line.size() == 0){
-    gotToNextLine(file_in, line);
-    //pos = 0;
-  }
+  handleEmptyLine();
   /*if (line->size() == 0 && (*line)[pos] == '\0'){
     file_log << "empty line" << "\n";
     gotToNextLine(file_in, *line);
