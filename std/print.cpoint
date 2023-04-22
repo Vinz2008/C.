@@ -2,14 +2,14 @@ include libc.hpoint
 include capi.hpoint
 func printd(d : double){
     cprintd(d)
-    return 0;
+    return 0
 }
 func printi(i : int) void{
     cprinti(i)
 }
 func putchard(d : double) double{
     cputchard(d)
-    return 0;
+    return 0
 }
 func printstr(x : i8 ptr) void{
   puts(x)

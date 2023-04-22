@@ -131,10 +131,10 @@ int getCharLine(){
      pos++;
      Comp_context->col_nb++;
   }
-  /*if (line.size() == 0){
+  if (line.size() == 0){
     gotToNextLine(file_in, line);
     //pos = 0;
-  }*/
+  }
   /*if (line->size() == 0 && (*line)[pos] == '\0'){
     file_log << "empty line" << "\n";
     gotToNextLine(file_in, *line);
