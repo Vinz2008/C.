@@ -27,6 +27,7 @@
 #include "imports.h"
 #include "log.h"
 #include "utils.h"
+#include "color.h"
 
 using namespace std;
 using namespace llvm;
@@ -51,6 +52,9 @@ bool gc_mode = true;
 extern std::string IdentifierStr;
 bool debug_mode = false;
 
+
+bool errors_found = false;
+int error_count = 0;
 
 std::map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<Module> TheModule;
@@ -401,6 +405,10 @@ int main(int argc, char **argv){
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
+    if (errors_found){
+      fprintf(stderr, RED "exited with %d errors\n" CRESET, error_count);
+      exit(1);
+    }
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();

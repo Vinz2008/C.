@@ -10,12 +10,13 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include <iostream>
+#include <map>
+#include <cstdarg>
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
 #include "log.h"
-#include <iostream>
-#include <map>
 
 using namespace llvm;
 
@@ -108,8 +109,11 @@ static void AllocateMemory(Function* function, std::string VarName, Cpoint_Type 
     }
 }
 
-Value *LogErrorV(const char *Str) {
-  LogError(Str);
+Value *LogErrorV(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
   return nullptr;
 }
 
@@ -131,11 +135,11 @@ Value *VariableExprAST::codegen() {
     return Builder->CreateLoad(get_type_llvm(type), GlobalVariables[Name]->globalVar, Name.c_str());
   }
   if (NamedValues[Name] == nullptr) {
-  return LogErrorV("Unknown variable name");
+  return LogErrorV("Unknown variable name %s", Name.c_str());
   }
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
-    return LogErrorV("Unknown variable name");
+    return LogErrorV("Unknown variable name %s", Name.c_str());
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
 }
 
@@ -398,21 +402,21 @@ Value *CallExprAST::codegen() {
   }
   Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
-    return LogErrorV("Unknown function referenced");
+    return LogErrorV("Unknown function referenced %s", Callee.c_str());
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
   Log::Info() << "Args.size : " << Args.size() << "\n";
-  // If argument mismatch error.
   if (FunctionProtos[Callee] == nullptr){
-    return LogErrorV("Incorrect Function");
+    return LogErrorV("Incorrect Function %s", Callee.c_str());
   }
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
     if (!(Args.size() >= CalleeF->arg_size())){
-      return LogErrorV("Incorrect # arguments passed");
+      return LogErrorV("Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
     }
   } else {
+    // If argument mismatch error.
   if (CalleeF->arg_size() != Args.size())
-    return LogErrorV("Incorrect # arguments passed");
+    return LogErrorV("Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
   }
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -433,9 +437,8 @@ Value *CallExprAST::codegen() {
 
 Value* AddrExprAST::codegen(){
   AllocaInst *A = NamedValues[Name]->alloca_inst;
-  Log::Info() << "VARNAME: " << Name << "\n";
   if (!A)
-    return LogErrorV("Addr Unknown variable name");
+    return LogErrorV("Addr Unknown variable name %s", Name.c_str());
   return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Name.c_str());
 }
 
@@ -457,7 +460,7 @@ Value* SizeofExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A){
-    return LogErrorV("Addr Unknown variable name");
+    return LogErrorV("Addr Unknown variable name %s", Name.c_str());
   }
   Type* llvm_type = A->getAllocatedType();
   Value* size = Builder->CreateGEP(llvm_type->getPointerTo(), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
@@ -831,7 +834,7 @@ Value* RedeclarationExprAST::codegen(){
     auto indexVal = index->codegen();
     indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
     if (!index){
-      return LogErrorV("couldn't find index for array");
+      return LogErrorV("couldn't find index for array %s", VariableName.c_str());
     }
     auto arrayPtr = NamedValues[VariableName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
@@ -993,7 +996,7 @@ Value *UnaryExprAST::codegen() {
   Function *F = getFunction(std::string("unary") + Opcode);
   if (!F){
     Log::Info() << "UnaryExprAST : " << Opcode << "\n";
-    return LogErrorV("Unknown unary operator");
+    return LogErrorV("Unknown unary operator %c", Opcode);
   }
 
   return Builder->CreateCall(F, OperandV, "unop");
@@ -1067,7 +1070,7 @@ Value *VarExprAST::codegen() {
       Log::Info() << "IS CLASS" << "\n";
       Log::Info() << "class name : " << cpoint_type->class_name << "\n";
       if (ClassDeclarations[cpoint_type->class_name] == nullptr){
-        return LogErrorV("Couldn't find class declaration for created variable");
+        return LogErrorV("Couldn't find class declaration %s for created variable", cpoint_type->class_name);
       }
       struct_type_temp = ClassDeclarations[cpoint_type->class_name]->class_type;
       struct_declaration_name_temp = cpoint_type->class_name;

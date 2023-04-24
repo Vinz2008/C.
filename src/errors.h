@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <cstdarg>
 
 class Compiler_context{
 public:
@@ -11,3 +12,4 @@ public:
 };
 
 void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...);
+void vlogErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, std::va_list args);

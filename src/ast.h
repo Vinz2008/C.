@@ -331,4 +331,7 @@ std::unique_ptr<ExprAST> ParseBool(bool bool_value);
 std::unique_ptr<ExprAST> ParseCharExpr();
 std::unique_ptr<ExprAST> ParseLoopExpr();
 
+std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args);
+std::unique_ptr<ExprAST> LogError(const char *Str, ...);
+
 #endif

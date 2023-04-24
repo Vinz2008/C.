@@ -1,6 +1,7 @@
 #include <map>
 #include <iostream>
 #include <utility>
+#include <cstdarg>
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
@@ -27,50 +28,79 @@ extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
 
-
-std::unique_ptr<ExprAST> LogError(const char *Str) {
-  //fprintf(stderr, "LogError: %s\n", Str);
-  logErrorExit(std::move(Comp_context), Str);
+std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
+  vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args); // copy comp_context and not move it because it will be used multiple times
   return_status = 1;
   return nullptr;
 }
 
-std::unique_ptr<PrototypeAST> LogErrorP(const char *Str) {
-  LogError(Str);
+std::unique_ptr<ExprAST> LogError(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  //fprintf(stderr, "LogError: %s\n", Str);
+  vLogError(Str, args);
+  va_end(args);
   return nullptr;
 }
 
-std::unique_ptr<ReturnAST> LogErrorR(const char *Str) {
-  LogError(Str);
+
+std::unique_ptr<PrototypeAST> LogErrorP(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
+  return nullptr;
+}
+
+std::unique_ptr<ReturnAST> LogErrorR(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
   Log::Info() << "token : " << CurTok << "\n";
+  va_end(args);
   return nullptr;
 }
 
 
-std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str) {
-  LogError(Str);
+std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
   Log::Info() << "token : " << CurTok << "\n";
+  va_end(args);
   return nullptr;
 }
 
-std::unique_ptr<ClassDeclarAST> LogErrorC(const char *Str) {
-  LogError(Str);
+std::unique_ptr<ClassDeclarAST> LogErrorC(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
   Log::Info() << "token : " << CurTok << "\n";
+  va_end(args);
   return nullptr;
 }
 
-std::unique_ptr<FunctionAST> LogErrorF(const char *Str) {
-  LogError(Str);
+std::unique_ptr<FunctionAST> LogErrorF(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
   return nullptr;
 }
 
-std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str) {
-  LogError(Str);
+std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str, ...) {
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
   return nullptr;
 }
 
-std::unique_ptr<LoopExprAST> LogErrorL(const char* Str){
-  LogError(Str);
+std::unique_ptr<LoopExprAST> LogErrorL(const char* Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
   return nullptr;
 }
 
@@ -103,7 +133,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     getNextToken();
     indexAST = ParseExpression();
     if (!indexAST){
-      return LogError("Couldn't find index for array"); 
+      return LogError("Couldn't find index for array %s", IdName.c_str()); 
     }
     if (CurTok != ']'){
       return LogError("Missing '['"); 
@@ -121,7 +151,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     Log::Info() << "IdName " << IdName << "\n";
     Log::Info() << "RedeclarationExpr Parsing" << "\n";
     if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr) {
-      return LogError("Couldn't find variable in redeclaration");
+      return LogError("Couldn't find variable %s when redeclarating it", IdName.c_str());
     }
     getNextToken();
     auto V = ParseExpression();
@@ -262,8 +292,7 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   Log::Info() << "not operator " << CurTok << " " << IdentifierStr << "\n";
   switch (CurTok) {
   default:
-    Log::Info() << "tok : " << CurTok << "\n";
-    return LogError("Unknown token when expecting an expression");
+    return LogError("Unknown token %d when expecting an expression", CurTok);
   case tok_identifier:
     return ParseIdentifierExpr();
   case tok_number:
@@ -337,7 +366,7 @@ std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::stri
       getNextToken();
     }
   } else {
-    return LogError("wrong type found");
+    return LogError("wrong type %s found", IdentifierStr.c_str());
   }
   return nullptr;
 }
@@ -444,7 +473,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   // success.
   getNextToken();  // eat ')'.
   if (Kind && ArgNames.size() != Kind)
-    return LogErrorP("Invalid number of operands for operator");
+    return LogErrorP("Invalid number of operands for operator : %d args but %d expected", ArgNames.size(), Kind);
   Log::Info() << "Tok : " << CurTok << "\n";
   int type = -1;
   bool is_ptr = false;
