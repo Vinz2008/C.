@@ -158,7 +158,7 @@ void interpret_func(std::string line, int& pos, int nb_line, int& pos_line){
     }
     out_file << "extern " << declar << ";";
     pos_line++;
-    modifier_for_line_count--;
+    modifier_for_line_count++;
 }
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){

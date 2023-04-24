@@ -53,6 +53,7 @@ void go_to_next_line(){
 void gotToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
   Comp_context->line_nb++;
+  Log::Info() << "lines nb increment : " << Comp_context->line_nb << "\n";
   Comp_context->col_nb = 0;
   getLine(__is, __str);
   Comp_context->line = __str;
@@ -65,6 +66,7 @@ void gotToNextLine(std::istream &__is, std::string &__str){
 
 void init_line(){
   Comp_context->line_nb++;
+  Log::Info() << "lines nb increment : " << Comp_context->line_nb << "\n";
   Comp_context->col_nb = 0;
   getLine(file_in, line);
   Comp_context->line = line;
