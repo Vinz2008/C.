@@ -8,6 +8,8 @@
 
 using namespace std;
 
+extern bool debug_mode;
+
 #ifdef _WIN32
 #include "windows.h"
 #endif
@@ -16,22 +18,29 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     string cmd_clean = "make -C ";
     cmd_clean.append(path);
     cmd_clean.append(" clean");
+    if (debug_mode){
     cout << "cmd clean : " << cmd_clean << endl;
+    }
     FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+    if (verbose_std_build){
     char* out_clean = (char*)malloc(1000 * sizeof(char));
 	fread(out_clean, 1, 1000, pipe_clean);
     string out_cpp_clean = out_clean;
     cout << out_cpp_clean << endl;
-    pclose(pipe_clean);
     free(out_clean);
+    }
+    pclose(pipe_clean);
     int retcode = -1;
 
     string cmd = "TARGET=";
     cmd.append(target_triplet);
     cmd.append(" make -C ");
     cmd.append(path);
+    if (debug_mode){
     cout << "cmd : " << cmd << endl;
+    }
     FILE* pipe = popen(cmd.c_str(), "r");
+    if (verbose_std_build){
     char* out = (char*)malloc(10000000 * sizeof(char));
 	fread(out, 1, 10000000, pipe);
     string out_cpp = out;
@@ -39,8 +48,11 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
         cout << out_cpp << endl;
     }
     free(out);
+    }
     retcode = pclose(pipe);
+    if (verbose_std_build){
     cout << "retcode : " << retcode << endl;
+    }
     return retcode;
 }
 int build_gc(string path, string target_triplet){
@@ -114,10 +126,14 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
         cmd.append(" ");
         cmd.append(list_files.at(i));
     }
+    if (debug_mode){
     cout << "cmd : " << cmd << endl;
+    }
     FILE* pipe = popen(cmd.c_str(), "r");
     retcode = pclose(pipe);
+    if (debug_mode){
     cout << "retcode : " << retcode << endl;
+    }
     if (retcode == -1 || retcode == 1){
         cout << "Could not create executable " << filename_out << endl;
         exit(1);

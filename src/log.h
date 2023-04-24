@@ -1,6 +1,8 @@
 #include <iostream>
 #pragma once
 
+extern bool debug_mode;
+
 namespace Log {
     namespace Color {
     enum Code {
@@ -25,11 +27,15 @@ namespace Log {
     }
     struct Info {
         Info() {
+            if (debug_mode){
             std::cout << "[INFO] ";
+            }
         }
         template< class T >
         Info &operator<<(const T& val){
+            if (debug_mode){
             std::cout<<val;
+            }
             return *this;
         }
     };
@@ -51,11 +57,15 @@ namespace Log {
     };
     struct Preprocessor_Info {
         Preprocessor_Info(){
+            if (debug_mode){
             std::cout << "[PREPROCESSOR INFO] ";
+            }
         }
         template< class T >
         Preprocessor_Info &operator<<(const T& val){
+            if (debug_mode){
             std::cout<<val;
+            }
             return *this;
         }
     };
@@ -77,21 +87,29 @@ namespace Log {
     };
     struct Imports_Info {
         Imports_Info(){
+            if (debug_mode){
             std::cout << "[IMPORTS INFO] ";
+            }
         }
         template< class T >
         Imports_Info &operator<<(const T& val){
+            if (debug_mode){
             std::cout<<val;
+            }
             return *this;
         }
     };
     struct Build_Info {
         Build_Info(){
+            if (debug_mode){
             std::cout << "[BUILD INFO] ";
+            }
         }
         template< class T >
         Build_Info &operator<<(const T& val){
+            if (debug_mode){
             std::cout<<val;
+            }
             return *this;
         }
     };

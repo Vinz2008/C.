@@ -296,7 +296,9 @@ int main(int argc, char **argv){
           filename = arg;
         }
     }
+    if (debug_mode){
     cout << "filename at end : " << filename << endl;
+    }
     first_filename = filename;
     if (output_temp_found){
       if (link_files_mode){
@@ -378,6 +380,9 @@ int main(int argc, char **argv){
     TargetTriple = sys::getDefaultTargetTriple();
     }
     std::string os_name = get_os(TargetTriple);
+    if (debug_mode){
+      std::cout << "os from target triplet : " << os_name << std::endl;
+    }
     setup_preprocessor(TargetTriple);
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
@@ -449,6 +454,7 @@ int main(int argc, char **argv){
     std_static_path.append("libstd.a");
     if (std_mode && link_files_mode){
       if (rebuild_std){
+      cout << "Built the standard library" << endl;
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         cout << "Could not build std at path : " << std_path << endl;
         exit(1);
@@ -462,6 +468,7 @@ int main(int argc, char **argv){
       gc_path = std_path;
       if (rebuild_gc){
       gc_path.append("/../bdwgc");
+      cout << "Build the garbage collector" << endl;
       build_gc(gc_path, TargetTriple);
       }
       }
@@ -498,6 +505,7 @@ int main(int argc, char **argv){
           vect_obj_files.push_back(package_archive_path);
         }
       }
+      cout << "Linked the executable" << endl;
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
     }
     if (remove_temp_file){

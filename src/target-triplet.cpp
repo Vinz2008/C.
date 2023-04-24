@@ -26,7 +26,7 @@ static std::string get_word(std::string str, int p){
 
 std::string get_os(std::string str){
     std::string r = get_word(str, 2);
-    std::cout << "os from target triplet : " << r << std::endl;
+    //std::cout << "os from target triplet : " << r << std::endl;
     return r;
 }
 
