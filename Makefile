@@ -76,11 +76,11 @@ install: std_lib
 	cp build/cpoint-build $(DESTDIR)/
 	cp tools/bindgen/cpoint-bindgen $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
-	mkdir $(PREFIX)/lib/cpoint
-	mkdir $(PREFIX)/lib/cpoint/std
-	mkdir $(PREFIX)/lib/cpoint/packages
-	mkdir $(PREFIX)/lib/cpoint/bdwgc
-	mkdir $(PREFIX)/lib/cpoint/bdwgc_prefix
+	mkdir -p $(PREFIX)/lib/cpoint
+	mkdir -p $(PREFIX)/lib/cpoint/std
+	mkdir -p $(PREFIX)/lib/cpoint/packages
+	mkdir -p $(PREFIX)/lib/cpoint/bdwgc
+	mkdir -p $(PREFIX)/lib/cpoint/bdwgc_prefix
 	cp -r std/* $(PREFIX)/lib/cpoint/std
 	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
 	cp -r bdwgc_prefix/* $(PREFIX)/lib/cpoint/bdwgc_prefix
