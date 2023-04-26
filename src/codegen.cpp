@@ -880,7 +880,7 @@ Value* LoopExprAST::codegen(){
     Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
     Builder->CreateStore(StartVal, allocaPos);
     
-    BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
+    BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_loop_in", TheFunction);
     Builder->CreateBr(LoopBB);
     Builder->SetInsertPoint(LoopBB);
   }

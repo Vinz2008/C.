@@ -206,15 +206,26 @@ static void MainLoop() {
       break;
     case tok_typedef:
       HandleTypeDef();
-    case '#':
-      // FOR NOW NOT WORKING : TODO
-      Log::Info() << "# comment found" << "\n";
+    case '/':
+      Log::Info() << "found single-line comment" << "\n";
+      if (debug_mode){
+      file_log << "found single-line comment" << "\n";
+      }
       getNextToken();
-      Log::Info() << "CurTok : " << CurTok << "\n";
+      if (CurTok != '/'){
+        LogError("single '/' found, did you want to do a comment ?");
+        exit(1);
+      }
+      getNextToken();
+      go_to_next_line();
+      // FOR NOW NOT WORKING : TODO
+      //Log::Info() << "# comment found" << "\n";
+      //getNextToken();
+      /*Log::Info() << "CurTok : " << CurTok << "\n";
       while (CurTok != tok_eof && CurTok != ';' && CurTok != tok_func && CurTok != tok_extern && CurTok != tok_struct){
         Log::Info() << "next token" << "\n";
         getNextToken();
-      } 
+      }*/
       break;
     default:
       Log::Info() << "CurTok : " << CurTok << "\n";

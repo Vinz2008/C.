@@ -30,6 +30,8 @@ string last_line_str = "";
 
 extern bool last_line;
 
+void handlePreprocessor();
+
 int getLine(std::istream &__is, std::string &__str){
   if (!getline(__is, __str)){
       last_line = true;
@@ -46,10 +48,6 @@ std::string get_line_returned(){
   return line;
 }
 
-void go_to_next_line(){
-  getLine(file_in, line);
-}
-
 void gotToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
   Comp_context->line_nb++;
@@ -62,6 +60,11 @@ void gotToNextLine(std::istream &__is, std::string &__str){
   /*while (line.size == 0){
   goToNextLine(__is,__str);
   }*/
+}
+
+void go_to_next_line(){
+  gotToNextLine(file_in, line);
+  handlePreprocessor();
 }
 
 void init_line(){
