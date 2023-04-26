@@ -23,3 +23,4 @@ test_io.txt
 *.temp
 bdwgc_prefix
 cpoint-build
+valgrind-out.txt

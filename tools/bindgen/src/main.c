@@ -53,7 +53,9 @@ void close_previous_blocks(){
 
 enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data){
     cursorKind = clang_getCursorKind(cursor);
-    printf("cursor %s kind : %s\n", clang_getCString(clang_getCursorSpelling(cursor)), clang_getCString(clang_getCursorKindSpelling(cursorKind)));
+    CXString clangstr_cursor_name = clang_getCursorSpelling(cursor);
+    CXString clangstr_cursor_kind = clang_getCursorKindSpelling(cursorKind);
+    printf("cursor %s kind : %s\n", clang_getCString(clangstr_cursor_name), clang_getCString(clangstr_cursor_kind));
     switch(cursorKind){
         case CXCursor_MacroDefinition:
             printf("MACRO DEFINITION\n");
@@ -65,26 +67,33 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             }
             return_type = clang_getResultType(clang_getCursorType(cursor));
             param_number = 0;
-            fprintf(outf, "extern %s(", clang_getCString(clang_getCursorSpelling(cursor)));
+            CXString clangstr_function_name = clang_getCursorSpelling(cursor);
+            fprintf(outf, "extern %s(", clang_getCString(clangstr_function_name));
             in_function_declaration = true;
+            clang_disposeString(clangstr_function_name);
             break;
         case CXCursor_ParmDecl:
             CXType param_type = clang_getCursorType(cursor);
-            printf("type param : %s\n", clang_getCString(clang_getTypeSpelling(param_type)));
+            CXString clangstr_param_type_name = clang_getTypeSpelling(param_type);
+            printf("type param : %s\n", clang_getCString(clangstr_param_type_name));
             printf("type enum : %d\n", param_type.kind);
             if (param_number > 0){
                 fprintf(outf, ",");
             }
-            fprintf(outf, "%s", clang_getCString(clang_getCursorSpelling(cursor)));
+            CXString clangstr_param_name = clang_getCursorSpelling(cursor);
+            fprintf(outf, "%s", clang_getCString(clangstr_param_name));
             fprintf(outf, " : %s", get_type_string_from_type_libclang(param_type));
             param_number++;
+            clang_disposeString(clangstr_param_type_name);
+            clang_disposeString(clangstr_param_name);
             break;
         case CXCursor_StructDecl:
             if (is_in_typedef){
                 break;
             }
             close_previous_blocks();
-            char* struct_name = clang_getCString(clang_getCursorSpelling(cursor));
+            CXString clangstr_struct_name = clang_getCursorSpelling(cursor);
+            char* struct_name = clang_getCString(clangstr_struct_name);
             if (strlen(struct_name) != 0){
             printf("struct name : %s\n", struct_name);
             printf("struct name length : %ld\n", strlen(struct_name));
@@ -93,29 +102,37 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
                 pass_block = true;
             }
             in_struct_declaration = true;
+            clang_disposeString(clangstr_struct_name);
             break;
         case CXCursor_FieldDecl:
             CXType field_type = clang_getCursorType(cursor);
             if (!pass_block && is_in_typedef == false){
-            fprintf(outf, "\tvar %s", clang_getCString(clang_getCursorSpelling(cursor)));
+            CXString clangstr_var_name = clang_getCursorSpelling(cursor);
+            fprintf(outf, "\tvar %s", clang_getCString(clangstr_var_name));
             fprintf(outf, " : %s \n", get_type_string_from_type_libclang(field_type));
+            clang_disposeString(clangstr_var_name);
             }
             break;
         case CXCursor_TypedefDecl:
             close_previous_blocks();
-            char* new_type_name = clang_getCString(clang_getCursorSpelling(cursor));
+            CXString clangstr_new_type_name = clang_getCursorSpelling(cursor);
+            char* new_type_name = clang_getCString(clangstr_new_type_name);
             CXType value_type_clang = clang_getTypedefDeclUnderlyingType(cursor);
             is_in_typedef = true;
             if (value_type_clang.kind == CXType_Elaborated){
+                clang_disposeString(clangstr_new_type_name);
                 break;
             }
             char* value_type_name = get_type_string_from_type_libclang(value_type_clang);
             printf("typedef from %s to %s\n", new_type_name, value_type_name);
             fprintf(outf, "type %s %s;\n", new_type_name, value_type_name);
+            clang_disposeString(clangstr_new_type_name);
             break;
         default:
             break;
     }
+    clang_disposeString(clangstr_cursor_kind);
+    clang_disposeString(clangstr_cursor_name);
     return CXChildVisit_Recurse;
 }
 
