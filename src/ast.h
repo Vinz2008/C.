@@ -175,15 +175,17 @@ public:
 /// which captures its name, and its argument names (thus implicitly the number
 /// of arguments the function takes).
 class PrototypeAST {
+public:
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
-  std::unique_ptr<Cpoint_Type> cpoint_type;
-public:
+  Cpoint_Type cpoint_type;
   std::string Name;
   bool is_variable_number_args;
+  bool has_template;
+  std::string template_name;
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
-  PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, std::unique_ptr<Cpoint_Type> cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false)
-    : Name(name), Args(std::move(Args)), cpoint_type(std::move(cpoint_type)), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args) {}
+  PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, Cpoint_Type cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false, bool has_template = false,  const std::string& template_name = "")
+    : Name(name), Args(std::move(Args)), cpoint_type(cpoint_type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args), has_template(has_template), template_name(template_name) {}
 
   const std::string &getName() const { return Name; }
   Function *codegen();

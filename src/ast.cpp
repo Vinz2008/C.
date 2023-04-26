@@ -27,6 +27,7 @@ extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
+extern std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes;
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
   vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args); // copy comp_context and not move it because it will be used multiple times
@@ -383,6 +384,8 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   bool is_variable_number_args = false;
   unsigned Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.
   unsigned BinaryPrecedence = 30;
+  bool has_template = false;
+  std::string template_name = "";
   switch (CurTok){
     default:
       return LogErrorP("Expected function name in prototype");
@@ -417,7 +420,15 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     }
     break;
   }
-
+  // find template/generic
+  if (CurTok == '<'){
+    getNextToken();
+    template_name = IdentifierStr;
+    if (CurTok != '>'){
+      return LogErrorP("Missing '>' in template declaration");
+    }
+    getNextToken();
+  }
   if (CurTok != '(')
     return LogErrorP("Expected '(' in prototype");
 
@@ -487,16 +498,15 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     //type = get_type(IdentifierStr);
     //getNextToken(); // eat type
   }
-  std::unique_ptr<Cpoint_Type> cpoint_type;
   bool is_struct = struct_name != "";
   bool is_class = class_name != "";
-  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
+  Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, false, 0, is_struct, struct_name, is_class, class_name, nb_ptr);
   /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, false, "", nb_ptr);
   }*/
-  return std::make_unique<PrototypeAST>(FnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
+  return std::make_unique<PrototypeAST>(FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
 }
 
 std::unique_ptr<StructDeclarAST> ParseStruct(){
@@ -589,6 +599,8 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken();  // eat func.
   auto Proto = ParsePrototype();
   if (!Proto) return nullptr;
+  auto argsCopy(Proto->Args);
+  auto ProtoCopy = std::make_unique<PrototypeAST>(Proto->Name, argsCopy, Proto->cpoint_type, Proto->IsOperator, Proto->Precedence, Proto->is_variable_number_args, Proto->has_template, Proto->template_name);
   if (CurTok != '{'){
     LogErrorF("Expected '{' in function definition");
   }
@@ -608,7 +620,12 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   }
   getNextToken(); // eat }
   Log::Info() << "end of function" << "\n";
-  return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
+  std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
+  if (Proto->has_template){
+    //auto BodyCopy = Body;
+    //TemplateTypes[Proto->template_name] = std::make_unique<TemplateType>(std::make_unique<FunctionAST>(std::move(ProtoCopy), std::move(BodyCopy)));
+  }
+  return functionAST;
 }
 
 std::unique_ptr<PrototypeAST> ParseExtern() {
@@ -670,7 +687,7 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   if (!E){
     return nullptr;
   }
-  auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::pair<std::string, Cpoint_Type>>(), std::make_unique<Cpoint_Type>(0));
+  auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::pair<std::string, Cpoint_Type>>(), Cpoint_Type(0));
   std::vector<std::unique_ptr<ExprAST>> Body;
   Body.push_back(std::move(E));
   return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));

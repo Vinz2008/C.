@@ -64,7 +64,7 @@ void gotToNextLine(std::istream &__is, std::string &__str){
 
 void go_to_next_line(){
   gotToNextLine(file_in, line);
-  handlePreprocessor();
+  //handlePreprocessor();
 }
 
 void init_line(){

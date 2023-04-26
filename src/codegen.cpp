@@ -28,6 +28,8 @@ std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
+
+std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes; // the second is temporary I will see what I will put (a AST node ? a class ?)
 //std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
 extern std::map<std::string, int> BinopPrecedence;
@@ -505,9 +507,9 @@ Function *PrototypeAST::codegen() {
   std::vector<Type*> args_type_main;
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-2)));
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
-  FT = FunctionType::get(get_type_llvm(*cpoint_type), args_type_main, false);
+  FT = FunctionType::get(get_type_llvm(cpoint_type), args_type_main, false);
   } else {
-  FT = FunctionType::get(get_type_llvm(*cpoint_type), type_args, is_variable_number_args);
+  FT = FunctionType::get(get_type_llvm(cpoint_type), type_args, is_variable_number_args);
   }
   Function *F =
       Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
@@ -519,7 +521,7 @@ Function *PrototypeAST::codegen() {
     Arg.setName(Args[Idx++].first);
     //}
   }
-  FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(this->Name, this->Args, std::move(this->cpoint_type), this->IsOperator, this->Precedence, this->is_variable_number_args);
+  FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(this->Name, this->Args, this->cpoint_type, this->IsOperator, this->Precedence, this->is_variable_number_args);
   return F;
 }
 
@@ -546,6 +548,7 @@ Function *FunctionAST::codegen() {
 
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
+  TemplateTypes.clear();
   if (P.getName() == "main"){
     int i = 0;
     for (auto &Arg : TheFunction->args()){

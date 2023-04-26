@@ -69,23 +69,23 @@ bool last_line = false;
 
 extern int modifier_for_line_count;
 
-void add_manually_extern(std::string fnName, std::unique_ptr<Cpoint_Type> cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
-  auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
-  FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), std::move(cpoint_type), Kind != 0, BinaryPrecedence, is_variable_number_args);
+void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
+  auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
+  FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   Log::Info() << "add extern name " << fnName << "\n";
   auto *FnIR = FnAST->codegen();
 }
 
 void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
-  add_manually_extern("gc_init", std::make_unique<Cpoint_Type>(void_type), std::move(args_gc_init), 0, 30, false);
+  add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false);
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
   args_gc_malloc.push_back(make_pair("size", Cpoint_Type(int_type)));
-  add_manually_extern("gc_malloc", std::make_unique<Cpoint_Type>(void_type, true), std::move(args_gc_malloc), 0, 30, false);
+  add_manually_extern("gc_malloc", Cpoint_Type(void_type, true), std::move(args_gc_malloc), 0, 30, false);
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_realloc;
   args_gc_realloc.push_back(make_pair("ptr", Cpoint_Type(void_type, true)));
   args_gc_realloc.push_back(make_pair("size", Cpoint_Type(int_type)));
-  add_manually_extern("gc_realloc", std::make_unique<Cpoint_Type>(void_type, true), std::move(args_gc_realloc), 0, 30, false);
+  add_manually_extern("gc_realloc", Cpoint_Type(void_type, true), std::move(args_gc_realloc), 0, 30, false);
 }
 
 static void HandleDefinition() {
@@ -217,7 +217,7 @@ static void MainLoop() {
         exit(1);
       }
       getNextToken();
-      go_to_next_line();
+      //go_to_next_line();
       // FOR NOW NOT WORKING : TODO
       //Log::Info() << "# comment found" << "\n";
       //getNextToken();

@@ -39,6 +39,23 @@ int get_next_word(std::string line, int& pos){
     return 0;
 }
 
+bool compare_line(std::string line, std::string pattern){
+    int pos_cmp = 0;
+    while (isspace(line.at(pos_cmp))){
+        pos_cmp++;
+    }
+    int pos_cmp2 = line.size()-1;
+    while (isspace(line.at(pos_cmp2))){
+        pos_cmp2--;
+    }
+    std::string without_space_line = line.substr(pos_cmp, pos_cmp2+1);
+    Log::Preprocessor_Info() << "without space line for comparison : " << without_space_line << "\n";
+    if (without_space_line == pattern){
+        Log::Preprocessor_Info() << "comparison is true" << "\n";
+    }
+    return without_space_line == pattern;
+}
+
 void preprocess_instruction(std::string line){
     Log::Info() << "LINE : " << line << "\n";
     std::string instruction;
@@ -67,8 +84,8 @@ void preprocess_instruction(std::string line){
                 //go_to_next_line();
             } else {
                 Log::Preprocessor_Info() << "if false" << "\n";
-                while (get_line_returned() != "?[endif]"){
-                    //std::cout << "line passed " << get_line_returned() << std::endl;
+                while (!compare_line(get_line_returned(), "?[endif]")){
+                    Log::Preprocessor_Info() << "line passed " << get_line_returned() << "\n";
                     go_to_next_line();
                 }
             }
