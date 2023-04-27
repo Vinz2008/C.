@@ -712,7 +712,7 @@ Value* RedeclarationExprAST::codegen(){
     is_array = true;
   }
   std::string ArrayName = "";
-  int pos_array = -1;
+  //int pos_array = -1;
   bool is_global = false;
   if (GlobalVariables[VariableName] != nullptr){
     is_global = true;
