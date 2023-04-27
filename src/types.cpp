@@ -93,7 +93,6 @@ Type* get_array_llvm_type(Type* type, int nb_element){
 Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){
     int type = double_type;
     bool is_ptr = false;
-    Type* not_ptr_type = llvm_type;
     if (llvm_type->isPointerTy()){
         is_ptr = true;
     }

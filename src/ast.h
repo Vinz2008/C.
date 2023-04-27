@@ -152,10 +152,9 @@ public:
 
 class RedeclarationExprAST : public ExprAST {
   std::string VariableName;
-  std::unique_ptr<ExprAST> index;
   std::unique_ptr<ExprAST> Val;
-  bool has_member;
   std::string member;
+  std::unique_ptr<ExprAST> index;
 public:
   RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val, const std::string &member, std::unique_ptr<ExprAST> index = nullptr) 
 : VariableName(VariableName), Val(std::move(Val)), member(member), index(std::move(index)) {}
@@ -176,14 +175,14 @@ public:
 /// of arguments the function takes).
 class PrototypeAST {
 public:
+  std::string Name;
+  std::vector<std::pair<std::string,Cpoint_Type>> Args;
+  Cpoint_Type cpoint_type;
   bool IsOperator;
   unsigned Precedence;  // Precedence if a binary op.
-  Cpoint_Type cpoint_type;
-  std::string Name;
   bool is_variable_number_args;
   bool has_template;
   std::string template_name;
-  std::vector<std::pair<std::string,Cpoint_Type>> Args;
   PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, Cpoint_Type cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false, bool has_template = false,  const std::string& template_name = "")
     : Name(name), Args(std::move(Args)), cpoint_type(cpoint_type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args), has_template(has_template), template_name(template_name) {}
 
@@ -231,8 +230,8 @@ public:
 
 class ClassDeclarAST {
   std::string Name;
-  std::vector<std::unique_ptr<FunctionAST>> Functions;
   std::vector<std::unique_ptr<VarExprAST>> Vars;
+  std::vector<std::unique_ptr<FunctionAST>> Functions;
 public:
   ClassDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
     : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
