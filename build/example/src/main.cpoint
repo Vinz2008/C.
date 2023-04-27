@@ -1,4 +1,5 @@
 import @std/print.cpoint
+include ../bindings.cpoint
 func test(x){
   for i = 1, i < x, 1.0 {
      printd(i)
@@ -6,4 +7,5 @@ func test(x){
 }
 func main(){
   test(10) 
+  test_c_function()
 }

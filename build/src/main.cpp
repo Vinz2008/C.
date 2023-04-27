@@ -78,6 +78,43 @@ void buildFolder(std::string src_folder, toml::v3::table& config){
     std::cout << std::endl;
 }
 
+void runCustomScripts(toml::v3::table& config){
+    auto scripts = config["custom"]["scripts"];
+    if (toml::array* arr = scripts.as_array()){
+        arr->for_each([](auto&& script){
+            if constexpr (toml::is_string<decltype(script)>){
+                std::cout << "script : " << script << std::endl;
+                std::unique_ptr<ProgramReturn> returnScript = runCommand((std::string) script);
+                std::cout << returnScript->buffer << std::endl;
+            }
+        });
+    }
+}
+
+void addCustomLinkableFiles(toml::v3::table& config){
+    auto linkableFiles = config["custom"]["linkablefiles"];
+    if (toml::array* arr = linkableFiles.as_array()){
+        arr->for_each([](auto&& file){
+            if constexpr (toml::is_string<decltype(file)>){
+                PathList.push_back((std::string) file);
+            }
+        });
+    }
+}
+
+void runPrebuildCommands(toml::v3::table& config){
+    auto commands = config["custom"]["prebuild_commands"];
+    if (toml::array* arr = commands.as_array()){
+        arr->for_each([](auto&& cmd){
+            if constexpr (toml::is_string<decltype(cmd)>){
+                std::cout << "cmd : " << cmd << std::endl;
+                std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
+                std::cout << returnCmd->buffer << std::endl;
+            }
+        });
+    }
+}
+
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
     std::string src_folder = "src/";
@@ -136,8 +173,11 @@ int main(int argc, char** argv){
         addDependency(dependency_to_add, config);
     } else if (modeBuild == BUILD_MODE) {
         downloadDependencies(config);
+        runPrebuildCommands(config);
         buildSubfolders(config);
         buildFolder(src_folder, config);
+        runCustomScripts(config);
+        addCustomLinkableFiles(config);
         if (type == "exe"){
         linkFiles(PathList);
         } else if (type == "library"){

@@ -12,3 +12,8 @@ github = ["Vinz2008/test_cpoint_package"]
 
 [build]
 arguments = ""
+
+[custom]
+scripts = ["./test.sh"]
+prebuild_commands = ["cpoint-bindgen c/test.c"]
+linkablefiles = ["./c/test.o"]
