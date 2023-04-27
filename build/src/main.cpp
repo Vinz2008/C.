@@ -18,6 +18,7 @@ enum mode {
     INFO_MODE = -3,
     DOWNLOAD_MODE = -4,
     ADD_DEPENDENCY_MODE = -5,
+    OPEN_PAGE_MODE = -6
 };
 
 std::string filename_config = "build.toml";
@@ -136,6 +137,9 @@ int main(int argc, char** argv){
         modeBuild = ADD_DEPENDENCY_MODE;
         i++;
         dependency_to_add = argv[i];
+    } else if (arg == "open-page"){
+        modeBuild = OPEN_PAGE_MODE;
+        i++;
     }
     }
     fs::path f{ filename_config };
@@ -171,6 +175,11 @@ int main(int argc, char** argv){
         downloadDependencies(config);
     } else if (modeBuild == ADD_DEPENDENCY_MODE){
         addDependency(dependency_to_add, config);
+    } else if (modeBuild == OPEN_PAGE_MODE){
+        std::string cmd = "xdg-open ";
+        std::string_view homepage = config["project"]["homepage"].value_or("");
+        cmd.append(homepage);
+        runCommand(cmd);
     } else if (modeBuild == BUILD_MODE) {
         downloadDependencies(config);
         runPrebuildCommands(config);
