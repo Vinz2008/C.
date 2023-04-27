@@ -191,6 +191,11 @@ after_while:
     pos_line++;
 }
 
+void interpret_extern(std::string line, int& pos, int& pos_line){
+    out_file << line;
+    pos_line++;
+}
+
 
 // find funcs, structs, etc
 void find_patterns(std::string line, int nb_line, int& pos_line){
@@ -203,6 +208,8 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
     } else if (IdentifierStr == "struct"){
         Log::Imports_Info() << "STRUCT FOUND" << "\n";
         interpret_struct(line, pos, nb_line, pos_line);
+    } else if (IdentifierStr == "extern"){
+        interpret_extern(line, pos, pos_line);
     }
 }
 
