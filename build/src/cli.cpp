@@ -65,3 +65,15 @@ void linkLibrary(std::vector<std::string> PathList){
     std::cout << "lib link cmd : " << cmd << std::endl;
     runCommand(cmd);
 }
+
+// need to add an option in compiler to implement -fPIC
+void linkDynamicLibrary(std::vector<std::string> PathList){
+    std::string cmd = "clang -shared -o lib.so ";
+    for (int i = 0; i < PathList.size(); i++){
+        fs::path path_fs{ PathList.at(i) };
+        std::string out_path = path_fs.replace_extension(".o");
+        cmd += out_path + " ";
+    }
+    std::cout << "dynlib link cmd : " << cmd << std::endl;
+    runCommand(cmd);
+}

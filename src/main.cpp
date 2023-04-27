@@ -254,6 +254,7 @@ int main(int argc, char **argv){
     bool asm_mode = false;
     bool is_optimised = false;
     bool explicit_with_gc = false; // add gc even with -no-std
+    bool PICmode = false;
     std::string first_filename = "";
     std::string linker_additional_flags = "";
     for (int i = 1; i < argc; i++){
@@ -278,6 +279,8 @@ int main(int argc, char **argv){
           is_optimised = true;
         } else if (arg.compare("-nostd") == 0){
           std_mode = false;
+        } else if (arg.compare("-fPIC") == 0){
+          PICmode = true;
         } else if(arg.compare("-target-triplet") == 0){
           target_triplet_found_bool = true;
           i++;
@@ -436,7 +439,12 @@ int main(int argc, char **argv){
     auto CPU = "generic";
     auto Features = "";
     TargetOptions opt;
-    auto RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
+    llvm::Optional<llvm::Reloc::Model> RM;
+    if (PICmode){
+      RM = Optional<Reloc::Model>(Reloc::Model::PIC_);
+    } else {
+      RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
+    }
     auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
     std::error_code EC;
