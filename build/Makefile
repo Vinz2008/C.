@@ -26,3 +26,7 @@ clean-build:
 
 clean: clean-build
 	rm -f $(OUTPUTBIN)
+
+
+run:
+	cd example && ../$(OUTPUTBIN)

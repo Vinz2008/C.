@@ -27,3 +27,6 @@ clean-build:
 
 clean: clean-build
 	rm -f $(OUTPUTBIN)
+
+run:
+	./$(OUTPUTBIN) example.h
