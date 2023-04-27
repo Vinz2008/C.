@@ -949,6 +949,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   int type = double_type;
   bool is_ptr = false;
+  int nb_element = 0;
   bool is_array = false;
   std::string struct_name = "";
   std::string class_name = "";

@@ -385,7 +385,7 @@ Value *CallExprAST::codegen() {
     if (Callee.rfind("llvm_", 0) == 0){
       Log::Info() << "llvm intrisic called" << "\n";
       Callee = Callee.substr(4, Callee.size());
-      llvm::Intrinsic::IndependentIntrinsics intrisicId = Intrinsic::vastart;
+      llvm::Intrinsic::IndependentIntrinsics intrisicId;
       if (Callee == "va_start"){
         intrisicId = Intrinsic::vastart;
       } else if (Callee == "va_end"){
@@ -445,6 +445,7 @@ Value* AddrExprAST::codegen(){
 }
 
 Value* SizeofExprAST::codegen(){
+  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
   if (is_type(Name)){
     int type = get_type(Name);
@@ -705,16 +706,41 @@ Value* LabelExprAST::codegen(){
 Value* RedeclarationExprAST::codegen(){
   Log::Info() << "REDECLARATION CODEGEN" << "\n";
   Log::Info() << "VariableName " << VariableName << "\n";
+  bool is_object = false;
   bool is_array = false;
   if (index != nullptr){
     is_array = true;
   }
   std::string ArrayName = "";
+  int pos_array = -1;
   bool is_global = false;
   if (GlobalVariables[VariableName] != nullptr){
     is_global = true;
   }
   Log::Info() << "is_global : " << is_global << "\n";
+  /*for (int i = 0; i < VariableName.length(); i++){
+    if (VariableName.at(i) == '.'){
+      Log::Info() << "i struct : " << i << "\n";
+      is_object = true;
+      ObjectName =  VariableName.substr(0, i);
+      MemberName =  VariableName.substr(i+1, VariableName.length()-1);
+      break;
+    }
+    if (VariableName.at(i) == '['){
+      is_array = true;
+      ArrayName = VariableName.substr(0, i);
+      std::string pos_str = "";
+      for (int j = i + 1; j < VariableName.length(); j++){
+        if (VariableName.at(j) == ']'){
+          break;
+        } else {
+          pos_str += VariableName.at(j);
+        }
+      }
+      pos_array = std::stoi(pos_str);
+      break;
+    }
+  }*/
   Log::Info() << "VariableName : " << VariableName << "\n";
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "TEST\n";
@@ -806,6 +832,7 @@ Value* RedeclarationExprAST::codegen(){
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto indexVal = index->codegen();
     indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
@@ -1006,6 +1033,7 @@ Value *VarExprAST::codegen() {
       InitVal = get_default_value(*cpoint_type);
     }
     llvm::Value* indexVal = nullptr;
+    double indexD = -1;
     if (index != nullptr){
     indexVal = index->codegen();
     auto constFP = dyn_cast<ConstantFP>(indexVal);
