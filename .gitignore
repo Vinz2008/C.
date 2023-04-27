@@ -25,3 +25,4 @@ bdwgc_prefix
 cpoint-build
 valgrind-out.txt
 bindings.cpoint
+*.so
