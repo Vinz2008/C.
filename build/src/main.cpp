@@ -179,11 +179,11 @@ int main(int argc, char** argv){
     } else if (modeBuild == ADD_DEPENDENCY_MODE){
         addDependency(dependency_to_add, config);
     } else if (modeBuild == OPEN_PAGE_MODE){
-        std::string cmd = "xdg-open ";
         std::string_view homepage = config["project"]["homepage"].value_or("");
-        cmd.append(homepage);
-        runCommand(cmd);
+        openWebPage((std::string) homepage);
     } else if (modeBuild == BUILD_MODE) {
+        std::string_view outfilename_view = config["build"]["outfile"].value_or("");
+        std::string outfilename = (std::string) outfilename_view;
         downloadDependencies(config);
         runPrebuildCommands(config);
         buildSubfolders(config, type);
@@ -191,11 +191,11 @@ int main(int argc, char** argv){
         runCustomScripts(config);
         addCustomLinkableFiles(config);
         if (type == "exe"){
-        linkFiles(PathList);
+        linkFiles(PathList, outfilename);
         } else if (type == "library"){
-        linkLibrary(PathList);
+        linkLibrary(PathList, outfilename);
         } else if (type == "dynlib"){
-            linkDynamicLibrary(PathList);
+            linkDynamicLibrary(PathList, outfilename);
         }
     }
 

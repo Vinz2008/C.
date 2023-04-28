@@ -12,6 +12,7 @@ github = ["Vinz2008/test_cpoint_package"]
 
 [build]
 arguments = ""
+outfile = "a.out"
 
 [custom]
 scripts = ["./test.sh"]

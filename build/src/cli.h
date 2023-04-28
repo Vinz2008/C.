@@ -11,6 +11,7 @@ public:
 
 std::unique_ptr<ProgramReturn> runCommand(const std::string cmd);
 void compileFile(std::string target, std::string arguments, std::string path);
-void linkFiles(std::vector<std::string> PathList);
-void linkLibrary(std::vector<std::string> PathList);
-void linkDynamicLibrary(std::vector<std::string> PathList);
+void linkFiles(std::vector<std::string> PathList, std::string outfilename);
+void linkLibrary(std::vector<std::string> PathList, std::string outfilename);
+void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilename);
+void openWebPage(std::string url);

@@ -30,6 +30,15 @@ std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
 
 }
 
+void openWebPage(std::string url){
+#ifdef _WIN32
+    std::string cmd = "start ";
+#else
+    std::string cmd = "xdg-open ";
+#endif
+    cmd.append(url);
+    runCommand(cmd);
+}
 
 void compileFile(std::string target, std::string arguments, std::string path){
     std::string cmd = "cpoint -c " + arguments + " " + path + " ";
@@ -43,8 +52,11 @@ void compileFile(std::string target, std::string arguments, std::string path){
     runCommand(cmd);
 }
 
-void linkFiles(std::vector<std::string> PathList){
-    std::string cmd = "clang -o a.out ";
+void linkFiles(std::vector<std::string> PathList, std::string outfilename){
+    if  (outfilename == ""){
+        outfilename = "a.out";
+    }
+    std::string cmd = "clang -o " + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
         std::string out_path = path_fs.replace_extension(".o");
@@ -55,8 +67,11 @@ void linkFiles(std::vector<std::string> PathList){
     runCommand(cmd);
 }
 
-void linkLibrary(std::vector<std::string> PathList){
-    std::string cmd = "ar rcs lib.a ";
+void linkLibrary(std::vector<std::string> PathList, std::string outfilename){
+    if  (outfilename == ""){
+        outfilename = "lib.a";
+    }
+    std::string cmd = "ar rcs" + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
         std::string out_path = path_fs.replace_extension(".o");
@@ -67,8 +82,11 @@ void linkLibrary(std::vector<std::string> PathList){
 }
 
 // need to add an option in compiler to implement -fPIC
-void linkDynamicLibrary(std::vector<std::string> PathList){
-    std::string cmd = "clang -shared -o lib.so ";
+void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilename){
+    if  (outfilename == ""){
+        outfilename = "lib.so";
+    }
+    std::string cmd = "clang -shared -o " + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
         std::string out_path = path_fs.replace_extension(".o");
