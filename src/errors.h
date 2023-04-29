@@ -2,6 +2,8 @@
 #include <memory>
 #include <cstdarg>
 
+#pragma once
+
 class Compiler_context{
 public:
     int line_nb;

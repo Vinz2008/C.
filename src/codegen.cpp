@@ -10,6 +10,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/DIBuilder.h"
 #include <iostream>
 #include <map>
 #include <cstdarg>
@@ -17,12 +18,13 @@
 #include "lexer.h"
 #include "types.h"
 #include "log.h"
+#include "debuginfo.h"
 
 using namespace llvm;
 
 std::unique_ptr<LLVMContext> TheContext;
 std::unique_ptr<Module> TheModule;
-static std::unique_ptr<IRBuilder<>> Builder;
+std::unique_ptr<IRBuilder<>> Builder;
 std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
@@ -35,6 +37,8 @@ std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes; // the secon
 extern std::map<std::string, int> BinopPrecedence;
 extern bool isInStruct;
 extern bool gc_mode;
+extern std::unique_ptr<DIBuilder> DBuilder;
+extern struct DebugInfo CpointDebugInfo;
 
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
@@ -546,6 +550,19 @@ Function *FunctionAST::codegen() {
   BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
   Builder->SetInsertPoint(BB);
 
+  unsigned LineNo = 0;
+  DIFile *Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
+                                      CpointDebugInfo.TheCU->getDirectory());
+  DIScope *FContext = Unit;
+  unsigned ScopeLine = 0;
+  DISubprogram *SP = DBuilder->createFunction(
+    FContext, P.getName(), StringRef(), Unit, LineNo,
+    CreateFunctionType(P.cpoint_type, P.Args),
+    ScopeLine,
+    DINode::FlagPrototyped,
+    DISubprogram::SPFlagDefinition);
+  TheFunction->setSubprogram(SP);
+
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
   TemplateTypes.clear();
@@ -565,9 +582,18 @@ Function *FunctionAST::codegen() {
     }
   } else {
   int i = 0;
+  unsigned ArgIdx = 0;
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
+
+    DILocalVariable *D = DBuilder->createParameterVariable(
+      SP, Arg.getName(), ++ArgIdx, Unit, LineNo, CpointDebugInfo.getDoubleTy(),
+      true);
+    DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
+                          DILocation::get(SP->getContext(), LineNo, 0, SP),
+                          Builder->GetInsertBlock());
+    
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;

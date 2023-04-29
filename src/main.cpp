@@ -416,11 +416,11 @@ int main(int argc, char **argv){
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", is_optimised, "", 0);
-    DBuilder->finalize();
     if ((std_mode || explicit_with_gc) && gc_mode){
       add_externs_for_gc();
     }
     MainLoop();
+    DBuilder->finalize();
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
