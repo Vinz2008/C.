@@ -47,9 +47,12 @@ ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)
 	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static
 endif
 else
-	rm -rf bdwgc_prefix
-	mkdir bdwgc_prefix
-	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static
+#	rm -rf bdwgc_prefix
+#	mkdir bdwgc_prefix
+	mkdir -p bdwgc_prefix
+ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
+	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static --disable-shared
+endif
 endif
 	+make -C bdwgc
 	make -C bdwgc install
