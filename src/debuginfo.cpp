@@ -32,7 +32,7 @@ DIType *DebugInfo::getDoubleTy() {
   return DblTy;
 }
 
-
+// Add to each class a location attribute for line and column position to create debug infos like in the Kaleidoscope tutorial 
 
 void DebugInfo::emitLocation(Compiler_context context, bool pop_the_scope = false){
   if (pop_the_scope){
