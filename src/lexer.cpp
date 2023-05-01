@@ -188,7 +188,7 @@ static int gettok() {
     //cout << "SPACE" << endl;
     LastChar = getCharLine();
   }
-  if (isalpha(LastChar)) { // identifier: [a-zA-Z][a-zA-Z0-9]*
+  if (isalpha(LastChar) || LastChar == '_') { // identifier: [a-zA-Z][a-zA-Z0-9]*
     IdentifierStr = LastChar;
     while (isalnum((LastChar = getCharLine())) || /*LastChar == '[' || LastChar == ']' || LastChar == '.' ||*/ LastChar == '_')
       IdentifierStr += LastChar;

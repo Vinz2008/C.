@@ -1,16 +1,16 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-double cprintd(double X){
-    fprintf(stderr, "%f\n", X);
-    return 0;
+double printd_internal(double X){
+  fprintf(stderr, "%f\n", X);
+  return 0;
 }
 
-void cprinti(int x){
+void printi_internal(int x){
   fprintf(stderr, "%d\n", x);
 }
 
-double cputchard(double X) {
+double putchard_internal(double X) {
   fputc((char)X, stderr);
   return 0;
 }

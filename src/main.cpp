@@ -206,8 +206,10 @@ static void MainLoop() {
       break;
     case tok_typedef:
       HandleTypeDef();
+      break;
     case '/':
       Log::Info() << "found single-line comment" << "\n";
+      Log::Info() << "char found as a '/' : " << CurTok << "\n";
       if (debug_mode){
       file_log << "found single-line comment" << "\n";
       }
@@ -231,6 +233,7 @@ static void MainLoop() {
       Log::Info() << "CurTok : " << CurTok << "\n";
       Log::Info() << "identifier : " << IdentifierStr << "\n";
       LogError("TOP LEVEL EXPRESSION FORBIDDEN");
+      getNextToken();
       //HandleTopLevelExpression();
       break;
     }

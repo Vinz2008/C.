@@ -1,5 +1,5 @@
-extern cprintd(x : double) double;
-extern cprinti(x : int) void;
-extern cputchard(x : double);
+extern printd_internal(x : double) double;
+extern printi_internal(x : int) void;
+extern putchard_internal(x : double);
 extern copenfile(p : i8 ptr) int;
 extern cwritefile(fd : int, buf : i8 ptr) int;

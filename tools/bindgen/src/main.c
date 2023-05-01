@@ -51,6 +51,8 @@ void close_previous_blocks(){
     is_variable_number_args = false;
 }
 
+// TODO : verify if function paramaters or other identifier are empty name so they are given default name
+
 enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data){
     cursorKind = clang_getCursorKind(cursor);
     CXString clangstr_cursor_name = clang_getCursorSpelling(cursor);

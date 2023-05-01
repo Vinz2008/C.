@@ -1,20 +1,22 @@
 include libc.hpoint
 include capi.hpoint
 
-func printd(d : double){
-    cprintd(d)
-    return 0
+func printd(d : double) void{
+	printd_internal(d)
 }
 
-func printi(i : int) void{
-    cprinti(i)
+func printi(i : int) void {
+	printi_internal(i)
 }
 
-func putchard(d : double) double{
-    cputchard(d)
-    return 0
+func putchard(d : double) void {
+	putchard_internal(d)
 }
 
 func printstr(x : i8 ptr) void{
-  puts(x)
+	puts(x)
+}
+
+func printc(c : i8){
+	putchar(c)
 }
