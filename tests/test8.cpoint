@@ -4,7 +4,7 @@ var z : double = 2
 func main(){
   var c = "hello"
   printstr(c)
-  var b = putchard(37)
+  putchard(37)
   putchard(10)
   var a = 1
   printd(a)
