@@ -881,6 +881,9 @@ Value* RedeclarationExprAST::codegen(){
     Builder->CreateStore(ValDeclared, GlobalVariables[VariableName]->globalVar);
   } else {
   AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+  if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
+    return LogErrorV("Assigning to a variable a void value");
+  }
   Builder->CreateStore(ValDeclared, Alloca);
   NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
   }
@@ -1075,6 +1078,9 @@ Value *VarExprAST::codegen() {
     if (InitVal->getType() != get_type_llvm(*cpoint_type)){
       convertToType(*get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
     }
+    }
+    if (InitVal->getType() == get_type_llvm(Cpoint_Type(void_type))){
+       return LogErrorV("Assigning to a variable as default value a void value");
     }
     Builder->CreateStore(InitVal, Alloca);
 
