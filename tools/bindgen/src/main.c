@@ -136,17 +136,9 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
     return CXChildVisit_Recurse;
 }
 
-int main(int argc, char** argv){
-    if (argc <= 1){
-        fprintf(stderr, "arguments missing\n");
-        exit(1);
-    }
-    for (int i = 0; i < argc; i++){
-        printf("%d : %s\n", i, argv[i]);
-    }
-    outf = fopen("bindings.cpoint", "w");
+void generateBindings(char* path){
     CXIndex index = clang_createIndex(0, 0);
-    CXTranslationUnit unit = clang_parseTranslationUnit(index, argv[1], NULL, 0, NULL, 0, CXTranslationUnit_None);
+    CXTranslationUnit unit = clang_parseTranslationUnit(index, path, NULL, 0, NULL, 0, CXTranslationUnit_None);
     if (unit == NULL){
         fprintf(stderr, "Unable to parse Translation Unit\n");
         exit(1);
@@ -155,15 +147,46 @@ int main(int argc, char** argv){
     clang_visitChildren(cursor, cursorVisitor, NULL);
     if (cursorKind == CXCursor_FieldDecl){
         fprintf(outf, "}\n");
+        in_struct_declaration = false;
     } else {
         fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
+        in_function_declaration = false;
+    }
+    clang_disposeTranslationUnit(unit);
+    clang_disposeIndex(index);
+}   
+
+int main(int argc, char** argv){
+    if (argc <= 1){
+        fprintf(stderr, "arguments missing\n");
+        exit(1);
+    }
+    char* outfile = "bindings.cpoint";
+    char* filename = argv[1];
+    char** filenames = malloc(sizeof(char*) * argc-1);
+    int filenames_length = 0;
+    for (int i = 1; i < argc; i++){
+        printf("%d : %s\n", i, argv[i]);
+        if (strcmp("-o", argv[i]) == 0){
+            i++;
+            outfile = argv[i];
+            printf("%d : %s\n", i, argv[i]);
+        } else {
+            filenames[i-1] = argv[i];
+            filenames_length++;
+        }
+    }
+    outf = fopen(outfile, "w");
+
+
+    for (int i = 0; i < filenames_length; i++){
+        generateBindings(filenames[i]);
     }
     /*if (cursorKind == CXCursor_ParmDecl){
         fprintf(outf, ");\n");
     } else if (cursorKind == CXCursor_FieldDecl){
         fprintf(outf, "}\n");
     }*/
-    clang_disposeTranslationUnit(unit);
-    clang_disposeIndex(index);
     fclose(outf);
+    free(filenames);
 }

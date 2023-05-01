@@ -1,4 +1,4 @@
-#include <stdio.h>
+//#include <stdio.h>
 #define hello_world "hello world"
 #define a(b) b + 2
 char test(char* test_str);
