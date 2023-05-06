@@ -893,28 +893,81 @@ Value* RedeclarationExprAST::codegen(){
 
 Value* LoopExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  if (is_infinite_loop){
-  BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
-  Builder->CreateBr(loopBB);
-  Builder->SetInsertPoint(loopBB);
-  for (int i = 0; i < Body.size(); i++){
-    if (!Body.at(i)->codegen())
-      return nullptr;
-  }
-  Builder->CreateBr(loopBB);
-  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+  if (is_infinite_loop || Array == nullptr){
+    BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
+    Builder->CreateBr(loopBB);
+    Builder->SetInsertPoint(loopBB);
+    for (int i = 0; i < Body.size(); i++){
+      if (!Body.at(i)->codegen())
+        return nullptr;
+    }
+    Builder->CreateBr(loopBB);
+    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
   } else {
     return LogErrorV("Functionnality not finished to be implemented");
+    auto double_cpoint_type = Cpoint_Type(double_type, false);
+    AllocaInst *PosArrayAlloca = CreateEntryBlockAlloca(TheFunction, "pos_loop_in", double_cpoint_type);
+    BasicBlock* CmpLoop = BasicBlock::Create(*TheContext, "cmp_loop_in", TheFunction);;
+    BasicBlock* InLoop = BasicBlock::Create(*TheContext, "body_loop_in", TheFunction);;
+    BasicBlock* AfterLoop = BasicBlock::Create(*TheContext, "after_loop_in", TheFunction);;
     if (NamedValues[VarName] != nullptr){
       return LogErrorV("variable for loop already exists in the context");
     }
-    AllocaInst *allocaPos = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
+    Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
+    Builder->CreateStore(StartVal, PosArrayAlloca);
+    Value* ArrayPtr;
+  
+    //if (auto ArrayVarPtr = dynamic_cast<VariableExprAST*>(Array.get())){
+    auto ArrayVarPtr = static_cast<VariableExprAST*>(Array.get());
+      std::unique_ptr<VariableExprAST> ArrayVar;
+      Array.release();
+      ArrayVar.reset(ArrayVarPtr);
+      ArrayPtr = ArrayVar->codegen();
+      Cpoint_Type cpoint_type = NamedValues[ArrayVar->getName()]->type;
+    //} else {
+      //return LogErrorV("Expected a Variable Expression in loop in");
+    //}
+    Value* SizeArrayVal = ConstantFP::get(*TheContext, APFloat((float)cpoint_type.nb_element));
+    Builder->CreateBr(CmpLoop);
+    Builder->SetInsertPoint(CmpLoop);
+    Value* isLoopFinishedVal = Builder->CreateFCmpUEQ(PosArrayAlloca, SizeArrayVal,"cmptmp_loop_in"); 
+    Value* isLoopFinishedBoolVal = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
+    Builder->CreateCondBr(isLoopFinishedBoolVal, InLoop, AfterLoop);
+    
+    Builder->SetInsertPoint(InLoop);
+    // initalize here the temp variable to have the value of the array
+    for (int i = 0; i < Body.size(); i++){
+    if (!Body.at(i)->codegen())
+      return nullptr;
+    }
+    Value* StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
+    Value *CurrentPos = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "current_pos_loop_in");
+    Value* NextPos = Builder->CreateFAdd(CurrentPos, StepVal, "nextpos_loop_in");
+    Builder->CreateStore(NextPos, PosArrayAlloca);
+    Builder->CreateBr(CmpLoop);
+
+    Builder->SetInsertPoint(AfterLoop);
+
+    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+
+    /*AllocaInst *allocaPos = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
     Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
     Builder->CreateStore(StartVal, allocaPos);
     
-    BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_loop_in", TheFunction);
-    Builder->CreateBr(LoopBB);
-    Builder->SetInsertPoint(LoopBB);
+    BasicBlock *LoopBBInner = BasicBlock::Create(*TheContext, "loop_loop_in", TheFunction);
+    Builder->CreateBr(loopBB);
+    Builder->SetInsertPoint(loopBB);
+
+    Value* isLoopFinishedVal  = Builder->CreateFCmpUEQ(IndexArrayVal, SizeArrayVal,"cmptmp_loop_in"); 
+    Value* isLoopFinishedBoolVal = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
+    Builder->CreateFCmpONE(isLoopFinishedBoolVal, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
+
+
+    for (int i = 0; i < Body.size(); i++){
+    if (!Body.at(i)->codegen())
+      return nullptr;
+    }
+    Builder->CreateBr(loopBB);*/
   }
 }
 

@@ -164,6 +164,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       return std::make_unique<StructMemberExprAST>(IdName, member);
     }
     if (is_array){
+      Log::Info() << "Array member returned" << "\n";
       return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
     }
     /*for (int i = 0; i < IdName.length(); i++){
@@ -845,6 +846,7 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
     }
     return std::make_unique<LoopExprAST>("", nullptr, std::move(Body), true);
   } else {
+    Log::Info() << "Loop In Expr" << "\n";
     if (CurTok != tok_identifier){
       return LogErrorL("not an identifier or '{' after the loop");
     }
@@ -854,7 +856,19 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
       return LogErrorL("missing 'in' in loop");
     }
     getNextToken();
-    auto Array = ParseExpression();
+    //auto Array = ParseExpression();
+    auto Array = ParseIdentifierExpr();
+    if (CurTok != '{'){
+      return LogErrorL("missing '{' in loop in");
+    }
+    getNextToken();
+    while (CurTok != '}'){
+      auto E = ParseExpression();
+      if (!E)
+        return nullptr;
+      Body.push_back(std::move(E));
+    }
+    getNextToken();
     return std::make_unique<LoopExprAST>(VarName, std::move(Array), std::move(Body));
   }
 }
