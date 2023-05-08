@@ -2,6 +2,7 @@
 #include "cli.h"
 #include "files.h"
 #include "dependencies.h"
+#include "project_creator.h"
 #include <toml++/toml.h>
 #include <iostream>
 #include <fstream>
@@ -18,7 +19,8 @@ enum mode {
     INFO_MODE = -3,
     DOWNLOAD_MODE = -4,
     ADD_DEPENDENCY_MODE = -5,
-    OPEN_PAGE_MODE = -6
+    OPEN_PAGE_MODE = -6,
+    NEW_PROJECT_MODE = -7,
 };
 
 std::string filename_config = "build.toml";
@@ -123,6 +125,7 @@ int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
     std::string src_folder = "src/";
     std::string dependency_to_add = "";
+    std::string project_name_to_create = "";
     for (int i = 0; i < argc; i++){
     std::string arg = argv[i];
     if (arg == "-f"){
@@ -140,10 +143,19 @@ int main(int argc, char** argv){
         modeBuild = ADD_DEPENDENCY_MODE;
         i++;
         dependency_to_add = argv[i];
+    } else if (arg == "new"){
+        modeBuild = NEW_PROJECT_MODE;
+        i++;
+        project_name_to_create = argv[i];
     } else if (arg == "open-page"){
         modeBuild = OPEN_PAGE_MODE;
         i++;
     }
+    }
+    // instruction that don't need the toml file
+    if (modeBuild == NEW_PROJECT_MODE){
+        createProject("exe", project_name_to_create);
+        return 0;
     }
     fs::path f{ filename_config };
     if (!fs::exists(f)){
