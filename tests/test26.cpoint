@@ -1,21 +1,9 @@
-include @std/libc.hpoint
 import @std/print.cpoint
-class test {
-  var x : double 
-  var z : double 
-  func test(){
-    2
-  }
-  func test_function(){ 
-    1 
-  } 
-}
 func main(){
-    var z : int ptr 
-  var x : class test 
-  var y : class test ptr
-  z = malloc(sizeof int)
-  y = malloc(12) 
-  x.z = 2 
-  printd(sizeof x)
+    var arr[2] : int
+    arr[0] = 1
+    arr[1] = 2
+    loop i in arr {
+        printd(2)
+    }
 }

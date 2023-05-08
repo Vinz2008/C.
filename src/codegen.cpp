@@ -904,7 +904,7 @@ Value* LoopExprAST::codegen(){
     Builder->CreateBr(loopBB);
     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
   } else {
-    return LogErrorV("Functionnality not finished to be implemented");
+    //return LogErrorV("Functionnality not finished to be implemented");
     auto double_cpoint_type = Cpoint_Type(double_type, false);
     AllocaInst *PosArrayAlloca = CreateEntryBlockAlloca(TheFunction, "pos_loop_in", double_cpoint_type);
     BasicBlock* CmpLoop = BasicBlock::Create(*TheContext, "cmp_loop_in", TheFunction);;
@@ -927,11 +927,14 @@ Value* LoopExprAST::codegen(){
     //} else {
       //return LogErrorV("Expected a Variable Expression in loop in");
     //}
-    Value* SizeArrayVal = ConstantFP::get(*TheContext, APFloat((float)cpoint_type.nb_element));
+    Value* SizeArrayVal = ConstantFP::get(*TheContext, APFloat((double)cpoint_type.nb_element));
     Builder->CreateBr(CmpLoop);
     Builder->SetInsertPoint(CmpLoop);
-    Value* isLoopFinishedVal = Builder->CreateFCmpUEQ(PosArrayAlloca, SizeArrayVal,"cmptmp_loop_in"); 
-    Value* isLoopFinishedBoolVal = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
+    Value* PosVal = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
+    Value* isLoopFinishedVal = Builder->CreateFCmpUEQ(PosVal, SizeArrayVal,"cmptmp_loop_in"); 
+    Value* isLoopFinishedValFP = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
+    //Value* isLoopFinishedValFP = ConstantFP::get(*TheContext, APFloat((double)1));
+    Value* isLoopFinishedBoolVal = Builder->CreateFCmpONE(isLoopFinishedValFP, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
     Builder->CreateCondBr(isLoopFinishedBoolVal, InLoop, AfterLoop);
     
     Builder->SetInsertPoint(InLoop);
