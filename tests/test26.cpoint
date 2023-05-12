@@ -4,6 +4,6 @@ func main(){
     arr[0] = 1
     arr[1] = 2
     loop i in arr {
-        printd(2)
+        printi(i)
     }
 }

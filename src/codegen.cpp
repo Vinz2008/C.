@@ -907,8 +907,8 @@ Value* LoopExprAST::codegen(){
     //return LogErrorV("Functionnality not finished to be implemented");
     auto double_cpoint_type = Cpoint_Type(double_type, false);
     AllocaInst *PosArrayAlloca = CreateEntryBlockAlloca(TheFunction, "pos_loop_in", double_cpoint_type);
-    BasicBlock* CmpLoop = BasicBlock::Create(*TheContext, "cmp_loop_in", TheFunction);;
-    BasicBlock* InLoop = BasicBlock::Create(*TheContext, "body_loop_in", TheFunction);;
+    BasicBlock* CmpLoop = BasicBlock::Create(*TheContext, "cmp_loop_in", TheFunction);
+    BasicBlock* InLoop = BasicBlock::Create(*TheContext, "body_loop_in", TheFunction);
     BasicBlock* AfterLoop = BasicBlock::Create(*TheContext, "after_loop_in", TheFunction);;
     if (NamedValues[VarName] != nullptr){
       return LogErrorV("variable for loop already exists in the context");
@@ -927,11 +927,16 @@ Value* LoopExprAST::codegen(){
     //} else {
       //return LogErrorV("Expected a Variable Expression in loop in");
     //}
+    Cpoint_Type tempValueArrayType = Cpoint_Type(cpoint_type);
+    tempValueArrayType.is_array = false;
+    tempValueArrayType.nb_element = 0;
+    AllocaInst* TempValueArray = CreateEntryBlockAlloca(TheFunction, VarName, tempValueArrayType);
+    NamedValues[VarName] = std::make_unique<NamedValue>(TempValueArray, tempValueArrayType, nullptr, ""); // change values NULL and "" to have structs and classes supported
     Value* SizeArrayVal = ConstantFP::get(*TheContext, APFloat((double)cpoint_type.nb_element));
     Builder->CreateBr(CmpLoop);
     Builder->SetInsertPoint(CmpLoop);
     Value* PosVal = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
-    Value* isLoopFinishedVal = Builder->CreateFCmpUEQ(PosVal, SizeArrayVal,"cmptmp_loop_in"); 
+    Value* isLoopFinishedVal = Builder->CreateFCmpOLT(PosVal, SizeArrayVal,"cmptmp_loop_in");  // if is less than
     Value* isLoopFinishedValFP = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
     //Value* isLoopFinishedValFP = ConstantFP::get(*TheContext, APFloat((double)1));
     Value* isLoopFinishedBoolVal = Builder->CreateFCmpONE(isLoopFinishedValFP, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
@@ -939,6 +944,12 @@ Value* LoopExprAST::codegen(){
     
     Builder->SetInsertPoint(InLoop);
     // initalize here the temp variable to have the value of the array
+    Value* PosValInner = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    Value* index = Builder->CreateFPToUI(PosValInner, Type::getInt32Ty(*TheContext), "cast_gep_index");
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), TempValueArray, { zero, index}, "gep_loop_in");
+    Value* value = Builder->CreateLoad(get_type_llvm(cpoint_type), ptr, VarName);
+    Builder->CreateStore(value, TempValueArray);
     for (int i = 0; i < Body.size(); i++){
     if (!Body.at(i)->codegen())
       return nullptr;

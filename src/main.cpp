@@ -324,6 +324,9 @@ int main(int argc, char **argv){
         object_filename = temp_output;
       }
     }
+    if (asm_mode){
+      link_files_mode = false;
+    }
     init_context_preprocessor();
     Comp_context = std::make_unique<Compiler_context>(filename, 0, 0, "<empty line>");
     std::string temp_filename = filename;
