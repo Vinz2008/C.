@@ -18,6 +18,7 @@ outfile = "a.out"
 scripts = ["./test.sh"]
 prebuild_commands = ["cpoint-bindgen c/test.c"]
 linkablefiles = ["./c/test.o"]
+clean_commands = ["make -C c clean", "rm -f bindings.cpoint out.ll"]
 
 
 [cross-compile]

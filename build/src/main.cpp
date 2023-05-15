@@ -122,6 +122,44 @@ void runPrebuildCommands(toml::v3::table& config){
     }
 }
 
+
+void runCustomCleanCommands(toml::v3::table& config){
+    auto commands = config["custom"]["clean_commands"];
+    if (toml::array* arr = commands.as_array()){
+        arr->for_each([](auto&& cmd){
+            if constexpr (toml::is_string<decltype(cmd)>){
+                std::cout << "cmd : " << cmd << std::endl;
+                std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
+                std::cout << returnCmd->buffer << std::endl;
+            }
+        });
+    }
+}
+
+void cleanObjectFilesFolder(std::string folder){
+    std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", folder);
+    for (auto const& path : PathList){
+        fs::path path_fs{ path };
+        std::string object_path = path_fs.replace_extension(".o");
+        std::cout << object_path << ' ';
+        remove(object_path.c_str());
+    }
+    std::cout << std::endl;
+}
+
+void cleanObjectFiles(toml::v3::table& config, std::string src_folder){
+    cleanObjectFilesFolder(src_folder);
+    auto subfolders = config["subfolders"]["folders"];
+    if (toml::array* arr = subfolders.as_array()){
+        arr->for_each([&config](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                cleanObjectFilesFolder((std::string) sub);
+            }
+        });
+    }
+    runCustomCleanCommands(config);
+}
+
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
     std::string src_folder = "src/";
@@ -169,27 +207,17 @@ int main(int argc, char** argv){
     auto config = toml::parse_file(filename_config);
     std::string_view src_folder_temp = config["project"]["src_folder"].value_or("");
     std::string_view type = config["project"]["type"].value_or("");
-    std::string_view target_view = config["cross-compile"]["target"].value_or("");  
-    std::string target = (std::string)target_view; 
+    std::string_view target_view_cross = config["cross-compile"]["target"].value_or("");  
+    std::string target_cross = (std::string)target_view_cross; 
     std::string linker_args = (std::string)config["build"]["linker_arguments"].value_or("");   
     std::string cross_compile_linker_args = (std::string)config["cross-compile"]["linker_arguments"].value_or("");
-    if (modeBuild == CROSS_COMPILE_MODE){
-        linker_args += cross_compile_linker_args;
-    }
-    std::string sysroot = (std::string)config["cross-compile"]["sysroot"].value_or("");   
+    std::string sysroot_cross = (std::string)config["cross-compile"]["sysroot"].value_or("");   
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
     PathList.clear();
     if (modeBuild == CLEAN_MODE){
-        std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", src_folder);
-        for (auto const& path : PathList){
-            fs::path path_fs{ path };
-            std::string object_path = path_fs.replace_extension(".o");
-            std::cout << object_path << ' ';
-            remove(object_path.c_str());
-        }
-        std::cout << std::endl;
+        cleanObjectFiles(config, src_folder);
     } else if (modeBuild == INFO_MODE){
         std::string_view project_name = config["project"]["name"].value_or("");
         std::cout << "project name : " << project_name << "\n";
@@ -206,30 +234,26 @@ int main(int argc, char** argv){
     } else if (modeBuild == OPEN_PAGE_MODE){
         std::string_view homepage = config["project"]["homepage"].value_or("");
         openWebPage((std::string) homepage);
-    } else if (modeBuild == BUILD_MODE) {
+    } else if (modeBuild == BUILD_MODE || modeBuild == CROSS_COMPILE_MODE) {
         std::string_view outfilename_view = config["build"]["outfile"].value_or("");
         std::string outfilename = (std::string) outfilename_view;
-        downloadDependencies(config);
-        runPrebuildCommands(config);
-        buildSubfolders(config, type, "", "");
-        buildFolder(src_folder, config, type, "", "");
-        runCustomScripts(config);
-        addCustomLinkableFiles(config);
-        if (type == "exe"){
-        linkFiles(PathList, outfilename, "", "", "");
-        } else if (type == "library"){
-        linkLibrary(PathList, outfilename, "", "", "");
-        } else if (type == "dynlib"){
-            linkDynamicLibrary(PathList, outfilename, "", "", "");
+        std::string target = "";
+        std::string sysroot = "";
+        if (modeBuild == CROSS_COMPILE_MODE){
+        linker_args += cross_compile_linker_args;
+        target = target_cross;
+        sysroot = sysroot_cross;
         }
-    } else if (modeBuild == CROSS_COMPILE_MODE){
-        std::string_view outfilename_view = config["build"]["outfile"].value_or("");
-        std::string outfilename = (std::string) outfilename_view;
-        //runPrebuildCommands(config);
+        if (modeBuild != CROSS_COMPILE_MODE){
+            downloadDependencies(config);
+            runPrebuildCommands(config);
+        }
         buildSubfolders(config, type, target, sysroot);
         buildFolder(src_folder, config, type, target, sysroot);
         runCustomScripts(config);
-        //addCustomLinkableFiles(config);
+        if (modeBuild != CROSS_COMPILE_MODE){
+            addCustomLinkableFiles(config);
+        }
         if (type == "exe"){
         linkFiles(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "library"){
@@ -238,5 +262,4 @@ int main(int argc, char** argv){
             linkDynamicLibrary(PathList, outfilename, target, linker_args, sysroot);
         }
     }
-
 }
