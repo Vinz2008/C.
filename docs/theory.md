@@ -8,4 +8,6 @@ The Cpoint compiler compiles the .cpoint source files in IR with the LLVM C++ AP
 
 The compiler detects functions that are called "main" and automatically put its arguments as an int for argc and a char** for the argv. The arguments in the source files for the main function will be ignored.
 
-# 
+## Numbers
+
+By default, every number is a double.

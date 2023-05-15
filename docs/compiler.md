@@ -18,6 +18,8 @@
 
 **-no-gc** : make the compiler not add the functions for garbage collection
 
+**-with-gc** : activate the garbage collector explicitally (it is by default activated)
+
 **-no-imports** : desactivate imports in the compiler
 
 **-rebuild-gc** : force rebuilding the garbage collector source code
@@ -26,4 +28,6 @@
 
 **-linker-flags=** : select additional linker flags
 
+**-d** : activate debug mode to see debug logs
 
+**-fPIC** : make the compiler produce position-independent code

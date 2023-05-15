@@ -1,8 +1,30 @@
 # Standard Library
 
-
-
 ## Strings
+
+You can use strings in 2 ways : 
+
+**i8 pointer**
+
+```
+func main(){
+    var string : i8 ptr = "hello world"
+}
+```
+
+
+
+**string struct**
+
+```
+import @std/print.cpoint
+import @std/str.cpoint
+
+func main(){
+    var string : struct str = createString("hello world")
+    printstring(string)
+}
+```
 
 
 
@@ -16,12 +38,10 @@ Unless specified, declarations of the functions for gc_malloc (and gc_init but i
 extern gc_strdup(s : i8 ptr) i8 ptr;
 extern gc_free(s : int ptr) void;
 extern gc_realloc(s : int ptr, size : int) int ptr;
- 
+
 func main(){
     var s : int ptr = gc_malloc(sizeof int)
     s = gc_realloc(s, 2 * sizeof int)
     gc_free(s)    
 }
 ```
-
-

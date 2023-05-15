@@ -114,6 +114,66 @@ var x[10] : int
 
 (The array implementation is for now broken, so using array for now is not recommended)
 
+## If conditions
+
+You can create conditions with the ```if``` keyword.
+
+```
+import @std/print.cpoint
+
+func main(){
+    if argc == 2 {
+        printstr("2 args")
+    }
+}
+```
+
+You can also use the ```else``` keyword to do things when the condition is false
+
+```
+import @std/print.cpoint
+
+func main(){
+    if argc == 2 {
+        printstr("2 args")
+    } else {
+        printstr("not 2 args")
+    }
+}
+```
+
+## While loops
+
+You can create a while loop with the ```while``` keyword to create a loop that will do something until a condition is true.
+
+```
+import @std/print.cpoint
+
+func main(){
+    var i = 0
+    while i < 10 {
+        printd(i)
+        i = i + 1
+    }
+}
+```
+
+
+
+## For loops
+
+You can create a for loop with the ```for``` keyword to create a loop that will do something until a condition is true and initalize a variable and select a value to add to it in the syntax.
+
+```
+import @std/print.cpoint
+
+func main(){
+    for i = 1, i < 10, 1.0 {
+        printd(i)
+    }
+}
+```
+
 ## Structs
 
 To declare a struct, put a ```struct``` keyword.
@@ -185,5 +245,19 @@ You can use goto to jump to labels that you put in your code. It can be useful f
 func main(){
 label test
     goto test
+}
+```
+
+## Loops
+
+You can create an infinite loop with the ```loop``` keyword.
+
+```
+import @std/print.cpoint
+
+func main(){
+    loop {
+        printd(3)
+    }    
 }
 ```
