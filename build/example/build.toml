@@ -18,3 +18,9 @@ outfile = "a.out"
 scripts = ["./test.sh"]
 prebuild_commands = ["cpoint-bindgen c/test.c"]
 linkablefiles = ["./c/test.o"]
+
+
+[cross-compile]
+target = "wasm32-unknown-wasi"
+sysroot = "/usr/share/wasi-sysroot"
+linker_arguments = "-Wl,--export-all --no-standard-libraries -Wl,--no-entry -lc"

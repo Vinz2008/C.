@@ -10,8 +10,8 @@ public:
 };
 
 std::unique_ptr<ProgramReturn> runCommand(const std::string cmd);
-void compileFile(std::string target, std::string arguments, std::string path);
-void linkFiles(std::vector<std::string> PathList, std::string outfilename);
-void linkLibrary(std::vector<std::string> PathList, std::string outfilename);
-void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilename);
+void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot);
+void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot);
+void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot);
+void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot);
 void openWebPage(std::string url);

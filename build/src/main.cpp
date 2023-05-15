@@ -10,8 +10,8 @@
 
 namespace fs = std::filesystem;
 
-void buildSubfolders(toml::v3::table& config, std::string_view type);
-void buildFolder(std::string src_folder, toml::v3::table& config,std::string_view type);
+void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot);
+void buildFolder(std::string src_folder, toml::v3::table& config,std::string_view type, std::string target, std::string sysroot);
 
 enum mode {
     BUILD_MODE = -1,
@@ -21,6 +21,7 @@ enum mode {
     ADD_DEPENDENCY_MODE = -5,
     OPEN_PAGE_MODE = -6,
     NEW_PROJECT_MODE = -7,
+    CROSS_COMPILE_MODE = -8,
 };
 
 std::string filename_config = "build.toml";
@@ -57,19 +58,19 @@ void addDependency(std::string dependency_name, toml::v3::table& config){
     }
 }
 
-void buildSubfolders(toml::v3::table& config, std::string_view type){
+void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot){
     auto subfolders = config["subfolders"]["folders"];
     if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config, type](auto&& sub){
+        arr->for_each([&config, type, target, sysroot](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
                 std::cout << "sub : " << sub << std::endl;
-                buildFolder((std::string)sub, config, type);
+                buildFolder((std::string)sub, config, type, target, sysroot);
             }
         });
     }
 }
 
-void buildFolder(std::string src_folder, toml::v3::table& config,std::string_view type){
+void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot){
     std::string_view arguments_view = config["build"]["arguments"].value_or("");
     std::string arguments = (std::string) arguments_view;
     if (type == "dynlib"){
@@ -79,7 +80,7 @@ void buildFolder(std::string src_folder, toml::v3::table& config,std::string_vie
     PathList.insert(PathList.end(), localPathList.begin(), localPathList.end());
     for (auto const& path : localPathList){
         std::cout << path << ' ';
-        compileFile("", "-no-gc" + arguments, path);
+        compileFile(target, "-no-gc" + arguments, path, sysroot);
     }
     std::cout << std::endl;
 }
@@ -150,6 +151,9 @@ int main(int argc, char** argv){
     } else if (arg == "open-page"){
         modeBuild = OPEN_PAGE_MODE;
         i++;
+    } else if (arg == "cross-compile"){
+        modeBuild = CROSS_COMPILE_MODE;
+        i++;
     }
     }
     // instruction that don't need the toml file
@@ -165,6 +169,14 @@ int main(int argc, char** argv){
     auto config = toml::parse_file(filename_config);
     std::string_view src_folder_temp = config["project"]["src_folder"].value_or("");
     std::string_view type = config["project"]["type"].value_or("");
+    std::string_view target_view = config["cross-compile"]["target"].value_or("");  
+    std::string target = (std::string)target_view; 
+    std::string linker_args = (std::string)config["build"]["linker_arguments"].value_or("");   
+    std::string cross_compile_linker_args = (std::string)config["cross-compile"]["linker_arguments"].value_or("");
+    if (modeBuild == CROSS_COMPILE_MODE){
+        linker_args += cross_compile_linker_args;
+    }
+    std::string sysroot = (std::string)config["cross-compile"]["sysroot"].value_or("");   
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
@@ -177,6 +189,7 @@ int main(int argc, char** argv){
             std::cout << object_path << ' ';
             remove(object_path.c_str());
         }
+        std::cout << std::endl;
     } else if (modeBuild == INFO_MODE){
         std::string_view project_name = config["project"]["name"].value_or("");
         std::cout << "project name : " << project_name << "\n";
@@ -198,16 +211,31 @@ int main(int argc, char** argv){
         std::string outfilename = (std::string) outfilename_view;
         downloadDependencies(config);
         runPrebuildCommands(config);
-        buildSubfolders(config, type);
-        buildFolder(src_folder, config, type);
+        buildSubfolders(config, type, "", "");
+        buildFolder(src_folder, config, type, "", "");
         runCustomScripts(config);
         addCustomLinkableFiles(config);
         if (type == "exe"){
-        linkFiles(PathList, outfilename);
+        linkFiles(PathList, outfilename, "", "", "");
         } else if (type == "library"){
-        linkLibrary(PathList, outfilename);
+        linkLibrary(PathList, outfilename, "", "", "");
         } else if (type == "dynlib"){
-            linkDynamicLibrary(PathList, outfilename);
+            linkDynamicLibrary(PathList, outfilename, "", "", "");
+        }
+    } else if (modeBuild == CROSS_COMPILE_MODE){
+        std::string_view outfilename_view = config["build"]["outfile"].value_or("");
+        std::string outfilename = (std::string) outfilename_view;
+        //runPrebuildCommands(config);
+        buildSubfolders(config, type, target, sysroot);
+        buildFolder(src_folder, config, type, target, sysroot);
+        runCustomScripts(config);
+        //addCustomLinkableFiles(config);
+        if (type == "exe"){
+        linkFiles(PathList, outfilename, target, linker_args, sysroot);
+        } else if (type == "library"){
+        linkLibrary(PathList, outfilename, target, linker_args, sysroot);
+        } else if (type == "dynlib"){
+            linkDynamicLibrary(PathList, outfilename, target, linker_args, sysroot);
         }
     }
 

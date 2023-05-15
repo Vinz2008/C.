@@ -41,7 +41,7 @@ CPOINTFLAGS += -with-gc
 all: libstd.a
 
 libstd.a: $(OBJECTS) capi
-	ar -rc $@ $(OBJECTS) $(OBJECTS_C)
+	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C)
 
 capi:
 	+TARGET=$(TARGET) make -C c_api

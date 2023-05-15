@@ -40,34 +40,56 @@ void openWebPage(std::string url){
     runCommand(cmd);
 }
 
-void compileFile(std::string target, std::string arguments, std::string path){
+void rebuildSTD(std::string target, std::string path){
+    runCommand("make -C " + path + " clean");
+    std::string cmd_start = "";
+    if (target != ""){
+        cmd_start += "TARGET=" + target + " "; 
+    }
+    std::cout << runCommand(cmd_start + "make -C " + path)->buffer << std::endl;
+}
+
+void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot){
     std::string cmd = "cpoint -c " + arguments + " " + path + " ";
     fs::path path_fs{ path };
     std::string out_path = path_fs.replace_extension(".o");
     cmd += "-o " + out_path;
     if (target != ""){
-        cmd += "-target " + target;
+        cmd += " -target-triplet " + target + " ";
     }
     std::cout << "cmd : " << cmd << std::endl;
     runCommand(cmd);
 }
 
-void linkFiles(std::vector<std::string> PathList, std::string outfilename){
+void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot){
     if  (outfilename == ""){
         outfilename = "a.out";
     }
     std::string cmd = "clang -o " + outfilename + " ";
+    if (target != ""){
+        cmd.append(" -target " + target + " ");
+    }
+    if (sysroot != ""){
+        cmd.append(" --sysroot=" + sysroot + " ");
+    }
+    if (args != ""){
+        cmd.append(" " + args + " ");
+    }
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
         std::string out_path = path_fs.replace_extension(".o");
         cmd += out_path + " ";
     }
-    cmd += " " DEFAULT_STD_PATH "/libstd.a",
+    cmd += " " DEFAULT_STD_PATH "/libstd.a";
+    if (target != ""){
+        std::string path = DEFAULT_STD_PATH;
+        rebuildSTD(target, path);
+    }
     std::cout << "exe link cmd : " << cmd << std::endl;
     runCommand(cmd);
 }
 
-void linkLibrary(std::vector<std::string> PathList, std::string outfilename){
+void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot){
     if  (outfilename == ""){
         outfilename = "lib.a";
     }
@@ -82,7 +104,7 @@ void linkLibrary(std::vector<std::string> PathList, std::string outfilename){
 }
 
 // need to add an option in compiler to implement -fPIC
-void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilename){
+void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot){
     if  (outfilename == ""){
         outfilename = "lib.so";
     }

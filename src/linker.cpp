@@ -118,10 +118,11 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     cmd.append(target_triplet);
     if (target_triplet.find("wasm") != string::npos){
         //cmd.append(" --no-standard-libraries -Wl,--export-all -Wl,--no-entry ");
-        cmd.append("-Wl,--export-all --no-standard-libraries -Wl,--no-entry");
+        cmd.append("-Wl,--export-all --no-standard-libraries -Wl,--no-entry ");
+    } else {
+        cmd.append(" -lm ");
     }
     cmd.append(linker_additional_flags);
-    cmd.append(" -lm ");
     for (int i = 0; i < list_files.size(); i++){
         cmd.append(" ");
         cmd.append(list_files.at(i));

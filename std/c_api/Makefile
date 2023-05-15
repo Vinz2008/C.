@@ -1,5 +1,4 @@
 CC=clang
-CFLAGS=-Wall
 SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
 TARGET ?= $(shell gcc -dumpmachine)
