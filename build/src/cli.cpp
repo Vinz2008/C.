@@ -93,7 +93,7 @@ void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std
     if  (outfilename == ""){
         outfilename = "lib.a";
     }
-    std::string cmd = "ar rcs" + outfilename + " ";
+    std::string cmd = "llvm-ar rcs " + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
         std::string out_path = path_fs.replace_extension(".o");
