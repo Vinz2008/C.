@@ -621,10 +621,12 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   }
   getNextToken(); // eat }
   Log::Info() << "end of function" << "\n";
+  bool has_template = Proto->has_template;
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
-  if (Proto->has_template){
-    //auto BodyCopy = Body;
-    //TemplateTypes[Proto->template_name] = std::make_unique<TemplateType>(std::make_unique<FunctionAST>(std::move(ProtoCopy), std::move(BodyCopy)));
+  if (has_template){
+    std::vector<std::unique_ptr<ExprAST>> BodyCopy;
+    TemplateTypes[Proto->template_name] = std::make_unique<TemplateType>(std::move(functionAST));
+    return nullptr; // no generation of function because it is a template and will depend on the type
   }
   return functionAST;
 }
