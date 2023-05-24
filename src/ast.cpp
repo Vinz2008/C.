@@ -625,7 +625,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
     std::vector<std::unique_ptr<ExprAST>> BodyCopy;
-    TemplateTypes[Proto->template_name] = std::make_unique<TemplateType>(std::move(functionAST));
+    TemplateTypes[functionAST->Proto->template_name] = std::make_unique<TemplateType>(std::move(functionAST));
     return nullptr; // no generation of function because it is a template and will depend on the type
   }
   return functionAST;
