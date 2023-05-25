@@ -1,4 +1,3 @@
-include @std/libc.hpoint
 import @std/print.cpoint
 import @std/str.cpoint
 func main(){
