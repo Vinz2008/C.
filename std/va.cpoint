@@ -7,5 +7,6 @@ struct va_list {
 
 func printfmt_cpoint(format : i8 ptr ...){
     var va : struct va_list 
-    var comment : i8 ptr = "cpoint_internal_llvm_va_start(va)"
+    cpoint_internal_llvm_va_start(va)
+    cpoint_internal_llvm_va_end(va.gp_offset)
 }

@@ -387,8 +387,8 @@ Value *CallExprAST::codegen() {
     Callee = Callee.substr(internal_func_prefix.size(), Callee.size());
     Log::Info() << "internal function called " << Callee << "\n";
     if (Callee.rfind("llvm_", 0) == 0){
-      Log::Info() << "llvm intrisic called" << "\n";
-      Callee = Callee.substr(4, Callee.size());
+      Callee = Callee.substr(5, Callee.size());
+      Log::Info() << "llvm intrisic called " << Callee << "\n";
       llvm::Intrinsic::IndependentIntrinsics intrisicId;
       if (Callee == "va_start"){
         intrisicId = Intrinsic::vastart;
