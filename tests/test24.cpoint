@@ -1,4 +1,5 @@
 import @std/print.cpoint
+import @std/va.cpoint
 func main(){
     var test[10] : i8 ptr 
     test[0] = "test"
