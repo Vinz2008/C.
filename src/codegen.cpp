@@ -13,6 +13,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include <iostream>
 #include <map>
+#include <stack>
 #include <cstdarg>
 #include "ast.h"
 #include "lexer.h"
@@ -36,6 +37,8 @@ std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes; // the secon
 
 
 std::map<std::string, Function*> GeneratedFunctions;
+
+std::stack<BasicBlock*> blocksForBreak;
 
 extern std::map<std::string, int> BinopPrecedence;
 extern bool isInStruct;
@@ -908,17 +911,26 @@ Value* RedeclarationExprAST::codegen(){
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
+Value* BreakExprAST::codegen(){
+  Builder->SetInsertPoint(blocksForBreak.top());
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+}
+
 Value* LoopExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   if (is_infinite_loop || Array == nullptr){
     BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
     Builder->CreateBr(loopBB);
     Builder->SetInsertPoint(loopBB);
+    BasicBlock* afterBB = BasicBlock::Create(*TheContext, "after_loop_infinite", TheFunction);
+    blocksForBreak.push(afterBB);
     for (int i = 0; i < Body.size(); i++){
       if (!Body.at(i)->codegen())
         return nullptr;
     }
+    blocksForBreak.pop();
     Builder->CreateBr(loopBB);
+
     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
   } else {
     //return LogErrorV("Functionnality not finished to be implemented");
@@ -967,10 +979,12 @@ Value* LoopExprAST::codegen(){
     Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), TempValueArray, { zero, index}, "gep_loop_in");
     Value* value = Builder->CreateLoad(get_type_llvm(cpoint_type), ptr, VarName);
     Builder->CreateStore(value, TempValueArray);
+    blocksForBreak.push(AfterLoop);
     for (int i = 0; i < Body.size(); i++){
     if (!Body.at(i)->codegen())
       return nullptr;
     }
+    blocksForBreak.pop();
     Value* StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
     Value *CurrentPos = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "current_pos_loop_in");
     Value* NextPos = Builder->CreateFAdd(CurrentPos, StepVal, "nextpos_loop_in");
@@ -1015,6 +1029,8 @@ Value* WhileExprAST::codegen(){
     CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_while");
   BasicBlock *AfterBB =
       BasicBlock::Create(*TheContext, "afterloop_while", TheFunction);
+
+  blocksForBreak.push(AfterBB);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
   //Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
@@ -1022,6 +1038,7 @@ Value* WhileExprAST::codegen(){
     if (!Body.at(i)->codegen())
       return nullptr;
   }
+  blocksForBreak.pop();
   Builder->CreateBr(whileBB);
   Builder->SetInsertPoint(AfterBB);
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -1046,6 +1063,9 @@ Value *ForExprAST::codegen(){
     OldVal = NamedValues[VarName]->alloca_inst;
   }
   NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(double_type));
+  BasicBlock *AfterBB =
+      BasicBlock::Create(*TheContext, "afterloop", TheFunction);
+  blocksForBreak.push(AfterBB);
   /*PHINode *Variable = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, VarName);
   Variable->addIncoming(StartVal, PreheaderBB);
   Value *OldVal = NamedValues[VarName];
@@ -1054,6 +1074,7 @@ Value *ForExprAST::codegen(){
     if (!Body.at(i)->codegen())
       return nullptr;
   }
+  blocksForBreak.pop();
   Value *StepVal = nullptr;
   if (Step) {
     StepVal = Step->codegen();
@@ -1082,8 +1103,6 @@ Value *ForExprAST::codegen(){
 
   // Create the "after loop" block and insert it.
   //BasicBlock *LoopEndBB = Builder->GetInsertBlock();
-  BasicBlock *AfterBB =
-      BasicBlock::Create(*TheContext, "afterloop", TheFunction);
 
   // Insert the conditional branch into the end of LoopEndBB.
   Builder->CreateCondBr(EndCond, LoopBB, AfterBB);

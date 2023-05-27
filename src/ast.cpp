@@ -330,6 +330,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseGotoExpr();
   case tok_label:
     return ParseLabelExpr();
+  case tok_break:
+    return ParseBreakExpr();
   }
 }
 
@@ -816,6 +818,11 @@ std::unique_ptr<ExprAST> ParseReturn(){
   Log::Info() << "CurTok return after : " << CurTok << "\n";
   return std::make_unique<ReturnAST>(std::move(return_value));
   //return std::move(Result);
+}
+
+std::unique_ptr<ExprAST> ParseBreakExpr(){
+  getNextToken();
+  return std::make_unique<BreakExprAST>();
 }
 
 std::unique_ptr<ExprAST> ParseGotoExpr(){
