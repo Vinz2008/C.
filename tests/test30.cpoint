@@ -1,0 +1,5 @@
+import @std/va.cpoint
+
+func main(){
+    printfmt_cpoint("test %s", "hello world")
+}

@@ -1,5 +1,8 @@
-import @std/va.cpoint
+
+func test(){
+    2
+}
 
 func main(){
-    printfmt_cpoint("test %s", "hello world")
+    var p : int ptr = test
 }

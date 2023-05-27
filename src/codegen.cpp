@@ -34,6 +34,9 @@ std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes; // the second is temporary I will see what I will put (a AST node ? a class ?)
 //std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 
+
+std::map<std::string, Function*> GeneratedFunctions;
+
 extern std::map<std::string, int> BinopPrecedence;
 extern bool isInStruct;
 extern bool gc_mode;
@@ -139,6 +142,19 @@ Value *VariableExprAST::codegen() {
   // Look this variable up in the function.
   if (GlobalVariables[Name] != nullptr){
     return Builder->CreateLoad(get_type_llvm(type), GlobalVariables[Name]->globalVar, Name.c_str());
+  }
+  if (FunctionProtos[Name] != nullptr){
+    Log::Info() << "Using function pointer" << "\n";
+    std::vector<Type *> args;
+    for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){
+      args.push_back(get_type_llvm(FunctionProtos[Name]->Args.at(i).second));
+    }
+    Type* return_type = get_type_llvm(FunctionProtos[Name]->cpoint_type);
+    Log::Info() << "Created Function return type" << "\n";
+    FunctionType* functionType = FunctionType::get(return_type, args, FunctionProtos[Name]->is_variable_number_args);
+    Log::Info() << "Created Function type" << "\n";
+    return GeneratedFunctions[Name];
+    //return Builder->CreateLoad(functionType, FunctionProtos[Name]->codegen(), Name.c_str());
   }
   if (NamedValues[Name] == nullptr) {
   return LogErrorV("Unknown variable name %s", Name.c_str());
@@ -526,6 +542,7 @@ Function *PrototypeAST::codegen() {
     //}
   }
   FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(this->Name, this->Args, this->cpoint_type, this->IsOperator, this->Precedence, this->is_variable_number_args);
+  GeneratedFunctions[this->getName()] = F;
   return F;
 }
 
