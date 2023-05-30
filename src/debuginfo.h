@@ -14,5 +14,5 @@ struct DebugInfo {
 };
 
 
-DISubroutineType *CreateFunctionType(Cpoint_Type type, std::vector<std::pair<std::string, Cpoint_Type>> Args);
+DISubroutineType *DebugInfoCreateFunctionType(Cpoint_Type type, std::vector<std::pair<std::string, Cpoint_Type>> Args);
 

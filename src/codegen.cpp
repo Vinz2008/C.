@@ -577,7 +577,7 @@ Function *FunctionAST::codegen() {
   unsigned ScopeLine = 0;
   DISubprogram *SP = DBuilder->createFunction(
     FContext, P.getName(), StringRef(), Unit, LineNo,
-    CreateFunctionType(P.cpoint_type, P.Args),
+    DebugInfoCreateFunctionType(P.cpoint_type, P.Args),
     ScopeLine,
     DINode::FlagPrototyped,
     DISubprogram::SPFlagDefinition);

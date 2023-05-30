@@ -11,9 +11,24 @@ extern std::unique_ptr<IRBuilder<>> Builder;;
 
 extern struct DebugInfo CpointDebugInfo;
 
-DISubroutineType *CreateFunctionType(Cpoint_Type type, std::vector<std::pair<std::string, Cpoint_Type>> Args) {
+DIType *DebugInfo::getDoubleTy() {
+  if (DblTy)
+    return DblTy;
+  DblTy = DBuilder->createBasicType("double", 64, dwarf::DW_ATE_float);
+  return DblTy;
+}
+
+DIType* get_debuginfo_type(Cpoint_Type type){
+  switch (type.type){  
+  default:
+  case double_type:
+    return CpointDebugInfo.getDoubleTy();
+  }
+}
+
+DISubroutineType *DebugInfoCreateFunctionType(Cpoint_Type type, std::vector<std::pair<std::string, Cpoint_Type>> Args) {
   SmallVector<Metadata *, 8> EltTys;
-  DIType *DblTy = CpointDebugInfo.getDoubleTy(); // TODO : should create a function like get_llvm_type for debug info types
+  DIType *DblTy = get_debuginfo_type(type);
 
   // Add the result type.
   EltTys.push_back(DblTy);
@@ -24,13 +39,6 @@ DISubroutineType *CreateFunctionType(Cpoint_Type type, std::vector<std::pair<std
   return DBuilder->createSubroutineType(DBuilder->getOrCreateTypeArray(EltTys));
 }
 
-DIType *DebugInfo::getDoubleTy() {
-  if (DblTy)
-    return DblTy;
-
-  DblTy = DBuilder->createBasicType("double", 64, dwarf::DW_ATE_float);
-  return DblTy;
-}
 
 // Add to each class a location attribute for line and column position to create debug infos like in the Kaleidoscope tutorial 
 
@@ -46,3 +54,20 @@ void DebugInfo::emitLocation(Compiler_context context, bool pop_the_scope = fals
   Builder->SetCurrentDebugLocation(
       DILocation::get(Scope->getContext(), context.line_nb, context.col_nb, Scope));
 }
+
+
+void debugInfoCreateFunction(PrototypeAST &P, Function *TheFunction){
+  DIFile *Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
+                                      CpointDebugInfo.TheCU->getDirectory());
+  DIScope *FContext = Unit;
+  unsigned ScopeLine = 0; // add way to get file line from Prototype
+  unsigned LineNo = 0;
+  DISubprogram *SP = DBuilder->createFunction(
+    FContext, P.getName(), StringRef(), Unit, LineNo,
+    DebugInfoCreateFunctionType(P.cpoint_type, P.Args),
+    ScopeLine,
+    DINode::FlagPrototyped,
+    DISubprogram::SPFlagDefinition);
+  TheFunction->setSubprogram(SP);
+}
+
