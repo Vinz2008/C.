@@ -52,7 +52,7 @@ void DebugInfo::emitLocation(Compiler_context context, bool pop_the_scope = fals
   else
     Scope = LexicalBlocks.back();
   Builder->SetCurrentDebugLocation(
-      DILocation::get(Scope->getContext(), context.line_nb, context.col_nb, Scope));
+      DILocation::get(Scope->getContext(), context.loc.line_nb, context.loc.col_nb, Scope));
 }
 
 

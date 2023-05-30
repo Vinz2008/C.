@@ -333,10 +333,10 @@ int main(int argc, char **argv){
     temp_filename.append(".temp");
     if (import_mode){
     generate_file_with_imports(filename, temp_filename);
-    Log::Info() << "before remove line count because of import mode " << Comp_context->line_nb << " lines" << "\n";
+    Log::Info() << "before remove line count because of import mode " << Comp_context->loc.line_nb << " lines" << "\n";
     Log::Info() << "lines count to remove because of import mode " << modifier_for_line_count << "\n";
-    Comp_context->line_nb -= modifier_for_line_count*2; // don't know why there are 2 times too much increment so we need to make the modifier double
-    Log::Info() << "after remove line count because of import mode " << Comp_context->line_nb << " lines" << "\n";
+    Comp_context->loc.line_nb -= modifier_for_line_count*2; // don't know why there are 2 times too much increment so we need to make the modifier double
+    Log::Info() << "after remove line count because of import mode " << Comp_context->loc.line_nb << " lines" << "\n";
     filename = temp_filename;
     }
     std::error_code ec;
