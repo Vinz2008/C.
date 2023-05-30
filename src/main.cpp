@@ -51,7 +51,7 @@ bool std_mode = true;
 bool gc_mode = true;
 extern std::string IdentifierStr;
 bool debug_mode = false;
-
+bool debug_info_mode = false;
 
 bool errors_found = false;
 int error_count = 0;
@@ -280,6 +280,8 @@ int main(int argc, char **argv){
           asm_mode = true;
         } else if (arg.compare("-O") == 0){
           is_optimised = true;
+        } else if (arg.compare("-g") == 0){
+          debug_info_mode = true;
         } else if (arg.compare("-nostd") == 0){
           std_mode = false;
         } else if (arg.compare("-fPIC") == 0){

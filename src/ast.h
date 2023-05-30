@@ -13,16 +13,23 @@
 #include <memory>
 #include <vector>
 #include "types.h"
+#include "errors.h"
 
 using namespace llvm;
 
 #ifndef _AST_HEADER_
 #define _AST_HEADER_
 
+extern std::unique_ptr<Compiler_context> Comp_context; 
+
 class ExprAST {
 public:
+  ExprAST(Source_location loc = Comp_context->loc) : loc(loc) {}
+  Source_location loc;
   virtual ~ExprAST() = default;
   virtual Value *codegen() = 0;
+  int getLine() const { return loc.line_nb; }
+  int getCol() const { return loc.col_nb; }
 };
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".

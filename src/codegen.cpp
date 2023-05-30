@@ -46,6 +46,8 @@ extern bool gc_mode;
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
+extern bool debug_info_mode;
+
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
   if (auto *F = TheModule->getFunction(Name))
@@ -569,23 +571,30 @@ Function *FunctionAST::codegen() {
   // Create a new basic block to start insertion into.
   BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
   Builder->SetInsertPoint(BB);
-
+  DIFile *Unit;
+  DIScope *FContext;
+  DISubprogram *SP;
   unsigned LineNo = 0;
-  DIFile *Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
+  if (debug_info_mode){
+  Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
                                       CpointDebugInfo.TheCU->getDirectory());
-  DIScope *FContext = Unit;
+  FContext = Unit;
   unsigned ScopeLine = 0;
-  DISubprogram *SP = DBuilder->createFunction(
+  SP = DBuilder->createFunction(
     FContext, P.getName(), StringRef(), Unit, LineNo,
     DebugInfoCreateFunctionType(P.cpoint_type, P.Args),
     ScopeLine,
     DINode::FlagPrototyped,
     DISubprogram::SPFlagDefinition);
   TheFunction->setSubprogram(SP);
+  CpointDebugInfo.LexicalBlocks.push_back(SP);
+  CpointDebugInfo.emitLocation(nullptr);
+  }
 
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
   TemplateTypes.clear();
+  unsigned ArgIdx = 0;
   if (P.getName() == "main"){
     int i = 0;
     for (auto &Arg : TheFunction->args()){
@@ -596,6 +605,16 @@ Function *FunctionAST::codegen() {
         type = int_type;
       }
       AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), Cpoint_Type(type, false));
+      if (debug_info_mode){
+      debugInfoCreateParameterVariable(SP, Unit, Alloca, Arg, ArgIdx, LineNo);
+      }
+      /*DILocalVariable *D = DBuilder->createParameterVariable(
+      SP, Arg.getName(), ++ArgIdx, Unit, LineNo, CpointDebugInfo.getDoubleTy(),
+      true);
+
+      DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
+                          DILocation::get(SP->getContext(), LineNo, 0, SP),
+                          Builder->GetInsertBlock());*/
       Builder->CreateStore(&Arg, Alloca);
       NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(type, false));
       i++;
@@ -606,19 +625,18 @@ Function *FunctionAST::codegen() {
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
-
-    DILocalVariable *D = DBuilder->createParameterVariable(
-      SP, Arg.getName(), ++ArgIdx, Unit, LineNo, CpointDebugInfo.getDoubleTy(),
-      true);
-    DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
-                          DILocation::get(SP->getContext(), LineNo, 0, SP),
-                          Builder->GetInsertBlock());
-    
+    debugInfoCreateParameterVariable(SP, Unit, Alloca, Arg, ArgIdx, LineNo);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;
   }
   }
+  if (debug_info_mode){
+  for (int i = 0; i < Body.size(); i++){
+  CpointDebugInfo.emitLocation(Body.at(i).get());
+  }
+  }
+
   Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
   for (int i = 0; i < Body.size(); i++){
@@ -627,7 +645,7 @@ Function *FunctionAST::codegen() {
   if (RetVal) {
     // Finish off the function.
     Builder->CreateRet(RetVal);
-
+    CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
 
@@ -640,6 +658,9 @@ Function *FunctionAST::codegen() {
     std::string op = "";
     op += P.getOperatorName();
     BinopPrecedence.erase(op);
+  }
+  if (debug_info_mode){
+  CpointDebugInfo.LexicalBlocks.pop_back();
   }
   return nullptr;
 }
@@ -1047,6 +1068,7 @@ Value* WhileExprAST::codegen(){
 Value *ForExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
+  CpointDebugInfo.emitLocation(this);
   Value *StartVal = Start->codegen();
   if (!StartVal)
     return nullptr;
@@ -1226,6 +1248,7 @@ Value *VarExprAST::codegen() {
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type, struct_type_temp, struct_declaration_name_temp);
     Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
   }
+  CpointDebugInfo.emitLocation(this);
 
   // Codegen the body, now that all vars are in scope.
   /*Value *BodyVal = Body->codegen();
