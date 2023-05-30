@@ -415,6 +415,7 @@ int main(int argc, char **argv){
     pass.add(createGVNPass());
     pass.add(createCFGSimplificationPass());
     }
+    if (debug_info_mode){
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
                            DEBUG_METADATA_VERSION);
     if (Triple(sys::getProcessTriple()).isOSDarwin()){
@@ -424,11 +425,14 @@ int main(int argc, char **argv){
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", is_optimised, "", 0);
+    }
     if ((std_mode || explicit_with_gc) && gc_mode){
       add_externs_for_gc();
     }
     MainLoop();
+    if (debug_info_mode){
     DBuilder->finalize();
+    }
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
