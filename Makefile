@@ -94,7 +94,7 @@ install: std_lib
 
 
 run:
-	./cpoint -std ./std tests/test2.cpoint -no-gc
+	./$(OUTPUTBIN) -std ./std tests/test2.cpoint -no-gc
 
 clean: clean-build
 	make -C std/c_api clean
