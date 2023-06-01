@@ -248,7 +248,6 @@ Value* ArrayMemberExprAST::codegen() {
   Type* type_llvm = get_type_llvm(cpoint_type);
   Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
   Value* value = Builder->CreateLoad(type_llvm, ptr, ArrayName);
-  //Value* ptr = Builder->CreateGEP(double_type, ); //  TODO : make the code find the type of the array
   return value;
 }
 

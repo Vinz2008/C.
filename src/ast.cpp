@@ -232,8 +232,10 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     int TokPrec = 0;
     if (CurTok != tok_op_multi_char){
     TokPrec = GetTokPrecedence();
+    Log::Info() << "Tok Precedence not multi char : " << TokPrec << "\n";
     } else {
     TokPrec = getTokPrecedenceMultiChar(OpStringMultiChar);
+    Log::Info() << "Tok Precedence multi char " << OpStringMultiChar << " : " << TokPrec << "\n";
     }
 
     // If this is a binop that binds at least as tightly as the current binop,
@@ -269,7 +271,12 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 
     // If BinOp binds less tightly with RHS than the operator after RHS, let
     // the pending operator take RHS as its LHS.
-    int NextPrec = GetTokPrecedence();
+    int NextPrec = -1;
+    if (CurTok != tok_op_multi_char){
+    NextPrec = GetTokPrecedence();
+    } else {
+      NextPrec = getTokPrecedenceMultiChar(OpStringMultiChar);
+    }
     if (TokPrec < NextPrec) {
       RHS = ParseBinOpRHS(TokPrec + 1, std::move(RHS));
       if (!RHS)

@@ -353,6 +353,7 @@ int getNextToken() {
 }
 
 int GetTokPrecedence() {
+  Log::Info() << "CurTok in GetTokPrecedence : " << CurTok << "\n";
   if (!isascii(CurTok))
     return -1;
 
