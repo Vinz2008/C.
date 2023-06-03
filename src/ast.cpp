@@ -434,10 +434,13 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   if (CurTok == '<'){
     getNextToken();
     template_name = IdentifierStr;
+    getNextToken();
     if (CurTok != '>'){
       return LogErrorP("Missing '>' in template declaration");
     }
     getNextToken();
+    has_template = true;
+    Log::Info() << "Found template" << "\n";
   }
   if (CurTok != '(')
     return LogErrorP("Expected '(' in prototype");
@@ -633,9 +636,10 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   bool has_template = Proto->has_template;
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
-    std::vector<std::unique_ptr<ExprAST>> BodyCopy;
-    TemplateTypes[functionAST->Proto->template_name] = std::make_unique<TemplateType>(std::move(functionAST));
-    return nullptr; // no generation of function because it is a template and will depend on the type
+    std::string template_name = functionAST->Proto->template_name;
+    Log::Info() << "Added template : " << template_name << "\n";
+    TemplateTypes[template_name] = std::make_unique<TemplateType>(std::move(functionAST));
+    return nullptr; // no generation of function because it is a template and will depend on the type. Change to other value because nullptr causes to skip token
   }
   return functionAST;
 }

@@ -1,10 +1,7 @@
-import @std/print.cpoint
+func test<T>(){
+    0
+}
 
 func main(){
-    for i = 1, i < 10000, 1.0 {
-        if (i == 3){
-            break
-        }
-        printd(2)
-    }
+    test()
 }

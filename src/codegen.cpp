@@ -429,6 +429,14 @@ Value *CallExprAST::codegen() {
   Function *CalleeF = getFunction(Callee);
   if (!CalleeF)
     return LogErrorV("Unknown function referenced %s", Callee.c_str());
+  if (TemplateTypes[Callee] != nullptr){
+    std::string old_template_name = TemplateTypes[Callee]->functionAST->Proto->Name;
+    std::string function_temp_name = old_template_name + "_type";
+    TemplateTypes[Callee]->functionAST->Proto->Name = function_temp_name;
+    TemplateTypes[Callee]->functionAST->codegen();
+    Callee = function_temp_name;
+    TemplateTypes[Callee]->functionAST->Proto->Name = old_template_name;
+  }
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
   Log::Info() << "Args.size : " << Args.size() << "\n";
   if (FunctionProtos[Callee] == nullptr){

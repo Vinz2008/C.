@@ -28,7 +28,8 @@ public:
     bool is_class;
     std::string class_name;
     int nb_ptr;
-    Cpoint_Type(int type, bool is_ptr = false, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_class = false, const std::string& class_name = "", int nb_ptr = 0) : type(type), is_ptr(is_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_class(is_class), class_name(class_name) ,nb_ptr(nb_ptr) {}
+    bool is_template_type;
+    Cpoint_Type(int type, bool is_ptr = false, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_class = false, const std::string& class_name = "", int nb_ptr = 0, bool is_template_type = false) : type(type), is_ptr(is_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_class(is_class), class_name(class_name) ,nb_ptr(nb_ptr), is_template_type(is_template_type) {}
 };
 
 llvm::Type* get_type_llvm(Cpoint_Type cpoint_type);
