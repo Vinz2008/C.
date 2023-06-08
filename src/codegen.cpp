@@ -48,6 +48,11 @@ extern struct DebugInfo CpointDebugInfo;
 
 extern bool debug_info_mode;
 
+std::string struct_function_mangling(std::string struct_name, std::string name){
+  std::string mangled_name = struct_name + "__" + name;
+  return mangled_name;
+}
+
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
   if (auto *F = TheModule->getFunction(Name))
@@ -184,8 +189,18 @@ Value* StructMemberExprAST::codegen() {
     //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
     Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
     Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
-    if (StructDeclarations[NamedValues[StructName]->type.struct_name] == nullptr){
-      Log::Info() << "NULLPTR" << "\n";
+
+    bool is_function_call = false;
+    auto functions =  StructDeclarations[NamedValues[StructName]->type.struct_name]->functions;
+    for (int i = 0; i < functions.size(); i++){
+      if (functions.at(i) == MemberName){
+        is_function_call = true;
+      }
+    }
+    if (is_function_call){
+      std::vector<llvm::Value*> Args;
+      Function *F = getFunction(struct_function_mangling(StructName, MemberName));
+      return Builder->CreateCall(F, Args, "calltmp_struct"); 
     }
     auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
@@ -319,6 +334,7 @@ Type* StructDeclarAST::codegen(){
   structType->setName(Name);
   std::vector<Type*> dataTypes;
   std::vector<std::pair<std::string,Cpoint_Type>> members;
+  std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
     Type* var_type = get_type_llvm(*(VarExpr->cpoint_type));
@@ -327,11 +343,10 @@ Type* StructDeclarAST::codegen(){
     members.push_back(std::make_pair(VarName, *(VarExpr->cpoint_type)));
   }
   structType->setBody(dataTypes);
-  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members));
   Log::Info() << "added struct declaration name " << Name << " to StructDeclarations" << "\n";
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
-    std::string newNameFunc = "";
+    /*std::string newNameFunc = "";
     newNameFunc = Name;
     newNameFunc.append("__");
     Log::Info() << "FunctionExpr->Proto->Name : " << FunctionExpr->Proto->Name << "\n";
@@ -340,12 +355,23 @@ Type* StructDeclarAST::codegen(){
     newNameFunc.append("Constructor__Default");
     } else {
     newNameFunc.append(FunctionExpr->Proto->Name);
+    }*/
+    std::string function_name;
+    if (FunctionExpr->Proto->Name == Name){
+    // Constructor
+    function_name = "Constructor__Default";
+    } else {
+    function_name = FunctionExpr->Proto->Name;
     }
+
+    std::string mangled_name_function = struct_function_mangling(Name, function_name);
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", *get_cpoint_type_from_llvm(structType->getPointerTo()))); // TODO fix this by passing struct type pointer as first arg
-    FunctionExpr->Proto->Name = newNameFunc;
+    FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
+    functions.push_back(function_name);
     
   }
+  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
   return structType;
 }
 

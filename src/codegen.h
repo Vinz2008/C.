@@ -58,5 +58,6 @@ class StructDeclaration {
 public:
     llvm::Type* struct_type;
     std::vector<std::pair<std::string,Cpoint_Type>> members;
-    StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members) : struct_type(struct_type), members(std::move(members)) {}
+    std::vector<std::string> functions;
+    StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members, std::vector<std::string> functions) : struct_type(struct_type), members(std::move(members)), functions(std::move(functions)) {}
 };
