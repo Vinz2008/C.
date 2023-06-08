@@ -35,6 +35,7 @@ public:
     Struct(llvm::Type* struct_type, const std::string &struct_declaration_name) : struct_type(struct_type), struct_declaration_name(struct_declaration_name) {}
 };
 
+/*
 class ClassDeclaration {
 public:
     llvm::Type* class_type;
@@ -49,4 +50,13 @@ public:
     llvm::Type* struct_type;
     std::vector<std::pair<std::string,Cpoint_Type>> members;
     StructDeclaration(std::unique_ptr<StructDeclarAST> StructDeclar, llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members) : StructDeclar(std::move(StructDeclar)), struct_type(struct_type), members(std::move(members)) {}
+};
+*/
+
+
+class StructDeclaration {
+public:
+    llvm::Type* struct_type;
+    std::vector<std::pair<std::string,Cpoint_Type>> members;
+    StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members) : struct_type(struct_type), members(std::move(members)) {}
 };

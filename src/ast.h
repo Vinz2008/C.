@@ -93,13 +93,13 @@ public:
   Value *codegen() override;
 };
 
-class ClassMemberExprAST : public ExprAST {
+/*class ClassMemberExprAST : public ExprAST {
   std::string ClassName;
   std::string MemberName;
 public:
   ClassMemberExprAST(const std::string &ClassName, const std::string &MemberName) : ClassName(ClassName), MemberName(MemberName) {}
   Value *codegen() override;
-};
+};*/
 
 
 class ArrayMemberExprAST : public ExprAST {
@@ -169,6 +169,7 @@ public:
   Value *codegen() override;
 };
 
+/*
 class StructDeclarAST {
   std::string Name;
   std::vector<std::unique_ptr<VarExprAST>> Vars;
@@ -177,6 +178,16 @@ public:
     : Name(name), Vars(std::move(Vars)) {}
   Type* codegen();
 };
+
+class ClassDeclarAST {
+  std::string Name;
+  std::vector<std::unique_ptr<FunctionAST>> Functions;
+  std::vector<std::unique_ptr<VarExprAST>> Vars;
+public:
+  ClassDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
+    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
+  Type *codegen();
+};*/
 
 /// PrototypeAST - This class represents the "prototype" for a function,
 /// which captures its name, and its argument names (thus implicitly the number
@@ -215,6 +226,17 @@ public:
   Function *codegen();
 };
 
+class StructDeclarAST {
+  std::string Name;
+  std::vector<std::unique_ptr<FunctionAST>> Functions;
+  std::vector<std::unique_ptr<VarExprAST>> Vars;
+public:
+  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
+    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
+  Type *codegen();
+};
+
+
 
 class GlobalVariableAST {
 public:
@@ -233,17 +255,6 @@ public:
   std::string value_type;
   TypeDefAST(const std::string& new_type, const std::string& value_type) :  new_type(new_type), value_type(value_type) {}
   void codegen();
-};
-
-
-class ClassDeclarAST {
-  std::string Name;
-  std::vector<std::unique_ptr<FunctionAST>> Functions;
-  std::vector<std::unique_ptr<VarExprAST>> Vars;
-public:
-  ClassDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
-    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
-  Type *codegen();
 };
 
 class IfExprAST : public ExprAST {
@@ -333,7 +344,7 @@ std::unique_ptr<ExprAST> ParseStrExpr();
 std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<StructDeclarAST> ParseStruct();
-std::unique_ptr<ClassDeclarAST> ParseClass();
+//std::unique_ptr<ClassDeclarAST> ParseClass();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseSizeofExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();

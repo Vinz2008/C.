@@ -12,7 +12,7 @@ using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
-extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
+//extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector<std::string> typeDefTable;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
@@ -28,13 +28,13 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
         type = StructDeclarations[cpoint_type.struct_name]->struct_type;
-    } else if (cpoint_type.is_class){
+    } /*else if (cpoint_type.is_class){
         Log::Info() << "cpoint_type.class_name : " << cpoint_type.class_name << "\n";
         if (ClassDeclarations[cpoint_type.class_name] == nullptr){
             Log::Info() << "ClassDeclarations[cpoint_type.class_name] NULLPTR" << "\n";
         }
         type = ClassDeclarations[cpoint_type.class_name]->class_type;
-    } else {
+    }*/ else {
     switch (cpoint_type.type){
         default:
         case double_type:

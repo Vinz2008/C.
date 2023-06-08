@@ -162,13 +162,13 @@ static void HandleStruct() {
   }
 }
 
-static void HandleClass(){
+/*static void HandleClass(){
   if (auto classAST = ParseClass()){
     auto* classIR = classAST->codegen();
   } else {
     getNextToken();
   }
-}
+}*/
 
 static void MainLoop() {
   while (1) {
@@ -199,7 +199,8 @@ static void MainLoop() {
       HandleStruct();
       break;
     case tok_class:
-      HandleClass();
+      //HandleClass();
+      HandleStruct();
       break;
     case tok_var:
       HandleGlobalVariable();
