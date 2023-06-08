@@ -2,6 +2,12 @@
 
 A programming language compiler written in C++ which is definitely not finished. It compile the C. code to llvm ir.
 
+## Advantages
+
+- simple C-like language
+- blazingly fast compile times
+- predictable name-mangling
+
 ## Clone git repo
 
 To clone the git repo, run 
