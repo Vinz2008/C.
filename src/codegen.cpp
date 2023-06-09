@@ -677,7 +677,7 @@ Function *FunctionAST::codegen() {
       }
       AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), Cpoint_Type(type, false));
       if (debug_info_mode){
-      debugInfoCreateParameterVariable(SP, Unit, Alloca, Arg, ArgIdx, LineNo);
+      debugInfoCreateParameterVariable(SP, Unit, Alloca, Cpoint_Type(type, false), Arg, ArgIdx, LineNo);
       }
       /*DILocalVariable *D = DBuilder->createParameterVariable(
       SP, Arg.getName(), ++ArgIdx, Unit, LineNo, CpointDebugInfo.getDoubleTy(),
@@ -696,7 +696,7 @@ Function *FunctionAST::codegen() {
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
-    debugInfoCreateParameterVariable(SP, Unit, Alloca, Arg, ArgIdx, LineNo);
+    debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
     Builder->CreateStore(&Arg, Alloca);
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;

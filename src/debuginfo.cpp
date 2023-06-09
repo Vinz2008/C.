@@ -20,8 +20,26 @@ DIType *DebugInfo::getDoubleTy() {
   return DblTy;
 }
 
+DIType *DebugInfo::getIntTy() {
+  if (IntTy)
+    return IntTy;
+  IntTy = DBuilder->createBasicType("int", 32, dwarf::DW_ATE_signed);
+  return IntTy;
+}
+
+DIType *DebugInfo::getI8Ty() {
+  if (I8Ty)
+    return I8Ty;
+  I8Ty = DBuilder->createBasicType("i8", 8, dwarf::DW_ATE_signed_char);
+  return I8Ty;
+}
+
 DIType* get_debuginfo_type(Cpoint_Type type){
-  switch (type.type){  
+  switch (type.type){
+  case int_type:
+    return CpointDebugInfo.getIntTy();
+  case i8_type:
+    return CpointDebugInfo.getI8Ty();  
   default:
   case double_type:
     return CpointDebugInfo.getDoubleTy();
@@ -35,8 +53,10 @@ DISubroutineType *DebugInfoCreateFunctionType(Cpoint_Type type, std::vector<std:
   // Add the result type.
   EltTys.push_back(DblTy);
 
-  for (unsigned i = 0, e = Args.size(); i != e; ++i)
-    EltTys.push_back(DblTy);
+  for (unsigned i = 0; i < Args.size(); ++i){
+    EltTys.push_back(get_debuginfo_type(Args.at(i).second));
+    //EltTys.push_back(DblTy);
+  }
 
   return DBuilder->createSubroutineType(DBuilder->getOrCreateTypeArray(EltTys));
 }
@@ -90,10 +110,10 @@ void debugInfoCreateFunction(PrototypeAST &P, Function *TheFunction){
 
 
 
-void debugInfoCreateParameterVariable(DISubprogram *SP, DIFile *Unit, AllocaInst *Alloca, Argument& Arg, unsigned& ArgIdx, unsigned LineNo){
+void debugInfoCreateParameterVariable(DISubprogram *SP, DIFile *Unit, AllocaInst *Alloca, Cpoint_Type type, Argument& Arg, unsigned& ArgIdx, unsigned LineNo){
   if (debug_info_mode){
   DILocalVariable *D = DBuilder->createParameterVariable(
-      SP, Arg.getName(), ++ArgIdx, Unit, LineNo, CpointDebugInfo.getDoubleTy(),
+      SP, Arg.getName(), ++ArgIdx, Unit, LineNo, get_debuginfo_type(type),
       true);
 
   DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
