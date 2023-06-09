@@ -27,6 +27,8 @@ enum mode {
 std::string filename_config = "build.toml";
 std::vector<std::string> PathList;
 
+bool is_cross_compiling = false;
+
 void downloadDependencies(toml::v3::table config){
     auto github_dependencies = config["dependencies"]["github"];
     if (toml::array* arr = github_dependencies.as_array()){
@@ -88,10 +90,16 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
 void runCustomScripts(toml::v3::table& config){
     auto scripts = config["custom"]["scripts"];
     if (toml::array* arr = scripts.as_array()){
-        arr->for_each([](auto&& script){
+        arr->for_each([config](auto&& script){
             if constexpr (toml::is_string<decltype(script)>){
-                std::cout << "script : " << script << std::endl;
-                std::unique_ptr<ProgramReturn> returnScript = runCommand((std::string) script);
+                std::string cmd = (std::string)script;
+                if (is_cross_compiling){
+                std::cout << "cross-compiling : " << std::endl;
+                std::string target_cross_compiler = config["cross-compile"]["target"].value_or("");
+                cmd = "TARGET=" + target_cross_compiler + " " + (std::string)script;
+                }
+                std::cout << "script : " << cmd << std::endl;
+                std::unique_ptr<ProgramReturn> returnScript = runCommand(cmd);
                 std::cout << returnScript->buffer << std::endl;
             }
         });
@@ -112,8 +120,12 @@ void addCustomLinkableFiles(toml::v3::table& config){
 void runPrebuildCommands(toml::v3::table& config){
     auto commands = config["custom"]["prebuild_commands"];
     if (toml::array* arr = commands.as_array()){
-        arr->for_each([](auto&& cmd){
+        arr->for_each([config](auto&& cmd){
             if constexpr (toml::is_string<decltype(cmd)>){
+                if (is_cross_compiling){
+                std::string target_cross_compiler = config["cross-compile"]["target"].value_or("");
+                cmd = "TARGET=" + target_cross_compiler + " " + (std::string)cmd;
+                }
                 std::cout << "cmd : " << cmd << std::endl;
                 std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
                 std::cout << returnCmd->buffer << std::endl;
@@ -191,6 +203,7 @@ int main(int argc, char** argv){
         i++;
     } else if (arg == "cross-compile"){
         modeBuild = CROSS_COMPILE_MODE;
+        is_cross_compiling = true;
         i++;
     }
     }
@@ -246,14 +259,12 @@ int main(int argc, char** argv){
         }
         if (modeBuild != CROSS_COMPILE_MODE){
             downloadDependencies(config);
-            runPrebuildCommands(config);
         }
+        runPrebuildCommands(config);
         buildSubfolders(config, type, target, sysroot);
         buildFolder(src_folder, config, type, target, sysroot);
         runCustomScripts(config);
-        if (modeBuild != CROSS_COMPILE_MODE){
-            addCustomLinkableFiles(config);
-        }
+        addCustomLinkableFiles(config);
         if (type == "exe"){
         linkFiles(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "library"){

@@ -27,6 +27,8 @@ const char* get_type_string_from_type_libclang(CXType type){
             return "i8";
         case CXType_Pointer:
             return "int ptr";
+        case CXType_Void:
+            return "void";
         case CXType_LongDouble:
         case CXType_Double:
         default:
