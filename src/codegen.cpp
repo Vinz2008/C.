@@ -34,7 +34,7 @@ std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
 std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes; // the second is temporary I will see what I will put (a AST node ? a class ?)
 //std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
-
+std::vector<std::string> modulesNamesContext;
 
 std::map<std::string, Function*> GeneratedFunctions;
 
@@ -50,6 +50,11 @@ extern bool debug_info_mode;
 
 std::string struct_function_mangling(std::string struct_name, std::string name){
   std::string mangled_name = struct_name + "__" + name;
+  return mangled_name;
+}
+
+std::string module_function_mangling(std::string module_name, std::string function_name){
+  std::string mangled_name = module_name + "___" + function_name;
   return mangled_name;
 }
 
@@ -737,6 +742,10 @@ Function *FunctionAST::codegen() {
 }
 
 void TypeDefAST::codegen(){
+  return;
+}
+
+void ModAST::codegen(){
   return;
 }
 

@@ -1,0 +1,7 @@
+func test<T>(){
+    0
+}
+
+func main(){
+    test()
+}

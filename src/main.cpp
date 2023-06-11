@@ -69,6 +69,8 @@ bool last_line = false;
 
 extern int modifier_for_line_count;
 
+extern std::vector<std::string> modulesNamesContext;
+
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
   auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
@@ -136,10 +138,16 @@ static void HandleTopLevelExpression() {
 }
 
 static void HandleTypeDef(){
-  if (auto TypeDefAST = ParseTypeDef()){
-    TypeDefAST->codegen();
+  if (auto typeDefAST = ParseTypeDef()){
+    typeDefAST->codegen();
   } else {
     getNextToken();
+  }
+}
+
+static void HandleMod(){
+  if (auto modAST = ParseMod()){
+    modAST->codegen();
   }
 }
 
@@ -208,6 +216,9 @@ static void MainLoop() {
     case tok_typedef:
       HandleTypeDef();
       break;
+    case tok_mod:
+      HandleMod();
+      break;
     case '/':
       Log::Info() << "found single-line comment" << "\n";
       Log::Info() << "char found as a '/' : " << CurTok << "\n";
@@ -231,11 +242,17 @@ static void MainLoop() {
       }*/
       break;
     default:
+      bool is_in_module_context = CurTok == '}' && !modulesNamesContext.empty();
+      if (is_in_module_context){
+        modulesNamesContext.pop_back();
+        getNextToken();
+      } else {
       Log::Info() << "CurTok : " << CurTok << "\n";
       Log::Info() << "identifier : " << IdentifierStr << "\n";
       LogError("TOP LEVEL EXPRESSION FORBIDDEN");
       getNextToken();
       //HandleTopLevelExpression();
+      }
       break;
     }
   }

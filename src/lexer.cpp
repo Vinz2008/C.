@@ -237,6 +237,8 @@ static int gettok() {
       return tok_typedef;
     if (IdentifierStr == "break")
       return tok_break;
+    if (IdentifierStr == "mod")
+      return tok_mod;
     if (IdentifierStr == "true")
       return tok_true;
     if (IdentifierStr == "false")

@@ -2,6 +2,7 @@
 #include <iostream>
 #include <utility>
 #include <cstdarg>
+#include <stack>
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
@@ -28,6 +29,7 @@ extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
 extern std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes;
+extern std::vector<std::string> modulesNamesContext;
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
   vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args); // copy comp_context and not move it because it will be used multiple times
@@ -105,6 +107,14 @@ std::unique_ptr<LoopExprAST> LogErrorL(const char* Str, ...){
   return nullptr;
 }
 
+std::unique_ptr<ModAST> LogErrorM(const char* Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
+  return nullptr;
+}
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -130,6 +140,29 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string member = "";
   std::unique_ptr<ExprAST> indexAST = nullptr;
   bool is_array = false;
+  if (CurTok == ':'){
+    getNextToken();
+    if (CurTok != ':'){
+      return LogError("Invalid single ':'");
+    }
+    getNextToken();
+    std::string module_mangled_function_name = IdName;
+    while (CurTok == tok_identifier){
+      std::string second_part = IdentifierStr; 
+      getNextToken();
+      module_mangled_function_name = module_function_mangling(module_mangled_function_name, second_part);
+      if (CurTok != ':'){
+      break;
+      }
+      getNextToken();
+      if (CurTok != ':'){
+      return LogError("Invalid single ':'");
+      }
+      getNextToken();
+    }
+    IdName = module_mangled_function_name;
+    Log::Info() << "Mangled call function name : " << IdName << "\n";
+  }
   if (CurTok == '['){
     getNextToken();
     indexAST = ParseExpression();
@@ -519,6 +552,14 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   } else {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, false, 0, false, "", nb_ptr);
   }*/
+  if (!modulesNamesContext.empty()){
+    std::string module_mangled_function_name = FnName;
+    for (int i = 0; i < modulesNamesContext.size(); i++){
+      module_mangled_function_name = module_function_mangling(modulesNamesContext.at(i), module_mangled_function_name);
+    }
+    FnName = module_mangled_function_name;
+    Log::Info() << "mangled name is : " << FnName << "\n";
+  }
   return std::make_unique<PrototypeAST>(FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
 }
 
@@ -774,6 +815,18 @@ std::unique_ptr<TypeDefAST> ParseTypeDef(){
   types.push_back(new_type);
   typeDefTable.push_back(value_type);
   return std::make_unique<TypeDefAST>(new_type, value_type);
+}
+
+std::unique_ptr<ModAST> ParseMod(){
+  getNextToken();
+  std::string mod_name = IdentifierStr;
+  getNextToken();
+  if (CurTok != '{'){
+    return LogErrorM("missing '{' in mod");
+  }
+  getNextToken();
+  modulesNamesContext.push_back(mod_name);
+  return std::make_unique<ModAST>(mod_name);
 }
 
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){

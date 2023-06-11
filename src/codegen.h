@@ -61,3 +61,5 @@ public:
     std::vector<std::string> functions;
     StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members, std::vector<std::string> functions) : struct_type(struct_type), members(std::move(members)), functions(std::move(functions)) {}
 };
+
+std::string module_function_mangling(std::string module_name, std::string function_name);

@@ -257,6 +257,13 @@ public:
   void codegen();
 };
 
+class ModAST {
+public:
+  std::string mod_name;
+  ModAST(const std::string& mod_name) :  mod_name(mod_name) {}
+  void codegen();
+};
+
 class IfExprAST : public ExprAST {
   std::unique_ptr<ExprAST> Cond;
   std::vector<std::unique_ptr<ExprAST>> Then, Else;
@@ -357,6 +364,7 @@ std::unique_ptr<ExprAST> ParseBool(bool bool_value);
 std::unique_ptr<ExprAST> ParseCharExpr();
 std::unique_ptr<ExprAST> ParseLoopExpr();
 std::unique_ptr<ExprAST> ParseBreakExpr();
+std::unique_ptr<ModAST> ParseMod();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

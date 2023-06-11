@@ -28,6 +28,8 @@ int pos_line_file = 0;
 // will be negative
 int modifier_for_line_count = 0; 
 
+bool is_in_mod = false;
+
 class ArgVarImport {
     std::string name;
     int type;
@@ -196,6 +198,10 @@ void interpret_extern(std::string line, int& pos, int& pos_line){
     pos_line++;
 }
 
+void interpret_mod(std::string line, int& pos, int& pos_line){
+    // TODO : have better to detect mod blocks
+}
+
 
 // find funcs, structs, etc
 void find_patterns(std::string line, int nb_line, int& pos_line){
@@ -210,6 +216,8 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
         interpret_struct(line, pos, nb_line, pos_line);
     } else if (IdentifierStr == "extern"){
         interpret_extern(line, pos, pos_line);
+    } else if (IdentifierStr == "mod"){
+        interpret_mod(line, pos, pos_line);
     }
 }
 

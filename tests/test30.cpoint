@@ -1,7 +1,11 @@
-func test<T>(){
+import @std/utils.cpoint
+extern absolute_mod___absolute();
+mod test {
+func function(){
     0
 }
-
+}
 func main(){
-    test()
+    test::function()
+    absolute_mod::absolute()
 }

@@ -2,12 +2,14 @@ func average(x, y) int {
   return (x + y) * 0.5
 }
 
+mod absolute_mod {
 func absolute(v) int {
   if v < 0 { 
     0 - v 
   } else {
    return v
   }
+}
 }
 
 struct utilstest {
