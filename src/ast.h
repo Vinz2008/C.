@@ -214,6 +214,9 @@ public:
     return Name[Name.size() - 1];
   }
   unsigned getBinaryPrecedence() const { return Precedence; }
+  std::unique_ptr<PrototypeAST> clone(){
+    return std::make_unique<PrototypeAST>(Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
+  }
 };
 
 class FunctionAST {

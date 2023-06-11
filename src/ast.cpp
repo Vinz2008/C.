@@ -28,8 +28,10 @@ extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
-extern std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes;
+extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::vector<std::string> modulesNamesContext;
+
+bool is_template_parsing_definition = false;
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
   vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args); // copy comp_context and not move it because it will be used multiple times
@@ -731,11 +733,13 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken(); // eat }
   Log::Info() << "end of function" << "\n";
   bool has_template = Proto->has_template;
+  std::string FunctionName = Proto->Name;
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
     std::string template_name = functionAST->Proto->template_name;
     Log::Info() << "Added template : " << template_name << "\n";
-    TemplateTypes[template_name] = std::make_unique<TemplateType>(std::move(functionAST));
+    TemplateProtos[FunctionName] = std::make_unique<TemplateProto>(std::move(functionAST), template_name);
+    is_template_parsing_definition = true;
     return nullptr; // no generation of function because it is a template and will depend on the type. Change to other value because nullptr causes to skip token
   }
   return functionAST;

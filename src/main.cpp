@@ -43,6 +43,7 @@ int return_status = 0;
 
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern std::vector<std::string> PackagesAdded;
+extern bool is_template_parsing_definition;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
@@ -92,15 +93,17 @@ void add_externs_for_gc(){
 
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
-    if (auto *FnIR = FnAST->codegen()) {
+	if (auto *FnIR = FnAST->codegen()) {
     Log::Info() << "Parsed a function definition." << "\n";
     //fprintf(stderr, "Parsed a function definition.\n");
     //FnIR->print(*file_out_ostream);
     //fprintf(stderr, "\n");
     }
   } else {
+    if (!is_template_parsing_definition){
     // Skip token for error recovery.
     getNextToken();
+    }
   }
 }
 

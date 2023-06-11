@@ -32,7 +32,7 @@ std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 //std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 
-std::map<std::string, std::unique_ptr<TemplateType>> TemplateTypes; // the second is temporary I will see what I will put (a AST node ? a class ?)
+std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos; // the second is temporary I will see what I will put (a AST node ? a class ?)
 //std::map<std::string, std::unique_ptr<Struct>> StructsDeclared;
 std::vector<std::string> modulesNamesContext;
 
@@ -496,15 +496,17 @@ Value *CallExprAST::codegen() {
     }
   }
   Function *CalleeF = getFunction(Callee);
-  if (!CalleeF)
+  bool is_function_template = TemplateProtos[Callee] != nullptr;
+  Log::Info() << "is_function_template : " << is_function_template << "\n";
+  if (!CalleeF && !is_function_template)
     return LogErrorV("Unknown function referenced %s", Callee.c_str());
-  if (TemplateTypes[Callee] != nullptr){
-    std::string old_template_name = TemplateTypes[Callee]->functionAST->Proto->Name;
+  if (TemplateProtos[Callee] != nullptr){
+    std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
     std::string function_temp_name = old_template_name + "_type";
-    TemplateTypes[Callee]->functionAST->Proto->Name = function_temp_name;
-    TemplateTypes[Callee]->functionAST->codegen();
+    TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
+    TemplateProtos[Callee]->functionAST->codegen();
     Callee = function_temp_name;
-    TemplateTypes[Callee]->functionAST->Proto->Name = old_template_name;
+    TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;
   }
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
   Log::Info() << "Args.size : " << Args.size() << "\n";
@@ -630,7 +632,7 @@ Function *PrototypeAST::codegen() {
 Function *FunctionAST::codegen() {
   auto &P = *Proto;
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
-  FunctionProtos[Proto->getName()] = std::move(Proto);
+  FunctionProtos[Proto->getName()] = Proto->clone();
   // First, check for an existing function from a previous 'extern' declaration.
   Function *TheFunction = getFunction(P.getName());
   /*if (!TheFunction)
@@ -669,7 +671,7 @@ Function *FunctionAST::codegen() {
 
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
-  TemplateTypes.clear();
+  // clean the map for Template types
   unsigned ArgIdx = 0;
   if (P.getName() == "main"){
     int i = 0;
