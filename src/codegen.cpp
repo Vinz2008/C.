@@ -853,6 +853,7 @@ Value* LabelExprAST::codegen(){
 }
 
 Value* RedeclarationExprAST::codegen(){
+  // TODO move this from a AST node to an operator 
   Log::Info() << "REDECLARATION CODEGEN" << "\n";
   Log::Info() << "VariableName " << VariableName << "\n";
   bool is_object = false;

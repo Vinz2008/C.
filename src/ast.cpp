@@ -172,7 +172,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       return LogError("Couldn't find index for array %s", IdName.c_str()); 
     }
     if (CurTok != ']'){
-      return LogError("Missing '['"); 
+      return LogError("Missing ']'"); 
     }
     getNextToken();
     is_array = true;
