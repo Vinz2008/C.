@@ -7,13 +7,16 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
+- less than 500 KB stripped, ≈10MB not stripped
+- classes support
+- goto support
 
 ## Clone git repo
 
 To clone the git repo, run 
 
 ```
-git clone --recurse-submodules
+git clone --recurse-submodules https://github.com/Vinz2008/C.
 ```
 
 ## WASM support
