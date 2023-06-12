@@ -21,7 +21,7 @@ import @std/print.cpoint
 import @std/str.cpoint
 
 func main(){
-    var string : struct str = createString("hello world")
+    var string : struct str = String::create("hello world")
     printstring(string)
 }
 ```

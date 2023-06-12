@@ -198,8 +198,38 @@ void interpret_extern(std::string line, int& pos, int& pos_line){
     pos_line++;
 }
 
-void interpret_mod(std::string line, int& pos, int& pos_line){
-    // TODO : have better to detect mod blocks
+void find_patterns(std::string line, int nb_line, int& pos_line);
+
+int nb_of_opened_braces;
+bool first_mod_opened = false;
+
+void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
+    // TODO : have better parsing to detect mod blocks
+    //return;
+    out_file << '\n' << line;
+    pos_line++;
+    if (!first_mod_opened){
+        first_mod_opened = true;
+    } else {
+        nb_of_opened_braces = 0;
+    }
+    while (std::getline(imported_file, line)){
+        Log::Imports_Info() << line << "\n";
+        if (line.find('{') != std::string::npos){
+            Log::Imports_Info() << "line mod contains {" << "\n";
+            nb_of_opened_braces++;
+        }
+        if (line.find('}') != std::string::npos){
+            nb_of_opened_braces--;
+        }
+        Log::Imports_Info() << "nb_of_opened_braces : " << nb_of_opened_braces << "\n";
+        if (line == "}" && nb_of_opened_braces == -1){
+            Log::Imports_Info() << "close mod block" << "\n";
+            out_file << '\n' << line;
+            break;
+        }
+        find_patterns(line, nb_line, pos_line);
+    }
 }
 
 
@@ -217,7 +247,7 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
     } else if (IdentifierStr == "extern"){
         interpret_extern(line, pos, pos_line);
     } else if (IdentifierStr == "mod"){
-        interpret_mod(line, pos, pos_line);
+        interpret_mod(line, pos, nb_line, pos_line);
     }
 }
 

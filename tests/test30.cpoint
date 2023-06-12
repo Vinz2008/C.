@@ -1,5 +1,4 @@
 import @std/utils.cpoint
-extern absolute_mod___absolute();
 mod test {
 func function(){
     0
@@ -7,5 +6,6 @@ func function(){
 }
 func main(){
     test::function()
-    absolute_mod::absolute()
+    std::utils::absolute(1)
+    std::utils::average(1, 2)
 }

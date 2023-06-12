@@ -11,13 +11,15 @@ struct str {
     var factor : int
 }
 
-func createString(string : i8 ptr) struct str ptr {
+mod String {
+func create(string : i8 ptr) struct str ptr {
     var s : struct str ptr
     var i : double = sizeof int
     s = gc_malloc(i * 5)
     s.pointer = gc_strdup(string)
     s.len = strlen(s.pointer)
     s
+}
 }
 
 func printstring(string : struct str) {

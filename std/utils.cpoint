@@ -1,8 +1,9 @@
+mod std {
+mod utils {
 func average(x, y) int {
   return (x + y) * 0.5
 }
 
-mod absolute_mod {
 func absolute(v) int {
   if v < 0 { 
     0 - v 
@@ -15,4 +16,5 @@ func absolute(v) int {
 struct utilstest {
   var a : i8
   var b : i8
+}
 }

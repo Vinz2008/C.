@@ -556,7 +556,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   }*/
   if (!modulesNamesContext.empty()){
     std::string module_mangled_function_name = FnName;
-    for (int i = 0; i < modulesNamesContext.size(); i++){
+    for (int i = modulesNamesContext.size()-1; i >= 0; i--){
       module_mangled_function_name = module_function_mangling(modulesNamesContext.at(i), module_mangled_function_name);
     }
     FnName = module_mangled_function_name;

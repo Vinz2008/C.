@@ -1,8 +1,8 @@
 import @std/print.cpoint
 import @std/str.cpoint
 func main(){
-  var s : struct str = createString("aa")
-  var s2 = createString("abc")
+  var s : struct str = String::create("aa")
+  var s2 = String::create("abc")
   printstring(s)
   printi(lenstr(s))
   printstring(s2)

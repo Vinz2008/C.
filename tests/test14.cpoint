@@ -1,11 +1,11 @@
 import @std/print.cpoint
 import @std/file.cpoint
 func main(){
-    var fd : int = openfile("test_io.txt")
+    var fd : int = file::open("test_io.txt")
     printstr("fd : ")
     printi(fd)
-    var out : int = writefile(fd, "test hello world\n")
+    var out : int = file::write(fd, "test hello world\n")
     printstr("write output")
     printi(out)
-    closefile(fd)
+    file::close(fd)
 }
