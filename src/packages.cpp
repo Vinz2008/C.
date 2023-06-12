@@ -4,6 +4,7 @@
 #include "packages.h"
 #include "config.h"
 #include "log.h"
+#include "cli.h"
 
 std::vector<std::string> PackagesAdded;
 
@@ -15,8 +16,9 @@ int download_package_github(std::string username, std::string reponame){
     std::string cmd_clean = "rm -rf " DEFAULT_PACKAGE_PATH;
     cmd_clean.append("/");
     cmd_clean.append(reponame);
-    FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
-    pclose(pipe_clean);
+    /*FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+    pclose(pipe_clean);*/
+    runCommand(cmd_clean);
     std::string cmd = "git clone https://github.com/";
     cmd.append(username);
     cmd.append("/");
@@ -24,13 +26,15 @@ int download_package_github(std::string username, std::string reponame){
     cmd.append(" " DEFAULT_PACKAGE_PATH);
     cmd.append("/");
     cmd.append(reponame);
-    FILE* pipe = popen(cmd.c_str(), "r");
+    /*FILE* pipe = popen(cmd.c_str(), "r");
     char* out = (char*)malloc(10000 * sizeof(char));
     fread(out, 1, 10000, pipe);
     std::string out_cpp = out;
     std::cout << out_cpp << std::endl;
     pclose(pipe);
-    free(out);
+    free(out);*/
+    auto out = runCommand(cmd);
+    std::cout << out->buffer << std::endl;
     return 0;
 }
 
@@ -38,20 +42,19 @@ int download_package_github(std::string username, std::string reponame){
 int build_package(std::string path){
     Log::Build_Info() << "Building package at " << path << "\n";
 
-
     std::string cmd_build = "cd " + path + " && ";
     cmd_build += "cpoint-build build";
 
-
-
     std::string cmd = "make -C ";
     cmd.append(path);
-    FILE* pipe = popen(cmd_build.c_str(), "r");
+    /*FILE* pipe = popen(cmd_build.c_str(), "r");
     char* out = (char*)malloc(100000 * sizeof(char));
     fread(out, 1, 100000, pipe);
     std::string out_cpp = out;
     std::cout << out_cpp << std::endl;
     pclose(pipe);
-    free(out);
+    free(out);*/
+    auto out = runCommand(cmd_build);
+    std::cout << out->buffer << std::endl;
     return 0;
 }

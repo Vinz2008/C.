@@ -4,6 +4,7 @@
 #include <vector>
 #include "config.h"
 #include "utils.h"
+#include "cli.h"
 
 
 using namespace std;
@@ -21,7 +22,7 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     if (debug_mode){
     cout << "cmd clean : " << cmd_clean << endl;
     }
-    FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+    /*FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
     if (verbose_std_build){
     char* out_clean = (char*)malloc(1000 * sizeof(char));
 	fread(out_clean, 1, 1000, pipe_clean);
@@ -29,7 +30,11 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     cout << out_cpp_clean << endl;
     free(out_clean);
     }
-    pclose(pipe_clean);
+    pclose(pipe_clean);*/
+    auto out_clean = runCommand(cmd_clean);
+    if (verbose_std_build){
+    cout << out_clean->buffer << endl;
+    }
     int retcode = -1;
 
     string cmd = "TARGET=";
@@ -39,6 +44,7 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     if (debug_mode){
     cout << "cmd : " << cmd << endl;
     }
+    /*
     FILE* pipe = popen(cmd.c_str(), "r");
     if (verbose_std_build){
     char* out = (char*)malloc(10000000 * sizeof(char));
@@ -49,8 +55,11 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     }
     free(out);
     }
-    retcode = pclose(pipe);
+    retcode = pclose(pipe);*/
+    auto out = runCommand(cmd);
+    retcode = out->exit_status;
     if (verbose_std_build){
+    cout << out->buffer << endl;
     cout << "retcode : " << retcode << endl;
     }
     return retcode;
@@ -69,43 +78,51 @@ int build_gc(string path, string target_triplet){
     std::string complete_string_path = realpath(prefix_path.c_str(), NULL);
     cmd_configure.append(complete_string_path);
     cout << "cmd_configure : " << cmd_configure << endl;
-    FILE* pipe_configure = popen(cmd_configure.c_str(), "r");
+    /*FILE* pipe_configure = popen(cmd_configure.c_str(), "r");
     char* out_configure = (char*)malloc(10000000 * sizeof(char));
 	fread(out_configure, 1, 10000000, pipe_configure);
     string out_configure_cpp = out_configure;
     cout << out_configure_cpp << endl;
     free(out_configure);
-    pclose(pipe_configure);
+    pclose(pipe_configure);*/
+    auto out_configure = runCommand(cmd_configure);
+    cout << out_configure->buffer << endl;
     } else {
         std::string cmd_clean = "make -C ";
         cmd_clean.append(path);
         cmd_clean.append(" clean");
-        FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
+        /*FILE* pipe_clean = popen(cmd_clean.c_str(), "r");
         char* out_clean = (char*)malloc(10000000 * sizeof(char));
 	    fread(out_clean, 1, 10000000, pipe_clean);
         string out_clean_cpp = out_clean;
         cout << out_clean_cpp << endl;
-        pclose(pipe_clean);
+        pclose(pipe_clean);*/
+        auto out_clean = runCommand(cmd_clean);
+        cout << out_clean->buffer << endl;
     }
     std::string cmd_make = "make -C ";
     cmd_make.append(path);
     cout << "cmd_make : " << cmd_make << endl;
-    FILE* pipe_make = popen(cmd_make.c_str(), "r");
+    /*FILE* pipe_make = popen(cmd_make.c_str(), "r");
     char* out = (char*)malloc(10000000 * sizeof(char));
 	fread(out, 1, 10000000, pipe_make);
     string out_cpp = out;
     cout << out_cpp << endl;
     free(out);
-    pclose(pipe_make);
+    pclose(pipe_make);*/
+    auto out = runCommand(cmd_make);
+    cout << out->buffer << endl;
     std::string cmd_install = cmd_make;
     cmd_install.append(" install");
     cout << "cmd_install : " << cmd_install << endl;
-    FILE* pipe_install = popen(cmd_install.c_str(), "r");
+    /*FILE* pipe_install = popen(cmd_install.c_str(), "r");
     char* out_install = (char*)malloc(10000000 * sizeof(char));
 	fread(out_install, 1, 10000000, pipe_install);
     string out_install_cpp = out_install;
     cout << out_install_cpp << endl;
-    pclose(pipe_install);
+    pclose(pipe_install);*/
+    auto out_install = runCommand(cmd_install);
+    cout << out_install->buffer << endl;
     std::cout << "end build gc" << std::endl;
     return 0;
 }
@@ -130,8 +147,10 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     if (debug_mode){
     cout << "cmd : " << cmd << endl;
     }
-    FILE* pipe = popen(cmd.c_str(), "r");
-    retcode = pclose(pipe);
+    /*FILE* pipe = popen(cmd.c_str(), "r");
+    retcode = pclose(pipe);*/
+    auto out = runCommand(cmd);
+    retcode = out->exit_status;
     if (debug_mode){
     cout << "retcode : " << retcode << endl;
     }
