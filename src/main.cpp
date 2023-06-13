@@ -471,11 +471,14 @@ int main(int argc, char **argv){
     auto CPU = "generic";
     auto Features = "";
     TargetOptions opt;
-    llvm::Optional<llvm::Reloc::Model> RM;
+    //llvm::Optional<llvm::Reloc::Model> RM;
+    auto RM = std::optional<Reloc::Model>();
     if (PICmode){
-      RM = Optional<Reloc::Model>(Reloc::Model::PIC_);
+      //RM = Optional<Reloc::Model>(Reloc::Model::PIC_);
+      RM = std::optional<Reloc::Model>(Reloc::Model::PIC_);
     } else {
-      RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
+      //RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
+      RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
     }
     auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
