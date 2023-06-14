@@ -29,4 +29,4 @@ clean: clean-build
 	rm -f $(OUTPUTBIN)
 
 run:
-	./$(OUTPUTBIN) example.h
+	./$(OUTPUTBIN) example.h example2.h -m

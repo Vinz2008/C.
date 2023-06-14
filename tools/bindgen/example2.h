@@ -1,5 +1,5 @@
 //#include <stdio.h>
-#define hello_world "hello world"
+#define hello_world2 "hello world"
 #define a(b) b + 2
 char test5(char* test_str);
 double test6(int number);
