@@ -1306,7 +1306,7 @@ Value *VarExprAST::codegen() {
     std::string struct_declaration_name_temp = "";
     if (cpoint_type->is_struct){
       if (StructDeclarations[cpoint_type->struct_name] == nullptr){
-        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type->struct_name);
+        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type->struct_name.c_str());
       }
       struct_type_temp = StructDeclarations[cpoint_type->struct_name]->struct_type;
       struct_declaration_name_temp = cpoint_type->struct_name;
