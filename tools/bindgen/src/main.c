@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <clang-c/Index.h>
+#include "macros.h"
 
 FILE* outf;
 bool in_function_declaration = false;
@@ -13,6 +14,7 @@ bool pass_block = false;
 bool is_in_typedef = false;
 bool is_variable_number_args = false;
 CXType return_type;
+
 const char* get_type_string_from_type_libclang(CXType type){
     printf("get_type  type enum : %d\n", type.kind);
     switch(type.kind){
@@ -97,7 +99,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             }
             close_previous_blocks();
             CXString clangstr_struct_name = clang_getCursorSpelling(cursor);
-            char* struct_name = clang_getCString(clangstr_struct_name);
+            const char* struct_name = clang_getCString(clangstr_struct_name);
             if (strlen(struct_name) != 0){
             printf("struct name : %s\n", struct_name);
             printf("struct name length : %ld\n", strlen(struct_name));
@@ -120,14 +122,14 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
         case CXCursor_TypedefDecl:
             close_previous_blocks();
             CXString clangstr_new_type_name = clang_getCursorSpelling(cursor);
-            char* new_type_name = clang_getCString(clangstr_new_type_name);
+            const char* new_type_name = clang_getCString(clangstr_new_type_name);
             CXType value_type_clang = clang_getTypedefDeclUnderlyingType(cursor);
             is_in_typedef = true;
             if (value_type_clang.kind == CXType_Elaborated){
                 clang_disposeString(clangstr_new_type_name);
                 break;
             }
-            char* value_type_name = get_type_string_from_type_libclang(value_type_clang);
+            const char* value_type_name = get_type_string_from_type_libclang(value_type_clang);
             printf("typedef from %s to %s\n", new_type_name, value_type_name);
             fprintf(outf, "type %s %s;\n", new_type_name, value_type_name);
             clang_disposeString(clangstr_new_type_name);
@@ -166,15 +168,17 @@ int main(int argc, char** argv){
         exit(1);
     }
     char* outfile = "bindings.cpoint";
-    char* filename = argv[1];
     char** filenames = malloc(sizeof(char*) * argc-1);
     int filenames_length = 0;
+    bool macro_mode = false;
     for (int i = 1; i < argc; i++){
         printf("%d : %s\n", i, argv[i]);
         if (strcmp("-o", argv[i]) == 0){
             i++;
             outfile = argv[i];
             printf("%d : %s\n", i, argv[i]);
+        } else if (strcmp("-m", argv[i]) == 0){
+            macro_mode = true;
         } else {
             filenames[i-1] = argv[i];
             filenames_length++;
@@ -182,15 +186,13 @@ int main(int argc, char** argv){
     }
     outf = fopen(outfile, "w");
 
-
     for (int i = 0; i < filenames_length; i++){
+        if (macro_mode){
+            generateMacroBindings(filenames[i]);
+        }
         generateBindings(filenames[i]);
     }
-    /*if (cursorKind == CXCursor_ParmDecl){
-        fprintf(outf, ");\n");
-    } else if (cursorKind == CXCursor_FieldDecl){
-        fprintf(outf, "}\n");
-    }*/
+
     fclose(outf);
     free(filenames);
 }
