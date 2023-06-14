@@ -77,7 +77,6 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(clangstr_function_name);
             break;
         case CXCursor_ParmDecl:
-	    {
             CXType param_type = clang_getCursorType(cursor);
             CXString clangstr_param_type_name = clang_getTypeSpelling(param_type);
             printf("type param : %s\n", clang_getCString(clangstr_param_type_name));
@@ -92,7 +91,6 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(clangstr_param_type_name);
             clang_disposeString(clangstr_param_name);
             break;
-	    }
         case CXCursor_StructDecl:
             if (is_in_typedef){
                 break;
@@ -111,7 +109,6 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(clangstr_struct_name);
             break;
         case CXCursor_FieldDecl:
-	    {
             CXType field_type = clang_getCursorType(cursor);
             if (!pass_block && is_in_typedef == false){
             CXString clangstr_var_name = clang_getCursorSpelling(cursor);
@@ -120,7 +117,6 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(clangstr_var_name);
             }
             break;
-	    }
         case CXCursor_TypedefDecl:
             close_previous_blocks();
             CXString clangstr_new_type_name = clang_getCursorSpelling(cursor);

@@ -793,8 +793,7 @@ Value *IfExprAST::codegen() {
   ThenBB = Builder->GetInsertBlock();
   Value *ElseV = nullptr;
   // Emit else block.
-  //TheFunction->getBasicBlockList().push_back(ElseBB);
-  TheFunction->insert(TheFunction->end(), ElseBB);
+  TheFunction->getBasicBlockList().push_back(ElseBB);
   Builder->SetInsertPoint(ElseBB);
   if (!Else.empty()){
   for (int i = 0; i < Else.size(); i++){
@@ -811,8 +810,7 @@ Value *IfExprAST::codegen() {
   ElseBB = Builder->GetInsertBlock();
 
   // Emit merge block.
-  //TheFunction->getBasicBlockList().push_back(MergeBB);
-  TheFunction->insert(TheFunction->end(), MergeBB);
+  TheFunction->getBasicBlockList().push_back(MergeBB);
   Builder->SetInsertPoint(MergeBB);
   PHINode *PN = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, "iftmp");
 
@@ -1308,7 +1306,7 @@ Value *VarExprAST::codegen() {
     std::string struct_declaration_name_temp = "";
     if (cpoint_type->is_struct){
       if (StructDeclarations[cpoint_type->struct_name] == nullptr){
-        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type->struct_name.c_str());
+        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type->struct_name);
       }
       struct_type_temp = StructDeclarations[cpoint_type->struct_name]->struct_type;
       struct_declaration_name_temp = cpoint_type->struct_name;
