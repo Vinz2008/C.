@@ -46,7 +46,8 @@ void close_previous_blocks(){
         }
         fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
         in_function_declaration = false;
-    } else if (in_struct_declaration && !pass_block){
+    } else if (in_struct_declaration && !pass_block && !is_in_typedef){
+        printf("closing struct so not passing block\n");
         fprintf(outf,"}\n");
         in_struct_declaration = false;
     }
@@ -55,7 +56,7 @@ void close_previous_blocks(){
     is_variable_number_args = false;
 }
 
-// TODO : verify if function paramaters or other identifier are empty name so they are given default name
+// TODO : verify if function parameters or other identifier are empty name so they are given default name
 
 enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClientData client_data){
     cursorKind = clang_getCursorKind(cursor);
@@ -79,6 +80,9 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(clangstr_function_name);
             break;
         case CXCursor_ParmDecl:
+            if (!in_function_declaration){
+                break;
+            }
             CXType param_type = clang_getCursorType(cursor);
             CXString clangstr_param_type_name = clang_getTypeSpelling(param_type);
             printf("type param : %s\n", clang_getCString(clangstr_param_type_name));
@@ -97,14 +101,16 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             if (is_in_typedef){
                 break;
             }
-            close_previous_blocks();
             CXString clangstr_struct_name = clang_getCursorSpelling(cursor);
             const char* struct_name = clang_getCString(clangstr_struct_name);
             if (strlen(struct_name) != 0){
+            printf("struct closing previous blocks\n");
+            close_previous_blocks();
             printf("struct name : %s\n", struct_name);
             printf("struct name length : %ld\n", strlen(struct_name));
             fprintf(outf, "struct %s {\n", struct_name);
             } else {
+                printf("passing block\n");
                 pass_block = true;
             }
             in_struct_declaration = true;
@@ -112,7 +118,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             break;
         case CXCursor_FieldDecl:
             CXType field_type = clang_getCursorType(cursor);
-            if (!pass_block && is_in_typedef == false){
+            if (!pass_block && !is_in_typedef){
             CXString clangstr_var_name = clang_getCursorSpelling(cursor);
             fprintf(outf, "\tvar %s", clang_getCString(clangstr_var_name));
             fprintf(outf, " : %s \n", get_type_string_from_type_libclang(field_type));
@@ -152,7 +158,9 @@ void generateBindings(char* path){
     CXCursor cursor = clang_getTranslationUnitCursor(unit);
     clang_visitChildren(cursor, cursorVisitor, NULL);
     if (cursorKind == CXCursor_FieldDecl){
+        if (!pass_block){
         fprintf(outf, "}\n");
+        }
         in_struct_declaration = false;
     } else {
         fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));

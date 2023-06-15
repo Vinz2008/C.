@@ -194,7 +194,7 @@ after_while:
 }
 
 void interpret_extern(std::string line, int& pos, int& pos_line){
-    out_file << line;
+    out_file << line << "\n";
     pos_line++;
 }
 
