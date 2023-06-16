@@ -18,3 +18,6 @@ extern close(fd : int) int;
 extern malloc(size : int) void ptr;
 extern strdup(s : i8 ptr) i8 ptr;
 extern strlen(str : i8 ptr) int;
+extern remove(path : i8 ptr) int;
+extern realpath(path : i8 ptr, resolved_path : i8 ptr) i8 ptr;
+extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) int;

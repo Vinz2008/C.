@@ -1,5 +1,6 @@
 import @std/print.cpoint
 import @std/file.cpoint
+
 func main(){
     var fd : int = file::open("test_io.txt")
     printstr("fd : ")
@@ -8,4 +9,7 @@ func main(){
     printstr("write output")
     printi(out)
     file::close(fd)
+    var path = file::canonicalize("../tests")
+    printstr(path)
+    file::symlink("test14.cpoint", "symlinked_test14.cpoint.temp")
 }

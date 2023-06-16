@@ -18,4 +18,18 @@ func close(fd : int){
     close(fd)
 }
 
+func remove(path : i8 ptr) int {
+    remove(path)
+}
+
+func canonicalize(path : i8 ptr) i8 ptr {
+    var canonicalized_path : i8 ptr = gc_malloc(4096 * sizeof i8)
+    realpath(path, canonicalized_path)
+    canonicalized_path
+}
+
+func symlink(file_name : i8 ptr, symlink_name : i8 ptr) int {
+    symlink(file_name, symlink_name)
+}
+
 }
