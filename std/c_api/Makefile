@@ -11,7 +11,7 @@ endif
 all: libc_api.a 
 
 libc_api.a: $(OBJECTS)
-	ar -rc $@ $^
+	llvm-ar -rc $@ $^
 
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
