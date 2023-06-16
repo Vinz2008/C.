@@ -1,5 +1,9 @@
 import @std/print.cpoint
 import @std/operators.cpoint
+import @std/math.cpoint
+
 func main(){
     printd(!1)
+    printd(math::cos(180))
+    printd(math::sqrt(9))
 }

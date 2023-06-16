@@ -1,0 +1,16 @@
+include libc.hpoint
+
+mod math {
+    func cos(arg : double) double {
+        cos(arg)
+    }
+    func sin(arg : double) double {
+        sin(arg)
+    }
+    func tan(arg : double) double {
+        tan(arg)
+    }
+    func sqrt(arg : double) double {
+        sqrt(arg)
+    }
+}

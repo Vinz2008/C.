@@ -1,0 +1,38 @@
+include libc.hpoint
+extern system(cmd : i8 ptr) int;
+
+?[if OS == linux]
+extern get_nprocs() int;
+?[endif]
+
+mod system {
+    func open_url(url : i8 ptr){
+        var len = strlen(url) + 10
+        var cmd : i8 ptr = gc_malloc(sizeof i8 * len)
+?[if OS == linux]
+        strcpy(cmd, "xdg-open ")
+?[endif]
+?[if OS == darwin]   
+        strcpy(cmd, "open ")
+?[endif]
+?[if OS == windows]   
+        strcpy(cmd, "start ")
+?[endif]
+        strcat(cmd, url)
+        system(cmd)
+    }
+    func open_browser(){
+        system::open_url("https://github.com/Vinz2008/C.")
+    }
+    func get_processor_nb() int {
+?[if OS == linux]
+    return get_nprocs()
+?[endif]
+?[if OS == windows]  
+    0
+?[endif]
+?[if OS == darwin]
+    0
+?[endif]
+    }
+}

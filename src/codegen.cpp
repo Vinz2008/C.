@@ -149,7 +149,7 @@ Value* StringExprAST::codegen() {
   Log::Info() << "Before Codegen " << (std::string)StringRef(str.c_str()) << '\n';
   Value* string = Builder->CreateGlobalStringPtr(StringRef(str.c_str()));
   Log::Info() << "Codegen String" << "\n";
-  string->print(outs());
+  //string->print(outs());
   return string;
 }
 
@@ -422,13 +422,22 @@ Value *BinaryExprAST::codegen() {
   }
   switch (Op.at(0)) {
   case '+':
-    return Builder->CreateFAdd(L, R, "addtmp");
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      return Builder->CreateAdd(L, R, "addtmp");
+    }
+    return Builder->CreateFAdd(L, R, "faddtmp");
   case '-':
     return Builder->CreateFSub(L, R, "subtmp");
   case '*':
-    return Builder->CreateFMul(L, R, "multmp");
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      return Builder->CreateMul(L, R, "multmp");
+    }
+    return Builder->CreateFMul(L, R, "fmultmp");
   case '%':
-    return Builder->CreateFRem(L, R, "remtmp");
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      return Builder->CreateSRem(L, R, "remtmp");
+    }
+    return Builder->CreateFRem(L, R, "fremtmp");
   case '<':
     L = Builder->CreateFCmpOLT(L, R, "cmptmp");
     // Convert bool 0/1 to double 0.0 or 1.0
