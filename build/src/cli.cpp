@@ -40,6 +40,11 @@ void openWebPage(std::string url){
     runCommand(cmd);
 }
 
+void buildDependency(std::string dependency){
+    std::string path = DEFAULT_PACKAGE_PATH "/" + dependency;
+    runCommand("cd " + path + " && cpoint-build");
+}
+
 void rebuildSTD(std::string target, std::string path){
     runCommand("make -C " + path + " clean");
     std::string cmd_start = "";
@@ -77,7 +82,13 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     }
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
-        std::string out_path = path_fs.replace_extension(".o");
+        std::string out_path;
+        out_path = path_fs;
+        if (path_fs.extension() == ".cpoint" || path_fs.extension() == ".c"){
+            out_path = path_fs.replace_extension(".o");
+        } else {
+            out_path = path_fs;
+        }
         cmd += out_path + " ";
     }
     cmd += " " DEFAULT_STD_PATH "/libstd.a";

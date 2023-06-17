@@ -27,7 +27,42 @@ enum mode {
 std::string filename_config = "build.toml";
 std::vector<std::string> PathList;
 
+std::vector<std::string> DependencyPathList;
+
 bool is_cross_compiling = false;
+
+void addDependencyToTempLinkableFiles(std::string dependency){
+    std::string lib_path = DEFAULT_PACKAGE_PATH "/" + dependency + "/lib.a";
+    DependencyPathList.push_back(lib_path);
+}
+
+void addDependenciesToLinkableFiles(){
+    for (int i = 0; i < DependencyPathList.size(); i++){
+        PathList.push_back(DependencyPathList.at(i));
+    }
+}
+
+void downloadSubDependencies(std::string username, std::string repo_name){
+    std::string root_build_toml_path = DEFAULT_PACKAGE_PATH "/" + repo_name + "/build.toml";
+    if (!fs::exists(fs::path(root_build_toml_path))){
+        return;
+    }
+    auto dependency_config = toml::parse_file(root_build_toml_path);
+    auto github_dependencies = dependency_config["dependencies"]["github"];
+    if (toml::array* arr = github_dependencies.as_array()){
+        arr->for_each([](auto&& dep){
+            if constexpr (toml::is_string<decltype(dep)>){
+                std::string dependency = *dep;
+                std::string username = dependency.substr(0, dependency.find('/'));
+                std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
+                cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
+                downloadSubDependencies(username, repo_name);
+                addDependencyToTempLinkableFiles(repo_name);
+            }
+        });
+    }
+
+}
 
 void downloadDependencies(toml::v3::table config){
     auto github_dependencies = config["dependencies"]["github"];
@@ -38,6 +73,8 @@ void downloadDependencies(toml::v3::table config){
             std::string username = dependency.substr(0, dependency.find('/'));
             std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
             cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
+            downloadSubDependencies(username, repo_name);
+            addDependencyToTempLinkableFiles(repo_name);
             }
         });
     }
@@ -85,6 +122,20 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
         compileFile(target, "-no-gc" + arguments, path, sysroot);
     }
     std::cout << std::endl;
+}
+
+void buildDependencies(toml::v3::table& config){
+    auto github_dependencies = config["dependencies"]["github"];
+    if (toml::array* arr = github_dependencies.as_array()){
+        arr->for_each([](auto&& dep){
+            if constexpr (toml::is_string<decltype(dep)>){
+            std::string dependency = *dep;
+            std::string username = dependency.substr(0, dependency.find('/'));
+            std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
+            buildDependency(repo_name);
+            }
+        });
+    }
 }
 
 void runCustomScripts(toml::v3::table& config){
@@ -259,12 +310,16 @@ int main(int argc, char** argv){
         }
         if (modeBuild != CROSS_COMPILE_MODE){
             downloadDependencies(config);
+            buildDependencies(config);
         }
         runPrebuildCommands(config);
         buildSubfolders(config, type, target, sysroot);
         buildFolder(src_folder, config, type, target, sysroot);
         runCustomScripts(config);
         addCustomLinkableFiles(config);
+        if (modeBuild != CROSS_COMPILE_MODE){
+            addDependenciesToLinkableFiles();
+        }
         if (type == "exe"){
         linkFiles(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "library"){
