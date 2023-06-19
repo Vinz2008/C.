@@ -513,8 +513,10 @@ Value *CallExprAST::codegen() {
     std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
     std::string function_temp_name = old_template_name + "_type";
     TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
+    auto ProtoClone = TemplateProtos[Callee]->functionAST->Proto->clone();
     TemplateProtos[Callee]->functionAST->codegen();
     Callee = function_temp_name;
+    TemplateProtos[Callee]->functionAST->Proto = std::move(ProtoClone);
     TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;
   }
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";

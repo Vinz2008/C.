@@ -227,6 +227,13 @@ public:
               std::vector<std::unique_ptr<ExprAST>> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *codegen();
+  std::unique_ptr<FunctionAST> clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyClone;
+    for (int i = 0; i < Body.size(); i++){
+      //BodyClone.push_back(Body.at(i)->clone());
+    }
+    return std::make_unique<FunctionAST>(Proto->clone(), std::move(BodyClone));
+  }
 };
 
 class StructDeclarAST {

@@ -9,7 +9,7 @@ extern vprintf(format : i8 ptr, arg : struct va_list ptr) int;
 
 func printfmt_cpoint(format : i8 ptr ...){
     var va : struct va_list 
-    cpoint_internal_llvm_va_start(va)
-    vprintf(format, va)
+    cpoint_internal_llvm_va_start(va.gp_offset)
+    vprintf(format, va.gp_offset)
     cpoint_internal_llvm_va_end(va.gp_offset)
 }
