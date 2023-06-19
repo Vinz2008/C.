@@ -576,10 +576,23 @@ Value* SizeofExprAST::codegen(){
   if (!A){
     return LogErrorV("Addr Unknown variable name %s", Name.c_str());
   }
-  Type* llvm_type = A->getAllocatedType();
-  Value* size = Builder->CreateGEP(llvm_type->getPointerTo(), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
-  size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
-  size  = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+  if (NamedValues[Name]->type.is_struct){
+    std::vector<Value*> ArgsV;
+    ArgsV.push_back(A);
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // return -1 if object size is unknown
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // is the calculation made at runtime
+    std::vector<Type*> OverloadedTypes;
+    OverloadedTypes.push_back(get_type_llvm(int_type));
+    OverloadedTypes.push_back(get_type_llvm(i64_type));
+    Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
+    return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");
+  }
+  //Type* llvm_type = A->getAllocatedType();
+  Type* llvm_type = get_type_llvm(NamedValues[Name]->type);
+  Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
+  size = Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
+  size = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
   return size;
   /*auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
