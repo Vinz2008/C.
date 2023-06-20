@@ -31,8 +31,13 @@ func lenstr(string : struct str) int {
     len
 }
 
-func appendChar(string : struct str ptr){
-    1
+func appendChar(c : i8, string : struct str ptr){
+    if string.len + 1 > string.maxlength {
+        gc_realloc(string.pointer, string.maxlength + string.factor)
+        string.maxlength = string.maxlength + 1
+    }
+    strcat(string.pointer, c, 1)
+    string.len = string.len + 1
 }
 
 func destroyString(string : struct str ptr){
