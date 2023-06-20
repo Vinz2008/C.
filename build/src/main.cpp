@@ -168,6 +168,40 @@ void addCustomLinkableFiles(toml::v3::table& config){
     }
 }
 
+std::string get_pkg_config_linker_args(std::string library_name){
+    std::string cmd = "pkg-config --libs " + library_name;
+    auto cmd_out = runCommand(cmd);
+    return cmd_out->buffer;
+}
+
+std::string get_libraries_linker_args(toml::v3::table&  config){
+    std::string linker_args = "";
+    auto libraries = config["build"]["libraries"];
+    bool found_at_least_one = false;
+    if (toml::array* arr = libraries.as_array()){
+        arr->for_each([&linker_args, &found_at_least_one](auto&& library){
+            if constexpr (toml::is_string<decltype(library)>){
+                found_at_least_one = true;
+                if (library == "pthread"){
+                    linker_args += "-lpthread ";
+                } else if (library == "gtk"){
+                    linker_args += get_pkg_config_linker_args("gtk4");
+                } else {
+                    std::cout << "Warning : unknown library : " << library << std::endl;
+                }
+            }
+        });
+    }
+    if (!found_at_least_one){
+        return "";
+    }
+    if (linker_args.back() == '\n'){
+        linker_args.resize(linker_args.size()-1);
+    }
+    return linker_args;
+}
+
+
 void runPrebuildCommands(toml::v3::table& config){
     auto commands = config["custom"]["prebuild_commands"];
     if (toml::array* arr = commands.as_array()){
@@ -276,6 +310,7 @@ int main(int argc, char** argv){
     std::string linker_args = (std::string)config["build"]["linker_arguments"].value_or("");   
     std::string cross_compile_linker_args = (std::string)config["cross-compile"]["linker_arguments"].value_or("");
     std::string sysroot_cross = (std::string)config["cross-compile"]["sysroot"].value_or("");   
+    std::string c_libraries_linker_args = get_libraries_linker_args(config);
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
@@ -320,6 +355,7 @@ int main(int argc, char** argv){
         if (modeBuild != CROSS_COMPILE_MODE){
             addDependenciesToLinkableFiles();
         }
+        linker_args += c_libraries_linker_args;
         if (type == "exe"){
         linkFiles(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "library"){
