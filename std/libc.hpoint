@@ -19,6 +19,7 @@ extern malloc(size : int) void ptr;
 extern strdup(s : i8 ptr) i8 ptr;
 extern strcpy(dest : i8 ptr, src : i8 ptr) i8 ptr;
 extern strcat(dest : i8 ptr, src : i8 ptr) i8 ptr;
+extern strncat(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
 extern strlen(str : i8 ptr) int;
 extern cos(arg : double) double;
 extern sin(arg : double) double;

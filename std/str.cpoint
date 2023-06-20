@@ -20,10 +20,9 @@ func create(string : i8 ptr) struct str ptr {
     s.len = strlen(s.pointer)
     s
 }
-}
 
-func printstring(string : struct str) {
-    printstr(string.pointer)
+func appendChar(c : i8, string : struct str ptr){
+    0
 }
 
 func lenstr(string : struct str) int {
@@ -31,15 +30,12 @@ func lenstr(string : struct str) int {
     len
 }
 
-func appendChar(c : i8, string : struct str ptr){
-    if string.len + 1 > string.maxlength {
-        gc_realloc(string.pointer, string.maxlength + string.factor)
-        string.maxlength = string.maxlength + 1
-    }
-    strcat(string.pointer, c, 1)
-    string.len = string.len + 1
-}
-
 func destroyString(string : struct str ptr){
     gc_free(string)
+}
+
+}
+
+func printstring(string : struct str) {
+    printstr(string.pointer)
 }
