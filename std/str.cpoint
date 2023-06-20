@@ -18,11 +18,17 @@ func create(string : i8 ptr) struct str ptr {
     s = gc_malloc(i * 5)
     s.pointer = gc_strdup(string)
     s.len = strlen(s.pointer)
+    s.maxlength = s.len
+    s.factor = 2
     s
 }
 
 func appendChar(c : i8, string : struct str ptr){
-    0
+    if string.len + 1 > string.maxlength {
+        var newmaxlength = string.maxlength + string.factor
+        string.pointer = gc_realloc(string.pointer, newmaxlength)
+    }
+    string.len = string.len + 1
 }
 
 func lenstr(string : struct str) int {

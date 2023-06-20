@@ -217,6 +217,7 @@ Value* StructMemberExprAST::codegen() {
         break;
       }
     }
+    Cpoint_Type member_type = members.at(pos).second;
     Log::Info() << "Pos for GEP struct member " << pos << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
@@ -225,7 +226,7 @@ Value* StructMemberExprAST::codegen() {
       cpoint_type.is_ptr = false;
     }
     Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});
-    Value* value = Builder->CreateLoad(get_type_llvm(cpoint_type), ptr, StructName);
+    Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
     return value;
 }
 
@@ -388,10 +389,14 @@ Value *BinaryExprAST::codegen() {
   if (L->getType() != R->getType()){
     convertToType(*get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
   }
-  
+  // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
   if (Op == "=="){
     Log::Info() << "Codegen ==" << "\n";
-    L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      L = Builder->CreateICmpEQ(L, R, "cmptmp");
+    } else {
+      L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
+    }
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   }
   if (Op == "||"){
@@ -439,11 +444,19 @@ Value *BinaryExprAST::codegen() {
     }
     return Builder->CreateFRem(L, R, "fremtmp");
   case '<':
-    L = Builder->CreateFCmpOLT(L, R, "cmptmp");
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      L = Builder->CreateICmpSLT(L, R, "cmptmp");
+    } else {
+      L = Builder->CreateFCmpOLT(L, R, "cmptmp");
+    }
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '>':
-    L = Builder->CreateFCmpOGT(R, L, "cmptmp");
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      L = Builder->CreateICmpSGT(R, L, "cmptmp");
+    } else {
+      L = Builder->CreateFCmpOGT(R, L, "cmptmp");
+    }
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '^':
     L = Builder->CreateXor(L, R, "xortmp");

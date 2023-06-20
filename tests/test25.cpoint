@@ -4,6 +4,7 @@ func main(){
   var s : struct str = String::create("aa")
   var s2 = String::create("abc")
   printstring(s)
-  printi(lenstr(s))
+  printi(String::lenstr(s))
+  String::appendChar('d', s2)
   printstring(s2)
 }
