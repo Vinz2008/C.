@@ -20,6 +20,7 @@
 #include "types.h"
 #include "log.h"
 #include "debuginfo.h"
+#include "operators.h"
 
 using namespace llvm;
 
@@ -443,22 +444,26 @@ Value *BinaryExprAST::codegen() {
   }
   switch (Op.at(0)) {
   case '+':
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    /*if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       return Builder->CreateAdd(L, R, "addtmp");
     }
-    return Builder->CreateFAdd(L, R, "faddtmp");
+    return Builder->CreateFAdd(L, R, "faddtmp");*/
+    return operators::LLVMCreateAdd(L, R);
   case '-':
-    return Builder->CreateFSub(L, R, "subtmp");
+    //return Builder->CreateFSub(L, R, "subtmp");
+    return operators::LLVMCreateSub(L, R);
   case '*':
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    /*if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       return Builder->CreateMul(L, R, "multmp");
     }
-    return Builder->CreateFMul(L, R, "fmultmp");
+    return Builder->CreateFMul(L, R, "fmultmp");*/
+    return operators::LLVMCreateMul(L, R);
   case '%':
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    /*if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       return Builder->CreateSRem(L, R, "remtmp");
     }
-    return Builder->CreateFRem(L, R, "fremtmp");
+    return Builder->CreateFRem(L, R, "fremtmp");*/
+    return operators::LLVMCreateRem(L, R);
   case '<':
     if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       L = Builder->CreateICmpSLT(L, R, "cmptmp");
