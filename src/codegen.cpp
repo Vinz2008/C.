@@ -411,18 +411,12 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateCmp(L, R);
   }
   if (Op == "||"){
-    /*L = Builder->CreateOr(L, R, "logicalortmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
     return operators::LLVMCreateLogicalOr(L, R);
   }
   if (Op == "&&"){
-    /*L = Builder->CreateAnd(L, R, "logicalandtmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
     return operators::LLVMCreateLogicalAnd(L, R);
   }
   if (Op == "!="){
-    /*L = Builder->CreateFCmpUNE(L, R, "notequalcmptmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
     return operators::LLVMCreateNotEqualCmp(L, R);
   }
   if (Op == "<="){
