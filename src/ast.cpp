@@ -76,15 +76,6 @@ std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...) {
   return nullptr;
 }
 
-/*std::unique_ptr<ClassDeclarAST> LogErrorC(const char *Str, ...) {
-  va_list args;
-  va_start(args, Str);
-  vLogError(Str, args);
-  Log::Info() << "token : " << CurTok << "\n";
-  va_end(args);
-  return nullptr;
-}*/
-
 std::unique_ptr<FunctionAST> LogErrorF(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
@@ -1147,28 +1138,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       }
       getNextToken();
     }
-    /*if (Name.find('[') != std::string::npos){
-      is_array = true;
-      std::string nb_element_str = "";
-      std::string Var_Name ="";
-      int i = 0;
-      for (i = 0; i < Name.size(); i++){
-        if (Name.at(i) == '['){
-          break;
-        } else {
-          Var_Name += Name.at(i);
-        }
-      }
-      for (int j = i + 1; j < Name.size(); j++){
-        if (Name.at(j) == ']'){
-          break;
-        } else {
-          nb_element_str += Name.at(j);
-        }
-      }
-      nb_element = std::stoi(nb_element_str);
-      Name = Var_Name;
-    }*/
     infer_type = false;
     if (CurTok == ':'){
       auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, /*class_name,*/ nb_ptr);
