@@ -183,7 +183,7 @@ Value *VariableExprAST::codegen() {
 Value* StructMemberExprAST::codegen() {
     Log::Info() << "STRUCT MEMBER CODEGEN" << "\n";
     AllocaInst* Alloca = NamedValues[StructName]->alloca_inst;
-    if (!NamedValues[StructName]->type.is_struct){
+    if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the this of structs function mmebers)
       return LogErrorV("Using a member of variable even though it is not a struct");
     }
     Log::Info() << "StructName : " << StructName << "\n";
@@ -195,17 +195,32 @@ Value* StructMemberExprAST::codegen() {
     Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
     Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
 
-    bool is_function_call = false;
-    auto functions =  StructDeclarations[NamedValues[StructName]->type.struct_name]->functions;
-    for (int i = 0; i < functions.size(); i++){
-      if (functions.at(i) == MemberName){
-        is_function_call = true;
-      }
-    }
+    //bool is_function_call = false;
     if (is_function_call){
-      std::vector<llvm::Value*> Args;
-      Function *F = getFunction(struct_function_mangling(StructName, MemberName));
-      return Builder->CreateCall(F, Args, "calltmp_struct"); 
+      bool found_function = false;
+      auto functions =  StructDeclarations[NamedValues[StructName]->type.struct_name]->functions;
+      for (int i = 0; i < functions.size(); i++){
+      Log::Info() << "functions.at(i) : " << functions.at(i) << "\n";
+      if (functions.at(i) == MemberName){
+        //is_function_call = true;
+        found_function = true;
+        Log::Info() << "Is function Call" << "\n";
+      }
+      }
+      if (!found_function){
+        return LogErrorV("Unknown struct function member called : %s\n", MemberName.c_str());
+      }
+      std::vector<llvm::Value*> CallArgs;
+      CallArgs.push_back(NamedValues[StructName]->alloca_inst);
+      for (int i = 0; i < Args.size(); i++){
+        CallArgs.push_back(Args.at(i)->codegen());
+      }
+      Function *F = getFunction(struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName));
+      if (!F){
+        Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName) << "\n";
+        return LogErrorV("The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
+      }
+      return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
     }
     auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
@@ -350,6 +365,7 @@ Type* StructDeclarAST::codegen(){
   }
   structType->setBody(dataTypes);
   Log::Info() << "added struct declaration name " << Name << " to StructDeclarations" << "\n";
+  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, members, functions);
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
     /*std::string newNameFunc = "";
@@ -742,6 +758,7 @@ Function *FunctionAST::codegen() {
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
     debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
     Builder->CreateStore(&Arg, Alloca);
+    Log::Info() << "added arg " << (std::string)Arg.getName() << " to NamedValues" << "\n";
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;
   }

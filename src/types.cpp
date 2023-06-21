@@ -27,6 +27,10 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     }
     Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
+        Log::Info() << "cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
+        if (StructDeclarations[cpoint_type.struct_name] == nullptr){
+            Log::Info() << "StructDeclarations[cpoint_type.struct_name] is nullptr" << "\n";
+        }
         type = StructDeclarations[cpoint_type.struct_name]->struct_type;
     } /*else if (cpoint_type.is_class){
         Log::Info() << "cpoint_type.class_name : " << cpoint_type.class_name << "\n";

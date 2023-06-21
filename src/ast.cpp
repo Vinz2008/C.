@@ -186,18 +186,46 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
     Log::Info() << "RedeclarationExpr Parsing" << "\n";
+    Log::Info() << "verify if " << IdName << "is in NamedValues : " << (int)(NamedValues[IdName] == nullptr) << "\n";
+    if (member != ""){
     if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr) {
       return LogError("Couldn't find variable %s when redeclarating it", IdName.c_str());
+    }
     }
     getNextToken();
     auto V = ParseExpression();
     return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member, std::move(indexAST));
   }
-  if (CurTok != '('){ // Simple variable ref.
-    if (member != ""){
-      Log::Info() << "Struct member returned" << "\n";
-      return std::make_unique<StructMemberExprAST>(IdName, member);
+  if (member != ""){
+    bool is_function_call_member = false;
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    if (CurTok == '('){
+      Log::Info() << "call struct member function" << "\n";
+      is_function_call_member = true;
+      getNextToken();
+       if (CurTok != ')') {
+        while (1) {
+          if (auto Arg = ParseExpression())
+            Args.push_back(std::move(Arg));
+          else
+            return nullptr;
+
+          if (CurTok == ')')
+            break;
+
+          if (CurTok != ',')
+            return LogError("Expected ')' or ',' in argument list");
+          getNextToken();
+        }
+      }
+
+    // Eat the ')'.
+    getNextToken();
     }
+    Log::Info() << "Struct member returned" << "\n";
+    return std::make_unique<StructMemberExprAST>(IdName, member, is_function_call_member, std::move(Args));
+  }
+  if (CurTok != '('){ // Simple variable ref.
     if (is_array){
       Log::Info() << "Array member returned" << "\n";
       return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
@@ -516,7 +544,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       int type = double_type;
       bool is_ptr = false;
       std::string temp_struct;
-      std::string temp_class;
+      //std::string temp_class;
       int temp_nb = -1;
       if (CurTok == ':'){
         ParseTypeDeclaration(&type, &is_ptr, temp_struct, /*temp_class,*/ temp_nb);

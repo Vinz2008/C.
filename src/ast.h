@@ -88,8 +88,10 @@ public:
 class StructMemberExprAST : public ExprAST {
   std::string StructName;
   std::string MemberName;
+  bool is_function_call;
+  std::vector<std::unique_ptr<ExprAST>> Args;
 public:
-  StructMemberExprAST(const std::string &StructName, const std::string &MemberName) : StructName(StructName), MemberName(MemberName) {}
+  StructMemberExprAST(const std::string &StructName, const std::string &MemberName, bool is_function_call, std::vector<std::unique_ptr<ExprAST>> Args) : StructName(StructName), MemberName(MemberName), is_function_call(is_function_call), Args(std::move(Args)) {}
   Value *codegen() override;
 };
 
