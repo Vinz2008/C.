@@ -120,20 +120,6 @@ static void convertToType(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   }
 }
 
-static void AllocateMemory(Function* function, std::string VarName, Cpoint_Type type){
-    // TODO return alloca ? because of different types, probably no return and add in function to table og alloca inst or pass pointer to variable instead of returning the value
-    if (gc_mode){
-    Function *CalleeF = getFunction("gc_malloc");
-    Type* llvm_type = get_type_llvm(type);
-    auto size = llvm::ConstantInt::get(llvm::Type::getInt64Ty(*TheContext), TheModule->getDataLayout().getTypeAllocSize(llvm_type));
-    std::vector<Value *> ArgsV;
-    ArgsV.push_back(size);
-    Builder->CreateCall(CalleeF, ArgsV, "calltmp");
-    } else {
-    CreateEntryBlockAlloca(function, VarName, type);
-    }
-}
-
 Value *LogErrorV(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
