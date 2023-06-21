@@ -408,13 +408,14 @@ Value *BinaryExprAST::codegen() {
   }
   // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
   if (Op == "=="){
-    Log::Info() << "Codegen ==" << "\n";
+    /*Log::Info() << "Codegen ==" << "\n";
     if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       L = Builder->CreateICmpEQ(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
     }
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
+    return operators::LLVMCreateCmp(L, R);
   }
   if (Op == "||"){
     L = Builder->CreateOr(L, R, "ortmp");

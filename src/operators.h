@@ -9,4 +9,5 @@ namespace operators {
     Value* LLVMCreateSub(Value* L, Value* R);
     Value* LLVMCreateMul(Value* L, Value* R);
     Value* LLVMCreateRem(Value* L, Value* R);
+    Value* LLVMCreateCmp(Value* L, Value* R);
 }

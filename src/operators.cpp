@@ -38,5 +38,14 @@ Value* LLVMCreateRem(Value* L, Value* R){
     return Builder->CreateFRem(L, R, "fremtmp");
 }
 
+Value* LLVMCreateCmp(Value* L, Value* R){
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      L = Builder->CreateICmpEQ(L, R, "cmptmp");
+    } else {
+      L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
+    }
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
 }
 
