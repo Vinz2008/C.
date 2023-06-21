@@ -31,6 +31,13 @@ Value* LLVMCreateMul(Value* L, Value* R){
     return Builder->CreateFMul(L, R, "fmultmp");
 }
 
+Value* LLVMCreateDiv(Value* L, Value* R){
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+      return Builder->CreateSDiv(L, R, "divtmp");
+    }
+    return Builder->CreateFDiv(L, R, "fdivtmp");
+}
+
 Value* LLVMCreateRem(Value* L, Value* R){
     if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       return Builder->CreateSRem(L, R, "remtmp");
@@ -46,6 +53,27 @@ Value* LLVMCreateCmp(Value* L, Value* R){
     }
     return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
+
+Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
+    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+        L = Builder->CreateICmpNE(L, R, "notequalcmptmp");
+    } else {
+        L = Builder->CreateFCmpUNE(L, R, "notequalfcmptmp");
+    }
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
+Value* LLVMCreateLogicalOr(Value* L, Value* R){
+    L = Builder->CreateOr(L, R, "logicalortmp");
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
+Value* LLVMCreateLogicalAnd(Value* L, Value* R){
+    L = Builder->CreateAnd(L, R, "logicalandtmp");
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
+
 
 }
 

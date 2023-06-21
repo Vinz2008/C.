@@ -411,16 +411,19 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateCmp(L, R);
   }
   if (Op == "||"){
-    L = Builder->CreateOr(L, R, "ortmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    /*L = Builder->CreateOr(L, R, "logicalortmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
+    return operators::LLVMCreateLogicalOr(L, R);
   }
   if (Op == "&&"){
-    L = Builder->CreateAnd(L, R, "andtmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    /*L = Builder->CreateAnd(L, R, "logicalandtmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
+    return operators::LLVMCreateLogicalAnd(L, R);
   }
   if (Op == "!="){
-    L = Builder->CreateFCmpUNE(L, R, "cmptmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    /*L = Builder->CreateFCmpUNE(L, R, "notequalcmptmp");
+    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
+    return operators::LLVMCreateNotEqualCmp(L, R);
   }
   if (Op == "<="){
     L = Builder->CreateFCmpULE(L, R, "cmptmp");
@@ -453,6 +456,8 @@ Value *BinaryExprAST::codegen() {
     }
     // Convert bool 0/1 to double 0.0 or 1.0
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  case '/':
+    return operators::LLVMCreateDiv(L, R);
   case '>':
     if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
       L = Builder->CreateICmpSGT(R, L, "cmptmp");
