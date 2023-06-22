@@ -120,6 +120,37 @@ static void convertToType(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   }
 }
 
+void callTemplate(std::string Callee){
+  std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
+  std::string function_temp_name = old_template_name + "_type";
+  TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
+  auto ProtoClone = TemplateProtos[Callee]->functionAST->Proto->clone();
+  TemplateProtos[Callee]->functionAST->codegen();
+  Callee = function_temp_name;
+  TemplateProtos[Callee]->functionAST->Proto = std::move(ProtoClone);
+  TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;
+}
+
+Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
+  Callee = Callee.substr(5, Callee.size());
+  Log::Info() << "llvm intrisic called " << Callee << "\n";
+  llvm::Intrinsic::IndependentIntrinsics intrisicId;
+  if (Callee == "va_start"){
+    intrisicId = Intrinsic::vastart;
+  } else if (Callee == "va_end"){
+    intrisicId = Intrinsic::vaend;
+  }
+  Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
+  std::vector<Value *> ArgsV;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    Value* temp_val = Args[i]->codegen();
+    ArgsV.push_back(temp_val);
+    if (!ArgsV.back())
+      return nullptr;
+  }
+  return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+}
+
 Value *LogErrorV(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
@@ -474,7 +505,6 @@ Value *BinaryExprAST::codegen() {
   return Builder->CreateCall(F, Ops, "binop");
 }
 
-
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   Log::Info() << "function called " << Callee << "\n";
@@ -485,7 +515,8 @@ Value *CallExprAST::codegen() {
     Callee = Callee.substr(internal_func_prefix.size(), Callee.size());
     Log::Info() << "internal function called " << Callee << "\n";
     if (Callee.rfind("llvm_", 0) == 0){
-      Callee = Callee.substr(5, Callee.size());
+      return callLLVMIntrisic(Callee, Args);
+      /*Callee = Callee.substr(5, Callee.size());
       Log::Info() << "llvm intrisic called " << Callee << "\n";
       llvm::Intrinsic::IndependentIntrinsics intrisicId;
       if (Callee == "va_start"){
@@ -501,7 +532,7 @@ Value *CallExprAST::codegen() {
         if (!ArgsV.back())
           return nullptr;
       }
-      return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+      return Builder->CreateCall(CalleeF, ArgsV, "calltmp");*/
     }
   }
   Function *CalleeF = getFunction(Callee);
@@ -510,14 +541,7 @@ Value *CallExprAST::codegen() {
   if (!CalleeF && !is_function_template)
     return LogErrorV("Unknown function referenced %s", Callee.c_str());
   if (TemplateProtos[Callee] != nullptr){
-    std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
-    std::string function_temp_name = old_template_name + "_type";
-    TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
-    auto ProtoClone = TemplateProtos[Callee]->functionAST->Proto->clone();
-    TemplateProtos[Callee]->functionAST->codegen();
-    Callee = function_temp_name;
-    TemplateProtos[Callee]->functionAST->Proto = std::move(ProtoClone);
-    TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;
+    callTemplate(Callee);
   }
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
   Log::Info() << "Args.size : " << Args.size() << "\n";
@@ -1123,25 +1147,6 @@ Value* LoopExprAST::codegen(){
     Builder->SetInsertPoint(AfterLoop);
 
     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-
-    /*AllocaInst *allocaPos = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
-    Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
-    Builder->CreateStore(StartVal, allocaPos);
-    
-    BasicBlock *LoopBBInner = BasicBlock::Create(*TheContext, "loop_loop_in", TheFunction);
-    Builder->CreateBr(loopBB);
-    Builder->SetInsertPoint(loopBB);
-
-    Value* isLoopFinishedVal  = Builder->CreateFCmpUEQ(IndexArrayVal, SizeArrayVal,"cmptmp_loop_in"); 
-    Value* isLoopFinishedBoolVal = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
-    Builder->CreateFCmpONE(isLoopFinishedBoolVal, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
-
-
-    for (int i = 0; i < Body.size(); i++){
-    if (!Body.at(i)->codegen())
-      return nullptr;
-    }
-    Builder->CreateBr(loopBB);*/
   }
 }
 
