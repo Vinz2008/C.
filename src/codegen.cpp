@@ -490,23 +490,6 @@ Value *CallExprAST::codegen() {
     Log::Info() << "internal function called " << Callee << "\n";
     if (Callee.rfind("llvm_", 0) == 0){
       return callLLVMIntrisic(Callee, Args);
-      /*Callee = Callee.substr(5, Callee.size());
-      Log::Info() << "llvm intrisic called " << Callee << "\n";
-      llvm::Intrinsic::IndependentIntrinsics intrisicId;
-      if (Callee == "va_start"){
-        intrisicId = Intrinsic::vastart;
-      } else if (Callee == "va_end"){
-        intrisicId = Intrinsic::vaend;
-      }
-      Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
-      std::vector<Value *> ArgsV;
-      for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-        Value* temp_val = Args[i]->codegen();
-        ArgsV.push_back(temp_val);
-        if (!ArgsV.back())
-          return nullptr;
-      }
-      return Builder->CreateCall(CalleeF, ArgsV, "calltmp");*/
     }
   }
   Function *CalleeF = getFunction(Callee);
