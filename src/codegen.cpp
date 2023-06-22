@@ -258,6 +258,7 @@ Value* StructMemberExprAST::codegen() {
 }*/
 
 Value* ArrayMemberExprAST::codegen() {
+  // TODO : fix type for array member after getelementptr
   Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
   auto index = posAST->codegen();
   if (!index){
