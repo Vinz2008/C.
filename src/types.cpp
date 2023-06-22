@@ -1,6 +1,7 @@
 #include "types.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
 #include "codegen.h"
 #include "ast.h"
@@ -11,6 +12,7 @@
 using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
+extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector<std::string> typeDefTable;
@@ -46,18 +48,28 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             break;
         case i32_type:
         case int_type:
+        case u32_type:
             type = Type::getInt32Ty(*TheContext);
             break;
         case float_type:
             type = Type::getFloatTy(*TheContext);
             break;
         case i8_type:
+        case u8_type:
            type = Type::getInt8Ty(*TheContext);
            break;
         case i16_type:
+        case u16_type:
             type = Type::getInt16Ty(*TheContext);
+            break;
         case i64_type:
+        case u64_type:
             type = Type::getInt64Ty(*TheContext);
+            break;
+        case i128_type:
+        case u128_type:
+            type = Type::getInt128Ty(*TheContext);
+            break;
         case void_type:
             if (!cpoint_type.is_ptr){
             type = Type::getVoidTy(*TheContext);
@@ -94,7 +106,7 @@ Type* get_array_llvm_type(Type* type, int nb_element){
     return llvm::ArrayType::get(type, nb_element);
 }
 
-Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){
+Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     int type = double_type;
     bool is_ptr = false;
     //Type* not_ptr_type = llvm_type;
@@ -120,8 +132,7 @@ Cpoint_Type* get_cpoint_type_from_llvm(Type* llvm_type){
         Log::Warning() << "Unknown Type" << "\n";
         }
     }
-    Cpoint_Type* cpoint_type = new Cpoint_Type(type, is_ptr);
-    return cpoint_type;
+    return Cpoint_Type(type, is_ptr);
 }
 
 Value* get_default_value(Cpoint_Type type){
@@ -145,20 +156,124 @@ Value* get_default_value(Cpoint_Type type){
     return ConstantFP::get(*TheContext, APFloat(0.0));
 }
 
+int get_type_number_of_bits(Cpoint_Type type){
+    switch (type.type)
+    {
+    case int_type:
+    case i32_type:
+    case u32_type:
+        return 32;
+        break;
+    case i8_type:
+    case u8_type:
+        return 8;
+    case i16_type:
+    case u16_type:
+        return 16;
+    case i64_type:
+    case u64_type:
+        return 64;
+    case u128_type:
+    case i128_type:
+        return 128;
+    default:
+        return 0;
+    }
+}
+
+bool is_unsigned(Cpoint_Type cpoint_type){
+    int type = cpoint_type.type;
+    return type == u8_type || type == u16_type || type == u32_type || type == u64_type || type == u128_type;
+}
+
+bool is_signed(Cpoint_Type type){
+    return !is_unsigned(type);
+}
+
+bool is_decimal_number_type(Cpoint_Type type){
+    return type.type == double_type || type.type == float_type;
+}
+
 Constant* get_default_constant(Cpoint_Type type){
     if (type.is_ptr){
         return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
     }
+    if (type.type == double_type){
+        return ConstantFP::get(*TheContext, APFloat(0.0));
+    }
+
     switch (type.type){
-        default:
-        case double_type:
-            return ConstantFP::get(*TheContext, APFloat(0.0));
+        case i32_type:
         case int_type:
-            return ConstantInt::get(*TheContext, APInt(32, 0, true));
+        case u32_type:
         case i8_type:
-            return ConstantInt::get(*TheContext, APInt(8, 0, true));
+        case u8_type:
+        case i16_type:
+        case u16_type:
+        case i64_type:
+        case u64_type:
+        case i128_type:
+        case u128_type:
+            bool type_is_signed = is_signed(type);
+            int nb_bits = get_type_number_of_bits(type);
+            return ConstantInt::get(*TheContext, APInt(nb_bits, 0, type_is_signed));
     }
     return ConstantFP::get(*TheContext, APFloat(0.0));
+}
+
+void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
+  Log::Info() << "Creating cast" << "\n";
+  if (typeFrom.is_ptr || typeFrom.is_array || get_cpoint_type_from_llvm(typeTo).is_ptr || get_cpoint_type_from_llvm(typeTo).is_array){
+    return;
+  }
+
+  if (is_decimal_number_type(typeFrom)){
+    if (is_signed(get_cpoint_type_from_llvm(typeTo))){
+      Log::Info() << "From float/double to signed int" << "\n";
+      val = Builder->CreateFPToUI(val, typeTo, "cast"); // change this to signed int conversion. For now it segfaults
+      return;
+    } else if (is_unsigned(get_cpoint_type_from_llvm(typeTo))){
+      Log::Info() << "From float/double to unsigned int" << "\n";
+      val = Builder->CreateFPToUI(val, typeTo, "cast");
+      return;
+    } else if (is_decimal_number_type(get_cpoint_type_from_llvm(typeTo))){
+      return;
+    }
+  }
+
+  if (is_signed(typeFrom.type)){
+    if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+        val = Builder->CreateSIToFP(val, typeTo, "cast");
+        return;
+    } else if (get_cpoint_type_from_llvm(typeTo).type == typeFrom.type){
+        return;
+    }
+  }
+
+
+  /*switch (typeFrom.type)
+  {
+  case int_type:
+    if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+      Log::Info() << "From int to float/double" << "\n";
+      Log::Info() << "typeFrom " << typeFrom.type << "\n";
+      val = Builder->CreateSIToFP(val, typeTo, "cast");
+    } else if (typeTo == Type::getInt32Ty(*TheContext)){
+      break;
+    }
+    break;
+  case float_type:
+  case double_type:
+    if (typeTo == Type::getInt32Ty(*TheContext)){
+      Log::Info() << "From float/double to int" << "\n";
+      val = Builder->CreateFPToUI(val, typeTo, "cast");
+    } else if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+      break;
+    }
+    break;
+  default:
+    break;
+  }*/
 }
 
 
@@ -171,6 +286,12 @@ std::vector<std::string> types{
     "i16",
     "i32",
     "i64",
+    "i128",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
+    "u128"
 };
 
 
@@ -186,8 +307,8 @@ bool is_type(std::string type){
 int get_type(std::string type){
     for (int i = 0; i < types.size(); i++){
        if (type.compare(types.at(i)) == 0){
-        if (i >= 8){
-            return i+1-9;
+        if (i >= 14){
+            return i+1-15;
         }
         return -(i + 1);
        }

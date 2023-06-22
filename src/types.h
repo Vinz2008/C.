@@ -12,6 +12,12 @@ enum types {
     i16_type = -6,
     i32_type = -7,
     i64_type = -8,
+    i128_type = -9,
+    u8_type = -10,
+    u16_type = -11,
+    u32_type = -12,
+    u64_type = -13,
+    u128_type = -14,
     argv_type = -1000,
 };
 
@@ -35,6 +41,10 @@ public:
 llvm::Type* get_type_llvm(Cpoint_Type cpoint_type);
 llvm::Value* get_default_value(Cpoint_Type type);
 llvm::Constant* get_default_constant(Cpoint_Type type);
-Cpoint_Type* get_cpoint_type_from_llvm(llvm::Type* llvm_type);
+Cpoint_Type get_cpoint_type_from_llvm(llvm::Type* llvm_type);
 bool is_llvm_type_number(llvm::Type* llvm_type);
 llvm::Type* get_array_llvm_type(llvm::Type* type, int nb_element);
+bool is_decimal_number_type(Cpoint_Type type);
+bool is_signed(Cpoint_Type type);
+void convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
+int get_type_number_of_bits(Cpoint_Type type);

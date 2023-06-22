@@ -93,33 +93,6 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   return nullptr;
 }
 
-static void convertToType(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
-  Log::Info() << "Creating cast" << "\n";
-  switch (typeFrom.type)
-  {
-  case int_type:
-    if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
-      Log::Info() << "From int to float/double" << "\n";
-      Log::Info() << "typeFrom " << typeFrom.type << "\n";
-      val = Builder->CreateSIToFP(val, typeTo, "cast");
-    } else if (typeTo == Type::getInt32Ty(*TheContext)){
-      break;
-    }
-    break;
-  case float_type:
-  case double_type:
-    if (typeTo == Type::getInt32Ty(*TheContext)){
-      Log::Info() << "From float/double to int" << "\n";
-      val = Builder->CreateFPToUI(val, typeTo, "cast");
-    } else if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
-      break;
-    }
-    break;
-  default:
-    break;
-  }
-}
-
 void callTemplate(std::string Callee){
   std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
   std::string function_temp_name = old_template_name + "_type";
@@ -405,7 +378,7 @@ Type* StructDeclarAST::codegen(){
     }
 
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
-    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", *get_cpoint_type_from_llvm(structType->getPointerTo()))); // TODO fix this by passing struct type pointer as first arg
+    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", get_cpoint_type_from_llvm(structType->getPointerTo()))); // TODO fix this by passing struct type pointer as first arg
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
     functions.push_back(function_name);
@@ -421,7 +394,7 @@ Value *BinaryExprAST::codegen() {
   if (!L || !R)
     return nullptr;
   if (L->getType() != R->getType()){
-    convertToType(*get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
   }
   // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
   if (Op == "=="){
@@ -460,7 +433,7 @@ Value *BinaryExprAST::codegen() {
   case '%':
     return operators::LLVMCreateRem(L, R);
   case '<':
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (get_cpoint_type_from_llvm(R->getType()).type == int_type){
       L = Builder->CreateICmpSLT(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpOLT(L, R, "cmptmp");
@@ -470,7 +443,7 @@ Value *BinaryExprAST::codegen() {
   case '/':
     return operators::LLVMCreateDiv(L, R);
   case '>':
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (get_cpoint_type_from_llvm(R->getType()).type == int_type){
       L = Builder->CreateICmpSGT(R, L, "cmptmp");
     } else {
       L = Builder->CreateFCmpOGT(R, L, "cmptmp");
@@ -564,7 +537,7 @@ Value *CallExprAST::codegen() {
     if (i < FunctionProtos[Callee]->Args.size()){
     if (temp_val->getType() != get_type_llvm(FunctionProtos[Callee]->Args.at(i).second)){
       Log::Info() << "name of arg converting in call expr : " << FunctionProtos[Callee]->Args.at(i).first << "\n";
-      convertToType(*get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(FunctionProtos[Callee]->Args.at(i).second), temp_val);
+      convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(FunctionProtos[Callee]->Args.at(i).second), temp_val);
     }
     }
     ArgsV.push_back(temp_val);
@@ -957,7 +930,7 @@ Value* RedeclarationExprAST::codegen(){
   }
   if (type != nullptr){
   if (ValDeclared->getType() != get_type_llvm(*type)){
-    convertToType(*get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(*type), ValDeclared);
+    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(*type), ValDeclared);
   }
   }
   bool is_struct = false;
@@ -1294,10 +1267,11 @@ Value *VarExprAST::codegen() {
       if (!InitVal)
         return nullptr;
       if (infer_type){
-        cpoint_type = std::make_unique<Cpoint_Type>(*get_cpoint_type_from_llvm(InitVal->getType()));
+        cpoint_type = std::make_unique<Cpoint_Type>(get_cpoint_type_from_llvm(InitVal->getType()));
       }
     } else { // If not specified, use 0.0.
       InitVal = get_default_value(*cpoint_type);
+      //InitVal = get_default_constant(*cpoint_type);
     }
     llvm::Value* indexVal = nullptr;
     double indexD = -1;
@@ -1314,7 +1288,7 @@ Value *VarExprAST::codegen() {
     }
     if (index != nullptr){
     if (InitVal->getType() != get_type_llvm(*cpoint_type)){
-      convertToType(*get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
+      convert_to_type(get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
     }
     }
     if (InitVal->getType() == get_type_llvm(Cpoint_Type(void_type))){

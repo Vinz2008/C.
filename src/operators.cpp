@@ -11,42 +11,52 @@ extern std::unique_ptr<IRBuilder<>> Builder;
 namespace operators {
 
 Value* LLVMCreateAdd(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
       return Builder->CreateAdd(L, R, "addtmp");
     }
     return Builder->CreateFAdd(L, R, "faddtmp");
 }
 
 Value* LLVMCreateSub(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
       return Builder->CreateSub(L, R, "subtmp");
     }
     return Builder->CreateFSub(L, R, "fsubtmp");
 }
 
 Value* LLVMCreateMul(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
       return Builder->CreateMul(L, R, "multmp");
     }
     return Builder->CreateFMul(L, R, "fmultmp");
 }
 
 Value* LLVMCreateDiv(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
-      return Builder->CreateSDiv(L, R, "divtmp");
+    Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
+    if (!is_decimal_number_type(type)){
+      if (is_signed(type)){
+        return Builder->CreateSDiv(L, R, "sdivtmp");
+      } else {
+        return Builder->CreateUDiv(L, R, "udivtmp");
+      }
     }
     return Builder->CreateFDiv(L, R, "fdivtmp");
 }
 
 Value* LLVMCreateRem(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
-      return Builder->CreateSRem(L, R, "remtmp");
+    Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
+    if (!is_decimal_number_type(type)){
+      if (is_signed(type)){
+        return Builder->CreateSRem(L, R, "sremtmp");
+      } else {
+        return Builder->CreateURem(L, R, "uremtmp");
+      }
     }
     return Builder->CreateFRem(L, R, "fremtmp");
 }
 
 Value* LLVMCreateCmp(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
       L = Builder->CreateICmpEQ(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
@@ -55,7 +65,7 @@ Value* LLVMCreateCmp(Value* L, Value* R){
 }
 
 Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
-    if (get_cpoint_type_from_llvm(R->getType())->type == int_type){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
         L = Builder->CreateICmpNE(L, R, "notequalcmptmp");
     } else {
         L = Builder->CreateFCmpUNE(L, R, "notequalfcmptmp");
