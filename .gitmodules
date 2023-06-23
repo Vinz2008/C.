@@ -1,10 +1,6 @@
 [submodule "bdwgc"]
 	path = bdwgc
 	url = https://github.com/ivmai/bdwgc
-[submodule "build/tomlplusplus"]
-	path = build/tomlplusplus
-	url = https://github.com/marzer/tomlplusplus.git
-	shallow = true
 [submodule "tools/vscode"]
 	path = tools/vscode
 	url = https://github.com/Vinz2008/cpoint-vscode.git
