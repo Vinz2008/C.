@@ -31,6 +31,10 @@ extern std::vector<std::string> typeDefTable;
 extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::vector<std::string> modulesNamesContext;
 
+bool is_comment = false;
+
+extern void HandleComment();
+
 bool is_template_parsing_definition = false;
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
@@ -356,6 +360,17 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   switch (CurTok) {
   default:
     return LogError("Unknown token %d when expecting an expression", CurTok);
+  case tok_single_line_comment:
+    HandleComment();
+    /*Log::Info() << "token bef : " << CurTok << "\n";
+    getNextToken(); // pass tok_single_line_comment token
+    Log::Info() << "go to next line : " << CurTok << "\n";
+    go_to_next_line();
+    //handlePreprocessor();
+    Log::Info() << "token : " << CurTok << "\n";*/
+    is_comment = true;
+    return nullptr;
+    break;
   case tok_identifier:
     return ParseIdentifierExpr();
   case tok_number:
@@ -481,8 +496,8 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
         return LogErrorP("Invalid precedence: must be 1..100");
       BinaryPrecedence = (unsigned)NumVal;
       getNextToken();
-    }
-    break;
+      }
+      break;
   }
   // find template/generic
   if (CurTok == '<'){
@@ -744,10 +759,12 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   }
   while (CurTok != '}'){
     auto E = ParseExpression();
-    if (!E){
+    if (!E && !is_comment){
        return nullptr;
     }
+    if (!is_comment){
     Body.push_back(std::move(E));
+    }
   }
   getNextToken(); // eat }
   Log::Info() << "end of function" << "\n";

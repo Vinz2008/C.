@@ -48,7 +48,7 @@ std::string get_line_returned(){
   return line;
 }
 
-void gotToNextLine(std::istream &__is, std::string &__str){
+void goToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
   Comp_context->loc.line_nb++;
   Log::Info() << "lines nb increment : " << Comp_context->loc.line_nb << "\n";
@@ -63,7 +63,7 @@ void gotToNextLine(std::istream &__is, std::string &__str){
 }
 
 void go_to_next_line(){
-  gotToNextLine(file_in, line);
+  goToNextLine(file_in, line);
   //handlePreprocessor();
 }
 
@@ -82,7 +82,7 @@ void handlePreprocessor(){
     if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){  
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
       preprocess_instruction(line);
-      gotToNextLine(file_in, line);
+      goToNextLine(file_in, line);
     } else {
       handleEmptyLine();
       //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
@@ -94,7 +94,7 @@ void handlePreprocessor(){
 
 void handleEmptyLine(){
   if (line.size() == 0){
-    gotToNextLine(file_in, line);
+    goToNextLine(file_in, line);
     handlePreprocessor();
     //pos = 0;
   }
@@ -127,7 +127,7 @@ int getCharLine(){
   file_log << "next char after \\0 : " << line[pos] << "\n";
   }
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line.c_str())){
-    gotToNextLine(file_in, line);
+    goToNextLine(file_in, line);
     handlePreprocessor();
     /*while (true){
       if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
@@ -329,6 +329,9 @@ static int gettok() {
   //Log::Info() << "LastChar : " << LastChar << " " << "ThisChar : " << ThisChar << "\n";
   // ThisChar : first character
   // LastChar : second character
+  if (ThisChar == '/' && LastChar == '/'){
+    return tok_single_line_comment;
+  }
   if (LastChar == '|'){
     return create_multi_char_op(ThisChar, LastChar);
   }

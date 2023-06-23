@@ -2,4 +2,12 @@ import @std/print.cpoint
 func main() {
     var strnot : i8 ptr = "not hello world"
     printstr("hello world")
+    // this is a comment interior to the main function
+    printstr("hello world")
+}
+
+// this is a comment exterior to the function
+func test(){
+    2 // world
+    // hello
 }

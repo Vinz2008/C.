@@ -43,6 +43,7 @@ enum Token {
   tok_typedef = -31,
   tok_break = -32,
   tok_mod = -33,
+  tok_single_line_comment = -34,
 };
 
 int getNextToken();
@@ -50,3 +51,4 @@ int GetTokPrecedence();
 int getTokPrecedenceMultiChar(std::string op);
 void go_to_next_line();
 std::string get_line_returned();
+void handlePreprocessor();

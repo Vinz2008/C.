@@ -173,6 +173,16 @@ static void HandleStruct() {
   }
 }
 
+void HandleComment(){
+  Log::Info() << "token bef : " << CurTok << "\n";
+  getNextToken(); // pass tok_single_line_comment token
+  Log::Info() << "go to next line : " << CurTok << "\n";
+  go_to_next_line();
+  getNextToken();
+  //handlePreprocessor();
+  Log::Info() << "token : " << CurTok << "\n";
+}
+
 /*static void HandleClass(){
   if (auto classAST = ParseClass()){
     auto* classIR = classAST->codegen();
@@ -222,27 +232,13 @@ static void MainLoop() {
     case tok_mod:
       HandleMod();
       break;
-    case '/':
+    case tok_single_line_comment:
       Log::Info() << "found single-line comment" << "\n";
       Log::Info() << "char found as a '/' : " << CurTok << "\n";
       if (debug_mode){
       file_log << "found single-line comment" << "\n";
       }
-      getNextToken();
-      if (CurTok != '/'){
-        LogError("single '/' found, did you want to do a comment ?");
-        exit(1);
-      }
-      getNextToken();
-      //go_to_next_line();
-      // FOR NOW NOT WORKING : TODO
-      //Log::Info() << "# comment found" << "\n";
-      //getNextToken();
-      /*Log::Info() << "CurTok : " << CurTok << "\n";
-      while (CurTok != tok_eof && CurTok != ';' && CurTok != tok_func && CurTok != tok_extern && CurTok != tok_struct){
-        Log::Info() << "next token" << "\n";
-        getNextToken();
-      }*/
+      HandleComment();
       break;
     default:
       bool is_in_module_context = CurTok == '}' && !modulesNamesContext.empty();
