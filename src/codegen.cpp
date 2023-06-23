@@ -1022,6 +1022,7 @@ Value* RedeclarationExprAST::codegen(){
 }
 
 Value* BreakExprAST::codegen(){
+  Builder->CreateBr(blocksForBreak.top());
   Builder->SetInsertPoint(blocksForBreak.top());
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
