@@ -1,10 +1,5 @@
-import @std/print.cpoint
+import @std/va.cpoint
 
 func main(){
-    for i = 1, i < 10000, 1.0 {
-        if (i == 3){
-            break
-        }
-        printd(2)
-    }
+    printfmt_cpoint("test %s", "hello world") // for new segfaults
 }
