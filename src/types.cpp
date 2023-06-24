@@ -306,7 +306,7 @@ bool is_type(std::string type){
 
 int get_type(std::string type){
     for (int i = 0; i < types.size(); i++){
-       if (type.compare(types.at(i)) == 0){
+       if (type == types.at(i)){
         if (i >= 14){
             return i+1-15;
         }
@@ -314,4 +314,12 @@ int get_type(std::string type){
        }
     }
     return 1;
+}
+
+std::string get_string_from_type(Cpoint_Type type){
+    if (type.type < 0){
+        return types.at(-(type.type-1));
+    } else {
+        return types.at(type.type-1+15);
+    }
 }

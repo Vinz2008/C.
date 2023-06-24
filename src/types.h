@@ -48,3 +48,4 @@ bool is_decimal_number_type(Cpoint_Type type);
 bool is_signed(Cpoint_Type type);
 void convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 int get_type_number_of_bits(Cpoint_Type type);
+std::string get_string_from_type(Cpoint_Type type);

@@ -72,7 +72,7 @@ extern int modifier_for_line_count;
 
 extern std::vector<std::string> modulesNamesContext;
 
-void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args){
+void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName){
   auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   Log::Info() << "add extern name " << fnName << "\n";
@@ -81,14 +81,14 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
 
 void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
-  add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false);
+  add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false, false, "");
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
   args_gc_malloc.push_back(make_pair("size", Cpoint_Type(int_type)));
-  add_manually_extern("gc_malloc", Cpoint_Type(void_type, true), std::move(args_gc_malloc), 0, 30, false);
+  add_manually_extern("gc_malloc", Cpoint_Type(void_type, true), std::move(args_gc_malloc), 0, 30, false, false, "");
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_realloc;
   args_gc_realloc.push_back(make_pair("ptr", Cpoint_Type(void_type, true)));
   args_gc_realloc.push_back(make_pair("size", Cpoint_Type(int_type)));
-  add_manually_extern("gc_realloc", Cpoint_Type(void_type, true), std::move(args_gc_realloc), 0, 30, false);
+  add_manually_extern("gc_realloc", Cpoint_Type(void_type, true), std::move(args_gc_realloc), 0, 30, false, false, "");
 }
 
 static void HandleDefinition() {
@@ -446,6 +446,7 @@ int main(int argc, char **argv){
       add_externs_for_gc();
     }
     MainLoop();
+    codegenTemplates();
     if (debug_info_mode){
     DBuilder->finalize();
     }

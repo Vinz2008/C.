@@ -64,3 +64,4 @@ public:
 };
 
 std::string module_function_mangling(std::string module_name, std::string function_name);
+void codegenTemplates();

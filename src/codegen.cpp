@@ -41,6 +41,8 @@ std::map<std::string, Function*> GeneratedFunctions;
 
 std::stack<BasicBlock*> blocksForBreak;
 
+std::vector<std::unique_ptr<FunctionAST>> TemplatesToGenerate;
+
 extern std::map<std::string, int> BinopPrecedence;
 extern bool isInStruct;
 extern bool gc_mode;
@@ -48,6 +50,8 @@ extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
 extern bool debug_info_mode;
+
+void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
 std::string struct_function_mangling(std::string struct_name, std::string name){
   std::string mangled_name = struct_name + "__" + name;
@@ -93,9 +97,24 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   return nullptr;
 }
 
-void callTemplate(std::string Callee){
+void codegenTemplates(){
+  for (int i = 0; i < TemplatesToGenerate.size(); i++){
+    TemplatesToGenerate.at(i)->codegen();
+  }
+}
+
+void callTemplate(std::string& Callee/*, std::string type*/){
   Log::Info() << "Callee : " << Callee << "\n";
-  std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
+  auto templateProto = std::make_unique<TemplateProto>(TemplateProtos[Callee]->functionAST->clone(), TemplateProtos[Callee]->template_type_name); 
+  std::string typeName = "___type";
+  //typeName = "_" + get_string_from_type(type) // TODO use type to create template name
+  std::string function_temp_name = templateProto->functionAST->Proto->Name + typeName; // add something to specify type
+  templateProto->functionAST->Proto->Name = function_temp_name;
+  //templateProto->functionAST->codegen();
+  add_manually_extern(templateProto->functionAST->Proto->Name, templateProto->functionAST->Proto->cpoint_type, templateProto->functionAST->Proto->Args, (templateProto->functionAST->Proto->IsOperator) ? 1 : 0, templateProto->functionAST->Proto->getBinaryPrecedence(), templateProto->functionAST->Proto->is_variable_number_args, templateProto->functionAST->Proto->has_template, templateProto->functionAST->Proto->template_name);
+  Callee = function_temp_name;
+  TemplatesToGenerate.push_back(std::move(templateProto->functionAST));
+  /*std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
   std::string function_temp_name = old_template_name + "_type";
   TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
   auto ProtoClone = TemplateProtos[Callee]->functionAST->Proto->clone();
@@ -103,7 +122,7 @@ void callTemplate(std::string Callee){
   Log::Info() << "TEST" << "\n";
   Callee = function_temp_name;
   TemplateProtos[Callee]->functionAST->Proto = std::move(ProtoClone);
-  TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;
+  TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;*/
 }
 
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -494,14 +513,17 @@ Value *CallExprAST::codegen() {
       return callLLVMIntrisic(Callee, Args);
     }
   }
-  Function *CalleeF = getFunction(Callee);
   bool is_function_template = TemplateProtos[Callee] != nullptr;
+  if (is_function_template){
+    callTemplate(Callee);
+  }
+  Function *CalleeF = getFunction(Callee);
   Log::Info() << "is_function_template : " << is_function_template << "\n";
   if (!CalleeF && !is_function_template)
     return LogErrorV("Unknown function referenced %s", Callee.c_str());
-  if (TemplateProtos[Callee] != nullptr){
+  /*if (TemplateProtos[Callee] != nullptr){
     callTemplate(Callee);
-  }
+  }*/
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
   Log::Info() << "Args.size : " << Args.size() << "\n";
   if (FunctionProtos[Callee] == nullptr){
