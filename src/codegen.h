@@ -22,6 +22,13 @@ public:
     TemplateProto(std::unique_ptr<FunctionAST> functionAST, const std::string& template_type_name) : functionAST(std::move(functionAST)), template_type_name(template_type_name) {}
 };
 
+class TemplateCall {
+public:
+    std::string typeName;
+    std::unique_ptr<FunctionAST> functionAST;
+    TemplateCall(const std::string& typeName, std::unique_ptr<FunctionAST> functionAST) : typeName(typeName), functionAST(std::move(functionAST)) {}
+};
+
 class GlobalVariableValue {
 public:
     Cpoint_Type type;

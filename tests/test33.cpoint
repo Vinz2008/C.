@@ -1,7 +1,5 @@
-func test<T>(){
-    0
-}
+import @std/va.cpoint
 
 func main(){
-    test()
+    printfmt_cpoint("test %s", "hello world") // for new segfaults
 }

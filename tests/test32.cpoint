@@ -1,5 +1,9 @@
-import @std/va.cpoint
+func test<T>(){
+    // var a : T = 2
+    0
+}
 
 func main(){
-    printfmt_cpoint("test %s", "hello world") // for new segfaults
+    test<int>()
+    test<double>()
 }

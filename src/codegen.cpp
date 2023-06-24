@@ -41,7 +41,11 @@ std::map<std::string, Function*> GeneratedFunctions;
 
 std::stack<BasicBlock*> blocksForBreak;
 
-std::vector<std::unique_ptr<FunctionAST>> TemplatesToGenerate;
+std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
+
+std::pair<std::string, std::string> TypeTemplateCallCodegen;
+
+
 
 extern std::map<std::string, int> BinopPrecedence;
 extern bool isInStruct;
@@ -99,21 +103,22 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 
 void codegenTemplates(){
   for (int i = 0; i < TemplatesToGenerate.size(); i++){
-    TemplatesToGenerate.at(i)->codegen();
+    TypeTemplateCallCodegen = std::make_pair(TemplatesToGenerate.at(i)->functionAST->Proto->template_name, TemplatesToGenerate.at(i)->typeName);
+    TemplatesToGenerate.at(i)->functionAST->codegen();
   }
 }
 
-void callTemplate(std::string& Callee/*, std::string type*/){
+void callTemplate(std::string& Callee, std::string template_passed_type){
   Log::Info() << "Callee : " << Callee << "\n";
   auto templateProto = std::make_unique<TemplateProto>(TemplateProtos[Callee]->functionAST->clone(), TemplateProtos[Callee]->template_type_name); 
-  std::string typeName = "___type";
-  //typeName = "_" + get_string_from_type(type) // TODO use type to create template name
+  std::string typeName = "____type";
+  typeName = "____" + template_passed_type;
   std::string function_temp_name = templateProto->functionAST->Proto->Name + typeName; // add something to specify type
   templateProto->functionAST->Proto->Name = function_temp_name;
   //templateProto->functionAST->codegen();
   add_manually_extern(templateProto->functionAST->Proto->Name, templateProto->functionAST->Proto->cpoint_type, templateProto->functionAST->Proto->Args, (templateProto->functionAST->Proto->IsOperator) ? 1 : 0, templateProto->functionAST->Proto->getBinaryPrecedence(), templateProto->functionAST->Proto->is_variable_number_args, templateProto->functionAST->Proto->has_template, templateProto->functionAST->Proto->template_name);
   Callee = function_temp_name;
-  TemplatesToGenerate.push_back(std::move(templateProto->functionAST));
+  TemplatesToGenerate.push_back(std::make_unique<TemplateCall>(template_passed_type, std::move(templateProto->functionAST)));
   /*std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
   std::string function_temp_name = old_template_name + "_type";
   TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
@@ -515,7 +520,7 @@ Value *CallExprAST::codegen() {
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;
   if (is_function_template){
-    callTemplate(Callee);
+    callTemplate(Callee, template_passed_type);
   }
   Function *CalleeF = getFunction(Callee);
   Log::Info() << "is_function_template : " << is_function_template << "\n";

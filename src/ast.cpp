@@ -30,6 +30,7 @@ extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
 extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::vector<std::string> modulesNamesContext;
+extern std::pair<std::string, std::string> TypeTemplateCallCodegen;
 
 bool is_comment = false;
 
@@ -220,7 +221,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     Log::Info() << "Struct member returned" << "\n";
     return std::make_unique<StructMemberExprAST>(IdName, member, is_function_call_member, std::move(Args));
   }
-  if (CurTok != '('){ // Simple variable ref.
+  if (CurTok != '(' /*&& CurTok != '<'*/){ // Simple variable ref.
     if (is_array){
       Log::Info() << "Array member returned" << "\n";
       return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
@@ -256,8 +257,20 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     return std::make_unique<VariableExprAST>(IdName, *type);
   }
-
   // Call.
+  std::string template_passed_type = "";
+  /*if (CurTok == '<'){
+    getNextToken();
+    template_passed_type = IdentifierStr;
+    getNextToken();
+    if (CurTok != '>'){
+      return LogError("expected '>' not found");
+    }
+    getNextToken();
+  }*/ // TODO : fix bug because this triggers when the '<' operator is used. Find a way to fix this by either changing the way it is passed or find a way to differenciate it
+  if (CurTok != '('){
+    return LogError("missing '(' when calling function");
+  }
   getNextToken();  // eat (
   std::vector<std::unique_ptr<ExprAST>> Args;
   if (CurTok != ')') {
@@ -279,7 +292,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   // Eat the ')'.
   getNextToken();
 
-  return std::make_unique<CallExprAST>(IdName, std::move(Args));
+  return std::make_unique<CallExprAST>(IdName, std::move(Args), template_passed_type);
 }
 
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
@@ -418,6 +431,13 @@ std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::stri
   }
   if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class)
     return LogError("expected identifier after var in type declaration");
+  /*if (CurTok == tok_identifier && IdentifierStr == TypeNameTemplateAST){
+
+  }*/ // TODO make a way to recognize a template type in cpoint_type. Remove the following code because the replacement of the type will be made in codegen
+  if (CurTok == tok_identifier && IdentifierStr == TypeTemplateCallCodegen.first){
+    Log::Info() << "Found template type in template call" << "\n";
+    IdentifierStr = TypeTemplateCallCodegen.second;
+  }
   if (CurTok == tok_struct || CurTok == tok_class){
     getNextToken();
     struct_Name = IdentifierStr;
@@ -426,7 +446,7 @@ std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::stri
     if (CurTok == tok_ptr){
       *is_ptr = true;
       getNextToken();
-    }
+    }    
   } /*else if (CurTok == tok_class){
     getNextToken();
     class_Name = IdentifierStr;
@@ -754,7 +774,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (std_mode && Proto->Name == "main" && gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
-  auto E_gc_init = std::make_unique<CallExprAST>("gc_init", std::move(Args_gc_init));
+  auto E_gc_init = std::make_unique<CallExprAST>("gc_init", std::move(Args_gc_init), "");
   Body.push_back(std::move(E_gc_init));
   }
   while (CurTok != '}'){

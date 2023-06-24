@@ -178,11 +178,12 @@ public:
 class CallExprAST : public ExprAST {
   std::string Callee;
   std::vector<std::unique_ptr<ExprAST>> Args;
+  std::string template_passed_type;
 
 public:
   CallExprAST(const std::string &Callee,
-              std::vector<std::unique_ptr<ExprAST>> Args)
-      : Callee(Callee), Args(std::move(Args)) {}
+              std::vector<std::unique_ptr<ExprAST>> Args, const std::string& template_passed_type)
+      : Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
@@ -191,7 +192,7 @@ public:
         ArgsCloned.push_back(Args.at(i)->clone());
       }
     }
-    return std::make_unique<CallExprAST>(Callee, std::move(ArgsCloned));
+    return std::make_unique<CallExprAST>(Callee, std::move(ArgsCloned), template_passed_type);
   }
 };
 
