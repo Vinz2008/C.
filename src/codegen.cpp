@@ -94,11 +94,13 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 }
 
 void callTemplate(std::string Callee){
+  Log::Info() << "Callee : " << Callee << "\n";
   std::string old_template_name = TemplateProtos[Callee]->functionAST->Proto->Name;
   std::string function_temp_name = old_template_name + "_type";
   TemplateProtos[Callee]->functionAST->Proto->Name = function_temp_name;
   auto ProtoClone = TemplateProtos[Callee]->functionAST->Proto->clone();
   TemplateProtos[Callee]->functionAST->codegen();
+  Log::Info() << "TEST" << "\n";
   Callee = function_temp_name;
   TemplateProtos[Callee]->functionAST->Proto = std::move(ProtoClone);
   TemplateProtos[Callee]->functionAST->Proto->Name = old_template_name;
@@ -350,10 +352,10 @@ Type* StructDeclarAST::codegen(){
   std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
-    Type* var_type = get_type_llvm(*(VarExpr->cpoint_type));
+    Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     dataTypes.push_back(var_type);
     std::string VarName = VarExpr->VarNames.at(0).first;
-    members.push_back(std::make_pair(VarName, *(VarExpr->cpoint_type)));
+    members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
   }
   structType->setBody(dataTypes);
   Log::Info() << "added struct declaration name " << Name << " to StructDeclarations" << "\n";
@@ -732,7 +734,6 @@ Function *FunctionAST::codegen() {
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
-
     return TheFunction;
   }
 
@@ -758,12 +759,12 @@ void ModAST::codegen(){
 }
 
 GlobalVariable* GlobalVariableAST::codegen(){
-  Constant* InitVal = get_default_constant(*cpoint_type);
+  Constant* InitVal = get_default_constant(cpoint_type);
   if (Init){
     InitVal = dyn_cast<ConstantFP>(Init->codegen());
   }
-  GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(*cpoint_type), /*is constant*/ is_const, GlobalValue::ExternalLinkage, InitVal, varName);
-  GlobalVariables[varName] = std::make_unique <GlobalVariableValue>(*cpoint_type, globalVar);
+  GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), /*is constant*/ is_const, GlobalValue::ExternalLinkage, InitVal, varName);
+  GlobalVariables[varName] = std::make_unique<GlobalVariableValue>(cpoint_type, globalVar);
   return globalVar;
 }
 
@@ -1252,10 +1253,10 @@ Value *VarExprAST::codegen() {
       if (!InitVal)
         return nullptr;
       if (infer_type){
-        cpoint_type = std::make_unique<Cpoint_Type>(get_cpoint_type_from_llvm(InitVal->getType()));
+        cpoint_type = Cpoint_Type(get_cpoint_type_from_llvm(InitVal->getType()));
       }
     } else { // If not specified, use 0.0.
-      InitVal = get_default_value(*cpoint_type);
+      InitVal = get_default_value(cpoint_type);
       //InitVal = get_default_constant(*cpoint_type);
     }
     llvm::Value* indexVal = nullptr;
@@ -1265,15 +1266,15 @@ Value *VarExprAST::codegen() {
     auto constFP = dyn_cast<ConstantFP>(indexVal);
     double indexD = constFP->getValueAPF().convertToDouble();
     Log::Info() << "index for varexpr array : " << indexD << "\n";
-    cpoint_type->nb_element = indexD;
+    cpoint_type.nb_element = indexD;
     }
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, *cpoint_type);
-    if (!get_type_llvm(*cpoint_type)->isPointerTy()){
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
+    if (!get_type_llvm(cpoint_type)->isPointerTy()){
     Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
     }
     if (index != nullptr){
-    if (InitVal->getType() != get_type_llvm(*cpoint_type)){
-      convert_to_type(get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(*cpoint_type), InitVal);
+    if (InitVal->getType() != get_type_llvm(cpoint_type)){
+      convert_to_type(get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(cpoint_type), InitVal);
     }
     }
     if (InitVal->getType() == get_type_llvm(Cpoint_Type(void_type))){
@@ -1293,14 +1294,14 @@ Value *VarExprAST::codegen() {
     // Remember this binding.
     Type* struct_type_temp = get_type_llvm(Cpoint_Type(double_type));
     std::string struct_declaration_name_temp = "";
-    if (cpoint_type->is_struct){
-      if (StructDeclarations[cpoint_type->struct_name] == nullptr){
-        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type->struct_name.c_str());
+    if (cpoint_type.is_struct){
+      if (StructDeclarations[cpoint_type.struct_name] == nullptr){
+        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type.struct_name.c_str());
       }
-      struct_type_temp = StructDeclarations[cpoint_type->struct_name]->struct_type;
-      struct_declaration_name_temp = cpoint_type->struct_name;
-      if (!cpoint_type->is_ptr){
-      if (Function* constructorF = getFunction(cpoint_type->struct_name + "__Constructor__Default")){
+      struct_type_temp = StructDeclarations[cpoint_type.struct_name]->struct_type;
+      struct_declaration_name_temp = cpoint_type.struct_name;
+      if (!cpoint_type.is_ptr){
+      if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
       std::vector<Value *> ArgsV;
       //auto A = NamedValues[VarName]->alloca_inst;
       //Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
@@ -1329,7 +1330,7 @@ Value *VarExprAST::codegen() {
     }*/
     Log::Info() << "VarName " << VarName << "\n";
     Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
-    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, *cpoint_type, struct_type_temp, struct_declaration_name_temp);
+    NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type, struct_type_temp, struct_declaration_name_temp);
     Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
   }
   CpointDebugInfo.emitLocation(this);

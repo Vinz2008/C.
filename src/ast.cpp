@@ -898,9 +898,8 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   if (!Init)
     return nullptr;
   }
-  std::unique_ptr<Cpoint_Type> cpoint_type;
-  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", /*false, "",*/ nb_ptr);
-  return std::make_unique<GlobalVariableAST>(Name, is_const, std::move(cpoint_type), std::move(Init));
+  Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, is_array, nb_element, false, "", /*false, "",*/ nb_ptr);
+  return std::make_unique<GlobalVariableAST>(Name, is_const, cpoint_type, std::move(Init));
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {
@@ -1198,16 +1197,15 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
-  std::unique_ptr<Cpoint_Type> cpoint_type;
   Log::Info() << "NB PTR : " << nb_ptr << "\n";
   bool is_struct = struct_name != "";
   //bool is_class = class_name != "";
-  cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, 0 /*deprecated*/, is_struct, struct_name/*, is_class, class_name*/, nb_ptr);
+  Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, is_array, 0 /*deprecated*/, is_struct, struct_name/*, is_class, class_name*/, nb_ptr);
   /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {
   cpoint_type = std::make_unique<Cpoint_Type>(type, is_ptr, is_array, nb_element, false, "", nb_ptr);
   }*/
-  NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, *cpoint_type);
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, std::move(cpoint_type), std::move(index), infer_type);
+  NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, cpoint_type);
+  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, cpoint_type, std::move(index), infer_type);
 }
