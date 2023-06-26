@@ -1,9 +1,9 @@
-func test<T>(){
+func test(T : templateType){
     // var a : T = 2
     0
 }
 
 func main(){
-    test<int>()
-    test<double>()
+    test(int)
+    test(double)
 }
