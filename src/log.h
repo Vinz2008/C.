@@ -53,6 +53,7 @@ namespace Log {
         ~Warning(){
             Color::Modifier def(Color::FG_DEFAULT);
             std::cout<<def;
+            std::flush(std::cout);
         }
     };
     struct Preprocessor_Info {
