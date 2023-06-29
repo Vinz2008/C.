@@ -16,6 +16,8 @@ func main(){
   var c : int = a
   var d : i8 = c
   var e : u8 = d
+  var f : i8 ptr = addr a
+  var g : int = f
   test(1, 2)
   test(a, b)
   test(e, 6)

@@ -109,9 +109,17 @@ Type* get_array_llvm_type(Type* type, int nb_element){
 Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     int type = double_type;
     bool is_ptr = false;
+    bool is_array = false;
+    bool is_struct = false;
     //Type* not_ptr_type = llvm_type;
     if (llvm_type->isPointerTy()){
         is_ptr = true;
+    }
+    if (llvm_type->isArrayTy()){
+        is_array = true;
+    }
+    if (llvm_type->isStructTy()){
+        is_struct = true;
     }
     if (llvm_type == Type::getDoubleTy(*TheContext)){
         type = double_type;
@@ -132,7 +140,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         Log::Warning() << "Unknown Type" << "\n";
         }
     }
-    return Cpoint_Type(type, is_ptr);
+    return Cpoint_Type(type, is_ptr, is_array, 0, is_struct);
 }
 
 Value* get_default_value(Cpoint_Type type){
@@ -225,7 +233,18 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
   Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
-  if (typeFrom.is_ptr || typeFrom.is_array || typeFrom.is_struct || typeTo_cpoint.is_ptr || typeTo_cpoint.is_array || typeTo_cpoint.is_struct){
+  if (typeFrom.is_array || typeFrom.is_struct || typeTo_cpoint.is_array || typeTo_cpoint.is_struct){
+    return;
+  }
+  if (typeFrom.is_ptr && !typeTo_cpoint.is_ptr){
+    val = Builder->CreatePtrToInt(val, typeTo, "ptrtoint_cast");
+    return;
+  } 
+  if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
+    val = Builder->CreateIntToPtr(val, typeTo, "ptrtoint_cast");
+    return;
+  }
+  if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){
     return;
   }
 
