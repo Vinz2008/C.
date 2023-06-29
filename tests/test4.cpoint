@@ -1,4 +1,5 @@
 import @std/print.cpoint
+
 func main(){
   for i = 1, i <= 100, 1.0 {
     if (i % 15) == 0 {

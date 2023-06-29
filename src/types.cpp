@@ -177,7 +177,7 @@ int get_type_number_of_bits(Cpoint_Type type){
     case i128_type:
         return 128;
     default:
-        return 0;
+        return -1;
     }
 }
 
@@ -222,33 +222,54 @@ Constant* get_default_constant(Cpoint_Type type){
 }
 
 void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
+    // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
+  Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
-  if (typeFrom.is_ptr || typeFrom.is_array || get_cpoint_type_from_llvm(typeTo).is_ptr || get_cpoint_type_from_llvm(typeTo).is_array){
+  if (typeFrom.is_ptr || typeFrom.is_array || typeFrom.is_struct || typeTo_cpoint.is_ptr || typeTo_cpoint.is_array || typeTo_cpoint.is_struct){
     return;
   }
 
   if (is_decimal_number_type(typeFrom)){
-    if (is_signed(get_cpoint_type_from_llvm(typeTo))){
+    if (is_signed(typeTo_cpoint)){
       Log::Info() << "From float/double to signed int" << "\n";
       val = Builder->CreateFPToUI(val, typeTo, "cast"); // change this to signed int conversion. For now it segfaults
       return;
-    } else if (is_unsigned(get_cpoint_type_from_llvm(typeTo))){
+    } else if (is_unsigned(typeTo_cpoint)){
       Log::Info() << "From float/double to unsigned int" << "\n";
       val = Builder->CreateFPToUI(val, typeTo, "cast");
       return;
-    } else if (is_decimal_number_type(get_cpoint_type_from_llvm(typeTo))){
+    } else if (is_decimal_number_type(typeTo_cpoint)){
       return;
     }
   }
-
-  if (is_signed(typeFrom.type)){
-    if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
-        val = Builder->CreateSIToFP(val, typeTo, "cast");
+  int nb_bits_type_from = -1;
+  int nb_bits_type_to = -1;
+  if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+        Log::Info() << "is_signed typeFrom.type " << typeFrom.type << " : " << is_signed(typeFrom.type) << "\n";
+        if (is_signed(typeFrom.type)){
+            val = Builder->CreateSIToFP(val, typeTo, "sitofp_cast");
+        } else {
+            val = Builder->CreateUIToFP(val, typeTo, "uitofp_cast");
+        }
         return;
-    } else if (get_cpoint_type_from_llvm(typeTo).type == typeFrom.type){
+    } else if ((nb_bits_type_from = get_type_number_of_bits(typeFrom)) != -1 && nb_bits_type_from != (nb_bits_type_to = get_type_number_of_bits(typeTo_cpoint))){
+        if (nb_bits_type_from < nb_bits_type_to){
+            if (is_signed(typeFrom.type)){
+                Log::Info() << "Sext cast" << "\n";
+                val = Builder->CreateSExt(val, typeTo, "sext_cast");
+            } else {
+                Log::Info() << "Zext cast" << "\n";
+                val = Builder->CreateZExt(val, typeTo, "zext_cast");
+            }
+            return;
+        } else {
+            Log::Info() << "Trunc cast" << "\n";
+            //val = Builder->CreateTrunc(val, typeTo, "trunc cast");
+            return;
+        }
+    } else if (typeTo_cpoint.type == typeFrom.type){
         return;
     }
-  }
 
 
   /*switch (typeFrom.type)

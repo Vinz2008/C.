@@ -1,7 +1,22 @@
+import @std/print.cpoint
+
 func test(x, y){
   if x < 3 {
+    printd(1)
     1
   } else { 
+    printd(x + y)
     return x + y
   } 
+}
+
+func main(){
+  var a : i8 = 4
+  var b : i16 = 12
+  var c : int = a
+  var d : i8 = c
+  var e : u8 = d
+  test(1, 2)
+  test(a, b)
+  test(e, 3)
 }
