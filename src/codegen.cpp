@@ -932,17 +932,18 @@ Value* RedeclarationExprAST::codegen(){
     return LogErrorV("Val is Nullptr\n");
   }
   Value* ValDeclared = Val->codegen();
-  Cpoint_Type* type = nullptr;
+  Cpoint_Type type = Cpoint_Type(0);
   if (is_global && GlobalVariables[VariableName] != nullptr){
-    type = new Cpoint_Type(GlobalVariables[VariableName]->type);
+    type = GlobalVariables[VariableName]->type;
   } else if (NamedValues[VariableName] != nullptr){
-    type = new Cpoint_Type(NamedValues[VariableName]->type);
+    type = NamedValues[VariableName]->type;
   } else {
     Log::Info() << "couldn't find variable" << "\n";
   }
-  if (type != nullptr){
-  if (ValDeclared->getType() != get_type_llvm(*type)){
-    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(*type), ValDeclared);
+  // TODO convert type for struct members. Either find the type and the member before and store the pos for after to not do loop 2 times, either move this code at the end to have the type
+  if (type.type != 0 && member == ""){ 
+  if (ValDeclared->getType() != get_type_llvm(type)){
+    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(type), ValDeclared);
   }
   }
   bool is_struct = false;
@@ -1299,7 +1300,7 @@ Value *VarExprAST::codegen() {
     if (!get_type_llvm(cpoint_type)->isPointerTy()){
     Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
     }
-    if (index != nullptr){
+    if (index == nullptr){
     if (InitVal->getType() != get_type_llvm(cpoint_type)){
       convert_to_type(get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(cpoint_type), InitVal);
     }

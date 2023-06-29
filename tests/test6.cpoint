@@ -18,5 +18,5 @@ func main(){
   var e : u8 = d
   test(1, 2)
   test(a, b)
-  test(e, 3)
+  test(e, 6)
 }

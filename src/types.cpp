@@ -264,7 +264,7 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
             return;
         } else {
             Log::Info() << "Trunc cast" << "\n";
-            //val = Builder->CreateTrunc(val, typeTo, "trunc cast");
+            val = Builder->CreateTrunc(val, typeTo, "trunc_cast");
             return;
         }
     } else if (typeTo_cpoint.type == typeFrom.type){
