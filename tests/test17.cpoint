@@ -1,4 +1,5 @@
 import @std/print.cpoint
+
 func main(){
     loop {
         printd(2)

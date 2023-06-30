@@ -3,3 +3,4 @@ extern printi_internal(x : int) void;
 extern putchard_internal(x : double);
 extern copenfile(p : i8 ptr) int;
 extern cwritefile(fd : int, buf : i8 ptr) int;
+extern internal_readline() i8 ptr;

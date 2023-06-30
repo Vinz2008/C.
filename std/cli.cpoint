@@ -1,0 +1,7 @@
+include capi.hpoint
+
+mod cli {
+    func read() i8 ptr {
+        internal_readline()
+    }
+}

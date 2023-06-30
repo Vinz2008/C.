@@ -1,6 +1,10 @@
+import @std/cli.cpoint
+import @std/print.cpoint
+
 struct a {
     var b
 }
 func main(){
+    printstr(cli::read())
     var s : struct a
 }
