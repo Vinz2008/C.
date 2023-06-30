@@ -95,6 +95,17 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << cpoint_type.type << "\n";
         type = llvm::ArrayType::get(type, cpoint_type.nb_element);
     }
+    if (cpoint_type.is_function){
+        std::vector<Type *> args;
+        for (int i = 0; i < cpoint_type.args.size(); i++){
+            args.push_back(get_type_llvm(cpoint_type.args.at(i)));
+        }
+        Log::Info() << "Generating function type" << "\n";
+        if (cpoint_type.return_type == nullptr){
+            Log::Info() << "cpoint_type.return_type is nullptr" << "\n";
+        }
+        type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);
+    }
     return type;   
 }
 
@@ -111,6 +122,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     bool is_ptr = false;
     bool is_array = false;
     bool is_struct = false;
+    bool is_function = false;
     //Type* not_ptr_type = llvm_type;
     if (llvm_type->isPointerTy()){
         is_ptr = true;
@@ -120,6 +132,9 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     }
     if (llvm_type->isStructTy()){
         is_struct = true;
+    }
+    if (llvm_type->isFunctionTy()){
+        is_function = true;
     }
     if (llvm_type == Type::getDoubleTy(*TheContext)){
         type = double_type;
@@ -140,7 +155,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         Log::Warning() << "Unknown Type" << "\n";
         }
     }
-    return Cpoint_Type(type, is_ptr, is_array, 0, is_struct);
+    return Cpoint_Type(type, is_ptr, is_array, 0, is_struct, "", 0, false, is_function);
 }
 
 Value* get_default_value(Cpoint_Type type){

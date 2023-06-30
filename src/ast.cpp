@@ -424,13 +424,23 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   }
 }
 
-std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::string& struct_Name, /*std::string& class_Name,*/ int& nb_ptr , bool eat_token = true){
+Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_Name, int& nb_ptr ,*/ bool eat_token = true){
+  int type = double_type; 
+  bool is_ptr = false;
+  std::string struct_Name = "";
+  int nb_ptr = 0;
+  bool is_function = false;
+  std::vector<Cpoint_Type> args;
+  Cpoint_Type* return_type = nullptr;
+  Cpoint_Type default_type = Cpoint_Type(double_type);
   Log::Info() << "type declaration found" << "\n";
   if (eat_token){
   getNextToken(); // eat the ':'
   }
-  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class)
-    return LogError("expected identifier after var in type declaration");
+  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func){
+    LogError("expected identifier after var in type declaration");
+    return default_type;
+  }
   /*if (CurTok == tok_identifier && IdentifierStr == TypeNameTemplateAST){
 
   }*/ // TODO make a way to recognize a template type in cpoint_type. Remove the following code because the replacement of the type will be made in codegen
@@ -438,13 +448,43 @@ std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::stri
     Log::Info() << "Found template type in template call" << "\n";
     IdentifierStr = TypeTemplateCallCodegen.second;
   }
+  if (CurTok == tok_func){
+    is_function = true;
+    getNextToken();
+    if (CurTok != '('){
+        LogError("Missing parenthesis");
+        return default_type;
+    }
+    getNextToken();
+    while (1){
+        if (CurTok != tok_identifier){
+            LogError("Missing Identifier for args in function type");
+            return default_type;
+        }
+        Cpoint_Type arg_type = ParseTypeDeclaration(false);
+        args.push_back(arg_type);
+        if (CurTok == ')'){
+            Log::Info() << "Found closing )" << "\n";
+            getNextToken();
+            break;
+        }
+        if (CurTok != ','){
+            LogError("Missing ',' in args types for function type");
+            return default_type;
+        }
+        getNextToken();
+    }
+    Cpoint_Type return_type_temp = ParseTypeDeclaration(false);
+    return_type = new Cpoint_Type(return_type_temp);
+    goto before_gen_cpoint_type;
+  }
   if (CurTok == tok_struct || CurTok == tok_class){
     getNextToken();
     struct_Name = IdentifierStr;
     Log::Info() << "struct_Name " << struct_Name << "\n";
     getNextToken();
     if (CurTok == tok_ptr){
-      *is_ptr = true;
+      is_ptr = true;
       getNextToken();
     }    
   } /*else if (CurTok == tok_class){
@@ -456,19 +496,21 @@ std::unique_ptr<ExprAST> ParseTypeDeclaration(int* type, bool* is_ptr, std::stri
       getNextToken();
     }
   }*/ else if (is_type(IdentifierStr)){
-    *type = get_type(IdentifierStr);
-    Log::Info() << "Variable type : " << *type << "\n";
+    type = get_type(IdentifierStr);
+    Log::Info() << "Variable type : " << type << "\n";
     getNextToken();
     while (CurTok == tok_ptr){
-      *is_ptr = true;
+      is_ptr = true;
       nb_ptr++;
       Log::Info() << "Type Declaration ptr added : " << nb_ptr << "\n";
       getNextToken();
     }
   } else {
-    return LogError("wrong type %s found", IdentifierStr.c_str());
+    LogError("wrong type %s found", IdentifierStr.c_str());
+    return default_type;
   }
-  return nullptr;
+before_gen_cpoint_type:
+  return Cpoint_Type(type, is_ptr, false, 0, struct_Name != "", struct_Name, 0, false, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseBool(bool bool_value){
@@ -567,16 +609,17 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       }
       std::string ArgName = IdentifierStr;
       getNextToken();
-      int type = double_type;
+      /*int type = double_type;
       bool is_ptr = false;
-      std::string temp_struct;
+      std::string temp_struct;*/
       //std::string temp_class;
       int temp_nb = -1;
+      Cpoint_Type arg_type = Cpoint_Type(double_type);
       if (CurTok == ':'){
-        ParseTypeDeclaration(&type, &is_ptr, temp_struct, /*temp_class,*/ temp_nb);
+        arg_type = ParseTypeDeclaration(/*type, is_ptr, temp_struct, temp_nb*/);
       }
       arg_nb++;
-      ArgNames.push_back(std::make_pair(ArgName, Cpoint_Type(type, is_ptr, false, 0, temp_struct != "", temp_struct, /*false, "",*/ temp_nb)));
+      ArgNames.push_back(std::make_pair(ArgName, arg_type /*Cpoint_Type(type, is_ptr, false, 0, temp_struct != "", temp_struct, temp_nb)*/));
       }
     }
   }
@@ -588,21 +631,21 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   if (Kind && ArgNames.size() != Kind)
     return LogErrorP("Invalid number of operands for operator : %d args but %d expected", ArgNames.size(), Kind);
   Log::Info() << "Tok : " << CurTok << "\n";
-  int type = -1;
+  /*int type = -1;
   bool is_ptr = false;
-  std::string struct_name = "";
+  std::string struct_name = "";*/
+  Cpoint_Type cpoint_type = Cpoint_Type(double_type);
   //std::string class_name = "";
   int nb_ptr = 0;
   if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class){
     Log::Info() << "Tok type : " << CurTok << "\n";
     Log::Info() << "type : " << IdentifierStr << "\n";
-    ParseTypeDeclaration(&type, &is_ptr, struct_name, /*class_name,*/ nb_ptr, false);
+    cpoint_type = ParseTypeDeclaration(/*type, is_ptr, struct_name, nb_ptr,*/ false);
     //type = get_type(IdentifierStr);
     //getNextToken(); // eat type
   }
-  bool is_struct = struct_name != "";
-  //bool is_class = class_name != "";
-  Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, false, 0, is_struct, struct_name/*, is_class, class_name*/, nb_ptr);
+  //bool is_struct = struct_name != "";
+  //Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, false, 0, is_struct, struct_name/*, is_class, class_name*/, nb_ptr);
   /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {
@@ -891,11 +934,12 @@ std::unique_ptr<ModAST> ParseMod(){
 
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   getNextToken(); // eat the var.
-  int type = -1;
-  bool is_ptr = false;
+  /*int type = double_type;
+  bool is_ptr = false;*/
   int nb_element = 0;
   bool is_array = false;
-  std::string struct_name = "";
+  Cpoint_Type cpoint_type = Cpoint_Type(double_type);
+  //std::string struct_name = "";
   //std::string class_name = "";
   int nb_ptr = 0;
   bool is_const = false;
@@ -906,10 +950,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   std::string Name = IdentifierStr;
   getNextToken(); // eat identifier.
   if (CurTok == ':'){
-    auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, /*class_name,*/ nb_ptr);
-    if (a != nullptr){
-      //return a;
-    }
+    cpoint_type = ParseTypeDeclaration(/*type, is_ptr, struct_name, nb_ptr*/);
   }
   std::unique_ptr<ExprAST> Init = nullptr;
   if (CurTok == '=') {
@@ -918,7 +959,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   if (!Init)
     return nullptr;
   }
-  Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, is_array, nb_element, false, "", /*false, "",*/ nb_ptr);
+  //Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, is_array, nb_element, false, "", /*false, "",*/ nb_ptr);
   return std::make_unique<GlobalVariableAST>(Name, is_const, cpoint_type, std::move(Init));
 }
 
@@ -1149,13 +1190,14 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   getNextToken(); // eat the var.
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
-  int type = double_type;
+  Cpoint_Type cpoint_type = Cpoint_Type(double_type);
+  /*int type = double_type;
   bool is_ptr = false;
-  //int nb_element = 0;
+  //int nb_element = 0;*/
   bool is_array = false;
-  std::string struct_name = "";
+  /*std::string struct_name = "";
   //std::string class_name = "";
-  int nb_ptr = 0;
+  int nb_ptr = 0;*/
   std::unique_ptr<ExprAST> index = nullptr;
   bool infer_type = false;
   // At least one variable name is required.
@@ -1176,12 +1218,15 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     infer_type = false;
     if (CurTok == ':'){
-      auto a = ParseTypeDeclaration(&type, &is_ptr, struct_name, /*class_name,*/ nb_ptr);
-      if (a != nullptr){
+      cpoint_type = ParseTypeDeclaration(/*type, is_ptr, struct_name, nb_ptr*/);
+      /*if (a != nullptr){
         return a;
-      }
+      }*/
     } else {
       infer_type = true;
+    }
+    if (is_array){
+        cpoint_type.is_array = is_array;
     }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;
@@ -1194,7 +1239,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     if (infer_type && Init == nullptr){
         Log::Info() << "Missing type declaration and default value to do type inference. Type defaults to double" << "\n";
-        type = double_type;
+        cpoint_type.type = double_type;
     }
     VarNames.push_back(std::make_pair(Name, std::move(Init)));
 
@@ -1217,10 +1262,10 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     return nullptr;
   */
  //std::cout << "PARSED VARIABLES: " << VarNames.at(0).first << std::endl;
-  Log::Info() << "NB PTR : " << nb_ptr << "\n";
-  bool is_struct = struct_name != "";
+  Log::Info() << "NB PTR : " << cpoint_type.nb_ptr << "\n";
+  cpoint_type.is_struct = cpoint_type.struct_name != "";
   //bool is_class = class_name != "";
-  Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, is_array, 0 /*deprecated*/, is_struct, struct_name/*, is_class, class_name*/, nb_ptr);
+  //Cpoint_Type cpoint_type = Cpoint_Type(type, is_ptr, is_array, 0 /*deprecated*/, is_struct, struct_name/*, is_class, class_name*/, nb_ptr);
   /*if (struct_name != ""){
   cpoint_type = std::make_unique<Cpoint_Type>(0, is_ptr, false, 0, true, struct_name, nb_ptr);
   } else {

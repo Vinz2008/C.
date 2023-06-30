@@ -1,4 +1,11 @@
 import @std/print.cpoint
+
+extern pthread_create(thread : void ptr, attr : void ptr, start_routine : func (void ptr, int) int, arg : void ptr);
+
+func create_thread(a : double){ // add there a function argument to create a thread
+    printd(2)
+}
+
 func main(){
   printi(argc)
   return 0
