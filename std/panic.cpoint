@@ -1,0 +1,6 @@
+include libc.hpoint
+
+func panic(string : i8 ptr){
+    printf("panic : %s\n", string)
+    exit(1)
+}

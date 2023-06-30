@@ -1,4 +1,6 @@
+import @std/panic.cpoint
 type new_type int;
 func main(){
   var hello : new_type = 2
+  panic("panic test")
 }

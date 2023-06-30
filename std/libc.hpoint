@@ -13,6 +13,7 @@
 
 extern puts(s : i8 ptr) int;
 extern putchar(c : int) int;
+extern exit(code : int) void;
 extern open(path : i8 ptr, flag : int ...) int;
 extern close(fd : int) int;
 extern malloc(size : int) void ptr;
@@ -28,3 +29,4 @@ extern sqrt(arg : double) double;
 extern remove(path : i8 ptr) int;
 extern realpath(path : i8 ptr, resolved_path : i8 ptr) i8 ptr;
 extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) int;
+extern printf(format : i8 ptr ...);
