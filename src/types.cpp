@@ -256,7 +256,7 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     return;
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
-    val = Builder->CreateIntToPtr(val, typeTo, "ptrtoint_cast");
+    val = Builder->CreateIntToPtr(val, typeTo, "ptrtoint_cast"); // TODO : test to readdd them
     return;
   }
   if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){

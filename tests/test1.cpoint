@@ -1,8 +1,13 @@
 import @std/print.cpoint
+include @std/libc.hpoint
+
 func main(){
   var i : int = 2
   var temp : int = 3
   var p : int ptr = addr i
   p = temp
   printi(i)
+  var s = "hello world"
+  var c : i8 = s[2]
+  printf("%c", c)
 }

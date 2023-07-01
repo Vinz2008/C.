@@ -299,8 +299,14 @@ Value* ArrayMemberExprAST::codegen() {
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
   //auto ptr = GetElementPtrInst::Create(Alloca, { zero, index}, "", );
+  std::vector<Value*> indexes = { zero, index};
+  if (cpoint_type.is_ptr){
+    Log::Info() << "array for array member is ptr" << "\n";
+    cpoint_type.is_ptr = false;
+    indexes = {index};
+  }
   Type* type_llvm = get_type_llvm(cpoint_type);
-  Value* ptr = Builder->CreateGEP(type_llvm, Alloca, { zero, index});
+  Value* ptr = Builder->CreateGEP(type_llvm, Alloca, indexes);
   Value* value = Builder->CreateLoad(type_llvm, ptr, ArrayName);
   return value;
 }
