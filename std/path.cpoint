@@ -1,5 +1,7 @@
+include capi.hpoint
+
 mod path {
     func get_extension(path : i8 ptr) i8 ptr {
-        "not implemented yet"
+        internal_get_extension(path)
     }
 }

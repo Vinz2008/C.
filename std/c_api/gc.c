@@ -29,7 +29,7 @@ size_t size_of_int(){
 }
 
 char* gc_strdup(char* s){
-    char* s2 = malloc(strlen(s)+1);
+    char* s2 = gc_malloc(strlen(s)+1);
     if (s2){
     strcpy(s2, s);
     }

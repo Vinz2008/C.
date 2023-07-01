@@ -1,4 +1,6 @@
 import @std/print.cpoint
+import @std/path.cpoint
+
 struct test {
   var x : double
   var z : double 
@@ -9,4 +11,5 @@ func main(){
   printd(v)
   x.z = 2
   printd(x.z)
+  printstr(path::get_extension("/home/test/hello.hpoint"))
 }
