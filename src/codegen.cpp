@@ -55,6 +55,8 @@ extern struct DebugInfo CpointDebugInfo;
 
 extern bool debug_info_mode;
 
+Value *LogErrorV(const char *Str, ...);
+
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
 std::string struct_function_mangling(std::string struct_name, std::string name){
@@ -65,6 +67,48 @@ std::string struct_function_mangling(std::string struct_name, std::string name){
 std::string module_function_mangling(std::string module_name, std::string function_name){
   std::string mangled_name = module_name + "___" + function_name;
   return mangled_name;
+}
+
+Value* getTypeId(Value* valueLLVM){
+    Type* valType = valueLLVM->getType();
+    Cpoint_Type cpoint_type = get_cpoint_type_from_llvm(valType);
+    return ConstantFP::get(*TheContext, APFloat((double)cpoint_type.type));
+}
+
+
+Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr<ExprAST>> Args){
+    if (instruction == "typeid"){
+        if (Args.size() > 1){
+            return LogErrorV("wrong number of arguments for reflection function");
+        }
+        return getTypeId(Args.at(0)->codegen());
+    } else if (instruction == "getstructname"){
+        if (Args.size() > 1){
+            return LogErrorV("wrong number of arguments for reflection function");
+        }
+        Value* val = Args.at(0)->codegen();
+        if (!val->getType()->isStructTy()){
+            return LogErrorV("argument is not a struct in getmembername");
+        }
+        auto structType = static_cast<StructType*>(val->getType());
+        std::string structName = (std::string)structType->getStructName();
+        Log::Info() << "get struct name : " << structName << "\n";
+        return Builder->CreateGlobalStringPtr(StringRef(structName.c_str()));
+    } else if (instruction == "getmembernb"){
+        if (Args.size() > 1){
+            return LogErrorV("wrong number of arguments for reflection function");
+        }
+        Value* val = Args.at(0)->codegen();
+        if (!val->getType()->isStructTy()){
+            return LogErrorV("argument is not a struct in getmembername");
+        }
+        auto structType = static_cast<StructType*>(val->getType());
+        int nb_member = -1;
+        nb_member = structType->getNumElements();
+        Log::Info() << "getmembernbname : " << nb_member << "\n";
+        return ConstantFP::get(*TheContext, APFloat((double)nb_member));
+    }
+    return LogErrorV("Unknown Reflection Instruction");
 }
 
 Function *getFunction(std::string Name) {
@@ -199,7 +243,14 @@ Value *VariableExprAST::codegen() {
 
 Value* StructMemberExprAST::codegen() {
     Log::Info() << "STRUCT MEMBER CODEGEN" << "\n";
-    AllocaInst* Alloca = NamedValues[StructName]->alloca_inst;
+    AllocaInst* Alloca;
+    if (StructName == "reflection"){
+        goto if_reflection;
+    }
+    if (NamedValues[StructName] == nullptr){
+        return LogErrorV("Can't find struct that is used for a member");
+    }
+    Alloca = NamedValues[StructName]->alloca_inst;
     if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the this of structs function mmebers)
       return LogErrorV("Using a member of variable even though it is not a struct");
     }
@@ -213,7 +264,11 @@ Value* StructMemberExprAST::codegen() {
     Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
 
     //bool is_function_call = false;
+if_reflection:
     if (is_function_call){
+      if (StructName == "reflection"){
+        return refletionInstruction(MemberName, std::move(Args));
+      }
       bool found_function = false;
       auto functions =  StructDeclarations[NamedValues[StructName]->type.struct_name]->functions;
       for (int i = 0; i < functions.size(); i++){
@@ -624,9 +679,7 @@ Value* SizeofExprAST::codegen(){
 
 Value* TypeidExprAST::codegen(){
     Value* valueLLVM = val->codegen();
-    Type* valType = valueLLVM->getType();
-    Cpoint_Type cpoint_type = get_cpoint_type_from_llvm(valType);
-    return ConstantFP::get(*TheContext, APFloat((double)cpoint_type.type));
+    return getTypeId(valueLLVM);
 }
 
 Value* BoolExprAST::codegen(){

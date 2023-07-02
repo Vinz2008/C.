@@ -1,6 +1,18 @@
+import @std/print.cpoint
+
+struct a {
+    var d : double
+    var i : int
+}
+
 func main(){
-    var f : double = 0
+    var d : double = 0
     var i : int = 0
-    var t1 = typeid f
-    var t2 = typeid i
+    var eightb : i8 = 0
+    var structa : struct a
+    var t1 = typeId d
+    var t2 = typeId i
+    printd(reflection.typeid(eightb))
+    printd(reflection.getmembernb(structa))
+    printstr(reflection.getstructname(structa))
 }
