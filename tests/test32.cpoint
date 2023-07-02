@@ -1,9 +1,6 @@
-func test(T : templateType){
-    // var a : T = 2
-    0
-}
-
 func main(){
-    test(int)
-    test(double)
+    var f : double = 0
+    var i : int = 0
+    var t1 = typeid f
+    var t2 = typeid i
 }

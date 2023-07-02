@@ -622,6 +622,13 @@ Value* SizeofExprAST::codegen(){
   } 
 }
 
+Value* TypeidExprAST::codegen(){
+    Value* valueLLVM = val->codegen();
+    Type* valType = valueLLVM->getType();
+    Cpoint_Type cpoint_type = get_cpoint_type_from_llvm(valType);
+    return ConstantFP::get(*TheContext, APFloat((double)cpoint_type.type));
+}
+
 Value* BoolExprAST::codegen(){
   if (val){
     return ConstantInt::get(*TheContext, APInt(8, 1, true));

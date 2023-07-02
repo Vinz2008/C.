@@ -96,6 +96,16 @@ public:
   }
 };
 
+class TypeidExprAST : public ExprAST {
+    std::unique_ptr<ExprAST> val;
+public:
+    TypeidExprAST(std::unique_ptr<ExprAST> val) : val(std::move(val)) {}
+    Value* codegen() override;
+    std::unique_ptr<ExprAST> clone() override {
+        return std::make_unique<TypeidExprAST>(val->clone());
+    }
+};
+
 class VariableExprAST : public ExprAST {
   std::string Name;
   Cpoint_Type type;
@@ -505,6 +515,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct();
 //std::unique_ptr<ClassDeclarAST> ParseClass();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseSizeofExpr();
+std::unique_ptr<ExprAST> ParseTypeidExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
 std::unique_ptr<ExprAST> ParseWhileExpr();
 std::unique_ptr<ExprAST> ParseGotoExpr();
