@@ -8,7 +8,7 @@ OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CXXFLAGS = -c -g -Wall $(shell llvm-config --cxxflags) -fno-stack-protector
+CXXFLAGS = -c -g -Wall $(shell llvm-config --cxxflags) -Wno-sign-compare
 ifeq ($(NO_OPTI),true)
 CXXFLAGS += -O0
 else

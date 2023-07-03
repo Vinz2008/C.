@@ -11,9 +11,9 @@ struct Source_location {
 
 class Compiler_context{
 public:
+    std::string filename;
     struct Source_location loc;
     std::string line;
-    std::string filename;
     Compiler_context(const std::string &filename, int line_nb, int col_nb, const std::string &line) : filename(filename), loc({line_nb, col_nb}), line(line) {}
 };
 

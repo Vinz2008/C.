@@ -76,7 +76,7 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
   auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   Log::Info() << "add extern name " << fnName << "\n";
-  auto *FnIR = FnAST->codegen();
+  /*auto *FnIR =*/ FnAST->codegen();
 }
 
 void add_externs_for_gc(){
@@ -93,7 +93,7 @@ void add_externs_for_gc(){
 
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
-	if (auto *FnIR = FnAST->codegen()) {
+	if (/*auto *FnIR =*/ FnAST->codegen()) {
     Log::Info() << "Parsed a function definition." << "\n";
     //fprintf(stderr, "Parsed a function definition.\n");
     //FnIR->print(*file_out_ostream);
@@ -109,7 +109,7 @@ static void HandleDefinition() {
 
 static void HandleExtern() {
   if (auto ProtoAST = ParseExtern()) {
-    if (auto *FnIR = ProtoAST->codegen()) {
+    if (/*auto *FnIR =*/ ProtoAST->codegen()) {
       //fprintf(stderr, "Read extern: ");
       Log::Info() << "Read Extern" << "\n";
       //FnIR->print(*file_out_ostream);
@@ -122,7 +122,7 @@ static void HandleExtern() {
 }
 
 
-static void HandleTopLevelExpression() {
+/*static void HandleTopLevelExpression() {
   // Evaluate a top-level expression into an anonymous function.
   if (auto FnAST = ParseTopLevelExpr()) {
     if (auto *FnIR = FnAST->codegen()) {
@@ -138,7 +138,7 @@ static void HandleTopLevelExpression() {
     // Skip token for error recovery.
     getNextToken();
   }
-}
+}*/
 
 static void HandleTypeDef(){
   if (auto typeDefAST = ParseTypeDef()){
@@ -165,7 +165,7 @@ static void HandleGlobalVariable(){
 
 static void HandleStruct() {
   if (auto structAST = ParseStruct()){
-    if (auto* structIR = structAST->codegen()){
+    if (/*auto* structIR =*/ structAST->codegen()){
       //ObjIR->print(*file_out_ostream);
     }
   } else {

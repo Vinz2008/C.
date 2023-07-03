@@ -177,7 +177,7 @@ void callTemplate(std::string& Callee, std::string template_passed_type){
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
   Callee = Callee.substr(5, Callee.size());
   Log::Info() << "llvm intrisic called " << Callee << "\n";
-  llvm::Intrinsic::IndependentIntrinsics intrisicId;
+  llvm::Intrinsic::IndependentIntrinsics intrisicId = llvm::Intrinsic::not_intrinsic;
   if (Callee == "va_start"){
     intrisicId = Intrinsic::vastart;
   } else if (Callee == "va_end"){
@@ -243,7 +243,7 @@ Value *VariableExprAST::codegen() {
 
 Value* StructMemberExprAST::codegen() {
     Log::Info() << "STRUCT MEMBER CODEGEN" << "\n";
-    AllocaInst* Alloca;
+    AllocaInst* Alloca = nullptr;
     if (StructName == "reflection"){
         goto if_reflection;
     }
@@ -644,7 +644,7 @@ Value* SizeofExprAST::codegen(){
     //Value* size = Builder->CreateGEP(llvm_type_ptr->getContainedType(0UL), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt8Ty(), 0), llvm_type_ptr), ConstantInt::get(Builder->getInt8Ty(), 1));
     //return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
   } else {
-  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  //Function *TheFunction = Builder->GetInsertBlock()->getParent();
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A){
     return LogErrorV("Addr Unknown variable name %s", Name.c_str());
@@ -749,9 +749,9 @@ Function *FunctionAST::codegen() {
   // Create a new basic block to start insertion into.
   BasicBlock *BB = BasicBlock::Create(*TheContext, "entry", TheFunction);
   Builder->SetInsertPoint(BB);
-  DIFile *Unit;
+  DIFile *Unit = nullptr;
   DIScope *FContext;
-  DISubprogram *SP;
+  DISubprogram *SP = nullptr;
   unsigned LineNo = 0;
   if (debug_info_mode){
   Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
@@ -956,7 +956,7 @@ Value* RedeclarationExprAST::codegen(){
   // TODO move this from a AST node to an operator 
   Log::Info() << "REDECLARATION CODEGEN" << "\n";
   Log::Info() << "VariableName " << VariableName << "\n";
-  bool is_object = false;
+  //bool is_object = false;
   bool is_array = false;
   if (index != nullptr){
     is_array = true;
@@ -1150,15 +1150,14 @@ Value* LoopExprAST::codegen(){
     }
     Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
     Builder->CreateStore(StartVal, PosArrayAlloca);
-    Value* ArrayPtr;
-  
+ 
     //if (auto ArrayVarPtr = dynamic_cast<VariableExprAST*>(Array.get())){
     auto ArrayVarPtr = static_cast<VariableExprAST*>(Array.get());
-      std::unique_ptr<VariableExprAST> ArrayVar;
-      Array.release();
-      ArrayVar.reset(ArrayVarPtr);
-      ArrayPtr = ArrayVar->codegen();
-      Cpoint_Type cpoint_type = NamedValues[ArrayVar->getName()]->type;
+    std::unique_ptr<VariableExprAST> ArrayVar;
+    Array.release();
+    ArrayVar.reset(ArrayVarPtr);
+    //Value* ArrayPtr = ArrayVar->codegen();
+    Cpoint_Type cpoint_type = NamedValues[ArrayVar->getName()]->type;
     //} else {
       //return LogErrorV("Expected a Variable Expression in loop in");
     //}

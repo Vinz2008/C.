@@ -31,13 +31,13 @@ public:
     int nb_element;
     bool is_struct;
     std::string struct_name;
+    int nb_ptr;
+    bool is_template_type;
     bool is_function;
     std::vector<Cpoint_Type> args; // the first is the return type, the other are arguments
     Cpoint_Type* return_type;
     //bool is_class;
     //std::string class_name;
-    int nb_ptr;
-    bool is_template_type;
     Cpoint_Type(int type, bool is_ptr = false, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", /*bool is_class = false, const std::string& class_name = "",*/ int nb_ptr = 0, bool is_template_type = false, bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr) : type(type), is_ptr(is_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), /*is_class(is_class), class_name(class_name),*/ nb_ptr(nb_ptr), is_template_type(is_template_type), is_function(is_function), args(args), return_type(return_type) {}
 };
 

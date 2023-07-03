@@ -615,7 +615,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       bool is_ptr = false;
       std::string temp_struct;*/
       //std::string temp_class;
-      int temp_nb = -1;
+      //int temp_nb = -1;
       Cpoint_Type arg_type = Cpoint_Type(double_type);
       if (CurTok == ':'){
         arg_type = ParseTypeDeclaration(/*type, is_ptr, temp_struct, temp_nb*/);
@@ -638,7 +638,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   std::string struct_name = "";*/
   Cpoint_Type cpoint_type = Cpoint_Type(double_type);
   //std::string class_name = "";
-  int nb_ptr = 0;
+  //int nb_ptr = 0;
   if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class){
     Log::Info() << "Tok type : " << CurTok << "\n";
     Log::Info() << "type : " << IdentifierStr << "\n";
@@ -949,12 +949,12 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   getNextToken(); // eat the var.
   /*int type = double_type;
   bool is_ptr = false;*/
-  int nb_element = 0;
-  bool is_array = false;
+  //int nb_element = 0;
+  //bool is_array = false;
   Cpoint_Type cpoint_type = Cpoint_Type(double_type);
   //std::string struct_name = "";
   //std::string class_name = "";
-  int nb_ptr = 0;
+  //int nb_ptr = 0;
   bool is_const = false;
   if (IdentifierStr == "const"){
     is_const = true;

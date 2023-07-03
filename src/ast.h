@@ -232,10 +232,9 @@ public:
 
 class RedeclarationExprAST : public ExprAST {
   std::string VariableName;
-  std::unique_ptr<ExprAST> index;
   std::unique_ptr<ExprAST> Val;
-  bool has_member;
   std::string member;
+  std::unique_ptr<ExprAST> index;
 public:
   RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val, const std::string &member, std::unique_ptr<ExprAST> index = nullptr) 
 : VariableName(VariableName), Val(std::move(Val)), member(member), index(std::move(index)) {}
@@ -314,8 +313,8 @@ public:
 
 class StructDeclarAST {
   std::string Name;
-  std::vector<std::unique_ptr<FunctionAST>> Functions;
   std::vector<std::unique_ptr<VarExprAST>> Vars;
+  std::vector<std::unique_ptr<FunctionAST>> Functions;
 public:
   StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
     : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
