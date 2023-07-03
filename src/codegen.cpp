@@ -630,7 +630,7 @@ Value* AddrExprAST::codegen(){
 }
 
 Value* SizeofExprAST::codegen(){
-  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  //auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
   if (is_type(Name)){
     int type = get_type(Name);
@@ -1083,7 +1083,7 @@ Value* RedeclarationExprAST::codegen(){
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+    //auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto indexVal = index->codegen();
     indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
@@ -1354,7 +1354,7 @@ Value *VarExprAST::codegen() {
       //InitVal = get_default_constant(*cpoint_type);
     }
     llvm::Value* indexVal = nullptr;
-    double indexD = -1;
+    //double indexD = -1;
     if (index != nullptr){
     indexVal = index->codegen();
     auto constFP = dyn_cast<ConstantFP>(indexVal);
