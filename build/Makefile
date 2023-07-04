@@ -1,9 +1,9 @@
 CXX = g++
 
-ifeq ($(OS),Windows_NT)
-OUTPUTBIN = cpoint-build.exe
-else
 OUTPUTBIN = cpoint-build
+
+ifeq ($(OS),Windows_NT)
+OUTPUTBIN += .exe
 endif
 
 SRCDIR=src

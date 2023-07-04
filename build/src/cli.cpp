@@ -40,9 +40,13 @@ void openWebPage(std::string url){
     runCommand(cmd);
 }
 
+void buildProject(std::string path){
+    runCommand("cd " + path + " && cpoint-build");
+}
+
 void buildDependency(std::string dependency){
     std::string path = DEFAULT_PACKAGE_PATH "/" + dependency;
-    runCommand("cd " + path + " && cpoint-build");
+    buildProject(path);
 }
 
 void rebuildSTD(std::string target, std::string path){

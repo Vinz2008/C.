@@ -84,6 +84,7 @@ install: std_lib
 	mkdir -p $(PREFIX)/lib/cpoint/packages
 	mkdir -p $(PREFIX)/lib/cpoint/bdwgc
 	mkdir -p $(PREFIX)/lib/cpoint/bdwgc_prefix
+	mkdir -p $(PREFIX)/lib/cpoint/build_install
 	cp -r std/* $(PREFIX)/lib/cpoint/std
 	cp -r bdwgc/* $(PREFIX)/lib/cpoint/bdwgc
 	cp -r bdwgc_prefix/* $(PREFIX)/lib/cpoint/bdwgc_prefix

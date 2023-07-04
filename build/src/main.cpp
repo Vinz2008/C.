@@ -3,6 +3,7 @@
 #include "files.h"
 #include "dependencies.h"
 #include "project_creator.h"
+#include "install.h"
 #include <toml++/toml.h>
 #include <iostream>
 #include <fstream>
@@ -22,6 +23,8 @@ enum mode {
     OPEN_PAGE_MODE = -6,
     NEW_PROJECT_MODE = -7,
     CROSS_COMPILE_MODE = -8,
+    INSTALL_MODE = -9,
+    INSTALL_PATH_MODE = -10,
 };
 
 std::string filename_config = "build.toml";
@@ -261,6 +264,7 @@ int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
     std::string src_folder = "src/";
     std::string dependency_to_add = "";
+    std::string binary_to_install = "";
     std::string project_name_to_create = "";
     for (int i = 0; i < argc; i++){
     std::string arg = argv[i];
@@ -285,16 +289,45 @@ int main(int argc, char** argv){
         project_name_to_create = argv[i];
     } else if (arg == "open-page"){
         modeBuild = OPEN_PAGE_MODE;
-        i++;
+        //i++;
     } else if (arg == "cross-compile"){
         modeBuild = CROSS_COMPILE_MODE;
         is_cross_compiling = true;
+        //i++;
+    } else if (arg == "install"){
+        modeBuild = INSTALL_MODE;
         i++;
+        binary_to_install = argv[i];
+    } else if (arg == "install_path"){
+        modeBuild = INSTALL_PATH_MODE;
     }
+    }
+    if (modeBuild == INSTALL_PATH_MODE){
+        printInstallPathMessage();
+        return 0;
     }
     // instruction that don't need the toml file
     if (modeBuild == NEW_PROJECT_MODE){
         createProject("exe", project_name_to_create);
+        return 0;
+    }
+    if (modeBuild == INSTALL_MODE){
+        std::string username = binary_to_install.substr(0, binary_to_install.find('/'));
+        std::string repo_name = binary_to_install.substr(binary_to_install.find('/')+1, binary_to_install.size());
+        cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
+        std::string repo_path = DEFAULT_PACKAGE_PATH "/" + repo_name;
+        buildDependency(repo_name);
+        auto config = toml::parse_file(repo_path + "/build.toml");
+        std::string outfile = (std::string)config["build"]["outfile"].value_or("");
+        if (outfile == ""){
+            outfile = "a.out";
+        }
+        std::string install_outfile = outfile;
+        if (install_outfile == "a.out"){
+            install_outfile = repo_name;
+        }
+        installBinary(repo_path + "/" + outfile, install_outfile);
+        std::cout << "Installed successfully the " << username << "/" << repo_name << " repo to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
         return 0;
     }
     fs::path f{ filename_config };
