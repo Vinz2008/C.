@@ -92,9 +92,21 @@ The available types are :
 
 - i64
 
+- u128
+
+- u8
+
+- u16
+
+- u32
+
+- u64
+
+- u128
+
 - void
 
-(Note : i8 is the equivalent in c of a char)
+Note : i8 is the equivalent of a char in C
 
 ```
 var x : float = 1.5
