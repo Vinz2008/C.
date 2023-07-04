@@ -10,6 +10,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - less than 500 KB stripped, ≈10MB not stripped
 - classes support
 - goto support
+- automatic casting
 
 ## Clone git repo
 

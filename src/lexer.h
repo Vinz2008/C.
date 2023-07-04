@@ -45,6 +45,7 @@ enum Token {
   tok_mod = -33,
   tok_single_line_comment = -34,
   tok_typeid = -35,
+  tok_null = -36,
 };
 
 int getNextToken();

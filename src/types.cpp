@@ -18,10 +18,11 @@ extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarati
 std::vector<std::string> typeDefTable;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
+    Log::Info() << "TEST" << "\n";
     Type* type;
     if (cpoint_type.type >= 0){
-        Log::Info() << "Typedef type used to declare variable" << "\n";
-        if (typeDefTable.size() <= cpoint_type.type){
+        Log::Info() << "Typedef type used to declare variable (size of typedef table : " << typeDefTable.size() << ")" << "\n";
+        if (typeDefTable.size() < cpoint_type.type){
             Log::Info() << "type number " << cpoint_type.type << "\n";
             LogError("couldn't find type from typedef");
         }
@@ -95,8 +96,10 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << cpoint_type.type << "\n";
         type = llvm::ArrayType::get(type, cpoint_type.nb_element);
     }
+    Log::Info() << "TEST before is function" << "\n";
     if (cpoint_type.is_function){
-        std::vector<Type *> args;
+        Log::Info() << "TEST in function" << "\n";
+        /*std::vector<Type *> args;
         for (int i = 0; i < cpoint_type.args.size(); i++){
             args.push_back(get_type_llvm(cpoint_type.args.at(i)));
         }
@@ -104,8 +107,11 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         if (cpoint_type.return_type == nullptr){
             Log::Info() << "cpoint_type.return_type is nullptr" << "\n";
         }
-        type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);
+        Log::Info() << "Cpoint type : " << *cpoint_type.return_type << "\n";
+        type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);*/
+        type = PointerType::get(*TheContext, 0);
     }
+     Log::Info() << "TEST after is function" << "\n";
     return type;   
 }
 
@@ -256,7 +262,7 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     return;
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
-    val = Builder->CreateIntToPtr(val, typeTo, "ptrtoint_cast"); // TODO : test to readdd them
+    val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast"); // TODO : test to readdd them
     return;
   }
   if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){

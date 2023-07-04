@@ -682,6 +682,10 @@ Value* TypeidExprAST::codegen(){
     return getTypeId(valueLLVM);
 }
 
+Value* NullExprAST::codegen(){
+    return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
+}
+
 Value* BoolExprAST::codegen(){
   if (val){
     return ConstantInt::get(*TheContext, APInt(8, 1, true));
@@ -849,6 +853,10 @@ void TypeDefAST::codegen(){
 
 void ModAST::codegen(){
   return;
+}
+
+Value* CommentExprAST::codegen(){
+    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
 GlobalVariable* GlobalVariableAST::codegen(){

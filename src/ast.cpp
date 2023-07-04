@@ -381,8 +381,9 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     go_to_next_line();
     //handlePreprocessor();
     Log::Info() << "token : " << CurTok << "\n";*/
-    is_comment = true;
-    return nullptr;
+    //is_comment = true;
+    return std::make_unique<CommentExprAST>();
+    //return nullptr;
     break;
   case tok_identifier:
     return ParseIdentifierExpr();
@@ -417,6 +418,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseLoopExpr();
   case tok_typeid:
     return ParseTypeidExpr();
+  case tok_null:
+    return ParseNullExpr();
   case tok_goto:
     return ParseGotoExpr();
   case tok_label:
@@ -882,6 +885,11 @@ std::unique_ptr<ExprAST> ParseSizeofExpr(){
   Log::Info() << "after sizeof : " << Name << "\n";
   getNextToken();
   return Sizeof;
+}
+
+std::unique_ptr<ExprAST> ParseNullExpr(){
+    getNextToken();
+    return std::make_unique<NullExprAST>();
 }
 
 std::unique_ptr<ExprAST> ParseTypeidExpr(){

@@ -1,12 +1,25 @@
 import @std/print.cpoint
+include @std/libc.hpoint
 
-extern pthread_create(thread : void ptr, attr : void ptr, start_routine : func (void ptr, int) int, arg : void ptr);
+extern pthread_create(thread : void ptr, attr : void ptr, start_routine : func (void ptr, int) int, arg : void ptr) i32;
 
-func create_thread(a : double){ // add there a function argument to create a thread
+func print_test(arg : void ptr) void ptr {
+    printstr("test thread")
+    null
+}
+
+func create_thread(a : func (void ptr, int) int){ // add there a function argument to create a thread
+    var thread : pthread_t
+    var arg : int = 3
+    pthread_create(addr thread, 0, print_test, addr arg)
     printd(2)
 }
 
 func main(){
   printi(argc)
+  create_thread(print_test)
+  var thread : pthread_t
+  var arg : int = 0
+  pthread_create(addr thread, 0, print_test, addr arg) // for now crash
   return 0
 }

@@ -244,6 +244,15 @@ public:
   }
 };
 
+class NullExprAST : public ExprAST {
+public:
+    NullExprAST() {}
+    Value *codegen() override;
+    std::unique_ptr<ExprAST> clone(){
+        return std::make_unique<NullExprAST>();
+    }
+};
+
 /*
 class StructDeclarAST {
   std::string Name;
@@ -360,6 +369,15 @@ public:
   std::string value_type;
   TypeDefAST(const std::string& new_type, const std::string& value_type) :  new_type(new_type), value_type(value_type) {}
   void codegen();
+};
+
+class CommentExprAST : public ExprAST {
+public:
+    CommentExprAST() {}
+    Value* codegen();
+    std::unique_ptr<ExprAST> clone() override {
+        return std::make_unique<CommentExprAST>();
+    }
 };
 
 class ModAST {
@@ -525,6 +543,7 @@ std::unique_ptr<ExprAST> ParseBool(bool bool_value);
 std::unique_ptr<ExprAST> ParseCharExpr();
 std::unique_ptr<ExprAST> ParseLoopExpr();
 std::unique_ptr<ExprAST> ParseBreakExpr();
+std::unique_ptr<ExprAST> ParseNullExpr();
 std::unique_ptr<ModAST> ParseMod();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args);

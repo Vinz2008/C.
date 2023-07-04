@@ -239,6 +239,8 @@ static int gettok() {
       return tok_break;
     if (IdentifierStr == "typeId")
         return tok_typeid;
+    if (IdentifierStr == "null")
+        return tok_null;
     if (IdentifierStr == "mod")
       return tok_mod;
     if (IdentifierStr == "true")
