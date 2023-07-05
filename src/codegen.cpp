@@ -682,6 +682,12 @@ Value* TypeidExprAST::codegen(){
     return getTypeId(valueLLVM);
 }
 
+Value* CastExprAST::codegen(){
+    Value* val = ValToCast->codegen();
+    convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(type), val);
+    return val;
+}
+
 Value* NullExprAST::codegen(){
     return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
 }

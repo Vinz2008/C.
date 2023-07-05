@@ -46,6 +46,7 @@ enum Token {
   tok_single_line_comment = -34,
   tok_typeid = -35,
   tok_null = -36,
+  tok_cast = -37,
 };
 
 int getNextToken();

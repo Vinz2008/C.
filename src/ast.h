@@ -244,6 +244,17 @@ public:
   }
 };
 
+class CastExprAST : public ExprAST {
+public:
+    std::unique_ptr<ExprAST> ValToCast;
+    Cpoint_Type type;
+    CastExprAST(std::unique_ptr<ExprAST> ValToCast, Cpoint_Type type) : ValToCast(std::move(ValToCast)), type(type) {}
+    Value *codegen() override;
+    std::unique_ptr<ExprAST> clone(){
+        return std::make_unique<CastExprAST>(ValToCast->clone(), type);
+    }
+};
+
 class NullExprAST : public ExprAST {
 public:
     NullExprAST() {}
@@ -544,6 +555,7 @@ std::unique_ptr<ExprAST> ParseCharExpr();
 std::unique_ptr<ExprAST> ParseLoopExpr();
 std::unique_ptr<ExprAST> ParseBreakExpr();
 std::unique_ptr<ExprAST> ParseNullExpr();
+std::unique_ptr<ExprAST> ParseCastExpr();
 std::unique_ptr<ModAST> ParseMod();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args);

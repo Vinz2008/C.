@@ -1,5 +1,4 @@
-import @std/va.cpoint
-
 func main(){
-    printfmt_cpoint("test %s", "hello world") // for new segfaults
+    var d : double = 2
+    var d2 = cast int d
 }

@@ -420,6 +420,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseTypeidExpr();
   case tok_null:
     return ParseNullExpr();
+  case tok_cast:
+    return ParseCastExpr();
   case tok_goto:
     return ParseGotoExpr();
   case tok_label:
@@ -885,6 +887,13 @@ std::unique_ptr<ExprAST> ParseSizeofExpr(){
   Log::Info() << "after sizeof : " << Name << "\n";
   getNextToken();
   return Sizeof;
+}
+
+std::unique_ptr<ExprAST> ParseCastExpr(){
+    getNextToken(); // eat "cast"
+    Cpoint_Type type = ParseTypeDeclaration(false);
+    auto E = ParseExpression();
+    return std::make_unique<CastExprAST>(std::move(E), type);
 }
 
 std::unique_ptr<ExprAST> ParseNullExpr(){
