@@ -36,4 +36,5 @@ double print_str(struct struct_str_c s){
     puts(s.ptr);
     return s.length;
 }
+
 #endif
