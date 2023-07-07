@@ -25,7 +25,7 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 
 class ExprAST {
 public:
-  ExprAST(Source_location loc = Comp_context->loc) : loc(loc) {}
+  ExprAST(Source_location loc = Comp_context->lexloc) : loc(loc) {}
   Source_location loc;
   virtual ~ExprAST() = default;
   virtual Value *codegen() = 0;
@@ -110,11 +110,11 @@ class VariableExprAST : public ExprAST {
   std::string Name;
   Cpoint_Type type;
 public:
-  VariableExprAST(const std::string &Name, Cpoint_Type type) : Name(Name), type(type) {}
+  VariableExprAST(Source_location Loc, const std::string &Name, Cpoint_Type type) : ExprAST(Loc), Name(Name), type(type) {}
   Value *codegen() override;
   const std::string &getName() const { return Name; }
   std::unique_ptr<ExprAST> clone() override {
-    return std::make_unique<VariableExprAST>(Name, type);
+    return std::make_unique<VariableExprAST>(ExprAST::loc, Name, type);
   }
 };
 
@@ -162,12 +162,12 @@ class BinaryExprAST : public ExprAST {
   std::unique_ptr<ExprAST> LHS, RHS;
 
 public:
-  BinaryExprAST(const std::string& op, std::unique_ptr<ExprAST> LHS,
+  BinaryExprAST(Source_location Loc, const std::string& op, std::unique_ptr<ExprAST> LHS,
                 std::unique_ptr<ExprAST> RHS)
-    : Op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
+    : ExprAST(Loc), Op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
-    return std::make_unique<BinaryExprAST>(Op, LHS->clone(), RHS->clone());
+    return std::make_unique<BinaryExprAST>(ExprAST::loc, Op, LHS->clone(), RHS->clone());
   }
 };
 
@@ -191,9 +191,9 @@ class CallExprAST : public ExprAST {
   std::string template_passed_type;
 
 public:
-  CallExprAST(const std::string &Callee,
+  CallExprAST(Source_location Loc, const std::string &Callee,
               std::vector<std::unique_ptr<ExprAST>> Args, const std::string& template_passed_type)
-      : Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
+      : ExprAST(Loc), Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
@@ -202,7 +202,7 @@ public:
         ArgsCloned.push_back(Args.at(i)->clone());
       }
     }
-    return std::make_unique<CallExprAST>(Callee, std::move(ArgsCloned), template_passed_type);
+    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, std::move(ArgsCloned), template_passed_type);
   }
 };
 
@@ -297,8 +297,9 @@ public:
   bool has_template;
   std::string template_name;
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
-  PrototypeAST(const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, Cpoint_Type cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false, bool has_template = false,  const std::string& template_name = "")
-    : Name(name), Args(std::move(Args)), cpoint_type(cpoint_type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args), has_template(has_template), template_name(template_name) {}
+  int Line;
+  PrototypeAST(Source_location loc, const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, Cpoint_Type cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false, bool has_template = false,  const std::string& template_name = "")
+    : Name(name), Args(std::move(Args)), cpoint_type(cpoint_type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args), has_template(has_template), template_name(template_name), Line(loc.line_nb) {}
 
   const std::string &getName() const { return Name; }
   Function *codegen();
@@ -309,8 +310,9 @@ public:
     return Name[Name.size() - 1];
   }
   unsigned getBinaryPrecedence() const { return Precedence; }
+  int getLine() const { return Line; }
   std::unique_ptr<PrototypeAST> clone(){
-    return std::make_unique<PrototypeAST>(Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
+    return std::make_unique<PrototypeAST>((Source_location){Line, 0}, Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
   }
 };
 
@@ -403,9 +405,9 @@ class IfExprAST : public ExprAST {
   std::vector<std::unique_ptr<ExprAST>> Then, Else;
 
 public:
-  IfExprAST(std::unique_ptr<ExprAST> Cond, std::vector<std::unique_ptr<ExprAST>> Then,
+  IfExprAST(Source_location Loc, std::unique_ptr<ExprAST> Cond, std::vector<std::unique_ptr<ExprAST>> Then,
             std::vector<std::unique_ptr<ExprAST>> Else)
-    : Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
+    : ExprAST(Loc), Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
 
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
@@ -421,7 +423,7 @@ public:
         ElseCloned.push_back(Else.at(i)->clone());
       }
     }
-    return std::make_unique<IfExprAST>(Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
+    return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
   }
   
 };

@@ -72,11 +72,13 @@ extern int modifier_for_line_count;
 
 extern std::vector<std::string> modulesNamesContext;
 
+extern Source_location emptyLoc;
+
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName){
-  auto FnAST =  std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
-  FunctionProtos[fnName] = std::make_unique<PrototypeAST>(fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
+  auto FnAST =  std::make_unique<PrototypeAST>(emptyLoc, fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
+  FunctionProtos[fnName] = FnAST->clone();
   Log::Info() << "add extern name " << fnName << "\n";
-  /*auto *FnIR =*/ FnAST->codegen();
+  FnAST->codegen();
 }
 
 void add_externs_for_gc(){
@@ -347,15 +349,15 @@ int main(int argc, char **argv){
       link_files_mode = false;
     }
     init_context_preprocessor();
-    Comp_context = std::make_unique<Compiler_context>(filename, 0, 0, "<empty line>");
+    Comp_context = std::make_unique<Compiler_context>(filename, 1, 0, "<empty line>");
     std::string temp_filename = filename;
     temp_filename.append(".temp");
     if (import_mode){
     generate_file_with_imports(filename, temp_filename);
-    Log::Info() << "before remove line count because of import mode " << Comp_context->loc.line_nb << " lines" << "\n";
+    Log::Info() << "before remove line count because of import mode " << Comp_context->lexloc.line_nb << " lines" << "\n";
     Log::Info() << "lines count to remove because of import mode " << modifier_for_line_count << "\n";
-    Comp_context->loc.line_nb -= modifier_for_line_count*2; // don't know why there are 2 times too much increment so we need to make the modifier double
-    Log::Info() << "after remove line count because of import mode " << Comp_context->loc.line_nb << " lines" << "\n";
+    Comp_context->lexloc.line_nb -= modifier_for_line_count/**2*/; // don't know why there are 2 times too much increment so we need to make the modifier double
+    Log::Info() << "after remove line count because of import mode " << Comp_context->lexloc.line_nb << " lines" << "\n";
     filename = temp_filename;
     }
     std::error_code ec;

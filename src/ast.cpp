@@ -38,6 +38,8 @@ extern void HandleComment();
 
 bool is_template_parsing_definition = false;
 
+Source_location emptyLoc = {0, 0};
+
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
   vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args); // copy comp_context and not move it because it will be used multiple times
   return_status = 1;
@@ -133,6 +135,8 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
 
 static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
+  struct Source_location IdLoc = Comp_context->curloc;
+
   Log::Info() << "Parse Identifier Str" << "\n";
   getNextToken();  // eat identifier.
   std::string member = "";
@@ -255,7 +259,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     } else  {
       type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
     }
-    return std::make_unique<VariableExprAST>(IdName, *type);
+    return std::make_unique<VariableExprAST>(IdLoc, IdName, *type);
   }
   // Call.
   std::string template_passed_type = "";
@@ -292,7 +296,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   // Eat the ')'.
   getNextToken();
 
-  return std::make_unique<CallExprAST>(IdName, std::move(Args), template_passed_type);
+  return std::make_unique<CallExprAST>(IdLoc, IdName, std::move(Args), template_passed_type);
 }
 
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
@@ -321,6 +325,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 
     // Okay, we know this is a binop.
     std::string BinOp = "";
+    Source_location BinLoc = Comp_context->curloc;
     if (CurTok != tok_op_multi_char){
     BinOp += (char)CurTok;
     } else {
@@ -356,7 +361,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 
     // Merge LHS/RHS.
     LHS =
-        std::make_unique<BinaryExprAST>(BinOp, std::move(LHS), std::move(RHS));
+        std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
   }
 }
 
@@ -529,6 +534,8 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     return LogErrorP("Expected function name in prototype");*/
 
   std::string FnName;
+  Source_location FnLoc = Comp_context->curloc;
+  Log::Info() << "FnLoc : " << Comp_context->curloc << "\n";
   bool is_variable_number_args = false;
   unsigned Kind = 0;  // 0 = identifier, 1 = unary, 2 = binary.
   unsigned BinaryPrecedence = 30;
@@ -666,7 +673,8 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     FnName = module_mangled_function_name;
     Log::Info() << "mangled name is : " << FnName << "\n";
   }
-  return std::make_unique<PrototypeAST>(FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
+  Log::Info() << "FnLoc in ast : " << FnLoc << "\n";
+  return std::make_unique<PrototypeAST>(FnLoc, FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
 }
 
 /*
@@ -816,7 +824,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   auto Proto = ParsePrototype();
   if (!Proto) return nullptr;
   auto argsCopy(Proto->Args);
-  auto ProtoCopy = std::make_unique<PrototypeAST>(Proto->Name, argsCopy, Proto->cpoint_type, Proto->IsOperator, Proto->Precedence, Proto->is_variable_number_args, Proto->has_template, Proto->template_name);
+  auto ProtoCopy = Proto->clone();
   if (CurTok != '{'){
     LogErrorF("Expected '{' in function definition");
   }
@@ -824,7 +832,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (std_mode && Proto->Name == "main" && gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
-  auto E_gc_init = std::make_unique<CallExprAST>("gc_init", std::move(Args_gc_init), "");
+  auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
   Body.push_back(std::move(E_gc_init));
   }
   while (CurTok != '}'){
@@ -933,7 +941,7 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   if (!E){
     return nullptr;
   }
-  auto Proto = std::make_unique<PrototypeAST>("main", std::vector<std::pair<std::string, Cpoint_Type>>(), Cpoint_Type(0));
+  auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "main", std::vector<std::pair<std::string, Cpoint_Type>>(), Cpoint_Type(0));
   std::vector<std::unique_ptr<ExprAST>> Body;
   Body.push_back(std::move(E));
   return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
@@ -994,6 +1002,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {
+  Source_location IfLoc = Comp_context->curloc;
   getNextToken();  // eat the if.
 
   // condition.
@@ -1050,7 +1059,7 @@ else_start:
   getNextToken();
   }
   }
-  return std::make_unique<IfExprAST>(std::move(Cond), std::move(Then),
+  return std::make_unique<IfExprAST>(IfLoc, std::move(Cond), std::move(Then),
                                       std::move(Else));
 }
 

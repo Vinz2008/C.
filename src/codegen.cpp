@@ -53,6 +53,8 @@ extern bool gc_mode;
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
+extern Source_location emptyLoc;
+
 extern bool debug_info_mode;
 
 Value *LogErrorV(const char *Str, ...);
@@ -571,6 +573,7 @@ Value *CallExprAST::codegen() {
   Log::Info() << "function called " << Callee << "\n";
   std::string internal_func_prefix = "cpoint_internal_";
   bool is_internal = false;
+  CpointDebugInfo.emitLocation(this);
   if (Callee.rfind(internal_func_prefix, 0) == 0){
     is_internal = true;
     Callee = Callee.substr(internal_func_prefix.size(), Callee.size());
@@ -734,7 +737,7 @@ Function *PrototypeAST::codegen() {
     Arg.setName(Args[Idx++].first);
     //}
   }
-  FunctionProtos[this->getName()] = std::make_unique<PrototypeAST>(this->Name, this->Args, this->cpoint_type, this->IsOperator, this->Precedence, this->is_variable_number_args);
+  FunctionProtos[this->getName()] = this->clone();
   GeneratedFunctions[this->getName()] = F;
   return F;
 }
@@ -763,6 +766,8 @@ Function *FunctionAST::codegen() {
   DIScope *FContext;
   DISubprogram *SP = nullptr;
   unsigned LineNo = 0;
+  LineNo = P.getLine();
+  Log::Info() << "LineNo after P.getLine : " << LineNo << "\n";
   if (debug_info_mode){
   Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
                                       CpointDebugInfo.TheCU->getDirectory());
@@ -876,6 +881,7 @@ GlobalVariable* GlobalVariableAST::codegen(){
 }
 
 Value *IfExprAST::codegen() {
+  CpointDebugInfo.emitLocation(this);
   Value *CondV = Cond->codegen();
   if (!CondV)
     return nullptr;

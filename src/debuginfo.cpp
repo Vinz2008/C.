@@ -1,6 +1,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "debuginfo.h"
 #include "errors.h"
+#include "log.h"
 
 using namespace llvm;
 
@@ -74,7 +75,7 @@ void DebugInfo::emitLocation(Compiler_context context, bool pop_the_scope = fals
   else
     Scope = LexicalBlocks.back();
   Builder->SetCurrentDebugLocation(
-      DILocation::get(Scope->getContext(), context.loc.line_nb, context.loc.col_nb, Scope));
+      DILocation::get(Scope->getContext(), context.lexloc.line_nb, context.lexloc.col_nb, Scope));
 }
 
 void DebugInfo::emitLocation(ExprAST* AST){
@@ -115,7 +116,7 @@ void debugInfoCreateParameterVariable(DISubprogram *SP, DIFile *Unit, AllocaInst
   DILocalVariable *D = DBuilder->createParameterVariable(
       SP, Arg.getName(), ++ArgIdx, Unit, LineNo, get_debuginfo_type(type),
       true);
-
+  Log::Info() << "LineNo Var : " << LineNo << "\n";
   DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
                         DILocation::get(SP->getContext(), LineNo, 0, SP),
                         Builder->GetInsertBlock());

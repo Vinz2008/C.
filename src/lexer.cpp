@@ -50,9 +50,9 @@ std::string get_line_returned(){
 
 void goToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
-  Comp_context->loc.line_nb++;
-  Log::Info() << "lines nb increment : " << Comp_context->loc.line_nb << "\n";
-  Comp_context->loc.col_nb = 0;
+  Comp_context->lexloc.line_nb++;
+  Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << "\n";
+  Comp_context->lexloc.col_nb = 0;
   getLine(__is, __str);
   Comp_context->line = __str;
   file_log << "line size : " << __str.size() << "\n";
@@ -68,9 +68,9 @@ void go_to_next_line(){
 }
 
 void init_line(){
-  Comp_context->loc.line_nb++;
-  Log::Info() << "lines nb increment : " << Comp_context->loc.line_nb << "\n";
-  Comp_context->loc.col_nb = 0;
+  Comp_context->lexloc.line_nb++;
+  Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << "\n";
+  Comp_context->lexloc.col_nb = 0;
   getLine(file_in, line);
   Comp_context->line = line;
 }
@@ -161,7 +161,7 @@ int getCharLine(){
       }
   } else {
      pos++;
-     Comp_context->loc.col_nb++;
+     Comp_context->lexloc.col_nb++;
   }
   handleEmptyLine();
   /*if (line->size() == 0 && (*line)[pos] == '\0'){
@@ -188,6 +188,8 @@ static int gettok() {
     //cout << "SPACE" << endl;
     LastChar = getCharLine();
   }
+
+  Comp_context->curloc = Comp_context->lexloc;
   if (isalpha(LastChar) || LastChar == '_') { // identifier: [a-zA-Z][a-zA-Z0-9]*
     IdentifierStr = LastChar;
     while (isalnum((LastChar = getCharLine())) || /*LastChar == '[' || LastChar == ']' || LastChar == '.' ||*/ LastChar == '_')
