@@ -37,7 +37,7 @@ public:
 class EmptyExprAST : public ExprAST {
 public:
     EmptyExprAST(){};
-    Value *codegen() override { }
+    Value *codegen() override { return nullptr; }
     std::unique_ptr<ExprAST> clone() override { return std::make_unique<EmptyExprAST>(); }
 
 };

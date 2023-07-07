@@ -872,15 +872,17 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
   Body.push_back(std::move(E_gc_init));
   }
-  while (CurTok != '}'){
+  auto ret = ParseBodyExpressions(Body);
+  if (!ret){
+    return nullptr;
+  }
+  /*while (CurTok != '}'){
     auto E = ParseExpression();
-    if (!E && !is_comment){
+    if (!E){
        return nullptr;
     }
-    if (!is_comment){
     Body.push_back(std::move(E));
-    }
-  }
+  }*/
   getNextToken(); // eat }
   Log::Info() << "end of function" << "\n";
   bool has_template = Proto->has_template;
@@ -1054,12 +1056,16 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
     return LogError("expected then");*/
   getNextToken();  // eat the {
   std::vector<std::unique_ptr<ExprAST>> Then;
-  while (CurTok != '}'){
+  auto ret = ParseBodyExpressions(Then);
+  if (!ret){
+    return nullptr;
+  }
+  /*while (CurTok != '}'){
     auto E = ParseExpression();
     if (!E)
       return nullptr;
     Then.push_back(std::move(E));
-  }
+  }*/
   Log::Info() << "CurTok : " << CurTok << "\n";
   /*if (CurTok != '}'){
     return LogError("expected }");
@@ -1084,12 +1090,16 @@ else_start:
     return LogError("expected {");
   }
   getNextToken();
-  while (CurTok != '}'){
+  auto ret = ParseBodyExpressions(Else);
+  if (!ret){
+    return nullptr;
+  }
+  /*while (CurTok != '}'){
     auto E2 = ParseExpression();
     if (!E2)
       return nullptr;
     Else.push_back(std::move(E2));
-  }
+  }*/
   /*if (CurTok != '}'){
     return LogError("expected }");
   }*/
@@ -1143,12 +1153,16 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
   if (CurTok == '{'){
     // infinite loop like in rust
     getNextToken();
-    while (CurTok != '}'){
+    auto ret = ParseBodyExpressions(Body);
+    if (!ret){
+        return nullptr;
+    }
+    /*while (CurTok != '}'){
       auto E = ParseExpression();
       if (!E)
         return nullptr;
       Body.push_back(std::move(E));
-    }
+    }*/
     return std::make_unique<LoopExprAST>("", nullptr, std::move(Body), true);
   } else {
     Log::Info() << "Loop In Expr" << "\n";
@@ -1171,12 +1185,6 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
     if (!ret){
         return nullptr;
     }
-    /*while (CurTok != '}'){
-      auto E = ParseExpression();
-      if (!E)
-        return nullptr;
-      Body.push_back(std::move(E));
-    }*/
     getNextToken();
     return std::make_unique<LoopExprAST>(VarName, std::move(Array), std::move(Body));
   }
@@ -1194,12 +1202,16 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   }
   getNextToken();
   std::vector<std::unique_ptr<ExprAST>> Body;
-  while (CurTok != '}'){
+  auto ret = ParseBodyExpressions(Body);
+  if (!ret){
+    return nullptr;
+  }
+  /*while (CurTok != '}'){
     auto E = ParseExpression();
     if (!E)
       return nullptr;
     Body.push_back(std::move(E));
-  }
+  }*/
   Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
     return LogError("expected }");
@@ -1250,12 +1262,13 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   }
   std::vector<std::unique_ptr<ExprAST>> Body;
   getNextToken();  // eat '{'.
-  while (CurTok != '}'){
+  auto ret = ParseBodyExpressions(Body);
+  /*while (CurTok != '}'){
     auto E = ParseExpression();
     if (!E)
       return nullptr;
     Body.push_back(std::move(E));
-  }
+  }*/
   /*if (CurTok != '}'){
     return LogError("expected } after for");
   }*/
