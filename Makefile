@@ -30,6 +30,13 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen
 
+release: set_release all
+
+
+set_release: 
+	$(eval CXXFLAGS += -O3) 
+	$(eval LDFLAGS += -s) 
+
 cpoint-build:
 	+make -C build
 
