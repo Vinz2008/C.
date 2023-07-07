@@ -97,9 +97,7 @@ static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
 	if (/*auto *FnIR =*/ FnAST->codegen()) {
     Log::Info() << "Parsed a function definition." << "\n";
-    //fprintf(stderr, "Parsed a function definition.\n");
     //FnIR->print(*file_out_ostream);
-    //fprintf(stderr, "\n");
     }
   } else {
     if (!is_template_parsing_definition){
@@ -112,35 +110,14 @@ static void HandleDefinition() {
 static void HandleExtern() {
   if (auto ProtoAST = ParseExtern()) {
     if (/*auto *FnIR =*/ ProtoAST->codegen()) {
-      //fprintf(stderr, "Read extern: ");
       Log::Info() << "Read Extern" << "\n";
       //FnIR->print(*file_out_ostream);
-      //fprintf(stderr, "\n");
     }
   } else {
     // Skip token for error recovery.
     getNextToken();
   }
 }
-
-
-/*static void HandleTopLevelExpression() {
-  // Evaluate a top-level expression into an anonymous function.
-  if (auto FnAST = ParseTopLevelExpr()) {
-    if (auto *FnIR = FnAST->codegen()) {
-      //fprintf(stderr, "Read top-level expression:");
-      Log::Info() << "Read top-level expression" << "\n";
-      //FnIR->print(*file_out_ostream);
-      //fprintf(stderr, "\n");
-
-      // Remove the anonymous expression.
-      //FnIR->eraseFromParent();
-    }
-  } else {
-    // Skip token for error recovery.
-    getNextToken();
-  }
-}*/
 
 static void HandleTypeDef(){
   if (auto typeDefAST = ParseTypeDef()){
@@ -185,20 +162,11 @@ void HandleComment(){
   Log::Info() << "token : " << CurTok << "\n";
 }
 
-/*static void HandleClass(){
-  if (auto classAST = ParseClass()){
-    auto* classIR = classAST->codegen();
-  } else {
-    getNextToken();
-  }
-}*/
-
 static void MainLoop() {
   while (1) {
     if (debug_mode){
     std::flush(file_log);
     }
-    //fprintf(stderr, "ready> ");
     if (last_line == true){
       if (debug_mode){
       file_log << "exit" << "\n";
@@ -252,7 +220,6 @@ static void MainLoop() {
       Log::Info() << "identifier : " << IdentifierStr << "\n";
       LogError("TOP LEVEL EXPRESSION FORBIDDEN");
       getNextToken();
-      //HandleTopLevelExpression();
       }
       break;
     }
@@ -411,7 +378,7 @@ int main(int argc, char **argv){
     BinopPrecedence["-"] = 20;
     BinopPrecedence["%"] = 40;
     BinopPrecedence["*"] = 40;*/  // highest.
-    //fprintf(stderr, "ready> ");
+
     string TargetTriple;
     legacy::PassManager pass;
     if (target_triplet_found_bool){

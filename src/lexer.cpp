@@ -37,10 +37,6 @@ int getLine(std::istream &__is, std::string &__str){
       last_line = true;
       file_log << "end of file" << "\n";
   }
-  //Comp_context->line_nb++;
-  /*Comp_context->line = last_line_str;
-  last_line_str = __str*/;
-  //Comp_context->line = __str;
   return 0;
 }
 
@@ -104,18 +100,6 @@ int getCharLine(){
   if (line == "<empty line>"){
     init_line();
     handlePreprocessor();
-    /*while (true){
-      if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
-        
-          Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
-          preprocess_instruction(line);
-          gotToNextLine(file_in, line);
-      } else {
-          //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
-          preprocess_replace_variable(line);
-          break;
-      }
-    }*/
   }
   int c = line[pos];
   if (c == '\0'){
@@ -129,17 +113,6 @@ int getCharLine(){
   if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line.c_str())){
     goToNextLine(file_in, line);
     handlePreprocessor();
-    /*while (true){
-      if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
-          Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
-          preprocess_instruction(line);
-          gotToNextLine(file_in, line);
-      } else {
-          //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
-          preprocess_replace_variable(line);
-          break;
-      }
-    }*/
     //pos = 0;
     file_log << "next char in line : " << line[pos] << "\n";
   } else if (c == '\\'){
@@ -182,17 +155,15 @@ static int create_multi_char_op(int FirsChar, int SecondChar){
 
 static int gettok() {
   static int LastChar = ' ';
-  //std::cout << "start gettok" << std::endl;
   // Skip any whitespace.
   while (isspace(LastChar)){
-    //cout << "SPACE" << endl;
     LastChar = getCharLine();
   }
 
   Comp_context->curloc = Comp_context->lexloc;
   if (isalpha(LastChar) || LastChar == '_') { // identifier: [a-zA-Z][a-zA-Z0-9]*
     IdentifierStr = LastChar;
-    while (isalnum((LastChar = getCharLine())) || /*LastChar == '[' || LastChar == ']' || LastChar == '.' ||*/ LastChar == '_')
+    while (isalnum((LastChar = getCharLine())) || LastChar == '_')
       IdentifierStr += LastChar;
 
     if (IdentifierStr == "func")
@@ -300,15 +271,8 @@ static int gettok() {
     LastChar = getCharLine();
     charStatic = LastChar;
     Log::Info() << "LastChar2 : " << LastChar << "\n";
-    /*charStatic = LastChar;
-    Log::Info() << "charStatic : " << LastChar << "\n";
     LastChar = getCharLine();
-    Log::Info() << "LastChar : " << LastChar << "\n";
-    if (LastChar != '\''){
-      LogError("Missing '");
-    }*/
-    LastChar = getCharLine();
-    LastChar = getCharLine();
+    LastChar = getCharLine(); // TODO : have error if char is not '
     return tok_char;
   }
   if (LastChar == '.'){
@@ -331,37 +295,34 @@ static int gettok() {
     return tok_eof;
 
   // Otherwise, just return the character as its ascii value.
-  int ThisChar = LastChar;
+  int FirstChar = LastChar;
   LastChar = getCharLine();
   // to debug multi-line operators
-  //Log::Info() << "LastChar : " << LastChar << " " << "ThisChar : " << ThisChar << "\n";
-  // ThisChar : first character
+  // FirstChar : first character
   // LastChar : second character
-  if (ThisChar == '/' && LastChar == '/'){
+  if (FirstChar == '/' && LastChar == '/'){
     return tok_single_line_comment;
   }
   if (LastChar == '|'){
-    return create_multi_char_op(ThisChar, LastChar);
+    return create_multi_char_op(FirstChar, LastChar);
   }
   if (LastChar == '='){
-    return create_multi_char_op(ThisChar, LastChar);
+    return create_multi_char_op(FirstChar, LastChar);
   }
   if (LastChar == '>'){
-    return create_multi_char_op(ThisChar, LastChar);
+    return create_multi_char_op(FirstChar, LastChar);
   }
   if (LastChar == '<'){
-    return create_multi_char_op(ThisChar, LastChar);
+    return create_multi_char_op(FirstChar, LastChar);
   }
   if (LastChar == '&'){
-    return create_multi_char_op(ThisChar, LastChar);
+    return create_multi_char_op(FirstChar, LastChar);
   }
-  return ThisChar;
+  return FirstChar;
 }
 
 int getNextToken() {
-  //std::cout << "Before CurTok" << std::endl;
   CurTok = gettok();
-  //cout << "CurTok : " << CurTok << endl;
   return CurTok;
 }
 
