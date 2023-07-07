@@ -881,29 +881,6 @@ Value* RedeclarationExprAST::codegen(){
     is_global = true;
   }
   Log::Info() << "is_global : " << is_global << "\n";
-  /*for (int i = 0; i < VariableName.length(); i++){
-    if (VariableName.at(i) == '.'){
-      Log::Info() << "i struct : " << i << "\n";
-      is_object = true;
-      ObjectName =  VariableName.substr(0, i);
-      MemberName =  VariableName.substr(i+1, VariableName.length()-1);
-      break;
-    }
-    if (VariableName.at(i) == '['){
-      is_array = true;
-      ArrayName = VariableName.substr(0, i);
-      std::string pos_str = "";
-      for (int j = i + 1; j < VariableName.length(); j++){
-        if (VariableName.at(j) == ']'){
-          break;
-        } else {
-          pos_str += VariableName.at(j);
-        }
-      }
-      pos_array = std::stoi(pos_str);
-      break;
-    }
-  }*/
   Log::Info() << "VariableName : " << VariableName << "\n";
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "TEST\n";
@@ -972,26 +949,7 @@ Value* RedeclarationExprAST::codegen(){
     auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
-  } /*else if (is_class){
-    Log::Info() << "class redeclaration" << "\n";
-    auto members = ClassDeclarations[NamedValues[VariableName]->type.class_name]->members;
-    int pos_class = -1;
-    for (int i = 0; i < members.size(); i++){
-      Log::Info() << "member nb " << i << " " << members.at(i).first << "\n";
-      if (members.at(i).first == member){
-        pos_class = i;
-        break;
-      }
-    }
-    Log::Info() << "Pos for GEP class member redeclaration : " << pos_class << "\n";
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_class, true));
-    auto classPtr = NamedValues[VariableName]->alloca_inst;
-    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
-    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), classPtr, {zero, index}, "get_class");
-    Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[VariableName] = std::make_unique<NamedValue>(classPtr, cpoint_type);
-  }*/ else if (is_array) {
+  } else if (is_array) {
     Log::Info() << "array redeclaration" << "\n";
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
@@ -1012,7 +970,6 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "Create GEP" << "\n";
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
-    //auto ptr = llvm::GetElementPtrInst::Create(arrayPtr, { zero, index }, "", block);
   } else {
   Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
   if (is_global){
@@ -1052,7 +1009,6 @@ Value* LoopExprAST::codegen(){
 
     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
   } else {
-    //return LogErrorV("Functionnality not finished to be implemented");
     auto double_cpoint_type = Cpoint_Type(double_type, false);
     AllocaInst *PosArrayAlloca = CreateEntryBlockAlloca(TheFunction, "pos_loop_in", double_cpoint_type);
     BasicBlock* CmpLoop = BasicBlock::Create(*TheContext, "cmp_loop_in", TheFunction);
@@ -1085,7 +1041,6 @@ Value* LoopExprAST::codegen(){
     Value* PosVal = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
     Value* isLoopFinishedVal = Builder->CreateFCmpOLT(PosVal, SizeArrayVal,"cmptmp_loop_in");  // if is less than
     Value* isLoopFinishedValFP = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
-    //Value* isLoopFinishedValFP = ConstantFP::get(*TheContext, APFloat((double)1));
     Value* isLoopFinishedBoolVal = Builder->CreateFCmpONE(isLoopFinishedValFP, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
     Builder->CreateCondBr(isLoopFinishedBoolVal, InLoop, AfterLoop);
     
@@ -1131,7 +1086,6 @@ Value* WhileExprAST::codegen(){
 
   blocksForBreak.push(AfterBB);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
-  //Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
   for (int i = 0; i < Body.size(); i++){
     if (!Body.at(i)->codegen())
@@ -1152,7 +1106,6 @@ Value *ForExprAST::codegen(){
     return nullptr;
   Builder->CreateStore(StartVal, Alloca);
 
-  //BasicBlock *PreheaderBB = Builder->GetInsertBlock();
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
   Builder->CreateBr(LoopBB);
   Builder->SetInsertPoint(LoopBB);
@@ -1184,8 +1137,6 @@ Value *ForExprAST::codegen(){
     // If not specified, use 1.0.
     StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
   }
-
-  //Value *NextVar = Builder->CreateFAdd(Variable, StepVal, "nextvar");
 
   // Compute the end condition.
   Value *EndCond = End->codegen();
