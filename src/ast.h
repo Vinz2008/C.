@@ -34,6 +34,14 @@ public:
   int getCol() const { return loc.col_nb; }
 };
 
+class EmptyExprAST : public ExprAST {
+public:
+    EmptyExprAST(){};
+    Value *codegen() override { }
+    std::unique_ptr<ExprAST> clone() override { return std::make_unique<EmptyExprAST>(); }
+
+};
+
 /// NumberExprAST - Expression class for numeric literals like "1.0".
 class NumberExprAST : public ExprAST {
   double Val;
@@ -534,6 +542,8 @@ std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
 std::unique_ptr<PrototypeAST> ParseExtern();
+std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args);
+std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body);
 std::unique_ptr<FunctionAST> ParseTopLevelExpr();
 std::unique_ptr<ExprAST> ParseIfExpr();
 std::unique_ptr<ExprAST> ParseReturn();

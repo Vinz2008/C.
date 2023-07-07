@@ -203,7 +203,11 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       Log::Info() << "call struct member function" << "\n";
       is_function_call_member = true;
       getNextToken();
-       if (CurTok != ')') {
+      auto ret = ParseFunctionArgs(Args);
+      if (!ret){
+        return nullptr;
+      }
+       /*if (CurTok != ')') {
         while (1) {
           if (auto Arg = ParseExpression())
             Args.push_back(std::move(Arg));
@@ -217,7 +221,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
             return LogError("Expected ')' or ',' in argument list");
           getNextToken();
         }
-      }
+      }*/
 
     // Eat the ')'.
     getNextToken();
@@ -277,7 +281,11 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
   getNextToken();  // eat (
   std::vector<std::unique_ptr<ExprAST>> Args;
-  if (CurTok != ')') {
+  auto ret = ParseFunctionArgs(Args);
+  if (!ret){
+    return nullptr;
+  }
+  /*if (CurTok != ')') {
     while (1) {
       if (auto Arg = ParseExpression())
         Args.push_back(std::move(Arg));
@@ -291,7 +299,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         return LogError("Expected ')' or ',' in argument list");
       getNextToken();
     }
-  }
+  }*/
 
   // Eat the ')'.
   getNextToken();
@@ -523,6 +531,35 @@ Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_
   }
 before_gen_cpoint_type:
   return Cpoint_Type(type, is_ptr, false, 0, struct_Name != "", struct_Name, 0, false, is_function, args, return_type);
+}
+
+std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
+  if (CurTok != ')') {
+    while (1) {
+      if (auto Arg = ParseExpression())
+        Args.push_back(std::move(Arg));
+      else
+        return nullptr;
+
+      if (CurTok == ')')
+        break;
+
+      if (CurTok != ',')
+        return LogError("Expected ')' or ',' in argument list");
+      getNextToken();
+    }
+  }
+  return std::make_unique<EmptyExprAST>();
+}
+
+std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body){
+    while (CurTok != '}'){
+      auto E = ParseExpression();
+      if (!E)
+        return nullptr;
+      Body.push_back(std::move(E));
+    }
+    return std::make_unique<EmptyExprAST>(); 
 }
 
 std::unique_ptr<ExprAST> ParseBool(bool bool_value){
@@ -1130,12 +1167,16 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
       return LogErrorL("missing '{' in loop in");
     }
     getNextToken();
-    while (CurTok != '}'){
+    auto ret = ParseBodyExpressions(Body);
+    if (!ret){
+        return nullptr;
+    }
+    /*while (CurTok != '}'){
       auto E = ParseExpression();
       if (!E)
         return nullptr;
       Body.push_back(std::move(E));
-    }
+    }*/
     getNextToken();
     return std::make_unique<LoopExprAST>(VarName, std::move(Array), std::move(Body));
   }
