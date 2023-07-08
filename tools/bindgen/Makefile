@@ -12,6 +12,14 @@ SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 CFLAGS = -c -g -Wall
+
+ifneq ($(OS),Windows_NT)
+UNAME := $(shell uname)
+ifeq ($(UNAME),Darwin)
+	CFLAGS += $(shell llvm-config --cflags)
+endif
+endif
+
 LDFLAGS = -lclang
 
 all: $(OUTPUTBIN)
