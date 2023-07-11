@@ -18,6 +18,7 @@ func main(){
   var a : double = 2 
   y = malloc(sizeof x)
   y.z = 3
-  x.z = 2 
+  x.z = 2
+  x.test_function(2) 
   y.test_function(3)
 }

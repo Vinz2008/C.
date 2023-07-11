@@ -762,7 +762,7 @@ std::unique_ptr<ExprAST> ParseAddrExpr(){
 
 std::unique_ptr<ExprAST> ParseSizeofExpr(){
   getNextToken();
-  std::string Name = IdentifierStr;
+  std::string Name = IdentifierStr; // TODO : Modify the sizeof code to detect structs type
   auto Sizeof = std::make_unique<SizeofExprAST>(Name);
   Log::Info() << "after sizeof : " << Name << "\n";
   getNextToken();
