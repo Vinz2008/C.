@@ -1,0 +1,26 @@
+struct node_linked_list {
+    var data : int
+    var next : struct node_linked_list ptr
+}
+
+struct linked_list {
+    var head : struct node_linked_list ptr 
+    var tail : struct node_linked_list ptr
+    func linked_list(){
+        self.head = null
+        self.tail = null
+    }
+    func append(data : int){
+        var temp : struct node_linked_list ptr = gc_malloc(sizeof i64)
+        temp.data = data
+        temp.next = null
+        if self.head == null {
+            self.head = temp
+            self.tail = temp
+        } else {
+            var tail = self.tail
+            tail.next = temp
+            self.tail = temp
+        }
+    }
+}

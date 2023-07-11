@@ -1,5 +1,17 @@
-import @std/va.cpoint
+struct node_linked_list {
+    var data : int
+    var next : struct node_linked_list ptr
+}
+
+struct linked_list {
+    var head : struct node_linked_list ptr 
+    var tail : struct node_linked_list ptr
+}
+
+extern linked_list__Constructor__Default(self : struct linked_list ptr);
+
+extern linked_list__append(self : struct linked_list ptr, data : int);
 
 func main(){
-    printfmt_cpoint("test %s", "hello world") // for new segfaults
+    var ll : struct linked_list 
 }

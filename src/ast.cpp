@@ -187,7 +187,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     Log::Info() << "RedeclarationExpr Parsing" << "\n";
     Log::Info() << "verify if " << IdName << "is in NamedValues : " << (int)(NamedValues[IdName] == nullptr) << "\n";
     if (member != ""){
-    if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr) {
+    if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr && IdName != "self") {
       return LogError("Couldn't find variable %s when redeclarating it", IdName.c_str());
     }
     }
@@ -211,6 +211,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     getNextToken();
     }
     Log::Info() << "Struct member returned" << "\n";
+    // make the struct members detection recursive : for example with a.b.c or in the linked list code
     return std::make_unique<StructMemberExprAST>(IdName, member, is_function_call_member, std::move(Args));
   }
   if (CurTok != '(' /*&& CurTok != '<'*/){ // Simple variable ref.
@@ -671,6 +672,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     VarList.push_back(std::move(declar));
     //getNextToken();
     //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
+    // TODO : add externs which declares struct functions with the name mangling so we can import structs with functions
     } else if (CurTok == tok_func){
       Log::Info() << "function found in struct" << "\n";
       auto funcAST = ParseDefinition();
@@ -706,6 +708,10 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
     LogErrorF("Expected '{' in function definition");
   }
   getNextToken();  // eat '{'
+  for (int i = 0; i < Proto->Args.size(); i++){
+    Log::Info() << "args added to NamedValues when doing ast : " << Proto->Args.at(i).first << "\n";
+    NamedValues[Proto->Args.at(i).first] = std::make_unique<NamedValue>(nullptr,Proto->Args.at(i).second);
+  }
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (std_mode && Proto->Name == "main" && gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;

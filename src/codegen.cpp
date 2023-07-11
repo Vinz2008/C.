@@ -346,6 +346,10 @@ Type* StructDeclarAST::codegen(){
   std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
+    if (VarExpr->cpoint_type.struct_name == Name && VarExpr->cpoint_type.is_ptr){
+        VarExpr->cpoint_type.is_struct = false;
+        VarExpr->cpoint_type.struct_name = "";
+    }
     Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     dataTypes.push_back(var_type);
     std::string VarName = VarExpr->VarNames.at(0).first;
@@ -1264,20 +1268,21 @@ Value *VarExprAST::codegen() {
       }
       struct_type_temp = StructDeclarations[cpoint_type.struct_name]->struct_type;
       struct_declaration_name_temp = cpoint_type.struct_name;
-      if (!cpoint_type.is_ptr){
-      if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
-      std::vector<Value *> ArgsV;
-      //auto A = NamedValues[VarName]->alloca_inst;
-      //Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
-      //ArgsV.push_back(thisClass);
-      Builder->CreateCall(constructorF, ArgsV, "calltmp");
-      }
-      }
     }
     Log::Info() << "VarName " << VarName << "\n";
     Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type, struct_type_temp, struct_declaration_name_temp);
     Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
+    if (cpoint_type.is_struct && !cpoint_type.is_ptr){
+      if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
+      std::vector<Value *> ArgsV;
+      
+      auto A = NamedValues[VarName]->alloca_inst;
+      Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
+      ArgsV.push_back(thisClass);
+      Builder->CreateCall(constructorF, ArgsV, "calltmp");
+      }
+    }
   }
   CpointDebugInfo.emitLocation(this);
   // Pop all our variables from scope.
