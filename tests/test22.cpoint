@@ -7,6 +7,7 @@ class test {
     2
   }
   func test_function(a : int){
+    printd(self.z)
     printstr("test_function called")
     a + 1 
   } 
@@ -15,7 +16,7 @@ func main(){
   var x : class test 
   var y : class test ptr 
   var a : double = 2 
-  y = malloc(12)
+  y = malloc(sizeof x)
   y.z = 3
   x.z = 2 
   y.test_function(3)

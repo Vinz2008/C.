@@ -241,7 +241,8 @@ Value* StructMemberExprAST::codegen() {
         return LogErrorV("Can't find struct that is used for a member");
     }
     Alloca = NamedValues[StructName]->alloca_inst;
-    if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the this of structs function mmebers)
+    Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
+    if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
       return LogErrorV("Using a member of variable even though it is not a struct");
     }
     Log::Info() << "StructName : " << StructName << "\n";
@@ -299,10 +300,13 @@ if_reflection:
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
     Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+    //Value* tempval = Builder->CreateLoad(get_type_llvm(cpoint_type), Alloca, StructName);
     if (cpoint_type.is_ptr){
       cpoint_type.is_ptr = false;
     }
-    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});
+    Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
+    
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Alloca, { zero, index});
     Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
     return value;
 }
@@ -361,7 +365,9 @@ Type* StructDeclarAST::codegen(){
     }
 
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
-    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("this", get_cpoint_type_from_llvm(structType->getPointerTo()))); // TODO fix this by passing struct type pointer as first arg
+    Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
+    self_pointer_type = Cpoint_Type(double_type, true, false, 0, true, Name);
+    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type)); // TODO fix this by passing struct type pointer as first arg
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
     functions.push_back(function_name);
@@ -710,6 +716,7 @@ Function *FunctionAST::codegen() {
   unsigned ArgIdx = 0;
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
+    Log::Info() << "cpoint_type_arg : " << cpoint_type_arg << "\n";
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
     debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
     Builder->CreateStore(&Arg, Alloca);
