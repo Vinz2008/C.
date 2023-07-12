@@ -12,8 +12,6 @@ func main(){
 }
 ```
 
-
-
 **string struct**
 
 ```
@@ -23,10 +21,12 @@ import @std/str.cpoint
 func main(){
     var string : struct str = String::create("hello world")
     printstring(string)
+    String::appendChar('a', string)
+    var len = String::lenstr(string)
 }
 ```
 
-
+The string struct is dynamically allocated with the garbage collector.
 
 ## Garbage collector
 
@@ -43,5 +43,33 @@ func main(){
     var s : int ptr = gc_malloc(sizeof int)
     s = gc_realloc(s, 2 * sizeof int)
     gc_free(s)    
+}
+```
+
+## Files
+
+You can open files, write to them, delete them or create symlinks.
+
+```
+import @std/file.cpoint
+
+func main(){
+    var fd = file::open("test_file.txt")
+    file::write(fd, "test content of file\n")
+    file::close(fd)
+    file::remove("test_file.txt")
+}
+```
+
+## Panic
+
+There is a panic function which will print the error and exit with an error the program.
+
+```
+import @std/panic.cpoint
+
+func main(){
+    panic("test error")
+    // the program doesn't continue to here because it has exited
 }
 ```
