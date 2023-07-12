@@ -95,12 +95,14 @@ public:
 };
 
 class SizeofExprAST : public ExprAST {
+  Cpoint_Type type;
+  bool is_variable;
   std::string Name;
 public:
-  SizeofExprAST(const std::string &Name) : Name(Name) {}
+  SizeofExprAST(Cpoint_Type type, bool is_variable, const std::string &Name) : type(type), is_variable(is_variable), Name(Name) {}
   Value* codegen() override;
   std::unique_ptr<ExprAST> clone() override {
-    return std::make_unique<SizeofExprAST>(Name);
+    return std::make_unique<SizeofExprAST>(type,is_variable, Name);
   }
 };
 

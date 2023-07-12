@@ -184,6 +184,19 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
   return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
 }
 
+Value* getSizeOfStruct(AllocaInst *A){
+    std::vector<Value*> ArgsV;
+    ArgsV.push_back(A);
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // return -1 if object size is unknown
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // is the calculation made at runtime
+    std::vector<Type*> OverloadedTypes;
+    OverloadedTypes.push_back(get_type_llvm(int_type));
+    OverloadedTypes.push_back(get_type_llvm(i64_type));
+    Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
+    return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");
+}
+
 Value *LogErrorV(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
@@ -536,27 +549,35 @@ Value* AddrExprAST::codegen(){
 }
 
 Value* SizeofExprAST::codegen(){
+  Log::Info() << "codegen sizeof" << "\n";
   //auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-  if (is_type(Name)){
-    int type = get_type(Name);
-    Cpoint_Type cpoint_type = Cpoint_Type(type);
+  if (/*is_type(Name)*/!is_variable){
+    Log::Info() << "codegen sizeof is type" << "\n";
+    //int type = get_type(Name);
+    Cpoint_Type cpoint_type = /*Cpoint_Type(type)*/ type;
+    if (cpoint_type.is_struct){
+        
+        //return getSizeOfStruct(temp_alloca);
+    }
     Type* llvm_type = get_type_llvm(cpoint_type);
-    Value* size = Builder->CreateGEP(llvm_type->getPointerTo(), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
+    Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
     size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
-    size  = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+    //size  = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+    // size found is in bytes but we want the number of bits
+    size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
     return size;
-    //Type* llvm_type_ptr = llvm_type->getPointerTo();
-    //Value* size = Builder->CreateGEP(llvm_type_ptr->getContainedType(0UL), Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt8Ty(), 0), llvm_type_ptr), ConstantInt::get(Builder->getInt8Ty(), 1));
-    //return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));
   } else {
-  //Function *TheFunction = Builder->GetInsertBlock()->getParent();
+    Log::Info() << "codegen sizeof is variable" << "\n";
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A){
     return LogErrorV("Addr Unknown variable name %s", Name.c_str());
   }
-  if (NamedValues[Name]->type.is_struct){
-    std::vector<Value*> ArgsV;
+  if (NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr){
+    Value* size =  getSizeOfStruct(A);
+    size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
+    return size;
+    /*std::vector<Value*> ArgsV;
     ArgsV.push_back(A);
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // return -1 if object size is unknown
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
@@ -565,21 +586,15 @@ Value* SizeofExprAST::codegen(){
     OverloadedTypes.push_back(get_type_llvm(int_type));
     OverloadedTypes.push_back(get_type_llvm(i64_type));
     Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
-    return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");
+    return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");*/
   }
-  //Type* llvm_type = A->getAllocatedType();
   Type* llvm_type = get_type_llvm(NamedValues[Name]->type);
   Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
   size = Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
-  size = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+  //size = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
+  // size found is in bytes but we want the number of bits
+  size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
   return size;
-  /*auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-  auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-  AllocaInst* temp_ptr = CreateEntryBlockAlloca(TheFunction, "temp_sizeof", *get_cpoint_type_from_llvm(llvm_type->getPointerTo()));
-  Value* Val = Builder->CreateLoad(llvm_type->getPointerTo(), A, "temp_load_sizeof");
-  Builder->CreateStore(Val, temp_ptr);
-  Value* size = Builder->CreateGEP(Val->getType(), temp_ptr, {zero, one}, "sizeof");
-  return Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(double_type)));*/
   } 
 }
 

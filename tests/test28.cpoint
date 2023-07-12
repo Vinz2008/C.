@@ -10,22 +10,24 @@ class test {
   } 
 }
 func main(){
-  var z : int ptr 
-  var x : class test 
-  var y : class test ptr
   var a : int
   var b : double
   var c : i8
+  var x : class test 
+  var y : class test ptr
+  var z : int ptr 
   z = gc_malloc(sizeof int)
   y = gc_malloc(12) 
   x.z = 2 
   x.x = 3
-  printi(sizeof x)
   printi(sizeof a)
   printi(sizeof b)
   printi(sizeof c)
+  printi(sizeof x)
+  printi(sizeof y)
   printi(sizeof z)
   printi(sizeof int)
+  printi(sizeof struct test)
   printd(x.z)
   printd(x.x)
 }

@@ -767,11 +767,27 @@ std::unique_ptr<ExprAST> ParseAddrExpr(){
 }
 
 std::unique_ptr<ExprAST> ParseSizeofExpr(){
+  Log::Info() << "Parsing sizeof" << "\n";
   getNextToken();
-  std::string Name = IdentifierStr; // TODO : Modify the sizeof code to detect structs type
-  auto Sizeof = std::make_unique<SizeofExprAST>(Name);
+  Cpoint_Type type = Cpoint_Type(double_type);
+  bool is_variable = false;
+  std::string Name = "";
+  if (NamedValues[IdentifierStr] != nullptr){
+    Log::Info() << "sizeof is variable" << "\n";
+    is_variable = true;
+    Name = IdentifierStr;
+    getNextToken();
+  } else if ((CurTok == tok_identifier && is_type(IdentifierStr)) || CurTok == tok_struct || CurTok == tok_class){
+    Log::Info() << "sizeof is type" << "\n";
+    type = ParseTypeDeclaration(false);
+    Log::Info() << "CurTok : " << CurTok << "\n";
+    Log::Info() << "sizeof type parsed : " << type << "\n";
+  } else {
+    return LogError("Neither a type or a variable in sizeof expr");
+  }
+  auto Sizeof = std::make_unique<SizeofExprAST>(type, is_variable, Name);
   Log::Info() << "after sizeof : " << Name << "\n";
-  getNextToken();
+  //getNextToken();
   return Sizeof;
 }
 
