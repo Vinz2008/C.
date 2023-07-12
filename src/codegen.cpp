@@ -339,14 +339,17 @@ Value* ArrayMemberExprAST::codegen() {
   AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   std::vector<Value*> indexes = { zero, index};
-  if (cpoint_type.is_ptr){
+  if (cpoint_type.is_ptr && !cpoint_type.is_array){
     Log::Info() << "array for array member is ptr" << "\n";
     cpoint_type.is_ptr = false;
     indexes = {index};
   }
+  Cpoint_Type member_type = cpoint_type;
+  member_type.is_array = false;
+  member_type.nb_element = 0;
   Type* type_llvm = get_type_llvm(cpoint_type);
   Value* ptr = Builder->CreateGEP(type_llvm, Alloca, indexes);
-  Value* value = Builder->CreateLoad(type_llvm, ptr, ArrayName);
+  Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
   return value;
 }
 

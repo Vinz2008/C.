@@ -30,6 +30,13 @@ string last_line_str = "";
 
 extern bool last_line;
 
+void LogErrorLexer(const char *Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args);
+  va_end(args);
+}
+
 void handlePreprocessor();
 
 int getLine(std::istream &__is, std::string &__str){
@@ -272,6 +279,10 @@ static int gettok() {
     charStatic = LastChar;
     Log::Info() << "LastChar2 : " << LastChar << "\n";
     LastChar = getCharLine();
+    Log::Info() << "LastChar3 : " << LastChar << "\n";
+    if (LastChar != '\''){
+        LogErrorLexer("missing ' in char static declaration");
+    }
     LastChar = getCharLine(); // TODO : have error if char is not '
     return tok_char;
   }
