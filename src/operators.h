@@ -12,6 +12,10 @@ namespace operators {
     Value* LLVMCreateRem(Value* L, Value* R);
     Value* LLVMCreateCmp(Value* L, Value* R);
     Value* LLVMCreateNotEqualCmp(Value* L, Value* R);
+    Value* LLVMCreateGreaterThan(Value* L, Value* R);
+    Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R);
+    Value* LLVMCreateSmallerThan(Value* L, Value* R);
+    Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R);
     Value* LLVMCreateLogicalOr(Value* L, Value* R);
     Value* LLVMCreateLogicalAnd(Value* L, Value* R);
 }

@@ -73,6 +73,43 @@ Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
     return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
+Value* LLVMCreateGreaterThan(Value* L, Value* R){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+      L = Builder->CreateICmpSGT(R, L, "cmptmp");
+    } else {
+      L = Builder->CreateFCmpOGT(R, L, "cmptmp");
+    }
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
+Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+        L = Builder->CreateICmpSGE(L, R, "cmptmp");
+    } else {
+        L = Builder->CreateFCmpOGE(L, R, "cmptmp");
+    }
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
+Value* LLVMCreateSmallerThan(Value* L, Value* R){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+      L = Builder->CreateICmpSLT(L, R, "cmptmp");
+    } else {
+      L = Builder->CreateFCmpOLT(L, R, "cmptmp");
+    }
+    // Convert bool 0/1 to double 0.0 or 1.0
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
+Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R){
+    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+        L = Builder->CreateICmpSLE(L, R, "cmptmp");
+    } else {
+        L = Builder->CreateFCmpOLE(L, R, "cmptmp");
+    }
+    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+}
+
 Value* LLVMCreateLogicalOr(Value* L, Value* R){
     L = Builder->CreateOr(L, R, "logicalortmp");
     return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
