@@ -27,6 +27,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 ## TODO
 
 - [ ] Generics support
-- [ ] Importing structs with function members
+- [x] Importing structs with function members
 - [ ] Finish refactoring the code for operators to make it compatible with every types
 - [ ] Make redeclarations just the equal operator

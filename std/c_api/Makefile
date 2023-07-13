@@ -10,6 +10,9 @@ endif
 
 all: libc_api.a 
 
+debug: CFLAGS += -g
+debug: libc_api.a
+
 libc_api.a: $(OBJECTS)
 	llvm-ar -rc $@ $^
 

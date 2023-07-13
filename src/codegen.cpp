@@ -406,6 +406,7 @@ Type* StructDeclarAST::codegen(){
     ProtoExpr->Args.insert(ProtoExpr->Args.begin(), std::make_pair("self", self_pointer_type));
     ProtoExpr->Name = mangled_name_function;
     ProtoExpr->codegen();
+    functions.push_back(function_name);
   }
 
   StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));

@@ -36,14 +36,17 @@ OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
 CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)
 CPOINTFLAGS += -with-gc
 
-
 all: libstd.a
+
+debug: CPOINTFLAGS += -g
+debug: MAKETARGET = debug
+debug: libstd.a
 
 libstd.a: $(OBJECTS) capi
 	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C)
 
 capi:
-	+TARGET=$(TARGET) make -C c_api
+	+TARGET=$(TARGET) make $(MAKETARGET) -C c_api
 
 %.o: %.cpoint
 	$(CCPOINT) $(CPOINTFLAGS) $< -o $@

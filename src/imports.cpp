@@ -146,7 +146,7 @@ void getPathFromFilePOV(std::string& Path, std::string file_src){
     Log::Imports_Info() << "Path after serialization : " << Path << "\n";
 }
 
-void interpret_func(std::string line, int& pos, int nb_line, int& pos_line){
+std::string interpret_func(std::string line, int& pos, int nb_line, int& pos_line, bool should_write_to_file = true){
     std::string declar = "";
     for (int i = pos; i < line.size(); i++){
         if (line.at(i) != '{'){
@@ -158,39 +158,84 @@ void interpret_func(std::string line, int& pos, int nb_line, int& pos_line){
     if (pos_line != 0 && pos_line != nb_line){
         out_file << "\n";
     }
+    if (should_write_to_file){
     out_file << "extern " << declar << ";";
     pos_line++;
     modifier_for_line_count++;
+    }
+    return declar;
 }
 
 void find_patterns(std::string line, int nb_line, int& pos_line);
+void interpret_extern(std::string line, int& pos, int& pos_line);
 
 int nb_of_opened_braces_struct;
 
-#define STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS 0
+#define STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS 1
 
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     std::string struct_declar = "";
-    // TODO : improve this parsing
 #if STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS
+    bool in_function = false;
     nb_of_opened_braces_struct = 0;
-    nb_of_opened_braces_struct++;
+    //nb_of_opened_braces_struct++;
     line = line.substr(pos, line.size()-1);
 #endif
     while (true){
 #if STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS
-        if (nb_of_opened_braces_struct == 0 && line.find('}') != std::string::npos){
+        /*if (nb_of_opened_braces_struct == 0 && line.find('}') != std::string::npos){
+            Log::Imports_Info() << "break struct at line : " << line << "\n";
             break;
-        }
+        }*/
         if (line.find('{') != std::string::npos){
+            Log::Imports_Info() << "found { in struct" << "\n";
             nb_of_opened_braces_struct++;
         }
         if (line.find('}') != std::string::npos){
+            Log::Imports_Info() << "found } in struct" << "\n";
             nb_of_opened_braces_struct--;
+            if (nb_of_opened_braces_struct == 0){
+                Log::Imports_Info() << "break struct at line : " << line << "\n";
+                struct_declar += line;
+                break;
+            }
         }
-        find_patterns(line, nb_line, pos_line);
+        //find_patterns(line, nb_line, pos_line);
+        int pos = 0;
+        //skip_spaces(line, pos);
+        while (pos < line.size() && isspace(line.at(pos))){
+            Log::Info() << "skip space char : " << (char)line.at(pos) << "\n";
+            pos++;
+        }
+        getIdentifierStr(line, pos, IdentifierStr);
+        Log::Info() << "IdentifierStr : " << IdentifierStr << "\n";
+        if (IdentifierStr == "func"){
+            Log::Info() << "pos : " << pos << "\n";
+            Log::Imports_Info() << "found func in struct" << "\n";
+            std::string declar = interpret_func(line, pos, nb_line, pos_line, false);
+            struct_declar += "    extern " + declar + " ";
+            int in_func_nb_of_opened_braces = 0;
+            while (1){
+                if (line.find('{') != std::string::npos){
+                    in_func_nb_of_opened_braces++;
+                }
+                if (line.find('}') != std::string::npos){
+                    in_func_nb_of_opened_braces--;
+                    if (in_func_nb_of_opened_braces == 0){
+                        break;
+                    }
+                }
+                if (!std::getline(imported_file, line)){
+                    break;
+                }
+            }
+            //nb_of_opened_braces_struct--;
+        } else if (IdentifierStr == "extern"){
+            interpret_extern(line, pos, pos_line);
+        } else {
         struct_declar += line;
+        }
         pos = 0;
         if (!std::getline(imported_file, line)){
             break;
