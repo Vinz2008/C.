@@ -650,14 +650,15 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   int i = 0;
   std::vector<std::unique_ptr<VarExprAST>> VarList;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
+  std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions;
   getNextToken(); // eat struct
   std::string structName = IdentifierStr;
   Log::Info() << "Struct Name : " << structName << "\n";
   getNextToken();
   if (CurTok != '{')
-    return LogErrorS("Expected '{' in prototype");
+    return LogErrorS("Expected '{' in Struct");
   getNextToken();
-  while ((CurTok == tok_var || CurTok == tok_func) && CurTok != '}'){
+  while ((CurTok == tok_var || CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
     Log::Info() << "Curtok in struct parsing : " << CurTok << "\n";
     if (CurTok == tok_var){
     auto exprAST = ParseVarExpr();
@@ -673,6 +674,20 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     //getNextToken();
     //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
     // TODO : add externs which declares struct functions with the name mangling so we can import structs with functions
+    } else if (CurTok == tok_extern){
+        getNextToken();
+        auto protoExpr = ParsePrototype();
+        PrototypeAST* protoPtr = dynamic_cast<PrototypeAST*>(protoExpr.get());
+        if (protoPtr == nullptr){
+            return LogErrorS("Error in struct declaration externs");
+        }
+        std::unique_ptr<PrototypeAST> Proto;
+        protoExpr.release();
+        Proto.reset(protoPtr);
+        if (Proto == nullptr){ return nullptr; }
+        ExternFunctions.push_back(std::move(Proto));
+        Log::Info() << "CurTok after extern : " << CurTok << "\n";
+        
     } else if (CurTok == tok_func){
       Log::Info() << "function found in struct" << "\n";
       auto funcAST = ParseDefinition();
@@ -692,10 +707,10 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
-    return LogErrorS("Expected '}' in prototype");
+    return LogErrorS("Expected '}' in struct");
   }
   getNextToken();  // eat '}'.
-  return std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions));
+  return std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions));
 }
 
 std::unique_ptr<FunctionAST> ParseDefinition() {

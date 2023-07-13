@@ -390,9 +390,24 @@ Type* StructDeclarAST::codegen(){
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type)); // TODO fix this by passing struct type pointer as first arg
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
-    functions.push_back(function_name);
-    
+    functions.push_back(function_name);  
   }
+  for (int i = 0; i < ExternFunctions.size(); i++){
+    std::unique_ptr<PrototypeAST> ProtoExpr = std::move(ExternFunctions.at(i));
+    std::string function_name;
+    if (ProtoExpr->Name == Name){
+    // Constructor
+    function_name = "Constructor__Default";
+    } else {
+    function_name = ProtoExpr->Name;
+    }
+    std::string mangled_name_function = struct_function_mangling(Name, function_name);
+    Cpoint_Type self_pointer_type = Cpoint_Type(double_type, true, false, 0, true, Name);
+    ProtoExpr->Args.insert(ProtoExpr->Args.begin(), std::make_pair("self", self_pointer_type));
+    ProtoExpr->Name = mangled_name_function;
+    ProtoExpr->codegen();
+  }
+
   StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
   return structType;
 }

@@ -347,9 +347,10 @@ class StructDeclarAST {
   std::string Name;
   std::vector<std::unique_ptr<VarExprAST>> Vars;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
+  std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions;
 public:
-  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
-    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
+  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions) 
+    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)), ExternFunctions(std::move(ExternFunctions)) {}
   Type *codegen();
   std::unique_ptr<StructDeclarAST> clone(){
     std::vector<std::unique_ptr<FunctionAST>> FunctionsCloned;
@@ -357,6 +358,12 @@ public:
       for (int i = 0; i < Functions.size(); i++){
         FunctionsCloned.push_back(Functions.at(i)->clone());
       }
+    }
+    std::vector<std::unique_ptr<PrototypeAST>> ExternFunctionsCloned;
+    if (!ExternFunctions.empty()){
+        for (int i = 0; i < ExternFunctions.size(); i++){
+            ExternFunctionsCloned.push_back(ExternFunctions.at(i)->clone());
+        }
     }
     std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
     if (!Vars.empty()){
@@ -369,7 +376,7 @@ public:
         VarsCloned.push_back(std::move(VarTemp));
       }
     }
-    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned));
+    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned), std::move(ExternFunctionsCloned));
   }
 };
 

@@ -3,7 +3,8 @@ import @std/path.cpoint
 
 struct test {
   var x : double
-  var z : double 
+  var z : double
+  extern test_function() 
 }
 func main(){
   var x : struct test
