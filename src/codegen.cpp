@@ -435,7 +435,8 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateNotEqualCmp(L, R);
   }
   if (Op == "<="){
-    L = Builder->CreateFCmpULE(L, R, "cmptmp");
+    //L = Builder->CreateFCmpULE(L, R, "cmptmp");
+    L = Builder->CreateFCmpULT(L, R, "cmptmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   }
   if (Op == ">="){
@@ -830,6 +831,9 @@ Value *IfExprAST::codegen() {
 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
+  Type* phiType = Type::getDoubleTy(*TheContext);
+  phiType = TheFunction->getReturnType();
+
   // Create blocks for the then and else cases.  Insert the 'then' block at the
   // end of the function.
   BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then", TheFunction);
@@ -845,6 +849,9 @@ Value *IfExprAST::codegen() {
     if (!ThenV)
       return nullptr;
   }
+  if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
+    convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
+  }
 
   Builder->CreateBr(MergeBB);
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
@@ -859,10 +866,16 @@ Value *IfExprAST::codegen() {
     if (!ElseV)
       return nullptr;
   }
+  if (ElseV->getType() != Type::getVoidTy(*TheContext) && ElseV->getType() != phiType){
+    convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV);
+  }
+
   } /*else {
     Log::Info() << "Else empty" << "\n";
     ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
   }*/
+ 
+
   Builder->CreateBr(MergeBB);
   // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
   ElseBB = Builder->GetInsertBlock();
@@ -870,16 +883,28 @@ Value *IfExprAST::codegen() {
   // Emit merge block.
   TheFunction->getBasicBlockList().push_back(MergeBB);
   Builder->SetInsertPoint(MergeBB);
-  PHINode *PN = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, "iftmp");
+  PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");
 
-  if (ThenV->getType() != Type::getDoubleTy(*TheContext)){
+  if (ThenV->getType() == Type::getVoidTy(*TheContext)){
     ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
   }
-  if (ElseV == nullptr){
+
+  if (ElseV == nullptr || ElseV->getType() == Type::getVoidTy(*TheContext)){
+    if (phiType != Type::getVoidTy(*TheContext)){
     ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
-  } else if (ElseV->getType() != Type::getDoubleTy(*TheContext)){
-    ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
+    }
   }
+
+  /*if (ThenV->getType() != Type::getDoubleTy(*TheContext)){
+    ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
+  }*/
+  /*if (ThenV->getType() != phiType){
+    convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
+  }*/
+   /*if (ElseV->getType() != phiType){
+    convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV);
+  }*/
+
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
   return PN;

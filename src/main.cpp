@@ -366,6 +366,7 @@ int main(int argc, char **argv){
 
     BinopPrecedence["*"] = 30;
     BinopPrecedence["%"] = 30;
+    BinopPrecedence["/"] = 30;
 
 
 

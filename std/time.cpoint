@@ -1,0 +1,17 @@
+import ./print.cpoint
+
+struct __timeval {
+    var tv_sec : i64
+    var tv_usec : i64
+}
+
+extern gettimeofday(tv : struct __timeval ptr, tz : int ptr) int;
+extern __internal_get_time() i64;
+
+
+mod time {
+    func get() i64 {
+        var millisecondsSinceEpoch = __internal_get_time()
+        millisecondsSinceEpoch
+    }
+}

@@ -1,5 +1,5 @@
-import @std/va.cpoint
+import @std/time.cpoint
 
 func main(){
-    printfmt_cpoint("test %s", "hello world") // for new segfaults
+    time::get()
 }
