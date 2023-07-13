@@ -1,6 +1,6 @@
 # C.
 
-A programming language compiler written in C++ which is definitely not finished. It compile the C. code to llvm ir.
+A programming language compiler written in C++ which is definitely not finished. It compile the C. code to LLVM IR.
 
 ## Advantages
 
@@ -12,7 +12,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - goto support
 - automatic casting
 
-## Clone git repo
+## Cloning the git repo
 
 To clone the git repo, run 
 
