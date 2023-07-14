@@ -45,13 +45,14 @@ Rust release (rustc 1.69.0) : 71.294s
 Rust debug :
 C (gcc 13.1.1) : 149.729s
 Nim 1.6.10 release :  27.447s
-Nim debug : 
+Nim 1.6.10 debug : 355.472s
 Php :
 Lua :
 LuaJIT 2.1.0-beta3 : 288.73s
 Crystal 1.8.2 : 118.306s
 Go 1.20.5 : 133.766s
 Java : 
-V : 180.918s
+V 0.4.0 : 180.918s
 Python 3.11.3 : 3957.103s
+Pypy : 
 Javascript in firefox : 
