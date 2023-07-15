@@ -34,7 +34,7 @@ Nim 1.6.10 debug : 3.216s
 Php : 17s  
 Lua : 20.07s  
 LuaJIT 2.1.0-beta3 : 2.09s  
-Crystal 1.8.2 : 2.775s 
+Crystal 1.8.2 : 2.775s  
 Go 1.20.5 : 3.208s  
 Java (openjdk 20.0.1) : ≈3s  
 V 0.4.0 : 2.857s  
