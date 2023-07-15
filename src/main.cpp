@@ -526,7 +526,7 @@ int main(int argc, char **argv){
       cout << "Linked the executable" << endl;
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
     }
-    if (remove_temp_file){
+    if (remove_temp_file & !asm_mode){
       remove(temp_filename.c_str());
     }
     return return_status;

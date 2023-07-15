@@ -1038,9 +1038,15 @@ Value* RedeclarationExprAST::codegen(){
     auto arrayPtr = NamedValues[VariableName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
     Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
+    std::vector<Value*> indexes = { zero, indexVal};
+    if (cpoint_type.is_ptr && !cpoint_type.is_array){
+        Log::Info() << "array for array member is ptr" << "\n";
+        cpoint_type.is_ptr = false;
+        indexes = {indexVal};
+    }
     Type* llvm_type = get_type_llvm(cpoint_type);
     Log::Info() << "Get LLVM TYPE" << "\n";
-    auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, {zero, indexVal}, "get_array");
+    auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array");
     Log::Info() << "Create GEP" << "\n";
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
