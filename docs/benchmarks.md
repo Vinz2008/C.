@@ -9,7 +9,7 @@ Finding the 50th Fibonacci number using a recursive function
 C. : 230.813s  
 C (gcc 13.1.1) : 149.729s  
 Rust release (rustc 1.69.0) : 71.294s  
-Rust debug (rustc 1.69.0) : 266.806s 
+Rust debug (rustc 1.69.0) : 266.806s  
 Nim 1.6.10 release :  27.447s  
 Nim 1.6.10 debug : 355.472s  
 Php :   
