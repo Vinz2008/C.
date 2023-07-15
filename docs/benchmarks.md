@@ -31,8 +31,8 @@ Rust release (rustc 1.69.0) : 2.756s
 Rust debug (rustc 1.69.0) : 14.905s  
 Nim 1.6.10 release : 3.206s  
 Nim 1.6.10 debug : 3.216s  
-Php : 17s  
-Lua : 20.07s  
+Php 8.2.8 : 17s  
+Lua 5.4.6 : 20.07s  
 LuaJIT 2.1.0-beta3 : 2.09s  
 Crystal 1.8.2 : 2.775s  
 Go 1.20.5 : 3.208s  
