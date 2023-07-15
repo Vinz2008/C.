@@ -6,22 +6,22 @@ The benchmark are run on a sytem with a ryzen 5 5600g, 32go of ram and running M
 
 Finding the 50th Fibonacci number using a recursive function
 
-C. : 230.813s
-C (gcc 13.1.1) : 149.729s
-Rust release (rustc 1.69.0) : 71.294s
-Rust debug :
-Nim 1.6.10 release :  27.447s
-Nim 1.6.10 debug : 355.472s
-Php : 
-Lua : 
-LuaJIT 2.1.0-beta3 : 288.73s
-Crystal 1.8.2 : 118.306s
-Go 1.20.5 : 133.766s
-Java : 
-V 0.4.0 : 180.918s
-Python 3.11.3 : 3957.103s
-PyPy 7.3.12 : 376.501s
-Nodejs v20.4.0 : 336.720s
+C. : 230.813s  
+C (gcc 13.1.1) : 149.729s  
+Rust release (rustc 1.69.0) : 71.294s  
+Rust debug :  
+Nim 1.6.10 release :  27.447s  
+Nim 1.6.10 debug : 355.472s  
+Php :   
+Lua :   
+LuaJIT 2.1.0-beta3 : 288.73s  
+Crystal 1.8.2 : 118.306s  
+Go 1.20.5 : 133.766s  
+Java :   
+V 0.4.0 : 180.918s  
+Python 3.11.3 : 3957.103s  
+PyPy 7.3.12 : 376.501s  
+Nodejs v20.4.0 : 336.720s  
 
 Finding the factors of 2,000,000,000
 
