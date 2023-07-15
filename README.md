@@ -37,6 +37,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 
 [Complete benchmarks](https://github.com/Vinz2008/C./tree/master/docs/benchmarks.md)
 
-[fibonacci benchmark](https://github.com/Vinz2008/C./tree/master/docs/tools/fibonacci.png)
+![fibonacci benchmark](https://raw.githubusercontent.com/Vinz2008/C./master/docs/tools/fibonacci.png)
 
-[factors benchmark](https://github.com/Vinz2008/C./tree/master/docs/tools/factors.png)
+![factors benchmark](https://raw.githubusercontent.com/Vinz2008/C./master/docs/tools/factors.png)
