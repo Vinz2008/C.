@@ -25,3 +25,4 @@ cpoint-build
 valgrind-out.txt
 bindings.cpoint
 *.so
+*.mo

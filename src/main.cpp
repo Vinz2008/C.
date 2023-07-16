@@ -3,6 +3,8 @@
 #include <map>
 #include <cstdio>
 #include <cstdlib>
+#include <libintl.h>
+#include <locale.h>
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/TargetSelect.h"
@@ -28,6 +30,7 @@
 #include "log.h"
 #include "utils.h"
 #include "color.h"
+#include "gettext.h"
 
 using namespace std;
 using namespace llvm;
@@ -228,6 +231,9 @@ static void MainLoop() {
 
 
 int main(int argc, char **argv){
+    setlocale(LC_ALL, "");
+    bindtextdomain("cpoint", /*"/usr/share/locale/"*/ "./locales/");
+    textdomain("cpoint");
     string object_filename = "out.o";
     string exe_filename = "a.out";
     string temp_output = "";
@@ -424,7 +430,7 @@ int main(int argc, char **argv){
     file_in.close();
     file_log.close();
     if (errors_found){
-      fprintf(stderr, RED "exited with %d errors\n" CRESET, error_count);
+      fprintf(stderr, _(RED "exited with %d errors\n" CRESET), error_count);
       exit(1);
     }
     InitializeAllTargetInfos();
@@ -448,7 +454,7 @@ int main(int argc, char **argv){
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
     std::error_code EC;
     if (EC) {
-    errs() << "Could not open file: " << EC.message();
+    errs() << _("Could not open file: ") << EC.message();
     return 1;
     }
     raw_fd_ostream dest(llvm::StringRef(object_filename), EC, sys::fs::OF_None);
@@ -458,13 +464,13 @@ int main(int argc, char **argv){
       FileType = CGFT_AssemblyFile;
     }
     if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
-    errs() << "TheTargetMachine can't emit a file of this type";
+    errs() << _("TheTargetMachine can't emit a file of this type");
     return 1;
     }
     pass.run(*TheModule);
     dest.flush();
     std::string gc_path = DEFAULT_GC_PATH;
-    outs() << "Wrote " << object_filename << "\n";
+    outs() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;
     if (std_path.back() != '/'){
       std_static_path.append("/");

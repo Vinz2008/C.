@@ -1,0 +1,1 @@
+#define _(STRING) gettext(STRING)
