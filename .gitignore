@@ -1,5 +1,4 @@
 cpoint
-.vscode/
 *.exe
 out.c
 *.ll
