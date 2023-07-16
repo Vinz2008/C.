@@ -1,5 +1,10 @@
 ﻿---
 BasedOnStyle: Google
 PointerAlignment: Left
+DerivePointerAlignment: false
+AllowShortFunctionsOnASingleLine: Empty
+TabWidth: 4
+UseTab: Always
+
 
 ...
