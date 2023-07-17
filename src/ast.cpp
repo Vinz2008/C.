@@ -37,10 +37,11 @@ extern void HandleComment();
 
 bool is_template_parsing_definition = false;
 
-Source_location emptyLoc = {0, 0};
 
-std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args){
-  vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args); // copy comp_context and not move it because it will be used multiple times
+Source_location emptyLoc = {0, 0, true, ""};
+
+std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc){
+  vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args, astLoc); // copy comp_context and not move it because it will be used multiple times
   return_status = 1;
   return nullptr;
 }
@@ -49,7 +50,7 @@ std::unique_ptr<ExprAST> LogError(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
   //fprintf(stderr, "LogError: %s\n", Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;
 }
@@ -58,7 +59,7 @@ std::unique_ptr<ExprAST> LogError(const char *Str, ...) {
 std::unique_ptr<PrototypeAST> LogErrorP(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;
 }
@@ -66,7 +67,7 @@ std::unique_ptr<PrototypeAST> LogErrorP(const char *Str, ...) {
 std::unique_ptr<ReturnAST> LogErrorR(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   Log::Info() << "token : " << CurTok << "\n";
   va_end(args);
   return nullptr;
@@ -76,7 +77,7 @@ std::unique_ptr<ReturnAST> LogErrorR(const char *Str, ...) {
 std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   Log::Info() << "token : " << CurTok << "\n";
   va_end(args);
   return nullptr;
@@ -85,7 +86,7 @@ std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...) {
 std::unique_ptr<FunctionAST> LogErrorF(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;
 }
@@ -93,7 +94,7 @@ std::unique_ptr<FunctionAST> LogErrorF(const char *Str, ...) {
 std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str, ...) {
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;
 }
@@ -101,7 +102,7 @@ std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str, ...) {
 std::unique_ptr<LoopExprAST> LogErrorL(const char* Str, ...){
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;
 }
@@ -109,7 +110,7 @@ std::unique_ptr<LoopExprAST> LogErrorL(const char* Str, ...){
 std::unique_ptr<ModAST> LogErrorM(const char* Str, ...){
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;
 }

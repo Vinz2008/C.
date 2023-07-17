@@ -54,7 +54,7 @@ extern Source_location emptyLoc;
 
 extern bool debug_info_mode;
 
-Value *LogErrorV(const char *Str, ...);
+Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
@@ -78,16 +78,16 @@ Value* getTypeId(Value* valueLLVM){
 Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr<ExprAST>> Args){
     if (instruction == "typeid"){
         if (Args.size() > 1){
-            return LogErrorV("wrong number of arguments for reflection function");
+            return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
         }
         return getTypeId(Args.at(0)->codegen());
     } else if (instruction == "getstructname"){
         if (Args.size() > 1){
-            return LogErrorV("wrong number of arguments for reflection function");
+            return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
         }
         Value* val = Args.at(0)->codegen();
         if (!val->getType()->isStructTy()){
-            return LogErrorV("argument is not a struct in getmembername");
+            return LogErrorV(emptyLoc, "argument is not a struct in getmembername");
         }
         auto structType = static_cast<StructType*>(val->getType());
         std::string structName = (std::string)structType->getStructName();
@@ -95,11 +95,11 @@ Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr
         return Builder->CreateGlobalStringPtr(StringRef(structName.c_str()));
     } else if (instruction == "getmembernb"){
         if (Args.size() > 1){
-            return LogErrorV("wrong number of arguments for reflection function");
+            return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
         }
         Value* val = Args.at(0)->codegen();
         if (!val->getType()->isStructTy()){
-            return LogErrorV("argument is not a struct in getmembername");
+            return LogErrorV(emptyLoc, "argument is not a struct in getmembername");
         }
         auto structType = static_cast<StructType*>(val->getType());
         int nb_member = -1;
@@ -107,7 +107,7 @@ Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr
         Log::Info() << "getmembernbname : " << nb_member << "\n";
         return ConstantFP::get(*TheContext, APFloat((double)nb_member));
     }
-    return LogErrorV("Unknown Reflection Instruction");
+    return LogErrorV(emptyLoc, "Unknown Reflection Instruction");
 }
 
 Function *getFunction(std::string Name) {
@@ -197,10 +197,10 @@ Value* getSizeOfStruct(AllocaInst *A){
     return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");
 }
 
-Value *LogErrorV(const char *Str, ...) {
+Value *LogErrorV(Source_location astLoc, const char *Str, ...){
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, astLoc);
   va_end(args);
   return nullptr;
 }
@@ -236,11 +236,11 @@ Value *VariableExprAST::codegen() {
     //return Builder->CreateLoad(functionType, FunctionProtos[Name]->codegen(), Name.c_str());
   }
   if (NamedValues[Name] == nullptr) {
-  return LogErrorV("Unknown variable name %s", Name.c_str());
+  return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
   }
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
-    return LogErrorV("Unknown variable name %s", Name.c_str());
+    return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
 }
 
@@ -251,12 +251,12 @@ Value* StructMemberExprAST::codegen() {
         goto if_reflection;
     }
     if (NamedValues[StructName] == nullptr){
-        return LogErrorV("Can't find struct that is used for a member");
+        return LogErrorV(this->loc, "Can't find struct that is used for a member");
     }
     Alloca = NamedValues[StructName]->alloca_inst;
     Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
     if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
-      return LogErrorV("Using a member of variable even though it is not a struct");
+      return LogErrorV(this->loc, "Using a member of variable even though it is not a struct");
     }
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
@@ -284,7 +284,7 @@ if_reflection:
       }
       }
       if (!found_function){
-        return LogErrorV("Unknown struct function member called : %s\n", MemberName.c_str());
+        return LogErrorV(this->loc, "Unknown struct function member called : %s\n", MemberName.c_str());
       }
       std::vector<llvm::Value*> CallArgs;
       CallArgs.push_back(NamedValues[StructName]->alloca_inst);
@@ -294,7 +294,7 @@ if_reflection:
       Function *F = getFunction(struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName));
       if (!F){
         Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName) << "\n";
-        return LogErrorV("The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
+        return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
       }
       return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
     }
@@ -329,11 +329,11 @@ Value* ArrayMemberExprAST::codegen() {
   Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
   auto index = posAST->codegen();
   if (!index){
-    return LogErrorV("error in array index");
+    return LogErrorV(this->loc, "error in array index");
   }
   index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
   if (!is_llvm_type_number(index->getType())){
-    return LogErrorV("index for array is not a number\n");
+    return LogErrorV(this->loc, "index for array is not a number\n");
   }
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
   AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
@@ -488,18 +488,18 @@ Value *BinaryExprAST::codegen() {
   case '=': {
     VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
     if (!LHSE)
-      return LogErrorV("destination of '=' must be a variable");
+      return LogErrorV(this->loc, "destination of '=' must be a variable");
     Value *Val = RHS->codegen();
     if (!Val)
       return nullptr;
     Value *Variable = NamedValues[LHSE->getName()]->alloca_inst;
     if (!Variable)
-      return LogErrorV("Unknown variable name");
+      return LogErrorV(this->loc, "Unknown variable name");
     Builder->CreateStore(Val, Variable);
     return Val;
   } break;
   default:
-    //return LogErrorV("invalid binary operator");
+    //return LogErrorV(this->loc, "invalid binary operator");
     break;
   }
   Function *F = getFunction(std::string("binary") + Op);
@@ -529,24 +529,24 @@ Value *CallExprAST::codegen() {
   Function *CalleeF = getFunction(Callee);
   Log::Info() << "is_function_template : " << is_function_template << "\n";
   if (!CalleeF && !is_function_template)
-    return LogErrorV("Unknown function referenced %s", Callee.c_str());
+    return LogErrorV(this->loc, "Unknown function referenced %s", Callee.c_str());
   /*if (TemplateProtos[Callee] != nullptr){
     callTemplate(Callee);
   }*/
   Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
   Log::Info() << "Args.size : " << Args.size() << "\n";
   if (FunctionProtos[Callee] == nullptr){
-    return LogErrorV("Incorrect Function %s", Callee.c_str());
+    return LogErrorV(this->loc, "Incorrect Function %s", Callee.c_str());
   }
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
     if (!(Args.size() >= CalleeF->arg_size())){
-      return LogErrorV("Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
+      return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
     }
   } else {
     // If argument mismatch error.
   if (CalleeF->arg_size() != Args.size())
-    return LogErrorV("Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
+    return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
   }
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -568,7 +568,7 @@ Value *CallExprAST::codegen() {
 Value* AddrExprAST::codegen(){
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
-    return LogErrorV("Addr Unknown variable name %s", Name.c_str());
+    return LogErrorV(this->loc, "Addr Unknown variable name %s", Name.c_str());
   return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Name.c_str());
 }
 
@@ -595,7 +595,7 @@ Value* SizeofExprAST::codegen(){
     Log::Info() << "codegen sizeof is variable" << "\n";
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A){
-    return LogErrorV("Addr Unknown variable name %s", Name.c_str());
+    return LogErrorV(this->loc, "Addr Unknown variable name %s", Name.c_str());
   }
   if (NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr){
     Value* size =  getSizeOfStruct(A);
@@ -959,7 +959,7 @@ Value* RedeclarationExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "TEST\n";
   if (Val == nullptr){
-    return LogErrorV("Val is Nullptr\n");
+    return LogErrorV(this->loc, "Val is Nullptr\n");
   }
   Value* ValDeclared = Val->codegen();
   Cpoint_Type type = Cpoint_Type(0);
@@ -968,7 +968,20 @@ Value* RedeclarationExprAST::codegen(){
   } else if (NamedValues[VariableName] != nullptr){
     type = NamedValues[VariableName]->type;
   } else {
-    Log::Info() << "couldn't find variable" << "\n";
+    std::string nearest_variable;
+    int lowest_distance = 20;
+    int temp_distance = 30;
+    for ( const auto &p : NamedValues ){
+      //Log::Info() << "temp variable : " << p.first << "\n";
+      if (p.second != nullptr){
+      if ((temp_distance = stringDistance(VariableName, p.first)) < lowest_distance){
+        nearest_variable = p.first;
+        lowest_distance = temp_distance;
+      }
+      }
+      //Log::Info() << "string distance : " << temp_distance << "\n";
+    }
+    return LogErrorV(this->loc, "couldn't find variable \"%s\", maybe you meant \"%s\"", VariableName.c_str(), nearest_variable.c_str());
   }
   // TODO convert type for struct members. Either find the type and the member before and store the pos for after to not do loop 2 times, either move this code at the end to have the type
   if (type.type != 0 && member == ""){ 
@@ -1033,7 +1046,7 @@ Value* RedeclarationExprAST::codegen(){
     auto indexVal = index->codegen();
     indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
     if (!index){
-      return LogErrorV("couldn't find index for array %s", VariableName.c_str());
+      return LogErrorV(this->loc, "couldn't find index for array %s", VariableName.c_str());
     }
     auto arrayPtr = NamedValues[VariableName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
@@ -1057,7 +1070,7 @@ Value* RedeclarationExprAST::codegen(){
   } else {
   AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
   if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
-    return LogErrorV("Assigning to a variable a void value");
+    return LogErrorV(this->loc, "Assigning to a variable a void value");
   }
   Builder->CreateStore(ValDeclared, Alloca);
   NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
@@ -1095,7 +1108,7 @@ Value* LoopExprAST::codegen(){
     BasicBlock* InLoop = BasicBlock::Create(*TheContext, "body_loop_in", TheFunction);
     BasicBlock* AfterLoop = BasicBlock::Create(*TheContext, "after_loop_in", TheFunction);;
     if (NamedValues[VarName] != nullptr){
-      return LogErrorV("variable for loop already exists in the context");
+      return LogErrorV(this->loc, "variable for loop already exists in the context");
     }
     Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
     Builder->CreateStore(StartVal, PosArrayAlloca);
@@ -1108,7 +1121,7 @@ Value* LoopExprAST::codegen(){
     //Value* ArrayPtr = ArrayVar->codegen();
     Cpoint_Type cpoint_type = NamedValues[ArrayVar->getName()]->type;
     //} else {
-      //return LogErrorV("Expected a Variable Expression in loop in");
+      //return LogErrorV(this->loc, "Expected a Variable Expression in loop in");
     //}
     Cpoint_Type tempValueArrayType = Cpoint_Type(cpoint_type);
     tempValueArrayType.is_array = false;
@@ -1262,7 +1275,7 @@ Value *UnaryExprAST::codegen() {
   Function *F = getFunction(std::string("unary") + Opcode);
   if (!F){
     Log::Info() << "UnaryExprAST : " << Opcode << "\n";
-    return LogErrorV("Unknown unary operator %c", Opcode);
+    return LogErrorV(this->loc, "Unknown unary operator %c", Opcode);
   }
 
   return Builder->CreateCall(F, OperandV, "unop");
@@ -1315,7 +1328,7 @@ Value *VarExprAST::codegen() {
     }
     }
     if (InitVal->getType() == get_type_llvm(Cpoint_Type(void_type))){
-       return LogErrorV("Assigning to a variable as default value a void value");
+       return LogErrorV(this->loc, "Assigning to a variable as default value a void value");
     }
     Builder->CreateStore(InitVal, Alloca);
 
@@ -1333,7 +1346,7 @@ Value *VarExprAST::codegen() {
     std::string struct_declaration_name_temp = "";
     if (cpoint_type.is_struct){
       if (StructDeclarations[cpoint_type.struct_name] == nullptr){
-        return LogErrorV("Couldn't find struct declaration %s for created variable", cpoint_type.struct_name.c_str());
+        return LogErrorV(this->loc, "Couldn't find struct declaration %s for created variable", cpoint_type.struct_name.c_str());
       }
       struct_type_temp = StructDeclarations[cpoint_type.struct_name]->struct_type;
       struct_declaration_name_temp = cpoint_type.struct_name;

@@ -13,13 +13,14 @@
 #include <memory>
 #include <vector>
 #include <utility>
-#include "types.h"
-#include "errors.h"
 
 using namespace llvm;
 
 #ifndef _AST_HEADER_
 #define _AST_HEADER_
+
+#include "types.h"
+#include "errors.h"
 
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
@@ -579,7 +580,7 @@ std::unique_ptr<ExprAST> ParseNullExpr();
 std::unique_ptr<ExprAST> ParseCastExpr();
 std::unique_ptr<ModAST> ParseMod();
 
-std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args);
+std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);
 
 #endif

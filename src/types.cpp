@@ -18,7 +18,6 @@ extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarati
 std::vector<std::string> typeDefTable;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
-    Log::Info() << "TEST" << "\n";
     Type* type;
     if (cpoint_type.type >= 0){
         Log::Info() << "Typedef type used to declare variable (size of typedef table : " << typeDefTable.size() << ")" << "\n";

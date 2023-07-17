@@ -17,6 +17,7 @@ string strPosArray;
 int posArrayNb;
 string OpStringMultiChar;
 extern std::unique_ptr<Compiler_context> Comp_context;
+extern Source_location emptyLoc;
 
 int CurTok;
 
@@ -33,7 +34,7 @@ extern bool last_line;
 void LogErrorLexer(const char *Str, ...){
   va_list args;
   va_start(args, Str);
-  vLogError(Str, args);
+  vLogError(Str, args, emptyLoc);
   va_end(args);
 }
 
@@ -54,10 +55,12 @@ std::string get_line_returned(){
 void goToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
   Comp_context->lexloc.line_nb++;
-  Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << "\n";
+  Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << " " << Comp_context->line << "\n";
   Comp_context->lexloc.col_nb = 0;
+  Comp_context->lexloc.line = Comp_context->line;
   getLine(__is, __str);
   Comp_context->line = __str;
+  //Comp_context->lexloc.line = __str;
   file_log << "line size : " << __str.size() << "\n";
   pos = 0;
   /*while (line.size == 0){
@@ -71,8 +74,8 @@ void go_to_next_line(){
 }
 
 void init_line(){
-  Comp_context->lexloc.line_nb++;
-  Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << "\n";
+  //Comp_context->lexloc.line_nb++;
+  Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << " " << Comp_context->line << "\n";
   Comp_context->lexloc.col_nb = 0;
   getLine(file_in, line);
   Comp_context->line = line;

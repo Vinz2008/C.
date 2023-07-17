@@ -389,12 +389,13 @@ int find_import_or_include(std::string line){
     return 0;
 }
 
-void generate_file_with_imports(std::string file_path, std::string out_path){
+int generate_file_with_imports(std::string file_path, std::string out_path){
     std::ifstream file_code;
     std::string line;
     int nb_line = get_nb_lines(file_code, file_path);
     file_code.open(file_path);
     out_file.open(out_path);
+    int nb_imports = 0;
 
     if (file_code.is_open()){
         //int pos_line = 0;
@@ -406,10 +407,13 @@ void generate_file_with_imports(std::string file_path, std::string out_path){
             if (find_import_or_include(line) == 0){
                 //preprocess_replace_variable(line);
                 out_file << line;
+            } else {
+                nb_imports++;
             }
             pos_line_file++;
         }
     }
     file_code.close();
     out_file.close();
+    return nb_imports;
 }

@@ -2,14 +2,19 @@
 #include <memory>
 #include <cstdarg>
 
-#pragma once
+
+
+//#pragma once
 
 #ifndef ERRORS_H
 #define ERRORS_H
 
+
 struct Source_location {
     int line_nb;
     int col_nb;
+    bool is_empty;
+    std::string line;
 };
 
 
@@ -25,7 +30,11 @@ public:
 };
 
 void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...);
-void vlogErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, std::va_list args);
+
+#include "ast.h"
+
+void vlogErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, std::va_list args, Source_location astLoc);
+int stringDistance(std::string s1, std::string s2);
 
 
 #endif
