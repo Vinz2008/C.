@@ -12,4 +12,10 @@ pthread_t* c_create_threads(void* (threadFunc)(void*)){
     pthread_create(thread, NULL, threadFunc, NULL);
     return thread;
 }
+
+void c_thread_spawn(void* (threadFunc)(void*)){
+    pthread_t* thread = c_create_threads(threadFunc);
+    pthread_detach(*thread);
+}
+
 #endif
