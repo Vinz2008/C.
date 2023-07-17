@@ -156,6 +156,22 @@ public:
   Value *codegen() override;
 };*/
 
+class ConstantArrayExprAST : public ExprAST {
+public:
+  std::vector<std::unique_ptr<ExprAST>> ArrayMembers;
+  ConstantArrayExprAST(std::vector<std::unique_ptr<ExprAST>> ArrayMembers) : ArrayMembers(std::move(ArrayMembers)) {}
+  Value *codegen() override;
+   std::unique_ptr<ExprAST> clone() override {
+    std::vector<std::unique_ptr<ExprAST>> ArrayMembersClone;
+    if (!ArrayMembers.empty()){
+      for (int i = 0; i < ArrayMembers.size(); i++){
+        ArrayMembersClone.push_back(ArrayMembers.at(i)->clone());
+      }
+    }
+    return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersClone));
+   }
+};
+
 
 class ArrayMemberExprAST : public ExprAST {
   std::string ArrayName;

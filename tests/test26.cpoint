@@ -1,8 +1,11 @@
 import @std/print.cpoint
 func main(){
-    var arr[2] : int
+    var arr[4] : int
     arr[0] = 1
     arr[1] = 2
+    arr[2] = 3
+    arr[3] = 4
+    var constarr[2] = [1, 2]
     loop i in arr {
         printi(i)
     }

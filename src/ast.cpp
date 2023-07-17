@@ -133,6 +133,35 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
   return V;
 }
 
+std::unique_ptr<ExprAST> ParseConstantArray(){
+  getNextToken(); // eat '['
+  std::vector<std::unique_ptr<ExprAST>> ArrayMembers;
+  int member_nb = 0;
+  while (true){
+    if (CurTok == ']'){
+      getNextToken();
+      break;
+    }
+    if (member_nb > 0){
+      if (CurTok != ','){
+      return LogError("missing \',\' in constant array");
+      }
+      getNextToken();
+    }
+    auto E = ParseExpression();
+    if (!E){
+      return nullptr;
+    }
+    ArrayMembers.push_back(std::move(E));
+    /*if (CurTok != ','){
+      return LogError("missing \',\' in constant array");
+    }
+    getNextToken();*/
+    member_nb++;
+  }
+  return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembers));
+}
+
 static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
   struct Source_location IdLoc = Comp_context->curloc;
@@ -365,6 +394,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseBool(false);
   case '(':
     return ParseParenExpr();
+  case '[':
+    return ParseConstantArray();
   case tok_if:
     return ParseIfExpr();
   case tok_return:
@@ -831,7 +862,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY" << "\n";
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string)
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == '[')
     return ParsePrimary();
 
   // If this is a unary operator, read it.

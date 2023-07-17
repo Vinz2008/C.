@@ -324,6 +324,21 @@ if_reflection:
     return value;
 }
 
+Value* ConstantArrayExprAST::codegen(){
+  std::vector<Constant*> arrayMembersVal;
+  for (int i = 0; i < ArrayMembers.size(); i++){
+    Value* Vtemp = ArrayMembers.at(i)->codegen();
+    Constant* constant;
+    if (! (constant = dyn_cast<Constant>(Vtemp))){
+      return LogErrorV(this->loc, "The %d value of constant array is not a constant", i);
+    }
+    arrayMembersVal.push_back(constant);
+  }
+  llvm::ArrayType* arrayType = ArrayType::get(arrayMembersVal.at(0)->getType(), arrayMembersVal.size());
+  // verify if everyone of them are constants of the same type
+  return llvm::ConstantArray::get(arrayType, arrayMembersVal);
+}
+
 Value* ArrayMemberExprAST::codegen() {
   // TODO : fix type for array member after getelementptr
   Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
@@ -1038,6 +1053,16 @@ Value* RedeclarationExprAST::codegen(){
     NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
   } else if (is_array) {
     Log::Info() << "array redeclaration" << "\n";
+    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+    Cpoint_Type member_type = cpoint_type;
+    member_type.is_array = false;
+    member_type.nb_element = 0;
+    if (ValDeclared->getType()->isArrayTy()){
+      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+      Builder->CreateStore(ValDeclared, Alloca);
+      NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+      return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+    }
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
@@ -1049,7 +1074,6 @@ Value* RedeclarationExprAST::codegen(){
       return LogErrorV(this->loc, "couldn't find index for array %s", VariableName.c_str());
     }
     auto arrayPtr = NamedValues[VariableName]->alloca_inst;
-    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
     Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
     std::vector<Value*> indexes = { zero, indexVal};
     if (cpoint_type.is_ptr && !cpoint_type.is_array){
@@ -1061,6 +1085,9 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "Get LLVM TYPE" << "\n";
     auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array");
     Log::Info() << "Create GEP" << "\n";
+    if (ValDeclared->getType() != get_type_llvm(member_type)){
+      convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
+    }
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
   } else {
@@ -1142,9 +1169,9 @@ Value* LoopExprAST::codegen(){
     Value* PosValInner = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     Value* index = Builder->CreateFPToUI(PosValInner, Type::getInt32Ty(*TheContext), "cast_gep_index");
-    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), TempValueArray, { zero, index}, "gep_loop_in");
-    Value* value = Builder->CreateLoad(get_type_llvm(cpoint_type), ptr, VarName);
-    Builder->CreateStore(value, TempValueArray);
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*TempValueArray*/ NamedValues[ArrayVarPtr->getName()]->alloca_inst, { zero, index}, "gep_loop_in");
+    Value* value = Builder->CreateLoad(get_type_llvm(tempValueArrayType), ptr, VarName);
+    Builder->CreateStore(value /*ptr*/, TempValueArray);
     blocksForBreak.push(AfterLoop);
     for (int i = 0; i < Body.size(); i++){
     if (!Body.at(i)->codegen())
