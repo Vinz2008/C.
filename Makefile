@@ -117,3 +117,6 @@ clean: clean-build
 test:
 	make -C tests python
 #	make -C tests run
+
+onefetch:
+	onefetch --exclude bdwgc/* bdwgc_prefix/* build/tomlplusplus/*
