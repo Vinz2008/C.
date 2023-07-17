@@ -10,6 +10,7 @@
 using namespace std;
 
 extern bool debug_mode;
+extern bool debug_info_mode;
 
 #ifdef _WIN32
 #include "windows.h"
@@ -32,6 +33,9 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     cmd.append(target_triplet);
     cmd.append(" make -C ");
     cmd.append(path);
+    if (debug_info_mode){
+        cmd += " debug";
+    }
     if (debug_mode){
     cout << "cmd : " << cmd << endl;
     }
