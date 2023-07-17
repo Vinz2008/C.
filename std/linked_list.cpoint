@@ -1,3 +1,5 @@
+import @std/print.cpoint
+
 struct node_linked_list {
     var data : int
     var next : struct node_linked_list ptr
@@ -21,6 +23,12 @@ struct linked_list {
             var tail = self.tail
             tail.next = temp
             self.tail = temp
+        }
+    }
+    func print(){
+        var current : struct node_linked_list ptr = self.head
+        while current != null {
+            printi(current.data)
         }
     }
 }

@@ -3,4 +3,5 @@ import @std/linked_list.cpoint
 func main(){
     var ll : struct linked_list 
     ll.append(1)
+    ll.print()
 }

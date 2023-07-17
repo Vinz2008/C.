@@ -1,0 +1,5 @@
+struct list {
+    var list : int ptr
+    var allocated_size : int
+    var length : int
+}
