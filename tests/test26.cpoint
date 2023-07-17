@@ -1,4 +1,5 @@
 import @std/print.cpoint
+
 func main(){
     var arr[4] : int
     arr[0] = 1
@@ -8,5 +9,11 @@ func main(){
     var constarr[2] = [1, 2]
     loop i in arr {
         printi(i)
+    }
+    var str_arr[2] : i8 ptr
+    str_arr[0] = "Hello"
+    str_arr[1] = "World"
+    loop s in str_arr {
+        printstr(s)
     }
 }
