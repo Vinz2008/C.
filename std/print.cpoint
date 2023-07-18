@@ -24,4 +24,10 @@ func printc(c : i8) void {
 test "testing printd" {
 	var a = 2
 	printd(a)
+	printd(a)
+}
+
+test "testing printi" {
+	printi(3)
+	printf("hello world")
 }

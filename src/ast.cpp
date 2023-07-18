@@ -327,7 +327,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     // If this is a binop that binds at least as tightly as the current binop,
     // consume it, otherwise we are done.
     //if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
-    Log::Info() << "CurTok before if : " << CurTok << "\n";
+    //Log::Info() << "CurTok before if : " << CurTok << "\n";
     //if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec)
       return LHS;
@@ -550,6 +550,8 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
 }
 
 std::unique_ptr<ExprAST> ParseBool(bool bool_value){
+  Log::Info() << "Parsing bool" << "\n";
+  getNextToken();
   return std::make_unique<BoolExprAST>(bool_value);
 }
 
@@ -890,7 +892,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY" << "\n";
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == '[')
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[')
     return ParsePrimary();
 
   // If this is a unary operator, read it.

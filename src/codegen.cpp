@@ -51,6 +51,8 @@ extern bool gc_mode;
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
+extern std::string filename;
+
 extern Source_location emptyLoc;
 
 extern bool debug_info_mode;
@@ -540,6 +542,18 @@ Value *CallExprAST::codegen() {
     Log::Info() << "internal function called " << Callee << "\n";
     if (Callee.rfind("llvm_", 0) == 0){
       return callLLVMIntrisic(Callee, Args);
+    }
+    if (Callee == "get_filename"){
+      std::string filename_without_temp = filename;
+      int temp_pos;
+      if ((temp_pos = filename.rfind(".temp")) != std::string::npos){
+        filename_without_temp = filename.substr(0, temp_pos);
+      }
+      return StringExprAST(filename_without_temp).codegen();
+    }
+    if (Callee == "get_function_name"){
+      Function *TheFunction = Builder->GetInsertBlock()->getParent();
+      return StringExprAST((std::string)TheFunction->getName()).codegen();
     }
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;

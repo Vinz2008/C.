@@ -74,4 +74,5 @@ run-test:
 	@for program in $(TESTS_EXE) ; do \
 		./$$program ; \
 	done
+	echo $?
 	

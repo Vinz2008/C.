@@ -75,9 +75,9 @@ Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
 
 Value* LLVMCreateGreaterThan(Value* L, Value* R){
     if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
-      L = Builder->CreateICmpSGT(R, L, "cmptmp");
+      L = Builder->CreateICmpSGT(L, R, "cmptmp");
     } else {
-      L = Builder->CreateFCmpOGT(R, L, "cmptmp");
+      L = Builder->CreateFCmpOGT(L, R, "cmptmp");
     }
     return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
