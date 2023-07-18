@@ -3,13 +3,13 @@ import panic.cpoint
 extern printf(format : i8 ptr ...);
 extern exit(i : int);
 
-func assert(expression : double){
+func expect(expression : double){
     if expression == false {
         panic("assertion failed\n")
     }
 }
 
-func assertx(expression : double, function : i8 ptr, filename : i8 ptr){
+func expectx(expression : double, function : i8 ptr, filename : i8 ptr){
     if expression == false {
         printf("assertion failed in the %s function in %s\n", function, filename)
         exit(1)

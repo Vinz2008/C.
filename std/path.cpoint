@@ -1,7 +1,13 @@
 include capi.hpoint
+import expect.cpoint
 
 mod path {
     func get_extension(path : i8 ptr) i8 ptr {
         internal_get_extension(path)
     }
+}
+
+test "testing get_extension" {
+    var ext = path::get_extension("test.c")
+    // expect(strcmp(ext, ".h") == 0)
 }

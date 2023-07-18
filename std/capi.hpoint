@@ -5,3 +5,4 @@ extern copenfile(p : i8 ptr) int;
 extern cwritefile(fd : int, buf : i8 ptr) int;
 extern internal_readline() i8 ptr;
 extern internal_get_extension(path : i8 ptr) i8 ptr;
+extern strcmp(s1 : i8 ptr, s2 : i8 ptr) int;

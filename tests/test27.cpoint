@@ -1,5 +1,5 @@
 import @std/panic.cpoint
-import @std/assert.cpoint
+import @std/expect.cpoint
 import @std/print.cpoint 
 
 type new_type int;
@@ -8,7 +8,7 @@ func main(){
   var hello : new_type = 2
   var filename = cpoint_internal_get_filename()
   var function_name = cpoint_internal_get_function_name()
-  assert(2 > 1)
-  assertx(argc < 3, function_name, filename)
+  expect(2 > 1)
+  expectx(argc < 3, function_name, filename)
   panic("panic test")
 }

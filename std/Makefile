@@ -32,7 +32,7 @@ endif
 SRC := $(wildcard *.cpoint) $(wildcard */*.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 #TESTS_EXE := $(patsubst %.cpoint, %.test, $(SRC))
-TESTS_EXE := print.test
+TESTS_EXE := print.test path.test
 SRC_C := $(wildcard c_api/*.c)
 OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
 CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)

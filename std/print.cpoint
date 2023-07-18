@@ -29,5 +29,5 @@ test "testing printd" {
 
 test "testing printi" {
 	printi(3)
-	printf("hello world")
+	printf("hello world\n")
 }
