@@ -26,3 +26,4 @@ valgrind-out.txt
 bindings.cpoint
 *.so
 *.mo
+*.test

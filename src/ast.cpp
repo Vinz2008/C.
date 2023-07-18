@@ -115,6 +115,14 @@ std::unique_ptr<ModAST> LogErrorM(const char* Str, ...){
   return nullptr;
 }
 
+std::unique_ptr<TestAST> LogErrorT(const char* Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args, emptyLoc);
+  va_end(args);
+  return nullptr;
+}
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -848,6 +856,26 @@ std::unique_ptr<ExprAST> ParseCastExpr(){
 std::unique_ptr<ExprAST> ParseNullExpr(){
     getNextToken();
     return std::make_unique<NullExprAST>();
+}
+
+std::unique_ptr<TestAST> ParseTest(){
+  getNextToken(); // eat "test" string
+  if (CurTok != tok_string){
+    return LogErrorT("Expected a string to describe the test");    
+  }
+  std::string description = strStatic;
+  getNextToken();
+  if (CurTok != '{'){
+    return LogErrorT("Expected { in test");
+  }
+  getNextToken();
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  auto ret = ParseBodyExpressions(Body);
+  if (!ret){
+    return nullptr;
+  }
+  getNextToken(); // eat '{'
+  return std::make_unique<TestAST>(description, std::move(Body));
 }
 
 std::unique_ptr<ExprAST> ParseTypeidExpr(){

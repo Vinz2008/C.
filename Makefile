@@ -32,10 +32,14 @@ all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen
 
 release: set_release all
 
+debug: set_debug all
 
 set_release: 
 	$(eval CXXFLAGS += -O3) 
 	$(eval LDFLAGS += -s) 
+
+set_debug:
+	$(eval CXXFLAGS += -O0)
 
 cpoint-build:
 	+make -C build

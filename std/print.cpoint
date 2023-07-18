@@ -20,3 +20,8 @@ func printstr(x : i8 ptr) void{
 func printc(c : i8) void {
 	printf("%c", c)
 }
+
+test "testing printd" {
+	var a = 2
+	printd(a)
+}

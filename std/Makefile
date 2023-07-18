@@ -31,6 +31,8 @@ endif
 
 SRC := $(wildcard *.cpoint) $(wildcard */*.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
+#TESTS_EXE := $(patsubst %.cpoint, %.test, $(SRC))
+TESTS_EXE := print.test
 SRC_C := $(wildcard c_api/*.c)
 OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
 CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)
@@ -42,6 +44,10 @@ debug: CPOINTFLAGS += -g
 debug: MAKETARGET = debug
 debug: libstd.a
 
+set_test_flag:
+	echo set
+	$(eval CPOINTFLAGS += -test)
+
 libstd.a: $(OBJECTS) capi
 	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C)
 
@@ -51,6 +57,22 @@ capi:
 %.o: %.cpoint
 	$(CCPOINT) $(CPOINTFLAGS) $< -o $@
 
-clean:
+clean-objects:
+	rm -f ./*.o
+
+clean: clean-objects
 	make -C c_api clean
-	rm -f ./*.o ./*.a ./*.ll ./*.log ./*.temp
+	rm -f ./*.a ./*.ll ./*.log ./*.temp ./*.test
+
+
+%.test: %.o
+	clang -o $@ $< c_api/libc_api.a ../bdwgc_prefix/lib/libgc.a
+
+
+test: clean-objects capi set_test_flag $(TESTS_EXE)
+
+run-test:
+	@for program in $(TESTS_EXE) ; do \
+		./$$program ; \
+	done
+	

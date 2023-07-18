@@ -56,6 +56,7 @@ bool gc_mode = true;
 extern std::string IdentifierStr;
 bool debug_mode = false;
 bool debug_info_mode = false;
+bool test_mode = false;
 
 bool errors_found = false;
 int error_count = 0;
@@ -94,6 +95,12 @@ void add_externs_for_gc(){
   args_gc_realloc.push_back(make_pair("ptr", Cpoint_Type(void_type, true)));
   args_gc_realloc.push_back(make_pair("size", Cpoint_Type(int_type)));
   add_manually_extern("gc_realloc", Cpoint_Type(void_type, true), std::move(args_gc_realloc), 0, 30, false, false, "");
+}
+
+void add_externs_for_test(){
+  std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
+  args_printf.push_back(make_pair("format", Cpoint_Type(i8_type, true)));
+  add_manually_extern("printf", Cpoint_Type(int_type), std::move(args_printf), 0, 30, true, false, "");
 }
 
 static void HandleDefinition() {
@@ -165,6 +172,14 @@ void HandleComment(){
   Log::Info() << "token : " << CurTok << "\n";
 }
 
+void HandleTest(){
+  if (auto testAST = ParseTest()){
+      testAST->codegen();
+  } else {
+    getNextToken();
+  }
+}
+
 static void MainLoop() {
   while (1) {
     if (debug_mode){
@@ -219,6 +234,10 @@ static void MainLoop() {
         modulesNamesContext.pop_back();
         getNextToken();
       } else {
+      if (CurTok == tok_identifier && IdentifierStr == "test"){
+        HandleTest();
+        break;
+      }
       Log::Info() << "CurTok : " << CurTok << "\n";
       Log::Info() << "identifier : " << IdentifierStr << "\n";
       LogError("TOP LEVEL EXPRESSION FORBIDDEN");
@@ -297,6 +316,8 @@ int main(int argc, char **argv){
 	        rebuild_gc = true;
         } else if (arg.compare("-no-rebuild-std") == 0){
           rebuild_std = false;
+        } else if (arg.compare("-test") == 0){
+          test_mode = true;
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
@@ -423,8 +444,12 @@ int main(int argc, char **argv){
     if ((std_mode || explicit_with_gc) && gc_mode){
       add_externs_for_gc();
     }
+    if (test_mode){
+      add_externs_for_test();
+    }
     MainLoop();
     codegenTemplates();
+    afterAllTests();
     if (debug_info_mode){
     DBuilder->finalize();
     }

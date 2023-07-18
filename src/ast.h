@@ -224,8 +224,8 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
-    if (!ArgsCloned.empty()){
-      for (int i = 0; i < ArgsCloned.size(); i++){
+    if (!Args.empty()){
+      for (int i = 0; i < Args.size(); i++){
         ArgsCloned.push_back(Args.at(i)->clone());
       }
     }
@@ -253,7 +253,13 @@ public:
         VarNamesCloned.push_back(std::make_pair(name, VarNames.at(i).second->clone()));
       }
     }
-    return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, index->clone(), infer_type);
+    std::unique_ptr<ExprAST> indexCloned;
+    if (index == nullptr){
+      indexCloned = nullptr;
+    } else {
+      indexCloned = index->clone();
+    }
+    return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
   }
 };
 
@@ -397,7 +403,22 @@ public:
   }
 };
 
-
+class TestAST {
+public:
+  std::string description;
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  TestAST(const std::string& description, std::vector<std::unique_ptr<ExprAST>> Body) : description(description), Body(std::move(Body)) {}
+  void codegen();
+  std::unique_ptr<TestAST> clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    if (!Body.empty()){
+      for (int i = 0; i < Body.size(); i++){
+        BodyCloned.push_back(Body.at(i)->clone());
+      }
+    }
+    return std::make_unique<TestAST>(description, std::move(BodyCloned));
+  }
+};
 
 class GlobalVariableAST {
 public:
@@ -595,6 +616,7 @@ std::unique_ptr<ExprAST> ParseBreakExpr();
 std::unique_ptr<ExprAST> ParseNullExpr();
 std::unique_ptr<ExprAST> ParseCastExpr();
 std::unique_ptr<ModAST> ParseMod();
+std::unique_ptr<TestAST> ParseTest();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

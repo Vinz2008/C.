@@ -43,6 +43,7 @@ std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
 std::pair<std::string, std::string> TypeTemplateCallCodegen;
 
+std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
 
 extern std::map<std::string, int> BinopPrecedence;
@@ -53,6 +54,10 @@ extern struct DebugInfo CpointDebugInfo;
 extern Source_location emptyLoc;
 
 extern bool debug_info_mode;
+
+extern bool test_mode;
+extern bool std_mode;
+extern bool gc_mode;
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
@@ -665,6 +670,50 @@ Value* CharExprAST::codegen(){
   return ConstantInt::get(*TheContext, APInt(8, c, true));
 }
 
+void TestAST::codegen(){
+  Log::Info() << "Codegen test " << this->description << "\n";
+  
+  testASTNodes.push_back(this->clone());
+}
+
+void afterAllTests(){
+  if (!test_mode /*|| testASTNodes.empty()*/){
+    return;
+  }
+  std::vector<std::pair<std::string,Cpoint_Type>> Args;
+  Args.push_back(std::make_pair("argc", Cpoint_Type(double_type, false)));
+  Args.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
+  auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "main", Args, Cpoint_Type(double_type));
+  std::vector<std::unique_ptr<ExprAST>> Body;
+  if (/*std_mode &&*/ gc_mode){
+    std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
+    auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
+    Body.push_back(std::move(E_gc_init));
+  }
+  Log::Info() << "testASTNodes size : " << testASTNodes.size() << "\n";
+  std::unique_ptr<ExprAST> printfCall;
+  std::vector<std::unique_ptr<ExprAST>> ArgsPrintf;
+  for (int i = 0; i < testASTNodes.size(); i++){
+    // create print for test description
+    ArgsPrintf.clear();
+    std::string temp_description = testASTNodes.at(i)->description;
+    std::unique_ptr<ExprAST> strExprAST;
+    strExprAST = std::make_unique<StringExprAST>("Test %s running\n");
+    ArgsPrintf.push_back(std::move(strExprAST));
+    strExprAST = std::make_unique<StringExprAST>(temp_description);
+    ArgsPrintf.push_back(std::move(strExprAST));
+    printfCall = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(ArgsPrintf), "");
+    Body.push_back(std::move(printfCall));
+    for (int j = 0; j < testASTNodes.at(i)->Body.size(); j++){
+      Body.push_back(std::move(testASTNodes.at(i)->Body.at(j)));
+    }
+  }
+  Body.push_back(std::make_unique<NumberExprAST>(0));
+  
+  auto funcAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
+  funcAST->codegen();
+}
+
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.
   //std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
@@ -704,6 +753,8 @@ Function *FunctionAST::codegen() {
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
   FunctionProtos[Proto->getName()] = Proto->clone();
   // First, check for an existing function from a previous 'extern' declaration.
+  std::string name = P.getName();
+  Log::Info() << "Name " << name << "\n";
   Function *TheFunction = getFunction(P.getName());
   /*if (!TheFunction)
     TheFunction = Proto->codegen();*/
@@ -931,6 +982,8 @@ Value *IfExprAST::codegen() {
 
 Value* ReturnAST::codegen(){
   Value* value_returned = returned_expr->codegen();
+  /*auto ret = ReturnInst::Create(*TheContext, value_returned); // TODO : create returnInst to instantly return
+  return ret;*/
   return value_returned;
   //return ConstantFP::get(*TheContext, APFloat(Val));
 }
