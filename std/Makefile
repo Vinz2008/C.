@@ -45,7 +45,6 @@ debug: MAKETARGET = debug
 debug: libstd.a
 
 set_test_flag:
-	echo set
 	$(eval CPOINTFLAGS += -test)
 
 libstd.a: $(OBJECTS) capi
