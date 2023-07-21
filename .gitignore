@@ -27,5 +27,5 @@ bindings.cpoint
 *.so
 *.mo
 *.test
-without_shebang.*.cpoint
+*.without_shebang
 cpoint-run
