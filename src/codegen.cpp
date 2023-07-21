@@ -975,12 +975,14 @@ Value *IfExprAST::codegen() {
   PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");
 
   if (ThenV->getType() == Type::getVoidTy(*TheContext)){
-    ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
+    //ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
+    ThenV = get_default_constant(get_cpoint_type_from_llvm(phiType));
   }
 
   if (ElseV == nullptr || ElseV->getType() == Type::getVoidTy(*TheContext)){
     if (phiType != Type::getVoidTy(*TheContext)){
-    ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
+    //ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
+    ElseV = get_default_constant(get_cpoint_type_from_llvm(phiType));
     }
   }
 
@@ -1296,6 +1298,9 @@ Value *ForExprAST::codegen(){
   Value *StartVal = Start->codegen();
   if (!StartVal)
     return nullptr;
+  if (StartVal->getType() != Alloca->getType()){
+      convert_to_type(get_cpoint_type_from_llvm(StartVal->getType()), Alloca->getAllocatedType(), StartVal);
+  }
   Builder->CreateStore(StartVal, Alloca);
 
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
@@ -1370,7 +1375,9 @@ Value *UnaryExprAST::codegen() {
   Value *OperandV = Operand->codegen();
   if (!OperandV)
     return nullptr;
-
+  if (Opcode == '-'){
+    return operators::LLVMCreateSub(ConstantFP::get(*TheContext, APFloat(0.0)), OperandV);
+  }
   Function *F = getFunction(std::string("unary") + Opcode);
   if (!F){
     Log::Info() << "UnaryExprAST : " << Opcode << "\n";

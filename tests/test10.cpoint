@@ -13,4 +13,5 @@ func main(){
   x.z = 2
   printd(x.z)
   printstr(path::get_extension("/home/test/hello.hpoint"))
+  printstr(cpoint_get_extension("/home/test/hello.hpoint"))
 }

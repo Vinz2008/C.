@@ -29,6 +29,6 @@ extern sqrt(arg : double) double;
 extern remove(path : i8 ptr) int;
 extern realpath(path : i8 ptr, resolved_path : i8 ptr) i8 ptr;
 extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) int;
-extern printf(format : i8 ptr ...);
+extern printf(format : i8 ptr ...) int;
 
 type pthread_t i64;
