@@ -156,6 +156,17 @@ public:
   Value *codegen() override;
 };*/
 
+class UnionMemberExprAST : public ExprAST {
+public:
+  std::string UnionName;
+  std::string MemberName;
+  UnionMemberExprAST(const std::string &UnionName, const std::string &MemberName) : UnionName(UnionName), MemberName(MemberName) {}
+  Value* codegen();
+  std::unique_ptr<ExprAST> clone(){
+    return std::make_unique<UnionMemberExprAST>(UnionName, MemberName);
+  }
+};
+
 class ConstantArrayExprAST : public ExprAST {
 public:
   std::vector<std::unique_ptr<ExprAST>> ArrayMembers;
@@ -403,6 +414,26 @@ public:
   }
 };
 
+class UnionDeclarAST {
+public:
+  std::string Name;
+  std::vector<std::unique_ptr<VarExprAST>> Vars;
+  UnionDeclarAST(const std::string& Name, std::vector<std::unique_ptr<VarExprAST>> Vars) : Name(Name), Vars(std::move(Vars)) {}
+  Type* codegen();
+  std::unique_ptr<UnionDeclarAST> clone(){
+    std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
+    for (int i = 0; i < Vars.size(); i++){
+      std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
+      std::unique_ptr<VarExprAST> VarTemp;
+      VarExprAST* VarTempPtr = static_cast<VarExprAST*>(VarCloned.get());
+      VarCloned.release();
+      VarTemp.reset(VarTempPtr);
+      VarsCloned.push_back(std::move(VarTemp));
+    }
+    return std::make_unique<UnionDeclarAST>(Name, std::move(VarsCloned));
+  }
+};
+
 class TestAST {
 public:
   std::string description;
@@ -617,6 +648,7 @@ std::unique_ptr<ExprAST> ParseNullExpr();
 std::unique_ptr<ExprAST> ParseCastExpr();
 std::unique_ptr<ModAST> ParseMod();
 std::unique_ptr<TestAST> ParseTest();
+std::unique_ptr<UnionDeclarAST> ParseUnion();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

@@ -164,6 +164,14 @@ static void HandleStruct() {
   }
 }
 
+static void HandleUnion(){
+  if (auto unionAST = ParseUnion()){
+    unionAST->codegen();
+  } else {
+    getNextToken();
+  }
+}
+
 void HandleComment(){
   Log::Info() << "token bef : " << CurTok << "\n";
   getNextToken(); // pass tok_single_line_comment token

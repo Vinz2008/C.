@@ -70,6 +70,13 @@ public:
     StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members, std::vector<std::string> functions) : struct_type(struct_type), members(std::move(members)), functions(std::move(functions)) {}
 };
 
+class UnionDeclaration {
+public:
+    llvm::Type* union_type;
+    std::vector<std::pair<std::string,Cpoint_Type>> members;
+    UnionDeclaration(llvm::Type* union_type, std::vector<std::pair<std::string,Cpoint_Type>> members) : union_type(union_type), members(std::move(members)) {}
+};
+
 std::string module_function_mangling(std::string module_name, std::string function_name);
 void codegenTemplates();
 void afterAllTests();

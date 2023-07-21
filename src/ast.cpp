@@ -517,7 +517,7 @@ Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, false, 0, struct_Name != "", struct_Name, nb_ptr, false, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, false, "", false, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){

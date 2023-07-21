@@ -14,6 +14,7 @@ using namespace llvm;
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+extern std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector<std::string> typeDefTable;
 
@@ -34,13 +35,9 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             Log::Info() << "StructDeclarations[cpoint_type.struct_name] is nullptr" << "\n";
         }
         type = StructDeclarations[cpoint_type.struct_name]->struct_type;
-    } /*else if (cpoint_type.is_class){
-        Log::Info() << "cpoint_type.class_name : " << cpoint_type.class_name << "\n";
-        if (ClassDeclarations[cpoint_type.class_name] == nullptr){
-            Log::Info() << "ClassDeclarations[cpoint_type.class_name] NULLPTR" << "\n";
-        }
-        type = ClassDeclarations[cpoint_type.class_name]->class_type;
-    }*/ else {
+    } else if (cpoint_type.is_union){
+        type = UnionDeclarations[cpoint_type.union_name]->union_type;
+    } else {
     switch (cpoint_type.type){
         default:
         case double_type:
@@ -160,7 +157,8 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         Log::Warning() << "Unknown Type" << "\n";
         }
     }
-    return Cpoint_Type(type, is_ptr, is_array, 0, is_struct, "", 0, false, is_function);
+    int nb_ptr = (is_ptr) ? 1 : 0;
+    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, 0, is_struct, "", false, "", false, is_function);
 }
 
 Value* get_default_value(Cpoint_Type type){

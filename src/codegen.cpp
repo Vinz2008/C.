@@ -31,6 +31,7 @@ std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
 
 std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 std::vector<std::string> modulesNamesContext;
@@ -331,6 +332,27 @@ if_reflection:
     return value;
 }
 
+Value* UnionMemberExprAST::codegen(){
+  AllocaInst* Alloca = nullptr;
+  if (NamedValues[UnionName] == nullptr){
+    return LogErrorV(this->loc, "Can't find union that is used for a member");
+  }
+  Alloca = NamedValues[UnionName]->alloca_inst;
+  if (!NamedValues[UnionName]->type.is_union){
+    return LogErrorV(this->loc, "Using a member of variable even though it is not an union");
+  }
+  auto members = UnionDeclarations[NamedValues[UnionName]->type.union_name]->members;
+  int pos = -1;
+  for (int i = 0; i < members.size(); i++){
+    if (members.at(i).first == MemberName){
+      pos = i;
+      break;
+    }
+  }
+  Cpoint_Type member_type = members.at(pos).second;
+  return Builder->CreateLoad(get_type_llvm(member_type), Alloca, "load_union_member");
+}
+
 Value* ConstantArrayExprAST::codegen(){
   std::vector<Constant*> arrayMembersVal;
   for (int i = 0; i < ArrayMembers.size(); i++){
@@ -413,7 +435,7 @@ Type* StructDeclarAST::codegen(){
 
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
     Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
-    self_pointer_type = Cpoint_Type(double_type, true, false, 0, true, Name);
+    self_pointer_type = Cpoint_Type(double_type, true, 0, false, 0, true, Name);
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type)); // TODO fix this by passing struct type pointer as first arg
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
@@ -429,7 +451,7 @@ Type* StructDeclarAST::codegen(){
     function_name = ProtoExpr->Name;
     }
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
-    Cpoint_Type self_pointer_type = Cpoint_Type(double_type, true, false, 0, true, Name);
+    Cpoint_Type self_pointer_type = Cpoint_Type(double_type, true, 1, false, 0, true, Name);
     ProtoExpr->Args.insert(ProtoExpr->Args.begin(), std::make_pair("self", self_pointer_type));
     ProtoExpr->Name = mangled_name_function;
     ProtoExpr->codegen();
@@ -438,6 +460,33 @@ Type* StructDeclarAST::codegen(){
 
   StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
   return structType;
+}
+
+Type* UnionDeclarAST::codegen(){
+  // TODO : finish union support
+  StructType* unionType = StructType::create(*TheContext);
+  unionType->setName(Name);
+  // take the biggest type and just have it in the struct and bitcast for the other types
+  std::vector<std::pair<std::string,Cpoint_Type>> members;
+  std::vector<Type*> dataType;
+  Cpoint_Type biggest_type = Cpoint_Type(double_type);
+  int biggest_type_size = 0;
+  for (int i = 0; i < Vars.size(); i++){
+    if (get_type_number_of_bits(Vars.at(i)->cpoint_type) > biggest_type_size){
+      biggest_type = Vars.at(i)->cpoint_type;
+      biggest_type_size = get_type_number_of_bits(Vars.at(i)->cpoint_type);
+    }
+  }
+  for (int i = 0; i < Vars.size(); i++){
+    std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
+    Type* var_type = get_type_llvm(VarExpr->cpoint_type);
+    std::string VarName = VarExpr->VarNames.at(0).first;
+    members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
+  }
+  dataType.push_back(get_type_llvm(biggest_type));
+  unionType->setBody(dataType);
+  UnionDeclarations[Name] = std::make_unique<UnionDeclaration>(unionType, members);
+  return unionType;
 }
 
 Value *BinaryExprAST::codegen() {
@@ -628,7 +677,7 @@ Value* SizeofExprAST::codegen(){
     size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
     //size  = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
     // size found is in bytes but we want the number of bits
-    size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
+    //size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
     return size;
   } else {
     Log::Info() << "codegen sizeof is variable" << "\n";
