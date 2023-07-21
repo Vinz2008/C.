@@ -363,7 +363,12 @@ Value* ArrayMemberExprAST::codegen() {
   std::vector<Value*> indexes = { zero, index};
   if (cpoint_type.is_ptr && !cpoint_type.is_array){
     Log::Info() << "array for array member is ptr" << "\n";
-    cpoint_type.is_ptr = false;
+    if (cpoint_type.nb_ptr > 1){
+      cpoint_type.nb_ptr--;
+    } else {
+      cpoint_type.is_ptr = false;
+      cpoint_type.nb_ptr = 0;
+    }
     indexes = {index};
   }
   Cpoint_Type member_type = cpoint_type;

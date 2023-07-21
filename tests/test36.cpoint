@@ -1,6 +1,5 @@
-import @std/va.cpoint
+import @std/args.cpoint
 
 func main(){
-    var s = "hello world"
-    printfmt_cpoint("test %s", s) // for now segfaults
+    handle_args(argc, argv)
 }
