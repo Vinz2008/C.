@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
+/*std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
     int exit_status = 0;
     auto pipe = popen(cmd.c_str(), "r");
     if (pipe == nullptr){
@@ -28,7 +28,7 @@ std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
     }
     return std::make_unique<ProgramReturn>(exit_status, result);
 
-}
+}*/
 
 void openWebPage(std::string url){
 #ifdef _WIN32

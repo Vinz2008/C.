@@ -2,6 +2,7 @@
 #pragma once
 
 extern bool debug_mode;
+extern bool silent_mode;
 
 namespace Log {
     namespace Color {
@@ -25,6 +26,15 @@ namespace Log {
         }
     };
     }
+    struct Print {
+        template< class T >
+        Print& operator<<(const T& val){
+            if (!silent_mode){
+                std::cout << val;
+            }
+            return *this;
+        }
+    };
     struct Info {
         Info() {
             if (debug_mode){

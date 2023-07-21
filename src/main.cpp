@@ -26,6 +26,7 @@
 #include "debuginfo.h"
 #include "linker.h"
 #include "target-triplet.h"
+#include "cli.h"
 #include "imports.h"
 #include "log.h"
 #include "utils.h"
@@ -57,6 +58,7 @@ extern std::string IdentifierStr;
 bool debug_mode = false;
 bool debug_info_mode = false;
 bool test_mode = false;
+bool silent_mode = false;
 
 bool errors_found = false;
 int error_count = 0;
@@ -266,6 +268,7 @@ int main(int argc, char **argv){
     bool rebuild_gc = false;
     bool rebuild_std = true;
     bool asm_mode = false;
+    bool run_mode = false;
     bool is_optimised = false;
     bool explicit_with_gc = false; // add gc even with -no-std
     bool PICmode = false;
@@ -279,12 +282,14 @@ int main(int argc, char **argv){
         } else if (arg.compare("-o") == 0){
           i++;
           temp_output = argv[i];
-          cout << "object_filename " << object_filename << endl;
+          Log::Info() << "object_filename " << object_filename << "\n";
           output_temp_found = true;
+        }  else if (arg.compare("-silent") == 0){
+          silent_mode = true;
         } else if (arg.compare("-std") == 0){
           i++;
           std_path = argv[i];
-          cout << "custom path std : " << std_path << endl;
+          Log::Print() << "custom path std : " << std_path << "\n";
         } else if (arg.compare("-c") == 0){
           link_files_mode = false;
         } else if (arg.compare("-S") == 0){
@@ -318,19 +323,22 @@ int main(int argc, char **argv){
           rebuild_std = false;
         } else if (arg.compare("-test") == 0){
           test_mode = true;
+        } else if (arg.compare("-run") == 0){
+          run_mode = true;
+        } else if (arg.compare("-run-test") == 0){
+          run_mode = true;
+          test_mode = true;
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
           linker_additional_flags += ' ';
           cout << "linker flag " << linker_additional_flags << endl; 
         } else {
-          cout << "filename : " << arg << endl;
+          Log::Print() << "filename : " << arg << "\n";
           filename = arg;
         }
     }
-    if (debug_mode){
-    cout << "filename at end : " << filename << endl;
-    }
+    Log::Info() << "filename at end : " << filename << "\n";
     first_filename = filename;
     if (output_temp_found){
       if (link_files_mode){
@@ -417,9 +425,8 @@ int main(int argc, char **argv){
     TargetTriple = sys::getDefaultTargetTriple();
     }
     std::string os_name = get_os(TargetTriple);
-    if (debug_mode){
-      std::cout << "os from target triplet : " << os_name << std::endl;
-    }
+
+    Log::Info() << "os from target triplet : " << os_name << "\n";
     setup_preprocessor(TargetTriple);
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
@@ -497,7 +504,7 @@ int main(int argc, char **argv){
     pass.run(*TheModule);
     dest.flush();
     std::string gc_path = DEFAULT_GC_PATH;
-    outs() << _("Wrote ") << object_filename << "\n";
+    Log::Print() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;
     if (std_path.back() != '/'){
       std_static_path.append("/");
@@ -505,9 +512,9 @@ int main(int argc, char **argv){
     std_static_path.append("libstd.a");
     if (std_mode && link_files_mode){
       if (rebuild_std){
-      cout << "Built the standard library" << endl;
+      Log::Print() << "Built the standard library" << "\n";
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
-        cout << "Could not build std at path : " << std_path << endl;
+        fprintf(stderr, "Could not build std at path : %s\n", std_path.c_str());
         exit(1);
       }
       } else {
@@ -519,7 +526,7 @@ int main(int argc, char **argv){
       gc_path = std_path;
       if (rebuild_gc){
       gc_path.append("/../bdwgc");
-      cout << "Build the garbage collector" << endl;
+      Log::Print() << "Build the garbage collector" << "\n";
       build_gc(gc_path, TargetTriple);
       }
       }
@@ -555,8 +562,18 @@ int main(int argc, char **argv){
           vect_obj_files.push_back(package_archive_path);
         }
       }
-      cout << "Linked the executable" << endl;
+      Log::Print() << "Linked the executable" << "\n";
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
+    }
+    if (run_mode){
+      if (!link_files_mode){
+        fprintf(stderr, "Can't run without linking so it is ignored\n");
+        exit(1);
+      }
+      char actualpath [PATH_MAX+1];
+      realpath(exe_filename.c_str(), actualpath);
+      Log::Print() << "run executable at " << actualpath << "\n";
+      runCommand(actualpath);
     }
     if (remove_temp_file & !asm_mode){
       remove(temp_filename.c_str());

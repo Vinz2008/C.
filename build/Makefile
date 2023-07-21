@@ -10,6 +10,7 @@ SRCDIR=src
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
+OBJS += ../src/cli.o
 
 CXXFLAGS = -c -g -Wall -Wno-sign-compare -Itomlplusplus/include -std=c++17
 

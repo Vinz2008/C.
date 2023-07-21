@@ -89,6 +89,7 @@ install: std_lib
 	cp cpoint $(DESTDIR)/
 	cp build/cpoint-build $(DESTDIR)/
 	cp tools/bindgen/cpoint-bindgen $(DESTDIR)/
+	cp tools/run/cpoint-run $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir -p $(PREFIX)/lib/cpoint
 	mkdir -p $(PREFIX)/lib/cpoint/std
