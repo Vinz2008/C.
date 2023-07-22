@@ -123,6 +123,14 @@ std::unique_ptr<TestAST> LogErrorT(const char* Str, ...){
   return nullptr;
 }
 
+std::unique_ptr<UnionDeclarAST> LogErrorU(const char* Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args, emptyLoc);
+  va_end(args);
+  return nullptr;
+}
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -439,10 +447,11 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   }
 }
 
-Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_Name, int& nb_ptr ,*/ bool eat_token = true){
+Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   int type = double_type; 
   bool is_ptr = false;
   std::string struct_Name = "";
+  std::string unionName = "";
   int nb_ptr = 0;
   bool is_function = false;
   std::vector<Cpoint_Type> args;
@@ -452,7 +461,7 @@ Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_
   if (eat_token){
   getNextToken(); // eat the ':'
   }
-  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func){
+  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union){
     LogError("expected identifier after var in type declaration");
     return default_type;
   }
@@ -502,6 +511,14 @@ Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_
       is_ptr = true;
       getNextToken();
     }    
+  } else if (CurTok == tok_union){
+    getNextToken();
+    unionName = IdentifierStr;
+    getNextToken();
+    if (CurTok == tok_ptr){
+      is_ptr = true;
+      getNextToken();
+    }
   } else if (is_type(IdentifierStr)){
     type = get_type(IdentifierStr);
     Log::Info() << "Variable type : " << type << "\n";
@@ -517,7 +534,7 @@ Cpoint_Type ParseTypeDeclaration(/*int& type, bool& is_ptr, std::string& struct_
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, false, "", false, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, false, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -648,17 +665,12 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       }
       std::string ArgName = IdentifierStr;
       getNextToken();
-      /*int type = double_type;
-      bool is_ptr = false;
-      std::string temp_struct;*/
-      //std::string temp_class;
-      //int temp_nb = -1;
       Cpoint_Type arg_type = Cpoint_Type(double_type);
       if (CurTok == ':'){
-        arg_type = ParseTypeDeclaration(/*type, is_ptr, temp_struct, temp_nb*/);
+        arg_type = ParseTypeDeclaration();
       }
       arg_nb++;
-      ArgNames.push_back(std::make_pair(ArgName, arg_type /*Cpoint_Type(type, is_ptr, false, 0, temp_struct != "", temp_struct, temp_nb)*/));
+      ArgNames.push_back(std::make_pair(ArgName, arg_type));
       }
     }
   }
@@ -753,6 +765,34 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   }
   getNextToken();  // eat '}'.
   return std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions));
+}
+
+std::unique_ptr<UnionDeclarAST> ParseUnion(){
+  Log::Info() << "Parsing Union" << "\n";
+  getNextToken(); // eat union
+  std::vector<std::unique_ptr<VarExprAST>> VarList;
+  std::string unionName = IdentifierStr;
+  getNextToken();
+  if (CurTok != '{')
+    return LogErrorU("Expected '{' in Struct");
+  getNextToken();
+  while (CurTok == tok_var && CurTok != '}'){
+    auto exprAST = ParseVarExpr();
+    VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
+    if (varExprAST == nullptr){
+      return LogErrorU("Error in union declaration vars");
+    }
+    std::unique_ptr<VarExprAST> declar;
+    exprAST.release();
+    declar.reset(varExprAST);
+    if (!declar){return nullptr;}
+    VarList.push_back(std::move(declar));
+  }
+  if (CurTok != '}'){
+    return LogErrorU("Expected '}' in union");
+  }
+  getNextToken();  // eat '}'.
+  return std::make_unique<UnionDeclarAST>(unionName, std::move(VarList));
 }
 
 std::unique_ptr<FunctionAST> ParseDefinition() {

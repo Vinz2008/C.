@@ -81,6 +81,7 @@ extern std::vector<std::string> modulesNamesContext;
 extern Source_location emptyLoc;
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName){
+  // TODO : verify in FunctionProtos if function already exists before redeclaring it
   auto FnAST =  std::make_unique<PrototypeAST>(emptyLoc, fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   FunctionProtos[fnName] = FnAST->clone();
   Log::Info() << "add extern name " << fnName << "\n";
@@ -216,6 +217,9 @@ static void MainLoop() {
       break;
     case tok_struct:
       HandleStruct();
+      break;
+    case tok_union:
+      HandleUnion();
       break;
     case tok_class:
       //HandleClass();

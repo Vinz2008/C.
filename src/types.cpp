@@ -202,6 +202,8 @@ int get_type_number_of_bits(Cpoint_Type type){
     case u128_type:
     case i128_type:
         return 128;
+    case double_type:
+        return 64;
     default:
         return -1;
     }

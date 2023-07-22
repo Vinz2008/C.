@@ -47,6 +47,7 @@ enum Token {
   tok_typeid = -35,
   tok_null = -36,
   tok_cast = -37,
+  tok_union = -38,
 };
 
 int getNextToken();
