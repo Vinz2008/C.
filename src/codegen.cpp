@@ -1128,33 +1128,29 @@ Value* RedeclarationExprAST::codegen(){
   }
   }
   bool is_struct = false;
+  bool is_union = false;
   //bool is_class = false;
   if (member != ""){
   Log::Info() << "objectName : " << VariableName << "\n";
   if (NamedValues[VariableName] != nullptr){
-    /*if (ClassDeclarations[NamedValues[VariableName]->type.class_name] != nullptr){
-      Log::Info() << "IS_CLASS" << "\n";
-      is_class = true;
-    }*/
+    if (UnionDeclarations[NamedValues[VariableName]->type.union_name] != nullptr){
+      Log::Info() << "IS_UNION" << "\n";
+      is_union = true;
+    }
     if (StructDeclarations[NamedValues[VariableName]->type.struct_name] != nullptr){
       Log::Info() << "IS_STRUCT" << "\n";
       is_struct = true;
     }
   }
-  //Log::Info() << "className Declar " << NamedValues[VariableName]->type.class_name << "\n";
-  /*if (StructDeclarations[ObjectName] != nullptr){
-    is_struct = true;
   }
-  if (ClassDeclarations[ObjectName] != nullptr){
-    is_class = true;
-  }*/
-  }
-  if (is_struct){
+  if (is_union){
+    Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
+    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+    Builder->CreateStore(ValDeclared, Alloca);
+    NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+  } else if (is_struct){
     Log::Info() << "StructName : " << VariableName << "\n";
-    Log::Info() << "StructName len : " << VariableName.length() << "\n";
-    Log::Info() << "StructDeclarations len : " << StructDeclarations.size() << "\n"; 
     auto members = StructDeclarations[NamedValues[VariableName]->type.struct_name]->members;
-    Log::Info() << "TEST2" << "\n";
     int pos_struct = -1;
     Log::Info() << "members.size() : " << members.size() << "\n";
     for (int i = 0; i < members.size(); i++){

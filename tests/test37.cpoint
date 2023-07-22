@@ -1,3 +1,5 @@
+import @std/print.cpoint
+
 union un {
     var a : double
     var b : int
@@ -5,4 +7,6 @@ union un {
 
 func main(){
     var u : union un
+    u.a = 2
+    printd(u.a)
 }
