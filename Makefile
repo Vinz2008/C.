@@ -28,7 +28,7 @@ SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
-all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen
+all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen cpoint-run
 
 release: set_release all
 
