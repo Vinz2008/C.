@@ -1,9 +1,6 @@
-func test(T : templateType){
-    // var a : T = 2
-    0
-}
+import @std/va.cpoint
 
 func main(){
-    test(int)
-    test(double)
+    var s = "hello world"
+    printfmt_cpoint("test %s", s) // for now segfaults
 }

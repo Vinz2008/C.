@@ -950,9 +950,12 @@ Value* CommentExprAST::codegen(){
 GlobalVariable* GlobalVariableAST::codegen(){
   Constant* InitVal = get_default_constant(cpoint_type);
   if (Init){
-    InitVal = dyn_cast<ConstantFP>(Init->codegen());
+    InitVal = dyn_cast<ConstantFP>(Init->codegen()); // TODO : fix this cast to make it depending on the type
   }
-  GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), /*is constant*/ is_const, GlobalValue::ExternalLinkage, InitVal, varName);
+  GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
+  GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName);
+  //GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName, nullptr, llvm::GlobalValue::NotThreadLocal, llvm::None, is_extern);
+  //globalVar->setExternallyInitialized(is_extern); // TODO : implement extern global variables
   GlobalVariables[varName] = std::make_unique<GlobalVariableValue>(cpoint_type, globalVar);
   return globalVar;
 }
@@ -1052,9 +1055,10 @@ Value *IfExprAST::codegen() {
 
 Value* ReturnAST::codegen(){
   Value* value_returned = returned_expr->codegen();
-  /*auto ret = ReturnInst::Create(*TheContext, value_returned); // TODO : create returnInst to instantly return
-  return ret;*/
-  return value_returned;
+  return Builder->CreateRet(value_returned);
+  //auto ret = ReturnInst::Create(*TheContext, value_returned); // TODO : create returnInst to instantly return
+  //return ret;
+  //return value_returned;
   //return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
@@ -1146,6 +1150,18 @@ Value* RedeclarationExprAST::codegen(){
   if (is_union){
     Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+    auto members = UnionDeclarations[NamedValues[VariableName]->type.union_name]->members;
+    int pos_union = -1;
+    Log::Info() << "members.size() : " << members.size() << "\n";
+    for (int i = 0; i < members.size(); i++){
+      if (members.at(i).first == member){
+        pos_union = i;
+        break;
+      }
+    }
+    if (ValDeclared->getType() != get_type_llvm(members.at(pos_union).second)){
+        convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_union).second), ValDeclared);
+    }
     Builder->CreateStore(ValDeclared, Alloca);
     NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
   } else if (is_struct){

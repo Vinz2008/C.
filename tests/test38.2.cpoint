@@ -1,0 +1,6 @@
+var b = 3
+
+func test(){
+    b = 2
+    b
+}

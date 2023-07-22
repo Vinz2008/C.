@@ -162,24 +162,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
 }
 
 Value* get_default_value(Cpoint_Type type){
-    if (type.is_ptr){
-        return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
-    }
-    switch (type.type){
-        default:
-        case double_type:
-            return ConstantFP::get(*TheContext, APFloat(0.0));
-        case i32_type:
-        case int_type:
-            return ConstantInt::get(*TheContext, APInt(32, 0, true));
-        case i8_type:
-            return ConstantInt::get(*TheContext, APInt(8, 0, true));
-        case i16_type:
-            return ConstantInt::get(*TheContext, APInt(16, 0, true));
-        case i64_type:
-            return ConstantInt::get(*TheContext, APInt(64, 0, true));
-    }
-    return ConstantFP::get(*TheContext, APFloat(0.0));
+    return static_cast<Value*>(get_default_constant(type));
 }
 
 int get_type_number_of_bits(Cpoint_Type type){

@@ -455,10 +455,11 @@ class GlobalVariableAST {
 public:
   std::string varName;
   bool is_const;
+  bool is_extern;
   Cpoint_Type cpoint_type;
   std::unique_ptr<ExprAST> Init;
-  GlobalVariableAST(const std::string& varName, bool is_const, Cpoint_Type cpoint_type, std::unique_ptr<ExprAST> Init) 
-    : varName(varName), is_const(is_const), cpoint_type(cpoint_type), Init(std::move(Init)) {} 
+  GlobalVariableAST(const std::string& varName, bool is_const, bool is_extern, Cpoint_Type cpoint_type, std::unique_ptr<ExprAST> Init) 
+    : varName(varName), is_const(is_const), is_extern(is_extern), cpoint_type(cpoint_type), Init(std::move(Init)) {} 
   GlobalVariable* codegen();
 };
 
@@ -621,7 +622,7 @@ std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
 std::unique_ptr<PrototypeAST> ParseExtern();
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args);
-std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body);
+std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body = false);
 std::unique_ptr<FunctionAST> ParseTopLevelExpr();
 std::unique_ptr<ExprAST> ParseIfExpr();
 std::unique_ptr<ExprAST> ParseReturn();

@@ -1,6 +1,13 @@
-import @std/va.cpoint
+import @std/print.cpoint
+
+var const a = 2;
+
+var extern b : int;
+
+var c = 32;
 
 func main(){
-    var s = "hello world"
-    printfmt_cpoint("test %s", s) // for now segfaults
+    printd(4)
+    return 0
+    printd(2)
 }

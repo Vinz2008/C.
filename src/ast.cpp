@@ -559,12 +559,20 @@ std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>
   return std::make_unique<EmptyExprAST>();
 }
 
-std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body){
+std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body){
+    bool return_found = false;
     while (CurTok != '}'){
       auto E = ParseExpression();
       if (!E)
         return nullptr;
-      Body.push_back(std::move(E));
+      if (is_func_body){
+      if (dynamic_cast<ReturnAST*>(E.get())){
+        return_found = true;
+      }
+      }
+      if (!return_found){
+        Body.push_back(std::move(E));
+      }
     }
     return std::make_unique<EmptyExprAST>(); 
 }
@@ -818,7 +826,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
   Body.push_back(std::move(E_gc_init));
   }
-  auto ret = ParseBodyExpressions(Body);
+  auto ret = ParseBodyExpressions(Body, true);
   if (!ret){
     return nullptr;
   }
@@ -974,6 +982,11 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   getNextToken(); // eat the var.
   Cpoint_Type cpoint_type = Cpoint_Type(double_type);
   bool is_const = false;
+  bool is_extern = false;
+  if (IdentifierStr == "extern"){
+    is_extern = true;
+    getNextToken();
+  }
   if (IdentifierStr == "const"){
     is_const = true;
     getNextToken();
@@ -990,7 +1003,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   if (!Init)
     return nullptr;
   }
-  return std::make_unique<GlobalVariableAST>(Name, is_const, cpoint_type, std::move(Init));
+  return std::make_unique<GlobalVariableAST>(Name, is_const, is_extern, cpoint_type, std::move(Init));
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {
