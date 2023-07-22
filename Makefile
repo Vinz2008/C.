@@ -37,15 +37,19 @@ debug: set_debug all
 set_release: 
 	$(eval CXXFLAGS += -O3) 
 	$(eval LDFLAGS += -s) 
+	$(eval MAKETARGET += release)
 
 set_debug:
 	$(eval CXXFLAGS += -O0)
 
 cpoint-build:
-	+make -C build
+	+make -C build $(MAKETARGET)
 
 cpoint-bindgen:
-	+make -C tools/bindgen
+	+make -C tools/bindgen $(MAKETARGET)
+
+cpoint-run:
+	+make -C tools/run $(MAKETARGET)
 
 std_lib_plus_compiler_plus_gc: std_lib
 
@@ -115,6 +119,7 @@ clean: clean-build
 	make -C tests clean
 	make -C build clean
 	make -C tools/bindgen clean
+	make -C tools/run clean
 	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
 	make -C bdwgc clean
 	rm bdwgc/Makefile

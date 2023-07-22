@@ -16,6 +16,12 @@ CXXFLAGS = -c -g -Wall -Wno-sign-compare -Itomlplusplus/include -std=c++17
 
 all: $(OUTPUTBIN)
 
+release: set_release all
+
+set_release: 
+	$(eval CXXFLAGS += -O3) 
+	$(eval LDFLAGS += -s) 
+
 $(OUTPUTBIN): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 

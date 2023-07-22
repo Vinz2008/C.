@@ -15,6 +15,12 @@ CFLAGS = -c -g -Wall
 
 all: $(OUTPUTBIN)
 
+release: set_release all
+
+set_release: 
+	$(eval CXXFLAGS += -O3) 
+	$(eval LDFLAGS += -s) 
+
 $(OUTPUTBIN): $(OBJS)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
