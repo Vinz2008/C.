@@ -1,5 +1,6 @@
 # C.
 
+
 A programming language compiler written in C++ which is definitely not finished. It compile the C. code to LLVM IR.
 
 ## Advantages
@@ -42,3 +43,7 @@ Length of benchmarks in seconds, lower is better
 ![fibonacci benchmark](https://raw.githubusercontent.com/Vinz2008/C./master/docs/tools/fibonacci.png)
 
 ![factors benchmark](https://raw.githubusercontent.com/Vinz2008/C./master/docs/tools/factors.png)
+
+## Note about the name
+
+C. is pronounced like C point. It was named like it and not C dot or period but C point because I just named the executable cpoint without thinking about it and then remembered that it is not a transparent translation from french and that it should have been name ccomma, but hey I am too lazy to fix it 🤷
