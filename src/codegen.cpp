@@ -412,7 +412,6 @@ Value* ArrayMemberExprAST::codegen() {
     indexes = {index};
   }
 
-
   if (!is_constant && cpoint_type.nb_element > 0 && std_mode && index){
     if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
       return nullptr;
@@ -538,14 +537,9 @@ Value *BinaryExprAST::codegen() {
   }
   if (Op == "<="){
     return operators::LLVMCreateSmallerOrEqualThan(L, R);
-    //L = Builder->CreateFCmpULE(L, R, "cmptmp");
-    /*L = Builder->CreateFCmpULT(L, R, "cmptmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
   }
   if (Op == ">="){
     return operators::LLVMCreateGreaterOrEqualThan(L, R);
-    /*L = Builder->CreateFCmpUGE(L, R, "cmptmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
   }
   if (Op == ">>"){
     return Builder->CreateLShr(L, R, "shiftrtmp");
@@ -564,23 +558,10 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateRem(L, R);
   case '<':
     return operators::LLVMCreateSmallerThan(L, R);
-    /*if (get_cpoint_type_from_llvm(R->getType()).type == int_type){
-      L = Builder->CreateICmpSLT(L, R, "cmptmp");
-    } else {
-      L = Builder->CreateFCmpOLT(L, R, "cmptmp");
-    }
-    // Convert bool 0/1 to double 0.0 or 1.0
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
   case '/':
     return operators::LLVMCreateDiv(L, R);
   case '>':
     return operators::LLVMCreateGreaterThan(L, R);
-    /*if (get_cpoint_type_from_llvm(R->getType()).type == int_type){
-      L = Builder->CreateICmpSGT(R, L, "cmptmp");
-    } else {
-      L = Builder->CreateFCmpOGT(R, L, "cmptmp");
-    }
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");*/
   case '^':
     L = Builder->CreateXor(L, R, "xortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
