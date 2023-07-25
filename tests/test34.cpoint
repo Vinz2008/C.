@@ -1,7 +1,9 @@
 import @std/linked_list.cpoint
+import @std/print.cpoint
 
 func main(){
     var ll : struct linked_list 
+    printd(2)
     ll.append(1)
     ll.print()
 }

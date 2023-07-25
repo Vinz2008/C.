@@ -1,5 +1,28 @@
+struct listItem {
+    var list : void ptr
+}
+
 struct list {
     var list : int ptr
     var allocated_size : int
     var length : int
+    func list(){
+        self.list = gc_malloc(sizeof int * 10)
+        self.allocated_size = 10
+        self.length = 0
+    }
+    func append(){
+        var list : struct list ptr = self
+        if list.length == list.allocated_size {
+            list.allocated_size = list.allocated_size * 2
+            list.list = gc_realloc(list.list, list.allocated_size * sizeof int)
+        }
+    }
+    func is_empty(){
+        var list : struct list ptr = self
+        list.length == 0
+    }
+    func c_ptr() int ptr {
+        self.list
+    }
 }

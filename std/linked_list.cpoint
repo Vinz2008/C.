@@ -11,9 +11,11 @@ struct linked_list {
     func linked_list(){
         self.head = null
         self.tail = null
+        printd(3)
+        0
     }
     func append(data : int){
-        var temp : struct node_linked_list ptr = gc_malloc(sizeof i64)
+        var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list)
         temp.data = data
         temp.next = null
         if self.head == null {

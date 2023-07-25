@@ -1179,7 +1179,6 @@ Value* RedeclarationExprAST::codegen(){
     }
     return LogErrorV(this->loc, "couldn't find variable \"%s\", maybe you meant \"%s\"", VariableName.c_str(), nearest_variable.c_str());
   }
-  // TODO convert type for struct members. Either find the type and the member before and store the pos for after to not do loop 2 times, either move this code at the end to have the type
   if (type.type != 0 && member == ""){ 
   if (ValDeclared->getType() != get_type_llvm(type)){
     convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(type), ValDeclared);
@@ -1238,6 +1237,9 @@ Value* RedeclarationExprAST::codegen(){
       cpoint_type.is_ptr = false;
     }
     auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
+    if (ValDeclared->getType() != get_type_llvm(members.at(pos_struct).second)){
+        convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_struct).second), ValDeclared);
+    }
     Builder->CreateStore(ValDeclared, ptr);
     NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
   } else if (is_array) {
@@ -1519,6 +1521,7 @@ Value *VarExprAST::codegen() {
     //  var a = 1 in
     //    var a = a in ...   # refers to outer 'a'.
     Value *InitVal;
+    bool no_explicit_init_val = false;
     if (Init) {
       InitVal = Init->codegen();
       if (!InitVal)
@@ -1527,6 +1530,7 @@ Value *VarExprAST::codegen() {
         cpoint_type = Cpoint_Type(get_cpoint_type_from_llvm(InitVal->getType()));
       }
     } else { // If not specified, use 0.0.
+      no_explicit_init_val = true;
       InitVal = get_default_value(cpoint_type);
       //InitVal = get_default_constant(*cpoint_type);
     }
@@ -1551,7 +1555,9 @@ Value *VarExprAST::codegen() {
     if (InitVal->getType() == get_type_llvm(Cpoint_Type(void_type))){
        return LogErrorV(this->loc, "Assigning to a variable as default value a void value");
     }
+    if (!cpoint_type.is_struct || !no_explicit_init_val){
     Builder->CreateStore(InitVal, Alloca);
+    }
 
     // Remember the old variable binding so that we can restore the binding when
     // we unrecurse.
