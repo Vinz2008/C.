@@ -1,0 +1,15 @@
+func quicksortx(arr : int ptr, a: int, b : int) {
+    if a >= b {
+        return 1
+    }
+    var key : int = arr[a]
+    var i : int = a + 1
+    var j : int = b
+    // https://stackoverflow.com/questions/9558804/quick-sort-in-c
+    0
+}
+
+
+func quicksort(arr : int ptr, len : int) {
+    quicksortx(arr, 0, len - 1)
+}

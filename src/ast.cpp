@@ -1066,7 +1066,10 @@ else_start:
 std::unique_ptr<ExprAST> ParseReturn(){
   getNextToken(); // eat the return
   Log::Info() << "CurTok return : " << CurTok << " " << NumVal << "\n";
-
+  if (CurTok == tok_identifier && IdentifierStr == "void"){
+    getNextToken();
+    return std::make_unique<ReturnAST>(nullptr);
+  }
   auto return_value = ParseExpression();
   //auto Result = std::make_unique<ReturnAST>(NumVal);
   if (!return_value){

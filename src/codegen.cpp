@@ -64,6 +64,8 @@ extern bool test_mode;
 extern bool std_mode;
 extern bool gc_mode;
 
+// TODO : return at last line of function after if returns the iftmp and not the return value : fix this
+
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
@@ -1042,7 +1044,7 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(MergeBB);
   PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");
 
-  if (ThenV->getType() == Type::getVoidTy(*TheContext)){
+  if (ThenV->getType() == Type::getVoidTy(*TheContext) && phiType != Type::getVoidTy(*TheContext)){
     //ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
     ThenV = get_default_constant(get_cpoint_type_from_llvm(phiType));
   }
@@ -1070,7 +1072,7 @@ Value *IfExprAST::codegen() {
 }
 
 Value* ReturnAST::codegen(){
-  Value* value_returned = returned_expr->codegen();
+  Value* value_returned = (returned_expr) ? returned_expr->codegen() : nullptr;
   return Builder->CreateRet(value_returned);
   //auto ret = ReturnInst::Create(*TheContext, value_returned); // TODO : create returnInst to instantly return
   //return ret;
