@@ -1,13 +1,6 @@
 import @std/print.cpoint
 
-var const a = 2;
-
-var extern b : int;
-
-var c = 32;
-
 func main(){
-    printd(4)
-    return 0
-    printd(2)
+    var da[3] : double
+    printd(da[argc])
 }
