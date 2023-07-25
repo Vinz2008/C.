@@ -128,5 +128,9 @@ test:
 	make -C tests python
 #	make -C tests run
 
+std-test:
+	make -C std test
+	make -C std run-test
+
 onefetch:
 	onefetch --exclude bdwgc/* bdwgc_prefix/* build/tomlplusplus/*

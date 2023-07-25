@@ -30,5 +30,5 @@ mod path {
 
 test "testing get_extension" {
     var ext = path::get_extension("test.c")
-    // expect(strcmp(ext, ".h") == 0)
+    expect(strcmp(ext, ".c") == 0)
 }

@@ -54,6 +54,7 @@ extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
 extern std::string filename;
+extern std::string first_filename;
 
 extern Source_location emptyLoc;
 
@@ -776,9 +777,11 @@ void afterAllTests(){
     ArgsPrintf.clear();
     std::string temp_description = testASTNodes.at(i)->description;
     std::unique_ptr<ExprAST> strExprAST;
-    strExprAST = std::make_unique<StringExprAST>("Test %s running\n");
+    strExprAST = std::make_unique<StringExprAST>("Test %s running (in %s)\n");
     ArgsPrintf.push_back(std::move(strExprAST));
     strExprAST = std::make_unique<StringExprAST>(temp_description);
+    ArgsPrintf.push_back(std::move(strExprAST));
+    strExprAST = std::make_unique<StringExprAST>(first_filename);
     ArgsPrintf.push_back(std::move(strExprAST));
     printfCall = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(ArgsPrintf), "");
     Body.push_back(std::move(printfCall));
@@ -925,6 +928,9 @@ Function *FunctionAST::codegen() {
   }
   if (RetVal) {
     // Finish off the function.
+    if (RetVal->getType() != get_type_llvm(void_type) && RetVal->getType() != TheFunction->getReturnType()){
+      convert_to_type(get_cpoint_type_from_llvm(RetVal->getType()), TheFunction->getReturnType(), RetVal);
+    }
     Builder->CreateRet(RetVal);
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.

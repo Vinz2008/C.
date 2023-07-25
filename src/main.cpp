@@ -66,6 +66,8 @@ int error_count = 0;
 std::map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<Module> TheModule;
 
+std::string first_filename = "";
+
 extern int CurTok;
 extern std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 //std::unique_ptr<llvm::raw_fd_ostream> file_out_ostream;
@@ -284,7 +286,6 @@ int main(int argc, char **argv){
     bool is_optimised = false;
     bool explicit_with_gc = false; // add gc even with -no-std
     bool PICmode = false;
-    std::string first_filename = "";
     std::string linker_additional_flags = "";
     for (int i = 1; i < argc; i++){
         string arg = argv[i];

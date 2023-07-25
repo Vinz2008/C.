@@ -14,3 +14,11 @@ mod math {
         sqrt(arg)
     }
 }
+
+test "testing sin" {
+	sin(2)
+}
+
+test "testing cos" {
+	cos(4)
+}

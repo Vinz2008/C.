@@ -32,7 +32,9 @@ endif
 SRC := $(wildcard *.cpoint) $(wildcard */*.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 #TESTS_EXE := $(patsubst %.cpoint, %.test, $(SRC))
-TESTS_EXE := print.test path.test
+TESTS_EXE := math.test path.test utils.test
+TEST_DEPENDENCIES = expect.cpoint print.cpoint panic.cpoint
+TEST_DEPENDENCIES_OBJ = $(patsubst %.cpoint, %.o, $(TEST_DEPENDENCIES))
 SRC_C := $(wildcard c_api/*.c)
 OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
 CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)
@@ -64,15 +66,13 @@ clean: clean-objects
 	rm -f ./*.a ./*.ll ./*.log ./*.temp ./*.test
 
 
-%.test: %.o
-	clang -o $@ $< c_api/libc_api.a ../bdwgc_prefix/lib/libgc.a
+%.test: %.o $(TEST_DEPENDENCIES_OBJ)
+	clang -o $@ $^ c_api/libc_api.a ../bdwgc_prefix/lib/libgc.a -lm
 
-
-test: clean-objects capi set_test_flag $(TESTS_EXE)
+test: clean-objects capi $(TEST_DEPENDENCIES_OBJ) set_test_flag $(TESTS_EXE)
 
 run-test:
 	@for program in $(TESTS_EXE) ; do \
 		./$$program ; \
 	done
-	echo $?
 	

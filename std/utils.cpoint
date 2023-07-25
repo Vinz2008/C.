@@ -1,7 +1,10 @@
+import expect.cpoint
+import print.cpoint
+
 mod std {
 mod utils {
 func average(x, y) int {
-  return (x + y) * 0.5
+  (x + y) / 2
 }
 
 func absolute(v) int {
@@ -17,4 +20,13 @@ struct utilstest {
   var a : i8
   var b : i8
 }
+}
+
+test "testing average" {
+  expect(std::utils::average(2, 4) == 3)
+  expect(std::utils::average(10, 20) == 15)
+}
+
+test "testing absolute" {
+  expect(std::utils::absolute(-10) == 10)
 }
