@@ -417,31 +417,6 @@ Value* ArrayMemberExprAST::codegen() {
     if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
       return nullptr;
     }
-
-    // TODO : desactivate this in release mode and leave it activated in debug build mode
-    /*std::vector<std::pair<std::string, Cpoint_Type>> PanicArgs;
-    PanicArgs.push_back(std::make_pair("message", Cpoint_Type(i8_type, true)));
-    add_manually_extern("panic", Cpoint_Type(void_type), std::move(PanicArgs), 0, 30, false, false, "");
-    Value* nbElement = ConstantFP::get(*TheContext, APFloat((double) cpoint_type.nb_element));
-    if (firstIndex->getType() != nbElement->getType()){
-      convert_to_type(get_cpoint_type_from_llvm(nbElement->getType()), firstIndex->getType(), nbElement);
-    }
-    Value* CondV = operators::LLVMCreateGreaterOrEqualThan(firstIndex, nbElement);
-    //Value* CondV = ConstantFP::get(*TheContext, APFloat((double)0));
-    if (!CondV)
-      return nullptr;
-    CondV = Builder->CreateFCmpONE(
-      CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
-    Function *TheFunction = Builder->GetInsertBlock()->getParent();
-    BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "bound_checking_then", TheFunction);
-    BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "bound_checking_after", TheFunction);
-    Builder->CreateCondBr(CondV, ThenBB, AfterBB);
-    Builder->SetInsertPoint(ThenBB);
-    std::vector<std::unique_ptr<ExprAST>> Args;
-    Args.push_back(std::make_unique<StringExprAST>("Out of bound access of array"));
-    std::make_unique<CallExprAST>(emptyLoc, "panic", std::move(Args), "")->codegen();
-    Builder->CreateBr(AfterBB);
-    Builder->SetInsertPoint(AfterBB);*/
   }
   Cpoint_Type member_type = cpoint_type;
   member_type.is_array = false;
