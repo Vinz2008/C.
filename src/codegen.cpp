@@ -414,9 +414,12 @@ Value* ArrayMemberExprAST::codegen() {
 
 
   if (!is_constant && cpoint_type.nb_element > 0 && std_mode && index){
-    // TODO : move this in checking.cpp
+    if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
+      return nullptr;
+    }
+
     // TODO : desactivate this in release mode and leave it activated in debug build mode
-    std::vector<std::pair<std::string, Cpoint_Type>> PanicArgs;
+    /*std::vector<std::pair<std::string, Cpoint_Type>> PanicArgs;
     PanicArgs.push_back(std::make_pair("message", Cpoint_Type(i8_type, true)));
     add_manually_extern("panic", Cpoint_Type(void_type), std::move(PanicArgs), 0, 30, false, false, "");
     Value* nbElement = ConstantFP::get(*TheContext, APFloat((double) cpoint_type.nb_element));
@@ -438,7 +441,7 @@ Value* ArrayMemberExprAST::codegen() {
     Args.push_back(std::make_unique<StringExprAST>("Out of bound access of array"));
     std::make_unique<CallExprAST>(emptyLoc, "panic", std::move(Args), "")->codegen();
     Builder->CreateBr(AfterBB);
-    Builder->SetInsertPoint(AfterBB);
+    Builder->SetInsertPoint(AfterBB);*/
   }
   Cpoint_Type member_type = cpoint_type;
   member_type.is_array = false;
