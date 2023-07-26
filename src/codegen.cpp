@@ -162,6 +162,7 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   return nullptr;
 }
 
+// TODO : maybe change name from templates to generics
 void codegenTemplates(){
   for (int i = 0; i < TemplatesToGenerate.size(); i++){
     Log::Info() << "setting TypeTemplateCallCodegen" << "\n";
