@@ -21,6 +21,7 @@ using namespace llvm;
 
 #include "types.h"
 #include "errors.h"
+#include "log.h"
 
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
@@ -259,9 +260,19 @@ public:
   std::unique_ptr<ExprAST> clone() override {
     std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNamesCloned;
     if (!VarNames.empty()){
+      Log::Info() << "VarNames.size() " << VarNames.size() << "\n";
       for (int i = 0; i < VarNames.size(); i++){
         std::string name = VarNames.at(i).first;
-        VarNamesCloned.push_back(std::make_pair(name, VarNames.at(i).second->clone()));
+        if (VarNames.at(i).second == nullptr){
+          Log::Info() << "VarNames.at(i).second is nullptr" << "\n";
+        }
+        std::unique_ptr<ExprAST> val;
+        if (VarNames.at(i).second != nullptr){
+        val = VarNames.at(i).second->clone();
+        } else {
+          val = nullptr;
+        }
+        VarNamesCloned.push_back(std::make_pair(name, std::move(val)));
       }
     }
     std::unique_ptr<ExprAST> indexCloned;
@@ -284,7 +295,11 @@ public:
 : VariableName(VariableName), Val(std::move(Val)), member(member), index(std::move(index)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
-    return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, index->clone());
+    std::unique_ptr<ExprAST> indexCloned = nullptr;
+    if (index != nullptr){
+      indexCloned = index->clone();
+    }
+    return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, std::move(indexCloned));
   }
 };
 

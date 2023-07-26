@@ -1,3 +1,8 @@
+func internal_swap(arr : int ptr, i : int, j : int) void {
+    var temp = arr[j]
+    arr[j] = arr[i]
+}
+
 func quicksortx(arr : int ptr, a: int, b : int) {
     if a >= b {
         return 1
@@ -6,6 +11,24 @@ func quicksortx(arr : int ptr, a: int, b : int) {
     var i : int = a + 1
     var j : int = b
     // https://stackoverflow.com/questions/9558804/quick-sort-in-c
+    while i < j && 1 {
+        while i < j {
+            j = j -1
+        }
+        while i < j {
+            i = i + 1
+        }
+        if i < j { 
+            internal_swap(arr, i, j) 
+        }
+    }
+    if arr[a] > arr[i] {
+        internal_swap(arr, a, i)
+        quicksortx(arr, a, i - 1)
+        quicksortx(arr, i + 1, b)
+    } else { // there is no left-hand-side
+        quicksortx(arr, a + 1, b)
+    }
     0
 }
 

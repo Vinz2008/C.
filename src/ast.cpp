@@ -30,6 +30,7 @@ extern std::vector<std::string> typeDefTable;
 extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, std::string> TypeTemplateCallCodegen;
+extern std::string TypeTemplatCallAst;
 
 bool is_comment = false;
 
@@ -239,6 +240,9 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     getNextToken();
     auto V = ParseExpression();
+    if (!V){
+      return nullptr;
+    }
     return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member, std::move(indexAST));
   }
   if (member != ""){
@@ -263,7 +267,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     return std::make_unique<StructMemberExprAST>(IdName, member, is_function_call_member, std::move(Args));
   }
-  if (CurTok != '(' /*&& CurTok != '<'*/){ // Simple variable ref.
+  if (CurTok != '(' && CurTok != /*'<'*/ '~'){ // Simple variable ref.
     if (is_array){
       Log::Info() << "Array member returned" << "\n";
       return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
@@ -281,15 +285,15 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
   // Call.
   std::string template_passed_type = "";
-  /*if (CurTok == '<'){
+  if (CurTok == /*'<'*/ '~'){
     getNextToken();
     template_passed_type = IdentifierStr;
     getNextToken();
-    if (CurTok != '>'){
-      return LogError("expected '>' not found");
+    if (CurTok != /*'>'*/ '~'){
+      return LogError("expected '~' not found");
     }
     getNextToken();
-  }*/ // TODO : fix bug because this triggers when the '<' operator is used. Find a way to fix this by either changing the way it is passed or find a way to differenciate it
+  } // TODO : fix bug because this triggers when the '<' operator is used. Find a way to fix this by either changing the way it is passed or find a way to differenciate it
   if (CurTok != '('){
     return LogError("missing '(' when calling function");
   }
@@ -457,6 +461,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   std::string unionName = "";
   int nb_ptr = 0;
   bool is_function = false;
+  bool is_template_type = false;
   std::vector<Cpoint_Type> args;
   Cpoint_Type* return_type = nullptr;
   Cpoint_Type default_type = Cpoint_Type(double_type);
@@ -532,12 +537,17 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
       Log::Info() << "Type Declaration ptr added : " << nb_ptr << "\n";
       getNextToken();
     }
+  } else if (TypeTemplatCallAst == IdentifierStr){
+    Log::Info() << "Template type in parsing type declaration" << "\n";
+    is_template_type = true;
+    getNextToken();
   } else {
+    Log::Info() << "TypeTemplatCallAst : " << TypeTemplatCallAst << "\n";
     LogError("wrong type %s found", IdentifierStr.c_str());
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, false, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, is_template_type, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -630,16 +640,17 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       break;
   }
   // find template/generic
-  if (CurTok == '<'){
+  if (CurTok == /*'<'*/ '~'){
     getNextToken();
     template_name = IdentifierStr;
     getNextToken();
-    if (CurTok != '>'){
-      return LogErrorP("Missing '>' in template declaration");
+    if (CurTok != /*'>'*/ '~'){
+      return LogErrorP("Missing '~' in template declaration");
     }
     getNextToken();
     has_template = true;
     Log::Info() << "Found template" << "\n";
+    TypeTemplatCallAst = template_name;
   }
   if (CurTok != '(')
     return LogErrorP("Expected '(' in prototype");
@@ -816,6 +827,9 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
     LogErrorF("Expected '{' in function definition");
   }
   getNextToken();  // eat '{'
+  /*if (Proto->has_template){
+  TypeTemplatCallAst = Proto->template_name;
+  }*/
   for (int i = 0; i < Proto->Args.size(); i++){
     Log::Info() << "args added to NamedValues when doing ast : " << Proto->Args.at(i).first << "\n";
     NamedValues[Proto->Args.at(i).first] = std::make_unique<NamedValue>(nullptr,Proto->Args.at(i).second);
@@ -1248,11 +1262,13 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     infer_type = false;
     if (CurTok == ':'){
+      Log::Info() << "Parse Type Declaration Var" << "\n";
       cpoint_type = ParseTypeDeclaration(/*type, is_ptr, struct_name, nb_ptr*/);
       /*if (a != nullptr){
         return a;
       }*/
     } else {
+      Log::Info() << "Infering type (CurTok : " << CurTok << ")" << "\n";
       infer_type = true;
     }
     if (is_array){

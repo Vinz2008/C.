@@ -17,9 +17,14 @@ extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarati
 extern std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector<std::string> typeDefTable;
+extern std::pair<std::string, std::string> TypeTemplateCallCodegen;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
+    if (cpoint_type.is_template_type){
+        Log::Info() << "template type found get_type_llvm " << TypeTemplateCallCodegen.first << " -> " << TypeTemplateCallCodegen.second << "\n";
+        return get_type_llvm(get_type(TypeTemplateCallCodegen.second));
+    }
     if (cpoint_type.type >= 0){
         Log::Info() << "Typedef type used to declare variable (size of typedef table : " << typeDefTable.size() << ")" << "\n";
         if (typeDefTable.size() < cpoint_type.type){

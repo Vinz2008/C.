@@ -5,6 +5,7 @@ func main(){
     } else { 
         printd(5 ^ 9)
         printd(argc == 0 || 1 == 1)
+        printd(argc == 0 && 1 == 1)
         printd(1 << 2)
     }
 }

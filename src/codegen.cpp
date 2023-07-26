@@ -43,7 +43,9 @@ std::stack<BasicBlock*> blocksForBreak;
 
 std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
-std::pair<std::string, std::string> TypeTemplateCallCodegen;
+std::pair<std::string, std::string> TypeTemplateCallCodegen; // contains the type of template in function call
+std::string TypeTemplatCallAst = "";
+
 
 std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
@@ -124,15 +126,19 @@ Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr
 
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
-  if (auto *F = TheModule->getFunction(Name))
+  if (auto *F = TheModule->getFunction(Name)){
+    Log::Info() << "TheModule->getFunction " << Name << "\n";
     return F;
+  }
 
   // If not, check whether we can codegen the declaration from some existing
   // prototype.
   auto FI = FunctionProtos.find(Name);
-  if (FI != FunctionProtos.end())
+  if (FI != FunctionProtos.end()){
+    Log::Info() << "FI->second->codegen() " << Name << "\n";
     return FI->second->codegen();
-
+  }
+  Log::Info() << "nullptr " << Name << "\n";
   // If no existing prototype exists, return null.
   return nullptr;
 }
@@ -158,6 +164,7 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 
 void codegenTemplates(){
   for (int i = 0; i < TemplatesToGenerate.size(); i++){
+    Log::Info() << "setting TypeTemplateCallCodegen" << "\n";
     TypeTemplateCallCodegen = std::make_pair(TemplatesToGenerate.at(i)->functionAST->Proto->template_name, TemplatesToGenerate.at(i)->typeName);
     TemplatesToGenerate.at(i)->functionAST->codegen();
   }
@@ -171,6 +178,7 @@ void callTemplate(std::string& Callee, std::string template_passed_type){
   std::string function_temp_name = templateProto->functionAST->Proto->Name + typeName; // add something to specify type
   templateProto->functionAST->Proto->Name = function_temp_name;
   //templateProto->functionAST->codegen();
+  TypeTemplateCallCodegen = std::make_pair(templateProto->functionAST->Proto->template_name, template_passed_type);
   add_manually_extern(templateProto->functionAST->Proto->Name, templateProto->functionAST->Proto->cpoint_type, templateProto->functionAST->Proto->Args, (templateProto->functionAST->Proto->IsOperator) ? 1 : 0, templateProto->functionAST->Proto->getBinaryPrecedence(), templateProto->functionAST->Proto->is_variable_number_args, templateProto->functionAST->Proto->has_template, templateProto->functionAST->Proto->template_name);
   Callee = function_temp_name;
   TemplatesToGenerate.push_back(std::make_unique<TemplateCall>(template_passed_type, std::move(templateProto->functionAST)));
@@ -625,6 +633,7 @@ Value *CallExprAST::codegen() {
     callTemplate(Callee, template_passed_type);
   }
   Function *CalleeF = getFunction(Callee);
+  //Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "is_function_template : " << is_function_template << "\n";
   if (!CalleeF && !is_function_template)
     return LogErrorV(this->loc, "Unknown function referenced %s", Callee.c_str());
@@ -1143,7 +1152,7 @@ Value* RedeclarationExprAST::codegen(){
     }
     return LogErrorV(this->loc, "couldn't find variable \"%s\", maybe you meant \"%s\"", VariableName.c_str(), nearest_variable.c_str());
   }
-  if (type.type != 0 && member == ""){ 
+  if (!type.is_template_type && type.type != 0 && member == ""){ 
   if (ValDeclared->getType() != get_type_llvm(type)){
     convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(type), ValDeclared);
   }
