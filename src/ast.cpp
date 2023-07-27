@@ -288,15 +288,15 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
   // Call.
   std::string template_passed_type = "";
-  if (CurTok == /*'<'*/ '~'){
+  if (CurTok == '~'){
     getNextToken();
     template_passed_type = IdentifierStr;
     getNextToken();
-    if (CurTok != /*'>'*/ '~'){
+    if (CurTok != '~'){
       return LogError("expected '~' not found");
     }
     getNextToken();
-  } // TODO : fix bug because this triggers when the '<' operator is used. Find a way to fix this by either changing the way it is passed or find a way to differenciate it
+  }
   if (CurTok != '('){
     return LogError("missing '(' when calling function");
   }
@@ -786,7 +786,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     VarList.push_back(std::move(declar));
     //getNextToken();
     //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
-    // TODO : add externs which declares struct functions with the name mangling so we can import structs with functions
     } else if (CurTok == tok_extern){
         getNextToken();
         auto protoExpr = ParsePrototype();
@@ -828,7 +827,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     Log::Info() << "Parse struct has template" << "\n";
     TemplateStructDeclars[structName] = std::make_unique<StructDeclar>(std::move(structDeclar), template_name);
     is_template_parsing_struct = true;
-    return nullptr; // TODO : remove comment to not generate the struct and only generate it when a variable is created. We will need to generate it immediately
+    return nullptr;
   }
   return structDeclar;
 }

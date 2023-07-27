@@ -282,8 +282,6 @@ int nb_of_opened_braces;
 bool first_mod_opened = false;
 
 void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
-    // TODO : have better parsing to detect mod blocks
-    //return;
     out_file << '\n' << line;
     pos_line++;
     if (!first_mod_opened){

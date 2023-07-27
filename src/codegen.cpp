@@ -168,7 +168,7 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 
 // TODO : maybe change name from templates to generics
 void codegenTemplates(){
-    StructTemplatesToGenerate.clear(); // TODO : because StructTemplatesToGenerate is populated when parsing and the codegen of templates is done at the end, we can't know what the StructTemplatesToGenerate for this function is. Need to create a vector or a map of StructTemplatesToGenerate for each templated functions
+  StructTemplatesToGenerate.clear(); // TODO : because StructTemplatesToGenerate is populated when parsing and the codegen of templates is done at the end, we can't know what the StructTemplatesToGenerate for this function is. Need to create a vector or a map of StructTemplatesToGenerate for each templated functions
   for (int i = 0; i < TemplatesToGenerate.size(); i++){
     Log::Info() << "setting TypeTemplateCallCodegen" << "\n";
     TypeTemplateCallCodegen = std::make_pair(TemplatesToGenerate.at(i)->functionAST->Proto->template_name, TemplatesToGenerate.at(i)->typeName);
@@ -406,7 +406,6 @@ Value* ConstantArrayExprAST::codegen(){
 }
 
 Value* ArrayMemberExprAST::codegen() {
-  // TODO : fix type for array member after getelementptr
   Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
   auto index = posAST->codegen();
@@ -528,7 +527,6 @@ Type* StructDeclarAST::codegen(){
 }
 
 Type* UnionDeclarAST::codegen(){
-  // TODO : finish union support
   StructType* unionType = StructType::create(*TheContext);
   unionType->setName(Name);
   // take the biggest type and just have it in the struct and bitcast for the other types
@@ -1112,10 +1110,6 @@ Value *IfExprAST::codegen() {
 Value* ReturnAST::codegen(){
   Value* value_returned = (returned_expr) ? returned_expr->codegen() : nullptr;
   return Builder->CreateRet(value_returned);
-  //auto ret = ReturnInst::Create(*TheContext, value_returned); // TODO : create returnInst to instantly return
-  //return ret;
-  //return value_returned;
-  //return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
 Value* GotoExprAST::codegen(){

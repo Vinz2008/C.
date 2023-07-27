@@ -1,6 +1,9 @@
 import @std/print.cpoint
+
 extern printptr(x)
-var z : double = 2
+
+var z : int = 2
+
 func main(){
   var c = "hello"
   printstr(c)
@@ -8,6 +11,7 @@ func main(){
   putchard(10)
   var a = 1
   printd(a)
+  printi(z)
   z = 3
-  printd(z)
+  printi(z)
 }
