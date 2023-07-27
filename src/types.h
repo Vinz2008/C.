@@ -46,7 +46,7 @@ public:
     Cpoint_Type(int type, bool is_ptr = false, int nb_ptr = 0, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_union = false, const std::string& union_name = "", bool is_template_type = false, bool is_struct_template = false, const std::string& struct_template_name = "", bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr) 
                 : type(type), is_ptr(is_ptr), nb_ptr(nb_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_union(is_union), union_name(union_name), is_template_type(is_template_type), is_struct_template(is_struct_template), struct_template_name(struct_template_name), is_function(is_function), args(args), return_type(return_type) {}
     friend std::ostream& operator<<(std::ostream& os, const Cpoint_Type& type){
-        os << "{ type : " << type.type << " is_ptr : " << type.is_ptr << " is_struct : " << type.is_struct << " }"; 
+        os << "{ type : " << type.type << " is_ptr : " << type.is_ptr << " nb_ptr : " << type.nb_ptr  << " is_struct : " << type.is_struct << " is_array : " << type.is_array << " }"; 
         return os;
     }
 

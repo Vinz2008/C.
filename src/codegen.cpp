@@ -436,6 +436,7 @@ Value* ArrayMemberExprAST::codegen() {
   AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   std::vector<Value*> indexes = { zero, index};
+  Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
   if (cpoint_type.is_ptr && !cpoint_type.is_array){
     Log::Info() << "array for array member is ptr" << "\n";
     if (cpoint_type.nb_ptr > 1){
@@ -443,10 +444,13 @@ Value* ArrayMemberExprAST::codegen() {
     } else {
       cpoint_type.is_ptr = false;
       cpoint_type.nb_ptr = 0;
+      cpoint_type.nb_element = 0;
     }
+    Log::Info() << "Cpoint_type for array member which is ptr : " << cpoint_type << "\n";
     indexes = {index};
   }
 
+  Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
   if (!is_constant && cpoint_type.nb_element > 0 && std_mode && index){
     if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
       return nullptr;
@@ -1242,8 +1246,16 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "array redeclaration" << "\n";
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
     Cpoint_Type member_type = cpoint_type;
-    member_type.is_array = false;
-    member_type.nb_element = 0;
+    Log::Info() << "member type : " << member_type << "\n";
+    if (member_type.is_ptr && !member_type.is_array){
+        Log::Info() << "is member" << "\n";
+        member_type.is_ptr = false;
+        member_type.nb_ptr = 0;
+        member_type.nb_element = 0;
+    } else {
+        member_type.is_array = false;
+        member_type.nb_element = 0;
+    }
     if (ValDeclared->getType()->isArrayTy()){
       AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
       Builder->CreateStore(ValDeclared, Alloca);
@@ -1256,7 +1268,10 @@ Value* RedeclarationExprAST::codegen(){
     //auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto indexVal = index->codegen();
-    indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
+    if (indexVal->getType() != get_type_llvm(int_type)){
+        convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(int_type), indexVal) ;
+    }
+    //indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
     if (!index){
       return LogErrorV(this->loc, "couldn't find index for array %s", VariableName.c_str());
     }
