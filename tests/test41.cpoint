@@ -1,5 +1,5 @@
 struct test_struct~T~ {
-    var content : int
+    var content : T
     var other : int ptr
 }
 

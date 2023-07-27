@@ -763,6 +763,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     }
     getNextToken();
     has_template = true;
+    TypeTemplateCallAst = template_name;
   }
   if (CurTok != '{')
     return LogErrorS("Expected '{' in Struct");

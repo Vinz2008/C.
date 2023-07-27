@@ -48,7 +48,7 @@ std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 
 std::pair<std::string, std::string> TypeTemplateCallCodegen; // contains the type of template in function call
-std::string TypeTemplateCallAst = "";
+std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have multiple templates in the future ?
 
 
 std::vector<std::unique_ptr<TestAST>> testASTNodes;
