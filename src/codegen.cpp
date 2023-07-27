@@ -35,6 +35,8 @@ std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
 
 std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
+
+std::map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 std::vector<std::string> modulesNamesContext;
 
 std::map<std::string, Function*> GeneratedFunctions;
@@ -43,8 +45,10 @@ std::stack<BasicBlock*> blocksForBreak;
 
 std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
+std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
+
 std::pair<std::string, std::string> TypeTemplateCallCodegen; // contains the type of template in function call
-std::string TypeTemplatCallAst = "";
+std::string TypeTemplateCallAst = "";
 
 
 std::vector<std::unique_ptr<TestAST>> testASTNodes;
@@ -164,6 +168,7 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 
 // TODO : maybe change name from templates to generics
 void codegenTemplates(){
+    StructTemplatesToGenerate.clear(); // TODO : because StructTemplatesToGenerate is populated when parsing and the codegen of templates is done at the end, we can't know what the StructTemplatesToGenerate for this function is. Need to create a vector or a map of StructTemplatesToGenerate for each templated functions
   for (int i = 0; i < TemplatesToGenerate.size(); i++){
     Log::Info() << "setting TypeTemplateCallCodegen" << "\n";
     TypeTemplateCallCodegen = std::make_pair(TemplatesToGenerate.at(i)->functionAST->Proto->template_name, TemplatesToGenerate.at(i)->typeName);
@@ -183,6 +188,25 @@ void callTemplate(std::string& Callee, std::string template_passed_type){
   add_manually_extern(templateProto->functionAST->Proto->Name, templateProto->functionAST->Proto->cpoint_type, templateProto->functionAST->Proto->Args, (templateProto->functionAST->Proto->IsOperator) ? 1 : 0, templateProto->functionAST->Proto->getBinaryPrecedence(), templateProto->functionAST->Proto->is_variable_number_args, templateProto->functionAST->Proto->has_template, templateProto->functionAST->Proto->template_name);
   Callee = function_temp_name;
   TemplatesToGenerate.push_back(std::make_unique<TemplateCall>(template_passed_type, std::move(templateProto->functionAST)));
+}
+
+void codegenStructTemplates(){
+    Log::Info() << "CODEGEN STRUCT TEMPLATES (nb : "  << StructTemplatesToGenerate.size() << ")" << "\n";
+    for (int i = 0; i < StructTemplatesToGenerate.size(); i++){
+        TypeTemplateCallCodegen = std::make_pair(StructTemplatesToGenerate.at(i)->structDeclarAST->template_name, StructTemplatesToGenerate.at(i)->typeName);
+        Log::Info()  << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.size() : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size() << "\n";
+        for (int j = 0; j < StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size(); j++){
+            if (!StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j)){
+                Log::Info() << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.at(" << j <<") is nullptr" << "\n";
+            }
+            //Log::Info() << "StructTemplatesToGenerate.at(" << i << ") : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j)->VarNames.at(0).first << "\n";
+        }
+        StructTemplatesToGenerate.at(i)->structDeclarAST->codegen();
+    }
+}
+
+std::string get_struct_template_name(std::string struct_name, std::string type){ // TODO replace string type to cpoint_type to then convert it to string
+    return struct_name + "____" + type;
 }
 
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -448,6 +472,9 @@ Type* StructDeclarAST::codegen(){
   std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
+    if (!VarExpr){
+        Log::Info() << "VarExpr is nullptr" << "\n";
+    }
     if (VarExpr->cpoint_type.struct_name == Name && VarExpr->cpoint_type.is_ptr){
         VarExpr->cpoint_type.is_struct = false;
         VarExpr->cpoint_type.struct_name = "";
@@ -496,6 +523,7 @@ Type* StructDeclarAST::codegen(){
   }
 
   StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
+  Log::Info() << "appending to StructDeclarations struct " << Name << "\n";
   return structType;
 }
 
@@ -932,7 +960,7 @@ Function *FunctionAST::codegen() {
   CpointDebugInfo.emitLocation(Body.at(i).get());
   }
   }
-
+  codegenStructTemplates();
   Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
   for (int i = 0; i < Body.size(); i++){
@@ -1546,11 +1574,15 @@ Value *VarExprAST::codegen() {
     Type* struct_type_temp = get_type_llvm(Cpoint_Type(double_type));
     std::string struct_declaration_name_temp = "";
     if (cpoint_type.is_struct){
-      if (StructDeclarations[cpoint_type.struct_name] == nullptr){
+      std::string struct_name = cpoint_type.struct_name;
+      if (cpoint_type.is_struct_template){
+        struct_name = get_struct_template_name(cpoint_type.struct_name, cpoint_type.struct_template_name);
+      }
+      if (StructDeclarations[struct_name] == nullptr){
         return LogErrorV(this->loc, "Couldn't find struct declaration %s for created variable", cpoint_type.struct_name.c_str());
       }
-      struct_type_temp = StructDeclarations[cpoint_type.struct_name]->struct_type;
-      struct_declaration_name_temp = cpoint_type.struct_name;
+      struct_type_temp = StructDeclarations[struct_name]->struct_type;
+      struct_declaration_name_temp = struct_name;
     }
     Log::Info() << "VarName " << VarName << "\n";
     Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";

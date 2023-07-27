@@ -48,6 +48,7 @@ int return_status = 0;
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern std::vector<std::string> PackagesAdded;
 extern bool is_template_parsing_definition;
+extern bool is_template_parsing_struct;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
@@ -163,7 +164,9 @@ static void HandleStruct() {
       //ObjIR->print(*file_out_ostream);
     }
   } else {
-    getNextToken();
+    if (!is_template_parsing_struct){
+        getNextToken();
+    }
   }
 }
 
@@ -469,6 +472,7 @@ int main(int argc, char **argv){
     }
     MainLoop();
     codegenTemplates();
+    //codegenStructTemplates();
     afterAllTests();
     if (debug_info_mode){
     DBuilder->finalize();

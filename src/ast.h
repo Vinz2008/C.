@@ -25,6 +25,10 @@ using namespace llvm;
 
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
+class StructDeclarAST;
+
+std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
+
 class ExprAST {
 public:
   ExprAST(Source_location loc = Comp_context->lexloc) : loc(loc) {}
@@ -393,13 +397,15 @@ public:
 };
 
 class StructDeclarAST {
+public:
   std::string Name;
   std::vector<std::unique_ptr<VarExprAST>> Vars;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
   std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions;
-public:
-  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions) 
-    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)), ExternFunctions(std::move(ExternFunctions)) {}
+  bool has_template;
+  std::string template_name;
+  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions, bool has_template, std::string template_name) 
+    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)), ExternFunctions(std::move(ExternFunctions)), has_template(has_template), template_name(template_name) {}
   Type *codegen();
   std::unique_ptr<StructDeclarAST> clone(){
     std::vector<std::unique_ptr<FunctionAST>> FunctionsCloned;
@@ -415,17 +421,21 @@ public:
         }
     }
     std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
+    Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
     if (!Vars.empty()){
       for (int i = 0; i < Vars.size(); i++){
         std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
         std::unique_ptr<VarExprAST> VarTemp;
-        VarExprAST* VarTempPtr = static_cast<VarExprAST*>(VarCloned.get());
+        VarExprAST* VarTempPtr = dynamic_cast<VarExprAST*>(VarCloned.get());
+        if (!VarTempPtr){
+            return LogErrorS("Vars in struct is not a var and is an other type exprAST");
+        }
         VarCloned.release();
         VarTemp.reset(VarTempPtr);
         VarsCloned.push_back(std::move(VarTemp));
       }
     }
-    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned), std::move(ExternFunctionsCloned));
+    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned), std::move(ExternFunctionsCloned), has_template, template_name);
   }
 };
 

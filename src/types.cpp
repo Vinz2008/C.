@@ -36,10 +36,15 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
         Log::Info() << "cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
-        if (StructDeclarations[cpoint_type.struct_name] == nullptr){
-            Log::Info() << "StructDeclarations[cpoint_type.struct_name] is nullptr" << "\n";
+        std::string structName = cpoint_type.struct_name;
+        if (cpoint_type.is_struct_template){
+            structName = get_struct_template_name(cpoint_type.struct_name, cpoint_type.struct_template_name);
+            Log::Info() << "struct type is template : " << structName << "\n";
         }
-        type = StructDeclarations[cpoint_type.struct_name]->struct_type;
+        if (StructDeclarations[structName] == nullptr){
+            Log::Info() << "StructDeclarations[structName] is nullptr" << "\n";
+        }
+        type = StructDeclarations[structName]->struct_type;
     } else if (cpoint_type.is_union){
         type = UnionDeclarations[cpoint_type.union_name]->union_type;
     } else {

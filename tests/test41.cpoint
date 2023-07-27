@@ -1,3 +1,8 @@
+struct test_struct~T~ {
+    var content : int
+    var other : int ptr
+}
+
 func test~T~() T {
     var v : T = 2
     v
@@ -6,4 +11,6 @@ func test~T~() T {
 func main(){
     test~int~()
     test~double~()
+    var si : struct test_struct~float~
+    var sf : struct test_struct~int~
 }

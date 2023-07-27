@@ -28,15 +28,18 @@ extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
 extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
+extern std::map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, std::string> TypeTemplateCallCodegen;
-extern std::string TypeTemplatCallAst;
+extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
+extern std::string TypeTemplateCallAst;
 
 bool is_comment = false;
 
 extern void HandleComment();
 
 bool is_template_parsing_definition = false;
+bool is_template_parsing_struct = false;
 
 
 Source_location emptyLoc = {0, 0, true, ""};
@@ -465,6 +468,8 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   std::vector<Cpoint_Type> args;
   Cpoint_Type* return_type = nullptr;
   Cpoint_Type default_type = Cpoint_Type(double_type);
+  bool is_struct_template = false;
+  std::string struct_template_name;
   Log::Info() << "type declaration found" << "\n";
   if (eat_token){
   getNextToken(); // eat the ':'
@@ -515,6 +520,22 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
     struct_Name = IdentifierStr;
     Log::Info() << "struct_Name " << struct_Name << "\n";
     getNextToken();
+    if (CurTok == '~'){
+        Log::Info() << "found templates for struct" << "\n";
+        getNextToken();
+        struct_template_name = IdentifierStr;
+        getNextToken();
+        if (CurTok != '~'){
+            LogError("Missing '~' in struct template type usage");
+            return default_type;
+        }
+        getNextToken();
+        auto structDeclar = TemplateStructDeclars[struct_Name]->declarAST->clone();
+        structDeclar->Name = get_struct_template_name(struct_Name, struct_template_name);
+        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(struct_template_name, std::move(structDeclar)));
+        Log::Info() << "added to StructTemplatesToGenerate" << "\n";
+        is_struct_template = true;
+    }
     if (CurTok == tok_ptr){
       is_ptr = true;
       getNextToken();
@@ -537,17 +558,17 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
       Log::Info() << "Type Declaration ptr added : " << nb_ptr << "\n";
       getNextToken();
     }
-  } else if (TypeTemplatCallAst == IdentifierStr){
+  } else if (TypeTemplateCallAst == IdentifierStr){
     Log::Info() << "Template type in parsing type declaration" << "\n";
     is_template_type = true;
     getNextToken();
   } else {
-    Log::Info() << "TypeTemplatCallAst : " << TypeTemplatCallAst << "\n";
+    Log::Info() << "TypeTemplatCallAst : " << TypeTemplateCallAst << "\n";
     LogError("wrong type %s found", IdentifierStr.c_str());
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, is_template_type, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, is_template_type, is_struct_template, struct_template_name, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -650,7 +671,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     getNextToken();
     has_template = true;
     Log::Info() << "Found template" << "\n";
-    TypeTemplatCallAst = template_name;
+    TypeTemplateCallAst = template_name;
   }
   if (CurTok != '(')
     return LogErrorP("Expected '(' in prototype");
@@ -724,6 +745,8 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
 
 std::unique_ptr<StructDeclarAST> ParseStruct(){
   int i = 0;
+  std::string template_name = "";
+  bool has_template = false;
   std::vector<std::unique_ptr<VarExprAST>> VarList;
   std::vector<std::unique_ptr<FunctionAST>> Functions;
   std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions;
@@ -731,6 +754,16 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   std::string structName = IdentifierStr;
   Log::Info() << "Struct Name : " << structName << "\n";
   getNextToken();
+  if (CurTok == '~'){
+    getNextToken();
+    template_name = IdentifierStr;
+    getNextToken();
+    if (CurTok != '~'){
+      return LogErrorS("Missing '~' in template struct declaration");
+    }
+    getNextToken();
+    has_template = true;
+  }
   if (CurTok != '{')
     return LogErrorS("Expected '{' in Struct");
   getNextToken();
@@ -738,6 +771,9 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     Log::Info() << "Curtok in struct parsing : " << CurTok << "\n";
     if (CurTok == tok_var){
     auto exprAST = ParseVarExpr();
+    if (!exprAST){
+        return nullptr;
+    }
     VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
     if (varExprAST == nullptr){
       return LogErrorS("Error in struct declaration vars");
@@ -786,7 +822,14 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     return LogErrorS("Expected '}' in struct");
   }
   getNextToken();  // eat '}'.
-  return std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions));
+  auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);
+  if (has_template){
+    Log::Info() << "Parse struct has template" << "\n";
+    TemplateStructDeclars[structName] = std::make_unique<StructDeclar>(std::move(structDeclar), template_name);
+    is_template_parsing_struct = true;
+    return nullptr; // TODO : remove comment to not generate the struct and only generate it when a variable is created. We will need to generate it immediately
+  }
+  return structDeclar;
 }
 
 std::unique_ptr<UnionDeclarAST> ParseUnion(){
@@ -834,6 +877,8 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
     Log::Info() << "args added to NamedValues when doing ast : " << Proto->Args.at(i).first << "\n";
     NamedValues[Proto->Args.at(i).first] = std::make_unique<NamedValue>(nullptr,Proto->Args.at(i).second);
   }
+  StructTemplatesToGenerate.clear();
+  Log::Info() << "cleared StructTemplatesToGenerate" << "\n";
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (std_mode && Proto->Name == "main" && gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
