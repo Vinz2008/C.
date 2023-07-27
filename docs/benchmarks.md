@@ -12,6 +12,7 @@ Rust release (rustc 1.69.0) : 71.294s
 Rust debug (rustc 1.69.0) : 266.806s  
 Nim 1.6.10 release :  27.447s  
 Nim 1.6.10 debug : 355.472s  
+Swift (swiftc 5.8.1) : 463.776s
 Php :   
 Lua :   
 LuaJIT 2.1.0-beta3 : 288.73s  
@@ -30,7 +31,8 @@ C (gcc 13.1.1) : 3.238s
 Rust release (rustc 1.69.0) : 2.756s  
 Rust debug (rustc 1.69.0) : 14.905s  
 Nim 1.6.10 release : 3.206s  
-Nim 1.6.10 debug : 3.216s  
+Nim 1.6.10 debug : 3.216s
+Swift (swiftc 5.8.1)  : 10.670s
 Php 8.2.8 : 17s  
 Lua 5.4.6 : 20.07s  
 LuaJIT 2.1.0-beta3 : 2.09s  
