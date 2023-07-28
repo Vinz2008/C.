@@ -41,7 +41,7 @@ std::vector<std::string> modulesNamesContext;
 
 std::map<std::string, Function*> GeneratedFunctions;
 
-std::stack<BasicBlock*> blocksForBreak;
+std::stack<BasicBlock*> blocksForBreak; // TODO : put this in Compiler_Context
 
 std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
@@ -65,10 +65,10 @@ extern Source_location emptyLoc;
 
 extern bool debug_info_mode;
 
-extern bool test_mode;
-extern bool std_mode;
-extern bool gc_mode;
-extern bool is_release_mode;
+//extern bool test_mode;
+//extern bool std_mode;
+//extern bool gc_mode;
+//extern bool is_release_mode;
 
 // TODO : return at last line of function after if returns the iftmp and not the return value : fix this
 
@@ -451,7 +451,7 @@ Value* ArrayMemberExprAST::codegen() {
   }
 
   Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
-  if (!is_constant && cpoint_type.nb_element > 0 && !is_release_mode && std_mode && index){
+  if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
     if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
       return nullptr;
     }
@@ -798,7 +798,7 @@ void TestAST::codegen(){
 }
 
 void afterAllTests(){
-  if (!test_mode /*|| testASTNodes.empty()*/){
+  if (!Comp_context->test_mode /*|| testASTNodes.empty()*/){
     return;
   }
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
@@ -806,7 +806,7 @@ void afterAllTests(){
   Args.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
   auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "main", Args, Cpoint_Type(double_type));
   std::vector<std::unique_ptr<ExprAST>> Body;
-  if (/*std_mode &&*/ gc_mode){
+  if (/*std_mode &&*/ Comp_context->gc_mode){
     std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
     auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
     Body.push_back(std::move(E_gc_init));

@@ -22,8 +22,8 @@ extern int posArrayNb;
 extern std::unique_ptr<Compiler_context> Comp_context;
 extern std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 extern std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
-extern bool std_mode;
-extern bool gc_mode;
+//extern bool std_mode;
+//extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector<std::string> typeDefTable;
@@ -880,7 +880,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   StructTemplatesToGenerate.clear();
   Log::Info() << "cleared StructTemplatesToGenerate" << "\n";
   std::vector<std::unique_ptr<ExprAST>> Body;
-  if (std_mode && Proto->Name == "main" && gc_mode){
+  if (Comp_context->std_mode && Proto->Name == "main" && Comp_context->gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
   auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
   Body.push_back(std::move(E_gc_init));

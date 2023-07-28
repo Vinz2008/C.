@@ -5,12 +5,15 @@
 #include "config.h"
 #include "utils.h"
 #include "cli.h"
+#include "errors.h"
 
 
 using namespace std;
 
-extern bool debug_mode;
+//extern bool debug_mode;
 extern bool debug_info_mode;
+
+extern std::unique_ptr<Compiler_context> Comp_context;
 
 #ifdef _WIN32
 #include "windows.h"
@@ -20,7 +23,7 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     string cmd_clean = "make -C ";
     cmd_clean.append(path);
     cmd_clean.append(" clean");
-    if (debug_mode){
+    if (Comp_context->debug_mode){
     cout << "cmd clean : " << cmd_clean << endl;
     }
     auto out_clean = runCommand(cmd_clean);
@@ -36,7 +39,7 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     if (debug_info_mode){
         cmd += " debug";
     }
-    if (debug_mode){
+    if (Comp_context->debug_mode){
     cout << "cmd : " << cmd << endl;
     }
     auto out = runCommand(cmd);
@@ -100,12 +103,12 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
         cmd.append(" ");
         cmd.append(list_files.at(i));
     }
-    if (debug_mode){
+    if (Comp_context->debug_mode){
     cout << "cmd : " << cmd << endl;
     }
     auto out = runCommand(cmd);
     retcode = out->exit_status;
-    if (debug_mode){
+    if (Comp_context->debug_mode){
     cout << "retcode : " << retcode << endl;
     }
     if (retcode == -1 || retcode == 1){

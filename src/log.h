@@ -1,8 +1,14 @@
 #include <iostream>
-#pragma once
 
-extern bool debug_mode;
+#include "errors.h"
+
+#ifndef _LOG_HEADER_
+#define _LOG_HEADER_
+
+//extern bool debug_mode;
 extern bool silent_mode;
+
+extern std::unique_ptr<Compiler_context> Comp_context;
 
 namespace Log {
     namespace Color {
@@ -37,13 +43,13 @@ namespace Log {
     };
     struct Info {
         Info() {
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout << "[INFO] ";
             }
         }
         template< class T >
         Info &operator<<(const T& val){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout<<val;
             }
             return *this;
@@ -68,13 +74,13 @@ namespace Log {
     };
     struct Preprocessor_Info {
         Preprocessor_Info(){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout << "[PREPROCESSOR INFO] ";
             }
         }
         template< class T >
         Preprocessor_Info &operator<<(const T& val){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout<<val;
             }
             return *this;
@@ -98,13 +104,13 @@ namespace Log {
     };
     struct Imports_Info {
         Imports_Info(){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout << "[IMPORTS INFO] ";
             }
         }
         template< class T >
         Imports_Info &operator<<(const T& val){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout<<val;
             }
             return *this;
@@ -112,16 +118,18 @@ namespace Log {
     };
     struct Build_Info {
         Build_Info(){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout << "[BUILD INFO] ";
             }
         }
         template< class T >
         Build_Info &operator<<(const T& val){
-            if (debug_mode){
+            if (Comp_context->debug_mode){
             std::cout<<val;
             }
             return *this;
         }
     };
 }
+
+#endif

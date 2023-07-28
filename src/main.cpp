@@ -54,15 +54,15 @@ std::unique_ptr<Compiler_context> Comp_context;
 // TODO : add those variable in a struct called cpointContext or in Compiler_context
 string std_path = DEFAULT_STD_PATH;
 string filename ="";
-bool std_mode = true;
-bool gc_mode = true;
+/*bool std_mode = true;
+bool gc_mode = true;*/
 extern std::string IdentifierStr;
-bool debug_mode = false;
+//bool debug_mode = false;
 bool debug_info_mode = false;
-bool test_mode = false;
+//bool test_mode = false;
 bool silent_mode = false;
 
-bool is_release_mode = false;
+//bool is_release_mode = false;
 
 bool errors_found = false;
 int error_count = 0;
@@ -201,11 +201,11 @@ void HandleTest(){
 
 static void MainLoop() {
   while (1) {
-    if (debug_mode){
+    if (Comp_context->debug_mode){
     std::flush(file_log);
     }
     if (last_line == true){
-      if (debug_mode){
+      if (Comp_context->debug_mode){
       file_log << "exit" << "\n";
       }
       return;
@@ -245,7 +245,7 @@ static void MainLoop() {
     case tok_single_line_comment:
       Log::Info() << "found single-line comment" << "\n";
       Log::Info() << "char found as a '/' : " << CurTok << "\n";
-      if (debug_mode){
+      if (Comp_context->debug_mode){
       file_log << "found single-line comment" << "\n";
       }
       HandleComment();
@@ -275,6 +275,7 @@ int main(int argc, char **argv){
     setlocale(LC_ALL, "");
     bindtextdomain("cpoint", /*"/usr/share/locale/"*/ "./locales/");
     textdomain("cpoint");
+    Comp_context = std::make_unique<Compiler_context>("", 1, 0, "<empty line>");
     string object_filename = "out.o";
     string exe_filename = "a.out";
     string temp_output = "";
@@ -297,7 +298,7 @@ int main(int argc, char **argv){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
             cout << "debug mode" << endl;
-            debug_mode = true;
+            Comp_context->debug_mode = true;
         } else if (arg.compare("-o") == 0){
           i++;
           temp_output = argv[i];
@@ -318,7 +319,7 @@ int main(int argc, char **argv){
         } else if (arg.compare("-g") == 0){
           debug_info_mode = true;
         } else if (arg.compare("-nostd") == 0){
-          std_mode = false;
+          Comp_context->std_mode = false;
         } else if (arg.compare("-fPIC") == 0){
           PICmode = true;
         } else if(arg.compare("-target-triplet") == 0){
@@ -329,19 +330,19 @@ int main(int argc, char **argv){
         } else if (arg.compare("-build-mode") == 0){
             i++;
             if ((std::string)argv[i] == "release"){
-                is_release_mode = true;
+                Comp_context->is_release_mode = true;
             } else if ((std::string)argv[i] == "debug"){
-                is_release_mode = false;
+                Comp_context->is_release_mode = false;
             } else {
                 Log::Warning() << "Unkown build mode, defaults to debug mode" << "\n";
-                is_release_mode = false;
+                Comp_context->is_release_mode = false;
             }
         } else if (arg.compare("-verbose-std-build") == 0){
           verbose_std_build = true;
         } else if (arg.compare("-no-delete-import-file") == 0){
           remove_temp_file = false;
         } else if (arg.compare("-no-gc") == 0){
-          gc_mode = false;
+          Comp_context->gc_mode = false;
         } else if (arg.compare("-with-gc") == 0){
           explicit_with_gc = true;
         } else if (arg.compare("-no-imports") == 0){
@@ -351,12 +352,12 @@ int main(int argc, char **argv){
         } else if (arg.compare("-no-rebuild-std") == 0){
           rebuild_std = false;
         } else if (arg.compare("-test") == 0){
-          test_mode = true;
+          Comp_context->test_mode = true;
         } else if (arg.compare("-run") == 0){
           run_mode = true;
         } else if (arg.compare("-run-test") == 0){
           run_mode = true;
-          test_mode = true;
+          Comp_context->test_mode = true;
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
@@ -380,7 +381,7 @@ int main(int argc, char **argv){
       link_files_mode = false;
     }
     init_context_preprocessor();
-    Comp_context = std::make_unique<Compiler_context>(filename, 1, 0, "<empty line>");
+    Comp_context->filename = filename;
     std::string temp_filename = filename;
     temp_filename.append(".temp");
     if (import_mode){
@@ -394,7 +395,7 @@ int main(int argc, char **argv){
     filename = temp_filename;
     }
     std::error_code ec;
-    if (debug_mode == false){
+    if (Comp_context->debug_mode == false){
 #ifdef _WIN32
       file_log.open("nul");
 #else
@@ -477,10 +478,10 @@ int main(int argc, char **argv){
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", is_optimised, "", 0);
     }
-    if ((std_mode || explicit_with_gc) && gc_mode){
+    if ((Comp_context->std_mode || explicit_with_gc) && Comp_context->gc_mode){
       add_externs_for_gc();
     }
-    if (test_mode){
+    if (Comp_context->test_mode){
       add_externs_for_test();
     }
     MainLoop();
@@ -540,7 +541,7 @@ int main(int argc, char **argv){
       std_static_path.append("/");
     }
     std_static_path.append("libstd.a");
-    if (std_mode && link_files_mode){
+    if (Comp_context->std_mode && link_files_mode){
       if (rebuild_std){
       Log::Print() << "Built the standard library" << "\n";
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
@@ -552,7 +553,7 @@ int main(int argc, char **argv){
           fprintf(stderr, "std static library %s has not be builded. You need to at least compile a file one time without the -no-rebuild-std flag\n", std_static_path.c_str());
         }
       }
-      if (gc_mode == true){
+      if (Comp_context->gc_mode == true){
       gc_path = std_path;
       if (rebuild_gc){
       gc_path.append("/../bdwgc");
@@ -573,9 +574,9 @@ int main(int argc, char **argv){
       std_static_path.append(std_path);
       std_static_path.append(" -lstd");*/
       vect_obj_files.push_back(object_filename);
-      if (std_mode){
+      if (Comp_context->std_mode){
       vect_obj_files.push_back(std_static_path);
-      if (gc_mode){
+      if (Comp_context->gc_mode){
       vect_obj_files.push_back(gc_static_path);
       }
       }
