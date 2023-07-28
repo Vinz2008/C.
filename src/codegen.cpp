@@ -55,7 +55,6 @@ std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
 
 extern std::map<std::string, int> BinopPrecedence;
-extern bool gc_mode;
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
@@ -69,6 +68,7 @@ extern bool debug_info_mode;
 extern bool test_mode;
 extern bool std_mode;
 extern bool gc_mode;
+extern bool is_release_mode;
 
 // TODO : return at last line of function after if returns the iftmp and not the return value : fix this
 
@@ -451,7 +451,7 @@ Value* ArrayMemberExprAST::codegen() {
   }
 
   Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
-  if (!is_constant && cpoint_type.nb_element > 0 && std_mode && index){
+  if (!is_constant && cpoint_type.nb_element > 0 && !is_release_mode && std_mode && index){
     if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
       return nullptr;
     }

@@ -51,6 +51,7 @@ extern bool is_template_parsing_definition;
 extern bool is_template_parsing_struct;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
+// TODO : add those variable in a struct called cpointContext or in Compiler_context
 string std_path = DEFAULT_STD_PATH;
 string filename ="";
 bool std_mode = true;
@@ -60,6 +61,8 @@ bool debug_mode = false;
 bool debug_info_mode = false;
 bool test_mode = false;
 bool silent_mode = false;
+
+bool is_release_mode = false;
 
 bool errors_found = false;
 int error_count = 0;
@@ -323,6 +326,16 @@ int main(int argc, char **argv){
           i++;
           target_triplet_found = argv[i];
           cout << "target triplet : " << target_triplet_found << endl;
+        } else if (arg.compare("-build-mode") == 0){
+            i++;
+            if ((std::string)argv[i] == "release"){
+                is_release_mode = true;
+            } else if ((std::string)argv[i] == "debug"){
+                is_release_mode = false;
+            } else {
+                Log::Warning() << "Unkown build mode, defaults to debug mode" << "\n";
+                is_release_mode = false;
+            }
         } else if (arg.compare("-verbose-std-build") == 0){
           verbose_std_build = true;
         } else if (arg.compare("-no-delete-import-file") == 0){
