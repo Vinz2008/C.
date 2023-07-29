@@ -231,11 +231,11 @@ public:
 class CallExprAST : public ExprAST {
   std::string Callee;
   std::vector<std::unique_ptr<ExprAST>> Args;
-  std::string template_passed_type;
+  /*std::string*/ Cpoint_Type template_passed_type;
 
 public:
   CallExprAST(Source_location Loc, const std::string &Callee,
-              std::vector<std::unique_ptr<ExprAST>> Args, const std::string& template_passed_type)
+              std::vector<std::unique_ptr<ExprAST>> Args, /*const std::string&*/ Cpoint_Type template_passed_type)
       : ExprAST(Loc), Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
@@ -491,8 +491,8 @@ public:
 class TypeDefAST {
 public:
   std::string new_type;
-  std::string value_type;
-  TypeDefAST(const std::string& new_type, const std::string& value_type) :  new_type(new_type), value_type(value_type) {}
+  Cpoint_Type value_type;
+  TypeDefAST(const std::string& new_type, Cpoint_Type value_type) :  new_type(new_type), value_type(value_type) {}
   void codegen();
 };
 

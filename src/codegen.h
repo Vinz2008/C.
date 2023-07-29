@@ -31,16 +31,16 @@ public:
 
 class TemplateCall {
 public:
-    std::string typeName;
+    /*std::string*/ Cpoint_Type type;
     std::unique_ptr<FunctionAST> functionAST;
-    TemplateCall(const std::string& typeName, std::unique_ptr<FunctionAST> functionAST) : typeName(typeName), functionAST(std::move(functionAST)) {}
+    TemplateCall(Cpoint_Type type, std::unique_ptr<FunctionAST> functionAST) : type(type), functionAST(std::move(functionAST)) {}
 };
 
 class TemplateStructCreation {
 public:
-    std::string typeName;
+    /*std::string*/ Cpoint_Type type;
     std::unique_ptr<StructDeclarAST> structDeclarAST;
-    TemplateStructCreation(const std::string& typeName, std::unique_ptr<StructDeclarAST> structDeclarAST) : typeName(typeName), structDeclarAST(std::move(structDeclarAST)) {}
+    TemplateStructCreation(Cpoint_Type type, std::unique_ptr<StructDeclarAST> structDeclarAST) : type(type), structDeclarAST(std::move(structDeclarAST)) {}
 };
 
 class GlobalVariableValue {
@@ -95,6 +95,6 @@ std::string module_function_mangling(std::string module_name, std::string functi
 void codegenTemplates();
 void codegenStructTemplates();
 void afterAllTests();
-std::string get_struct_template_name(std::string struct_name, std::string type);
+std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type);
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);

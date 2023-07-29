@@ -26,13 +26,15 @@ extern std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariabl
 //extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
-extern std::vector<std::string> typeDefTable;
+extern std::vector</*std::string*/ Cpoint_Type> typeDefTable;
 extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 extern std::vector<std::string> modulesNamesContext;
-extern std::pair<std::string, std::string> TypeTemplateCallCodegen;
+extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
+
+Cpoint_Type ParseTypeDeclaration(bool eat_token);
 
 bool is_comment = false;
 
@@ -287,11 +289,11 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     return std::make_unique<VariableExprAST>(IdLoc, IdName, *type);
   }
   // Call.
-  std::string template_passed_type = "";
+  /*std::string*/ Cpoint_Type template_passed_type = /*""*/ Cpoint_Type(double_type);
   if (CurTok == '~'){
     getNextToken();
-    template_passed_type = IdentifierStr;
-    getNextToken();
+    template_passed_type = /*IdentifierStr*/ ParseTypeDeclaration(false);
+    //getNextToken();
     if (CurTok != '~'){
       return LogError("expected '~' not found");
     }
@@ -469,7 +471,8 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   Cpoint_Type* return_type = nullptr;
   Cpoint_Type default_type = Cpoint_Type(double_type);
   bool is_struct_template = false;
-  std::string struct_template_name;
+  //std::string struct_template_name;
+  Cpoint_Type* struct_template_type_passed = nullptr;
   Log::Info() << "type declaration found" << "\n";
   if (eat_token){
   getNextToken(); // eat the ':'
@@ -483,7 +486,8 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   }*/ // TODO make a way to recognize a template type in cpoint_type. Remove the following code because the replacement of the type will be made in codegen
   if (CurTok == tok_identifier && IdentifierStr == TypeTemplateCallCodegen.first){
     Log::Info() << "Found template type in template call" << "\n";
-    IdentifierStr = TypeTemplateCallCodegen.second;
+    //IdentifierStr = TypeTemplateCallCodegen.second;
+    return TypeTemplateCallCodegen.second;
   }
   if (CurTok == tok_func){
     is_function = true;
@@ -523,16 +527,21 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
     if (CurTok == '~'){
         Log::Info() << "found templates for struct" << "\n";
         getNextToken();
-        struct_template_name = IdentifierStr;
-        getNextToken();
+        struct_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false));
+        if (!struct_template_type_passed){
+            LogError("missing template type for struct");
+            return default_type;
+        }
+        //struct_template_name = IdentifierStr;
+        //getNextToken();
         if (CurTok != '~'){
             LogError("Missing '~' in struct template type usage");
             return default_type;
         }
         getNextToken();
         auto structDeclar = TemplateStructDeclars[struct_Name]->declarAST->clone();
-        structDeclar->Name = get_struct_template_name(struct_Name, struct_template_name);
-        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(struct_template_name, std::move(structDeclar)));
+        structDeclar->Name = get_struct_template_name(struct_Name, /*struct_template_name*/ *struct_template_type_passed);
+        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(/*struct_template_name*/ *struct_template_type_passed, std::move(structDeclar)));
         Log::Info() << "added to StructTemplatesToGenerate" << "\n";
         is_struct_template = true;
     }
@@ -568,7 +577,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, is_template_type, is_struct_template, struct_template_name, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, is_template_type, is_struct_template, /*struct_template_name*/ struct_template_type_passed, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -882,7 +891,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (Comp_context->std_mode && Proto->Name == "main" && Comp_context->gc_mode){
   std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
-  auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
+  auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type(double_type));
   Body.push_back(std::move(E_gc_init));
   }
   auto ret = ParseBodyExpressions(Body, true);
@@ -1018,8 +1027,9 @@ std::unique_ptr<TypeDefAST> ParseTypeDef(){
   getNextToken(); // eat the 'type'
   std::string new_type = IdentifierStr;
   getNextToken();
-  std::string value_type = IdentifierStr;
-  getNextToken();
+  Cpoint_Type value_type = ParseTypeDeclaration(false);
+  //std::string value_type = IdentifierStr;
+  //getNextToken();
   types.push_back(new_type);
   typeDefTable.push_back(value_type);
   return std::make_unique<TypeDefAST>(new_type, value_type);

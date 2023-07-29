@@ -47,7 +47,7 @@ std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
 std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 
-std::pair<std::string, std::string> TypeTemplateCallCodegen; // contains the type of template in function call
+std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen; // contains the type of template in function call
 std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have multiple templates in the future ?
 
 
@@ -171,16 +171,16 @@ void codegenTemplates(){
   StructTemplatesToGenerate.clear(); // TODO : because StructTemplatesToGenerate is populated when parsing and the codegen of templates is done at the end, we can't know what the StructTemplatesToGenerate for this function is. Need to create a vector or a map of StructTemplatesToGenerate for each templated functions
   for (int i = 0; i < TemplatesToGenerate.size(); i++){
     Log::Info() << "setting TypeTemplateCallCodegen" << "\n";
-    TypeTemplateCallCodegen = std::make_pair(TemplatesToGenerate.at(i)->functionAST->Proto->template_name, TemplatesToGenerate.at(i)->typeName);
+    TypeTemplateCallCodegen = std::make_pair(TemplatesToGenerate.at(i)->functionAST->Proto->template_name, TemplatesToGenerate.at(i)->type);
     TemplatesToGenerate.at(i)->functionAST->codegen();
   }
 }
 
-void callTemplate(std::string& Callee, std::string template_passed_type){
+void callTemplate(std::string& Callee, /*std::string*/ Cpoint_Type template_passed_type){
   Log::Info() << "Callee : " << Callee << "\n";
   auto templateProto = std::make_unique<TemplateProto>(TemplateProtos[Callee]->functionAST->clone(), TemplateProtos[Callee]->template_type_name); 
   std::string typeName = "____type";
-  typeName = "____" + template_passed_type;
+  typeName = "____" + create_mangled_name_from_type(template_passed_type);
   std::string function_temp_name = templateProto->functionAST->Proto->Name + typeName; // add something to specify type
   templateProto->functionAST->Proto->Name = function_temp_name;
   //templateProto->functionAST->codegen();
@@ -193,7 +193,7 @@ void callTemplate(std::string& Callee, std::string template_passed_type){
 void codegenStructTemplates(){
     Log::Info() << "CODEGEN STRUCT TEMPLATES (nb : "  << StructTemplatesToGenerate.size() << ")" << "\n";
     for (int i = 0; i < StructTemplatesToGenerate.size(); i++){
-        TypeTemplateCallCodegen = std::make_pair(StructTemplatesToGenerate.at(i)->structDeclarAST->template_name, StructTemplatesToGenerate.at(i)->typeName);
+        TypeTemplateCallCodegen = std::make_pair(StructTemplatesToGenerate.at(i)->structDeclarAST->template_name, StructTemplatesToGenerate.at(i)->type);
         Log::Info()  << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.size() : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size() << "\n";
         for (int j = 0; j < StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size(); j++){
             if (!StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j)){
@@ -205,8 +205,9 @@ void codegenStructTemplates(){
     }
 }
 
-std::string get_struct_template_name(std::string struct_name, std::string type){ // TODO replace string type to cpoint_type to then convert it to string
-    return struct_name + "____" + type;
+std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type){ // TODO replace string type to cpoint_type to then convert it to string
+    //return struct_name + "____" + type;
+    return struct_name + "____" + create_mangled_name_from_type(type);
 }
 
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -808,7 +809,7 @@ void afterAllTests(){
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (/*std_mode &&*/ Comp_context->gc_mode){
     std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
-    auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), "");
+    auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type(double_type));
     Body.push_back(std::move(E_gc_init));
   }
   Log::Info() << "testASTNodes size : " << testASTNodes.size() << "\n";
@@ -825,7 +826,7 @@ void afterAllTests(){
     ArgsPrintf.push_back(std::move(strExprAST));
     strExprAST = std::make_unique<StringExprAST>(first_filename);
     ArgsPrintf.push_back(std::move(strExprAST));
-    printfCall = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(ArgsPrintf), "");
+    printfCall = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(ArgsPrintf), Cpoint_Type(double_type));
     Body.push_back(std::move(printfCall));
     for (int j = 0; j < testASTNodes.at(i)->Body.size(); j++){
       Body.push_back(std::move(testASTNodes.at(i)->Body.at(j)));
@@ -1585,7 +1586,7 @@ Value *VarExprAST::codegen() {
     if (cpoint_type.is_struct){
       std::string struct_name = cpoint_type.struct_name;
       if (cpoint_type.is_struct_template){
-        struct_name = get_struct_template_name(cpoint_type.struct_name, cpoint_type.struct_template_name);
+        struct_name = get_struct_template_name(cpoint_type.struct_name, *cpoint_type.struct_template_type_passed);
       }
       if (StructDeclarations[struct_name] == nullptr){
         return LogErrorV(this->loc, "Couldn't find struct declaration %s for created variable", cpoint_type.struct_name.c_str());

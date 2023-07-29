@@ -55,7 +55,7 @@ Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoin
     Builder->SetInsertPoint(ThenBB);
     std::vector<std::unique_ptr<ExprAST>> Args;
     Args.push_back(std::make_unique<StringExprAST>("Out of bound access of array"));
-    std::make_unique<CallExprAST>(emptyLoc, "panic", std::move(Args), "")->codegen();
+    std::make_unique<CallExprAST>(emptyLoc, "panic", std::move(Args), Cpoint_Type(double_type))->codegen();
     Builder->CreateBr(AfterBB);
     Builder->SetInsertPoint(AfterBB);
     return ConstantFP::get(*TheContext, APFloat((double)0)); // to differenciate from nullptr

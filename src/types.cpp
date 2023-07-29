@@ -16,14 +16,14 @@ extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 extern std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
-std::vector<std::string> typeDefTable;
-extern std::pair<std::string, std::string> TypeTemplateCallCodegen;
+std::vector</*std::string*/ Cpoint_Type> typeDefTable;
+extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
     if (cpoint_type.is_template_type){
         Log::Info() << "template type found get_type_llvm " << TypeTemplateCallCodegen.first << " -> " << TypeTemplateCallCodegen.second << "\n";
-        return get_type_llvm(get_type(TypeTemplateCallCodegen.second));
+        return get_type_llvm(TypeTemplateCallCodegen.second);
     }
     if (cpoint_type.type >= 0){
         Log::Info() << "Typedef type used to declare variable (size of typedef table : " << typeDefTable.size() << ")" << "\n";
@@ -31,14 +31,14 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             Log::Info() << "type number " << cpoint_type.type << "\n";
             LogError("couldn't find type from typedef");
         }
-        return get_type_llvm(get_type(typeDefTable.at(cpoint_type.type)));
+        return get_type_llvm(typeDefTable.at(cpoint_type.type));
     }
     Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
         Log::Info() << "cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
         std::string structName = cpoint_type.struct_name;
         if (cpoint_type.is_struct_template){
-            structName = get_struct_template_name(cpoint_type.struct_name, cpoint_type.struct_template_name);
+            structName = get_struct_template_name(cpoint_type.struct_name, *cpoint_type.struct_template_type_passed);
             Log::Info() << "struct type is template : " << structName << "\n";
         }
         if (StructDeclarations[structName] == nullptr){
@@ -375,4 +375,19 @@ std::string get_string_from_type(Cpoint_Type type){
     } else {
         return types.at(type.type-1+15);
     }
+}
+
+
+std::string create_mangled_name_from_type(Cpoint_Type type){
+    std::string name;
+    name = get_string_from_type(type);
+    if (type.is_ptr){
+        name += "_ptr";
+        // TODO : maybe use the nb_ptr to mangle differently
+    }
+    if (type.is_array){
+        name += "_array";
+    }
+    //if (type)
+    return name;   
 }
