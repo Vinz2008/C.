@@ -1,14 +1,14 @@
-# French translations for PACKAGE package
-# Traductions françaises du paquet PACKAGE.
-# Copyright (C) 2023 THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
+# French translations for Cpoint package
+# Traductions françaises du paquet Cpoint.
+# Copyright (C) 2023 THE Cpoint'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the Cpoint package.
 #  <vincentbidarddelanoe@gmail.com>, 2023.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: 1.0\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-16 22:11+0200\n"
+"POT-Creation-Date: 2023-07-29 22:22+0200\n"
 "PO-Revision-Date: 2023-07-16 22:10+0200\n"
 "Last-Translator:  <vincentbidarddelanoe@gmail.com>\n"
 "Language-Team: French <traduc@traduc.org>\n"
@@ -18,19 +18,23 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: ../src/main.cpp:435
+#: ../src/main.cpp:312
+msgid "custom path std : "
+msgstr "chemin custom pour std : "
+
+#: ../src/main.cpp:498
 #, c-format
 msgid "exited with %d errors\n"
 msgstr "Fini avec %d erreurs\n"
 
-#: ../src/main.cpp:459
+#: ../src/main.cpp:522
 msgid "Could not open file: "
 msgstr "N'a pas pu ouvrir le fichier "
 
-#: ../src/main.cpp:469
+#: ../src/main.cpp:532
 msgid "TheTargetMachine can't emit a file of this type"
 msgstr "TheTargetMachine ne peut pas émettre ce type de fichier"
 
-#: ../src/main.cpp:475
+#: ../src/main.cpp:538
 msgid "Wrote "
 msgstr "Ecrit "

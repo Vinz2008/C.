@@ -1,4 +1,5 @@
 LINGUAS = fr
+#LINGUAS = fr_FR
 
 MSGFMT=msgfmt --verbose --check
 MSGMERGE=msgmerge
@@ -10,7 +11,9 @@ XGETTEXT_ARGS=--keyword=_
 all: allmo
 
 install:
-	for t in $(LINGUAS); do cp $$t.po /usr/share/locale/$$t/LC_MESSAGES/cpoint.mo; done
+# for t in $(LINGUAS); do cp $$t.po /usr/share/locale/$$t/LC_MESSAGES/cpoint.mo; done
+	for t in $(LINGUAS); do cp $$t.po /usr/share/locale/$${t}_$${t^^}.UTF-8/LC_MESSAGES/cpoint.mo; done
+	for t in $(LINGUAS); do cp $$t.po /usr/lib/locale/$${t}_$${t^^}.utf8/LC_MESSAGES/cpoint.mo; done
 
 
 %.mo: %.po

@@ -273,7 +273,7 @@ static void MainLoop() {
 
 int main(int argc, char **argv){
     setlocale(LC_ALL, "");
-    bindtextdomain("cpoint", /*"/usr/share/locale/"*/ "./locales/");
+    bindtextdomain("cpoint", /*"/usr/share/locale/"*/ /*"./locales/"*/ NULL);
     textdomain("cpoint");
     Comp_context = std::make_unique<Compiler_context>("", 1, 0, "<empty line>");
     string object_filename = "out.o";
@@ -309,7 +309,7 @@ int main(int argc, char **argv){
         } else if (arg.compare("-std") == 0){
           i++;
           std_path = argv[i];
-          Log::Print() << "custom path std : " << std_path << "\n";
+          Log::Print() << _("custom path std : ") << std_path << "\n";
         } else if (arg.compare("-c") == 0){
           link_files_mode = false;
         } else if (arg.compare("-S") == 0){
