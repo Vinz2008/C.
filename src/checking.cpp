@@ -34,7 +34,6 @@ Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_T
 }
 
 Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoint_type){
-  // TODO : desactivate this in release mode and leave it activated in debug build mode
     std::vector<std::pair<std::string, Cpoint_Type>> PanicArgs;
     PanicArgs.push_back(std::make_pair("message", Cpoint_Type(i8_type, true)));
     add_manually_extern("panic", Cpoint_Type(void_type), std::move(PanicArgs), 0, 30, false, false, "");

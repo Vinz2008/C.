@@ -205,7 +205,7 @@ void codegenStructTemplates(){
     }
 }
 
-std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type){ // TODO replace string type to cpoint_type to then convert it to string
+std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type){
     //return struct_name + "____" + type;
     return struct_name + "____" + create_mangled_name_from_type(type);
 }
@@ -504,7 +504,7 @@ Type* StructDeclarAST::codegen(){
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
     Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
     self_pointer_type = Cpoint_Type(double_type, true, 0, false, 0, true, Name);
-    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type)); // TODO fix this by passing struct type pointer as first arg
+    FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
     functions.push_back(function_name);  
