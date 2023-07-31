@@ -1,5 +1,5 @@
 extern printfmt(x : i8 ptr ...) void;
-func main(){
+func main() void {
     var x : double = 2
     var str : i8 ptr = "\thello world %f\n"
     printfmt(str, x)

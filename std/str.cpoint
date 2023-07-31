@@ -45,12 +45,12 @@ func lenstr(string : struct str) int {
     len
 }
 
-func destroyString(string : struct str ptr){
+func destroyString(string : struct str ptr) void {
     gc_free(string)
 }
 
 }
 
-func printstring(string : struct str) {
+func printstring(string : struct str) void {
     printstr(string.pointer)
 }

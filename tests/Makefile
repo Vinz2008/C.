@@ -9,3 +9,6 @@ run: all
 
 python:
 	python3 tests.py
+
+verbose:
+	python3 tests.py -v

@@ -6,7 +6,7 @@ extern linux_function();
 ?[if OS == windows]
 extern windows_function();
 ?[endif]
-func main(){
+func main() void {
   var x : int = O_CREAT
   var y : int = O_WRONLY
   printi(x)

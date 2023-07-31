@@ -70,3 +70,4 @@ void convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val
 int get_type_number_of_bits(Cpoint_Type type);
 std::string get_string_from_type(Cpoint_Type type);
 std::string create_mangled_name_from_type(Cpoint_Type type);
+std::string create_pretty_name_for_type(Cpoint_Type type);

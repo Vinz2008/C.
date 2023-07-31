@@ -7,7 +7,7 @@ struct va_list {
 
 extern vprintf(format : i8 ptr, arg : struct va_list ptr) int;
 
-func printfmt_cpoint(format : i8 ptr ...){
+func printfmt_cpoint(format : i8 ptr ...) void {
     var va : struct va_list 
     cpoint_internal_llvm_va_start(addr va)
     vprintf(format, addr va)

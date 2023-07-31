@@ -6,7 +6,7 @@ struct test {
   var z : double
   extern test_function() 
 }
-func main(){
+func main() void {
   var x : struct test
   var v : double = 1
   printd(v)

@@ -1,5 +1,5 @@
 import @std/args.cpoint
 
-func main(){
+func main() void {
     handle_args(argc, argv)
 }

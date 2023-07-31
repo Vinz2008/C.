@@ -6,7 +6,7 @@ var extern b : int;
 
 var c = 32;
 
-func main(){
+func main() void {
     printd(4)
     return 0
     printd(2)

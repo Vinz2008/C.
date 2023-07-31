@@ -1,6 +1,6 @@
 import @std/print.cpoint
 
-func main(){
+func main() void {
     var da[3] : double
     printi(argc)
     printd(da[argc])

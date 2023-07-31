@@ -160,6 +160,8 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         type = i16_type;
     } else if (llvm_type == Type::getInt64Ty(*TheContext)){
         type = i64_type;
+    } else if (llvm_type == Type::getVoidTy(*TheContext)){
+        type = void_type;
     } else {
         if (is_ptr){
             type = i8_type;
@@ -390,4 +392,20 @@ std::string create_mangled_name_from_type(Cpoint_Type type){
     }
     //if (type)
     return name;   
+}
+
+std::string create_pretty_name_for_type(Cpoint_Type type){
+    if (type.is_struct){
+        return "struct " + type.struct_name;
+    }
+    std::string name;
+    name = get_string_from_type(type);
+    if (type.is_ptr){
+        name += " ptr";
+        // TODO : maybe use the nb_ptr to mangle differently
+    }
+    if (type.is_array){
+        name += " array";
+    }
+    return name;
 }

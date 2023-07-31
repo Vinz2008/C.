@@ -5,7 +5,7 @@ import @std/print.cpoint
 type new_type int;
 type int_ptr int ptr;
 
-func main(){
+func main() void {
   var hello : new_type = 2
   var helloptr : int_ptr = addr hello
   var filename = cpoint_internal_get_filename()

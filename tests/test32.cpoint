@@ -5,7 +5,7 @@ struct a {
     var i : int
 }
 
-func main(){
+func main() void {
     var d : double = 0
     var i : int = 0
     var eightb : i8 = 0

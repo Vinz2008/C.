@@ -1,5 +1,5 @@
 import @std/print.cpoint
-func main(){
+func main() void {
     var test[10] : i8 ptr
     var test3 : i8 ptr  
     test[0] = "test"

@@ -4,7 +4,7 @@ extern printptr(x)
 
 var z : int = 2
 
-func main(){
+func main() void {
   var c = "hello"
   printstr(c)
   putchard(37)

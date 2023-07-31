@@ -4,7 +4,8 @@ import @std/print.cpoint
 struct a {
     var b
 }
-func main(){
+func main() void {
     printstr(cli::read())
     var s : struct a
+    s = a(1)
 }

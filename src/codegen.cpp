@@ -251,6 +251,15 @@ Value *LogErrorV(Source_location astLoc, const char *Str, ...){
   return nullptr;
 }
 
+Function *LogErrorF(Source_location astLoc, const char *Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args, astLoc);
+  va_end(args);
+  return nullptr;
+}
+
+
 Value *NumberExprAST::codegen() {
   return ConstantFP::get(*TheContext, APFloat(Val));
 }
@@ -640,6 +649,25 @@ Value *CallExprAST::codegen() {
   std::string internal_func_prefix = "cpoint_internal_";
   bool is_internal = false;
   CpointDebugInfo.emitLocation(this);
+  if (StructDeclarations[Callee] != nullptr){
+    // function called is constructor of struct
+    std::string constructor_name = struct_function_mangling(Callee, "Constructor__Default");
+    if (FunctionProtos[constructor_name] != nullptr){
+        Callee = constructor_name;
+    } else {
+        //std::make_unique<GlobalVariableAST>("__const_struct_" + Callee, true, false, Cpoint_Type(double_type, false, 0, false, 0, true, Callee), );
+        std::vector<Constant*> constantArgs;
+        for (int i = 0; i < Args.size(); i++){
+            auto Val = Args.at(i)->codegen();
+            auto ConstantVal = dyn_cast<Constant>(Val);
+            if (!ConstantVal){
+                return LogErrorV(this->loc, "You can't initialize a struct without a constructor with non constant values");
+            }
+            constantArgs.push_back(ConstantVal);
+        }
+        return ConstantStruct::get(dyn_cast<StructType>(StructDeclarations[Callee]->struct_type), ArrayRef<Constant*>(constantArgs));
+    }
+  }
   if (Callee.rfind(internal_func_prefix, 0) == 0){
     is_internal = true;
     Callee = Callee.substr(internal_func_prefix.size(), Callee.size());
@@ -853,7 +881,7 @@ Function *PrototypeAST::codegen() {
   std::vector<Type*> args_type_main;
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-2)));
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
-  FT = FunctionType::get(get_type_llvm(cpoint_type), args_type_main, false);
+  FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(int_type)), args_type_main, false);
   } else {
   FT = FunctionType::get(get_type_llvm(cpoint_type), type_args, is_variable_number_args);
   }
@@ -971,9 +999,23 @@ Function *FunctionAST::codegen() {
   }
   if (RetVal) {
     // Finish off the function.
+    if (RetVal->getType() == get_type_llvm(void_type) && TheFunction->getReturnType() != get_type_llvm(void_type)){
+        if (P.getName() == "main"){
+            RetVal = ConstantInt::get(*TheContext, APInt(32, 0, true));
+            // TODO : maybe do an error if main function doesn't return an int and verify it after converting instead of createing the return 0
+        } else {
+            Log::Warning() << "Missing return value in function (the return value is void)" << "\n";
+        }
+    }
+
     if (RetVal->getType() != get_type_llvm(void_type) && RetVal->getType() != TheFunction->getReturnType()){
       convert_to_type(get_cpoint_type_from_llvm(RetVal->getType()), TheFunction->getReturnType(), RetVal);
     }
+    if (RetVal->getType() != TheFunction->getReturnType()){
+        //return LogErrorF(emptyLoc, "Return type is wrong in the %s function", P.getName().c_str());
+        Log::Warning() << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
+    }
+
     Builder->CreateRet(RetVal);
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
@@ -1556,9 +1598,9 @@ Value *VarExprAST::codegen() {
     cpoint_type.nb_element = indexD;
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
-    if (!get_type_llvm(cpoint_type)->isPointerTy()){
+    /*if (!get_type_llvm(cpoint_type)->isPointerTy()){
     Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
-    }
+    }*/
     if (index == nullptr){
     if (InitVal->getType() != get_type_llvm(cpoint_type)){
       convert_to_type(get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(cpoint_type), InitVal);

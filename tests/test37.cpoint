@@ -5,7 +5,7 @@ union un {
     var b : int
 }
 
-func main(){
+func main() void {
     var u : union un
     u.a = 2
     printd(u.a)

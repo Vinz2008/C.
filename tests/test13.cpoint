@@ -2,7 +2,7 @@ import @std/print.cpoint
 func test(x : double) double {
     printd(x)
 }
-func main(){
+func main() void {
     var x[10] : i8 ptr 
 label lbl
     test(argc)

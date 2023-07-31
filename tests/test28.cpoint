@@ -9,7 +9,7 @@ class test {
     1 
   } 
 }
-func main(){
+func main() void {
   var a : int
   var b : double
   var c : i8

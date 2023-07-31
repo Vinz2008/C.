@@ -1,5 +1,5 @@
 import @std/print.cpoint
-func main() {
+func main() void {
     var strnot : i8 ptr = "not hello world"
     printstr("hello world")
     // this is a comment interior to the main function
