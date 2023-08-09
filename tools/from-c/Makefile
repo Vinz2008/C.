@@ -1,9 +1,9 @@
 CC = gcc
 
 ifeq ($(OS),Windows_NT)
-OUTPUTBIN = cpoint-bindgen.exe
+OUTPUTBIN = cpoint-from-c.exe
 else
-OUTPUTBIN = cpoint-bindgen
+OUTPUTBIN = cpoint-from-c
 endif
 
 SRCDIR=src
@@ -47,4 +47,4 @@ clean: clean-build
 	rm -f $(OUTPUTBIN)
 
 run:
-	./$(OUTPUTBIN) example.h example2.h -m
+	@echo "TODO"
