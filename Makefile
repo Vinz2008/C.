@@ -2,6 +2,7 @@ CXX=g++
 DESTDIR ?= /usr/bin
 PREFIX ?= /usr/local
 NO_OPTI ?= false
+NO_STACK_PROTECTOR ?= false
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
@@ -14,6 +15,11 @@ CXXFLAGS += -O0
 else
 CXXFLAGS += -O2
 endif
+
+ifeq ($(NO_STACK_PROTECTOR),true)
+CXXFLAGS += -fno-stack-protector
+endif
+
 
 ifneq ($(OS), Windows_NT)
 ifneq ($(shell echo | $(CXX) -dM -E - | grep clang),"")

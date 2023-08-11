@@ -1,0 +1,17 @@
+import panic.cpoint
+
+extern malloc(size : int) void ptr;
+extern free(pointer : void ptr) void;
+
+mod alloc {
+	func manual_alloc(size : int) void ptr{
+		var pointer : void ptr = malloc(size)
+		if pointer == null {
+			panic("Manual allocation by the OS failed")
+		}
+		pointer
+	}
+	func manual_dealloc(pointer : void ptr) void {
+		free(pointer)
+	}
+}
