@@ -31,3 +31,4 @@ bindings.cpoint
 *.without_shebang
 cpoint-run
 cpoint-from-c
+out.cpoint

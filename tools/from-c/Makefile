@@ -47,4 +47,4 @@ clean: clean-build
 	rm -f $(OUTPUTBIN)
 
 run:
-	@echo "TODO"
+	./$(OUTPUTBIN) example.c
