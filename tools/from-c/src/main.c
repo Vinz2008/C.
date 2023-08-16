@@ -42,7 +42,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
 	    fprintf(outf, "var %s\n", clang_getCString(clangstr_cursor_name));
 	    break;
 	case CXCursor_BinaryOperator:
-	    /*enum CXBinaryOperatorKind operatorKind = clang_getCursorBinaryOperatorKind(cursor);;
+        /*enum CXBinaryOperatorKind operatorKind = clang_getCursorBinaryOperatorKind(cursor);;
 	    CXString operator_string = clang_getBinaryOperatorKindSpelling(operatorKind);
 	    fprintf(outf, "%s", clang_getCString(operator_string));
 	    clang_disposeString(operator_string);*/

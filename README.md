@@ -33,6 +33,11 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make redeclarations just the equal operator
 - [ ] Fix array members and array member redeclaration bugs
 - [ ] Maybe verify and warn in the manual allocation module in the standard library if an address was already freed by verifying in a list
+- [ ] Add type checking in separate file and remove implicit cast and only have explicit casts with the "cast" keyword
+- [ ] Add rust-styled enums with match
+- [ ] Add a syntax to import every cpoint files in package
+- [ ] Add chained struct members
+- [ ] Add chained else if
 
 
 ## Benchmarks compared to other languages

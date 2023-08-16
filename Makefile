@@ -34,7 +34,7 @@ SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
-all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen cpoint-run
+all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen cpoint-run cpoint-from-c
 
 release: set_release all
 
@@ -56,6 +56,9 @@ cpoint-bindgen:
 
 cpoint-run:
 	+make -C tools/run $(MAKETARGET)
+
+cpoint-from-c:
+	+make -C tools/from-c $(MAKETARGET)
 
 std_lib_plus_compiler_plus_gc: std_lib
 
@@ -100,6 +103,7 @@ install: std_lib
 	cp build/cpoint-build $(DESTDIR)/
 	cp tools/bindgen/cpoint-bindgen $(DESTDIR)/
 	cp tools/run/cpoint-run $(DESTDIR)/
+	cp tools/from-c/cpoint-from-c $(DESTDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir -p $(PREFIX)/lib/cpoint
 	mkdir -p $(PREFIX)/lib/cpoint/std

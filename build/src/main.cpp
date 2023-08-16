@@ -122,7 +122,7 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
     PathList.insert(PathList.end(), localPathList.begin(), localPathList.end());
     for (auto const& path : localPathList){
         std::cout << path << ' ';
-        compileFile(target, "-no-gc" + arguments, path, sysroot);
+        compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
     }
     std::cout << std::endl;
 }
