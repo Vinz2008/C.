@@ -164,7 +164,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         type = void_type;
     } else {
         if (is_ptr){
-            type = i8_type;
+            type = int_type;
         } else {
         Log::Warning() << "Unknown Type" << "\n";
         }

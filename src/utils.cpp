@@ -1,5 +1,7 @@
 #include <fstream>
 #include <iostream>
+#include <dirent.h>
+#include <functional>
 #include <sys/stat.h>
 
 bool FileExists(std::string filename){
@@ -19,4 +21,27 @@ bool FolderExists(std::string foldername){
     } else {
         return false;
     }
+}
+
+void listFiles(const std::string &path, std::function<void(const std::string &)> cb) {
+    if (auto dir = opendir(path.c_str())) {
+        while (auto f = readdir(dir)) {
+            if (f->d_name[0] == '.') continue;
+            if (f->d_type == DT_DIR) 
+                listFiles(path + "/" + f->d_name + "/", cb);
+
+            if (f->d_type == DT_REG)
+                cb(path + "/" + f->d_name);
+        }
+        closedir(dir);
+    }
+}
+
+std::string getFileExtension(std::string path){
+    for (int i = path.size()-1; i > 0; i--){
+        if (path.at(i) == '.'){
+            return path.substr(i+1, path.size()-(i+1));
+        }
+    }
+    return "";
 }

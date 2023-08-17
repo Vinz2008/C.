@@ -951,15 +951,17 @@ Function *FunctionAST::codegen() {
   if (P.getName() == "main"){
     int i = 0;
     for (auto &Arg : TheFunction->args()){
-      int type;
+      Cpoint_Type type = Cpoint_Type(double_type, false);
       if (i == 1){
-        type = argv_type;
+        //type = argv_type;
+        type = Cpoint_Type(i8_type, true, 2);
       } else {
-        type = int_type;
+        //type = int_type;
+        type = Cpoint_Type(int_type);
       }
-      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), Cpoint_Type(type, false));
+      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), /*Cpoint_Type(type, false)*/ type);
       if (debug_info_mode){
-      debugInfoCreateParameterVariable(SP, Unit, Alloca, Cpoint_Type(type, false), Arg, ArgIdx, LineNo);
+      debugInfoCreateParameterVariable(SP, Unit, Alloca, /*Cpoint_Type(type, false)*/ type, Arg, ArgIdx, LineNo);
       }
       /*DILocalVariable *D = DBuilder->createParameterVariable(
       SP, Arg.getName(), ++ArgIdx, Unit, LineNo, CpointDebugInfo.getDoubleTy(),
@@ -969,7 +971,7 @@ Function *FunctionAST::codegen() {
                           DILocation::get(SP->getContext(), LineNo, 0, SP),
                           Builder->GetInsertBlock());*/
       Builder->CreateStore(&Arg, Alloca);
-      NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(type, false));
+      NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, /*Cpoint_Type(type, false)*/ type);
       i++;
     }
   } else {
@@ -1236,10 +1238,11 @@ Value* RedeclarationExprAST::codegen(){
     if (UnionDeclarations[NamedValues[VariableName]->type.union_name] != nullptr){
       Log::Info() << "IS_UNION" << "\n";
       is_union = true;
-    }
-    if (StructDeclarations[NamedValues[VariableName]->type.struct_name] != nullptr){
+    } else if (StructDeclarations[NamedValues[VariableName]->type.struct_name] != nullptr){
       Log::Info() << "IS_STRUCT" << "\n";
       is_struct = true;
+    } else {
+        return LogErrorV(this->loc, "The variable %s in redeclaration which is used with a member %s is neither a struct or an union", VariableName.c_str(), member.c_str());
     }
   }
   }

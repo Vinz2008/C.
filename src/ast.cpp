@@ -693,7 +693,8 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       getNextToken();
     }
     ArgNames.push_back(std::make_pair("argc", Cpoint_Type(double_type, false)));
-    ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
+    //ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
+    ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   } else {
   getNextToken();
   if (CurTok != '('){

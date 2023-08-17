@@ -72,8 +72,8 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     skip_spaces(line, pos);
 }
 
-int getPath(std::string line, int& pos, std::string &Path){
-    Path = "";
+int getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::string>& Paths){
+    std::string Path = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || isdigit(line.at(pos)))){
         Path += line.at(pos);
         pos++;
@@ -83,6 +83,8 @@ int getPath(std::string line, int& pos, std::string &Path){
     	getIdentifierStr(Path, pos_path, IdentifierStr);
         Log::Imports_Info() << "IdentifierStr : " << IdentifierStr << "\n";
         std::string Path_temp;
+        bool importing_multiple_files = false;
+        bool is_package = false;
 	    if (IdentifierStr == "std"){
 	    //pos_path += IdentifierStr.size();
 	    Path_temp = std_path;
@@ -101,6 +103,7 @@ int getPath(std::string line, int& pos, std::string &Path){
             Path_temp.append(reponame);
             build_package(Path_temp);
         } else {
+            is_package = true;
             std::string path_repo = DEFAULT_PACKAGE_PATH;
             path_repo += '/';
             path_repo += IdentifierStr;
@@ -113,14 +116,29 @@ int getPath(std::string line, int& pos, std::string &Path){
             }
         }
         Log::Imports_Info() << "Path_temp : " << Path_temp << "\n";
+        if (is_package && pos_path >= Path.size()-1){
+            importing_multiple_files = true;
+            std::string package_folder = Path_temp;
+            listFiles(package_folder, [&Paths](std::string path){
+                Log::Imports_Info() << "path " << path << "\n";
+                if (getFileExtension(path) == "cpoint"){
+                    Paths.push_back(path);
+                }
+            });
+        } else {
         std::string end_str = Path.substr(pos_path, Path.size());
         Log::Imports_Info() << "end_str : " << end_str << "\n";
         Path_temp.append(end_str);
-	    Path = Path_temp;
+        }
+        Path = Path_temp;
         Log::Imports_Info() << "Path : " << Path << "\n";
-        return 1;
+        if (!importing_multiple_files){
+            Paths.push_back(Path);
+        }
+        return true;
     }
-    return 0;
+    Paths.push_back(Path);
+    return false;
 }
 
 void getPathFromFilePOV(std::string& Path, std::string file_src){
@@ -327,11 +345,9 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
     }
 }
 
-void interpret_import(std::string line, int& pos_src){
-    std::string Path;
-    skip_spaces(line, pos_src);
-    if (getPath(line, pos_src, Path) == 0){
-    getPathFromFilePOV(Path, filename);
+void import_file(std::string Path, bool is_special_path){
+    if (!is_special_path){
+        getPathFromFilePOV(Path, filename);
     }
     Log::Imports_Info() << "Path : " << Path << "\n";
     int nb_line = get_nb_lines(imported_file, Path);
@@ -346,11 +362,39 @@ void interpret_import(std::string line, int& pos_src){
     imported_file.close();
 }
 
+void interpret_import(std::string line, int& pos_src){
+    std::string Path;
+    std::vector<std::string> Paths;
+    skip_spaces(line, pos_src);
+    bool is_special_path = getPath(line, pos_src, Paths);
+    /*if (Paths.size() == 1){
+        Path = Paths.at(0);
+    }*/
+    for (int i = 0; i < Paths.size(); i++){
+        Log::Imports_Info() << "Importing file " << Paths.at(i) << "\n";
+        import_file(Paths.at(i), is_special_path);
+    }
+    //import_file(Path, is_special_path);
+    /*int nb_line = get_nb_lines(imported_file, Path);
+    imported_file.open(Path);
+    if (imported_file.is_open()){
+        int pos_line = 0;
+        while (std::getline(imported_file, line)){
+            Log::Imports_Info() << line << "\n";
+            find_patterns(line, nb_line, pos_line);
+        }
+    }
+    imported_file.close();*/
+}
+
 void interpret_include(std::string line, int& pos_src){
     std::string Path;
+    std::vector<std::string> Paths;
     std::ifstream included_file;
     skip_spaces(line, pos_src);
-    getPath(line, pos_src, Path);
+    getPath(line, pos_src, Paths);
+    // for now include doesn't support multiple files. Maybe TODO
+    Path = Paths.at(0);
     getPathFromFilePOV(Path, filename);
     Log::Imports_Info() << "Path : " << Path << "\n";
     int nb_line = get_nb_lines(included_file, Path);

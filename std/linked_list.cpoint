@@ -22,7 +22,7 @@ struct linked_list {
             self.head = temp
             self.tail = temp
         } else {
-            var tail = self.tail
+            var tail : struct node_linked_list ptr = self.tail
             tail.next = temp
             self.tail = temp
         }

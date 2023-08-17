@@ -1,6 +1,6 @@
 import @std/print.cpoint
 import ../bindings.cpoint
-import @test_cpoint_package/test.cpoint
+import @test_cpoint_package
 func test(x){
   for i = 1, i < x, 1.0 {
      printd(i)
