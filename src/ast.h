@@ -27,7 +27,7 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 
 class StructDeclarAST;
 
-std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
+//std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
 
 class ExprAST {
 public:
@@ -457,6 +457,35 @@ public:
     }
     return std::make_unique<UnionDeclarAST>(Name, std::move(VarsCloned));
   }
+};
+
+class EnumMember {
+public:
+    std::string Name;
+    bool contains_value;
+    std::unique_ptr<Cpoint_Type> Type;
+    EnumMember(const std::string& Name, bool contains_value = false, std::unique_ptr<Cpoint_Type> Type = nullptr) : Name(Name), contains_value(contains_value), Type(std::move(Type)) {}
+    std::unique_ptr<EnumMember> clone(){
+        return std::make_unique<EnumMember>(Name, contains_value, std::make_unique<Cpoint_Type>(*Type));
+    }
+};
+
+class EnumDeclarAST {
+public:
+    std::string Name;
+    bool enum_member_contain_type;
+    std::vector<std::unique_ptr<EnumMember>> EnumMembers;
+    EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<std::unique_ptr<EnumMember>> EnumMembers) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)) {}
+    Type* codegen();
+    std::unique_ptr<EnumDeclarAST> clone(){
+        std::vector<std::unique_ptr<EnumMember>> EnumMembersCloned;
+        if (!EnumMembers.empty()){
+            for (int i = 0; i < EnumMembers.size(); i++){
+                EnumMembersCloned.push_back(EnumMembers.at(i)->clone());
+            }
+        }
+        return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembersCloned));
+    }
 };
 
 class TestAST {

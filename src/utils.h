@@ -1,4 +1,5 @@
 #include <string>
+#include <functional>
 
 bool FileExists(std::string filename);
 bool FolderExists(std::string foldername);

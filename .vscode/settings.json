@@ -106,7 +106,10 @@
         "stack": "cpp",
         "allocator": "cpp",
         "hash_set": "cpp",
-        "ranges": "cpp"
+        "ranges": "cpp",
+        "__mutex_base": "cpp",
+        "__std_stream": "cpp",
+        "coroutine": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }

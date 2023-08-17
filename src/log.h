@@ -1,6 +1,32 @@
 #include <iostream>
 
 #include "errors.h"
+#include "ast.h"
+
+class StructDeclarAST;
+class ExprAST;
+class PrototypeAST;
+class ReturnAST;
+class FunctionAST;
+class GlobalVariableAST;
+class LoopExprAST;
+class ModAST;
+class TestAST;
+class UnionDeclarAST;
+
+std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
+std::unique_ptr<ExprAST> LogError(const char *Str, ...);
+std::unique_ptr<PrototypeAST> LogErrorP(const char *Str, ...);
+std::unique_ptr<ReturnAST> LogErrorR(const char *Str, ...);
+std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
+std::unique_ptr<FunctionAST> LogErrorF(const char *Str, ...);
+std::unique_ptr<GlobalVariableAST> LogErrorG(const char *Str, ...);
+std::unique_ptr<LoopExprAST> LogErrorL(const char* Str, ...);
+std::unique_ptr<ModAST> LogErrorM(const char* Str, ...);
+std::unique_ptr<TestAST> LogErrorT(const char* Str, ...);
+std::unique_ptr<UnionDeclarAST> LogErrorU(const char* Str, ...);
+Value* LogErrorV(Source_location astLoc, const char *Str, ...);
+Function* LogErrorF(Source_location astLoc, const char *Str, ...);
 
 #ifndef _LOG_HEADER_
 #define _LOG_HEADER_
