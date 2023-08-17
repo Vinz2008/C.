@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-07-29 22:22+0200\n"
+"POT-Creation-Date: 2023-08-17 08:07+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,6 +19,10 @@ msgstr ""
 
 #: ../src/main.cpp:312
 msgid "custom path std : "
+msgstr ""
+
+#: ../src/main.cpp:367
+msgid "filename : "
 msgstr ""
 
 #: ../src/main.cpp:498
@@ -36,4 +40,12 @@ msgstr ""
 
 #: ../src/main.cpp:538
 msgid "Wrote "
+msgstr ""
+
+#: ../src/main.cpp:546
+msgid "Built the standard library"
+msgstr ""
+
+#: ../src/main.cpp:596
+msgid "Linked the executable"
 msgstr ""

@@ -364,7 +364,7 @@ int main(int argc, char **argv){
           linker_additional_flags += ' ';
           cout << "linker flag " << linker_additional_flags << endl; 
         } else {
-          Log::Print() << "filename : " << arg << "\n";
+          Log::Print() << _("filename : ") << arg << "\n";
           filename = arg;
         }
     }
@@ -543,7 +543,7 @@ int main(int argc, char **argv){
     std_static_path.append("libstd.a");
     if (Comp_context->std_mode && link_files_mode){
       if (rebuild_std){
-      Log::Print() << "Built the standard library" << "\n";
+      Log::Print() << _("Built the standard library") << "\n";
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         fprintf(stderr, "Could not build std at path : %s\n", std_path.c_str());
         exit(1);
@@ -593,7 +593,7 @@ int main(int argc, char **argv){
           vect_obj_files.push_back(package_archive_path);
         }
       }
-      Log::Print() << "Linked the executable" << "\n";
+      Log::Print() << _("Linked the executable") << "\n";
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
     }
     if (run_mode){
