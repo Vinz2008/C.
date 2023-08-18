@@ -19,9 +19,22 @@ bool startswith(char* str, char* line){
 int main(int argc, char** argv){
     if (argc < 1){
         printf("need at least one argument\n");
+        printf("use -h to open the help\n");
         exit(1);
     }
-    char* filename = argv[1];
+    char* filename = NULL;
+    for (int i = 0; i < argc; i++){
+        if (strcmp("-h", argv[i]) == 0){
+
+        } else {
+            filename = argv[i];
+        }
+    }
+    //char* filename = argv[1];
+    if (!filename){
+        printf("couldn't find a filename in the arguments\n");
+        exit(1);
+    }
     char line[256];
     FILE* f = fopen(filename, "r");
     if (!fgets(line, sizeof(line), f)){
