@@ -34,6 +34,7 @@ std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
+std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 
 std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 
@@ -512,9 +513,11 @@ Type* UnionDeclarAST::codegen(){
 }
 
 Type* EnumDeclarAST::codegen(){
-    if (enum_member_contain_type){
-        // TODO : register enum in EnumDeclarations
-        return get_type_llvm(Cpoint_Type(int_type));
+    Type* enumType = nullptr;
+    if (!enum_member_contain_type){
+        enumType = get_type_llvm(int_type);
+        EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, std::move(this->clone()));
+        return nullptr;
     }
     std::vector<Type*> dataType;
     StructType* enumStructType = StructType::create(*TheContext);
@@ -530,7 +533,7 @@ Type* EnumDeclarAST::codegen(){
     }
     dataType.push_back(get_type_llvm(biggest_type));
     enumStructType->setBody(dataType);
-    // TODO : register enum in EnumDeclarations
+    EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumStructType, std::move(this->clone()));
     return enumStructType;
 }
 

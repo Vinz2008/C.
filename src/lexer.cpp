@@ -228,6 +228,8 @@ static int gettok() {
         return tok_cast;
     if (IdentifierStr == "union")
       return tok_union;
+    if (IdentifierStr == "enum")
+        return tok_enum;
     if (IdentifierStr == "mod")
       return tok_mod;
     if (IdentifierStr == "true")

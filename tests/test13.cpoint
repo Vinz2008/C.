@@ -1,5 +1,5 @@
 import @std/print.cpoint
-func test(x : double) double {
+func test(x : double) void {
     printd(x)
 }
 func main() void {

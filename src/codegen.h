@@ -91,6 +91,13 @@ public:
     UnionDeclaration(llvm::Type* union_type, std::vector<std::pair<std::string,Cpoint_Type>> members) : union_type(union_type), members(std::move(members)) {}
 };
 
+class EnumDeclaration {
+public:
+    llvm::Type* enumType;
+    std::unique_ptr<EnumDeclarAST> EnumDeclar;
+    EnumDeclaration(llvm::Type* enumType, std::unique_ptr<EnumDeclarAST> EnumDeclar) : enumType(enumType), EnumDeclar(std::move(EnumDeclar)) {} 
+};
+
 std::string module_function_mangling(std::string module_name, std::string function_name);
 void codegenTemplates();
 void codegenStructTemplates();

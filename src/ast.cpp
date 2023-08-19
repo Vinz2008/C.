@@ -758,7 +758,7 @@ std::unique_ptr<UnionDeclarAST> ParseUnion(){
   std::string unionName = IdentifierStr;
   getNextToken();
   if (CurTok != '{')
-    return LogErrorU("Expected '{' in Struct");
+    return LogErrorU("Expected '{' in Union");
   getNextToken();
   while (CurTok == tok_var && CurTok != '}'){
     auto exprAST = ParseVarExpr();
@@ -773,10 +773,45 @@ std::unique_ptr<UnionDeclarAST> ParseUnion(){
     VarList.push_back(std::move(declar));
   }
   if (CurTok != '}'){
-    return LogErrorU("Expected '}' in union");
+    return LogErrorU("Expected '}' in Union");
   }
   getNextToken();  // eat '}'.
   return std::make_unique<UnionDeclarAST>(unionName, std::move(VarList));
+}
+
+std::unique_ptr<EnumDeclarAST> ParseEnum(){
+    getNextToken(); // eat enum
+    std::string Name;
+    bool enum_member_contain_type = false;
+    std::vector<std::unique_ptr<EnumMember>> EnumMembers;
+    Name = IdentifierStr;
+    getNextToken();
+    if (CurTok != '{'){
+        return LogErrorE("Expected '{' in Enum");
+    }
+    getNextToken();
+    while (CurTok == tok_identifier && CurTok != '}'){
+        std::unique_ptr<EnumMember> enumMember;
+        bool contains_value = false;
+        std::unique_ptr<Cpoint_Type> Type = nullptr;
+        std::string memberName = IdentifierStr;
+        getNextToken();
+        if (CurTok == '('){
+            getNextToken();
+            contains_value = true;
+            Type = std::make_unique<Cpoint_Type>(ParseTypeDeclaration(false));
+            if (CurTok != ')'){
+                return LogErrorE("Expected ')' after '(' in type declaration of Enum member");
+            }
+            getNextToken();
+        }
+        EnumMembers.push_back(std::make_unique<EnumMember>(memberName, contains_value, std::move(Type)));
+    }
+    if (CurTok != '}'){
+        return LogErrorE("Expected '}' in Enum");
+    }
+    getNextToken();
+    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembers));
 }
 
 std::unique_ptr<FunctionAST> ParseDefinition() {

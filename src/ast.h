@@ -466,7 +466,11 @@ public:
     std::unique_ptr<Cpoint_Type> Type;
     EnumMember(const std::string& Name, bool contains_value = false, std::unique_ptr<Cpoint_Type> Type = nullptr) : Name(Name), contains_value(contains_value), Type(std::move(Type)) {}
     std::unique_ptr<EnumMember> clone(){
-        return std::make_unique<EnumMember>(Name, contains_value, std::make_unique<Cpoint_Type>(*Type));
+        std::unique_ptr<Cpoint_Type> TypeCloned = nullptr;
+        if (Type){
+            TypeCloned = std::make_unique<Cpoint_Type>(*Type);
+        }
+        return std::make_unique<EnumMember>(Name, contains_value, std::move(TypeCloned));
     }
 };
 
@@ -704,6 +708,7 @@ std::unique_ptr<ExprAST> ParseCastExpr();
 std::unique_ptr<ModAST> ParseMod();
 std::unique_ptr<TestAST> ParseTest();
 std::unique_ptr<UnionDeclarAST> ParseUnion();
+std::unique_ptr<EnumDeclarAST> ParseEnum();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

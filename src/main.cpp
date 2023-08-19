@@ -181,6 +181,14 @@ static void HandleUnion(){
   }
 }
 
+static void HandleEnum(){
+    if (auto enumAST = ParseEnum()){
+        enumAST->codegen();
+    } else {
+        getNextToken();
+    }
+}
+
 void HandleComment(){
   Log::Info() << "token bef : " << CurTok << "\n";
   getNextToken(); // pass tok_single_line_comment token
@@ -228,6 +236,9 @@ static void MainLoop() {
       break;
     case tok_union:
       HandleUnion();
+      break;
+    case tok_enum:
+      HandleEnum();
       break;
     case tok_class:
       //HandleClass();

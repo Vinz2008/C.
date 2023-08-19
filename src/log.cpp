@@ -97,6 +97,14 @@ std::unique_ptr<UnionDeclarAST> LogErrorU(const char* Str, ...){
   return nullptr;
 }
 
+std::unique_ptr<EnumDeclarAST> LogErrorE(const char* Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args, emptyLoc);
+  va_end(args);
+  return nullptr;
+}
+
 Value* LogErrorV(Source_location astLoc, const char *Str, ...){
   va_list args;
   va_start(args, Str);

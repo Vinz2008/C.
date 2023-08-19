@@ -1,0 +1,11 @@
+enum test_enum {
+    tag_int(int)
+    tag_float(float)
+    tag_alone
+}
+
+func main(){
+    var te : enum test_enum = test_enum::tag_int(1)
+    var te2 : enum test_enum = test_enum::tag_float(2.0)
+    var te3 : enum test_enum = test_enum::tag_alone
+}

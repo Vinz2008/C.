@@ -166,7 +166,9 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         if (is_ptr){
             type = int_type;
         } else {
+        if (!is_struct && !is_array && !is_function){
         Log::Warning() << "Unknown Type" << "\n";
+        }
         }
     }
     int nb_ptr = (is_ptr) ? 1 : 0;
@@ -373,7 +375,7 @@ int get_type(std::string type){
 
 std::string get_string_from_type(Cpoint_Type type){
     if (type.type < 0){
-        return types.at(-(type.type-1));
+        return types.at(-(type.type + 1));
     } else {
         return types.at(type.type-1+15);
     }
