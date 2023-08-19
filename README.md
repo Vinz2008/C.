@@ -39,7 +39,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add chained struct members
 - [x] Add chained else if
 - [ ] Fix bug with type inference and struct pointers (for example in linked_list.cpoint "var tail = self.tail" that we needed to replace with "var tail : struct node_linked_list ptr = self.tail")
-- [ ] add unions support in import
+- [ ] Add unions support in import
+- [ ] Add automatically when calling panic the file and line number to panic call
 
 ## Benchmarks compared to other languages
 
