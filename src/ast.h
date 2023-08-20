@@ -177,7 +177,7 @@ public:
   std::vector<std::unique_ptr<ExprAST>> ArrayMembers;
   ConstantArrayExprAST(std::vector<std::unique_ptr<ExprAST>> ArrayMembers) : ArrayMembers(std::move(ArrayMembers)) {}
   Value *codegen() override;
-   std::unique_ptr<ExprAST> clone() override {
+  std::unique_ptr<ExprAST> clone() override {
     std::vector<std::unique_ptr<ExprAST>> ArrayMembersClone;
     if (!ArrayMembers.empty()){
       for (int i = 0; i < ArrayMembers.size(); i++){
@@ -186,6 +186,19 @@ public:
     }
     return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersClone));
    }
+};
+
+class EnumCreation : public ExprAST {
+public:
+    std::string EnumVarName;
+    std::string EnumMemberName;
+    std::unique_ptr<ExprAST> value;
+    EnumCreation(const std::string& EnumVarName, const std::string& EnumMemberName, std::unique_ptr<ExprAST> value) : EnumVarName(EnumVarName), EnumMemberName(EnumMemberName), value(std::move(value)) {}
+    llvm::Value* codegen() override;
+    //Value *codegen() override;
+    std::unique_ptr<ExprAST> clone() override {
+        return std::make_unique<EnumCreation>(EnumVarName, EnumMemberName, value->clone());
+    }
 };
 
 

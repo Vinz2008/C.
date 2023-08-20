@@ -15,6 +15,7 @@ extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 extern std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
+extern std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector</*std::string*/ Cpoint_Type> typeDefTable;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
@@ -47,6 +48,8 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         type = StructDeclarations[structName]->struct_type;
     } else if (cpoint_type.is_union){
         type = UnionDeclarations[cpoint_type.union_name]->union_type;
+    } else if (cpoint_type.is_enum){
+        type = EnumDeclarations[cpoint_type.enum_name]->enumType; 
     } else {
     switch (cpoint_type.type){
         default:
@@ -172,7 +175,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         }
     }
     int nb_ptr = (is_ptr) ? 1 : 0;
-    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, 0, is_struct, "", false, "", false, is_function);
+    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, 0, is_struct, "", false, "", false, "", false, is_function);
 }
 
 Value* get_default_value(Cpoint_Type type){
@@ -200,6 +203,7 @@ int get_type_number_of_bits(Cpoint_Type type){
     case i128_type:
         return 128;
     case double_type:
+    case float_type:
         return 64;
     default:
         return -1;

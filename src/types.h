@@ -37,6 +37,8 @@ public:
     std::string struct_name;
     bool is_union;
     std::string union_name;
+    bool is_enum;
+    std::string enum_name;
     bool is_template_type;
     bool is_struct_template;
     bool is_empty;
@@ -44,8 +46,8 @@ public:
     bool is_function;
     std::vector<Cpoint_Type> args; // the first is the return type, the other are arguments
     Cpoint_Type* return_type;
-    Cpoint_Type(int type, bool is_ptr = false, int nb_ptr = 0, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_union = false, const std::string& union_name = "", bool is_template_type = false, bool is_struct_template = false, /*const std::string&*/ Cpoint_Type* struct_template_type_passed = nullptr, bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr) 
-                : type(type), is_ptr(is_ptr), nb_ptr(nb_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_union(is_union), union_name(union_name), is_template_type(is_template_type), is_struct_template(is_struct_template), struct_template_type_passed(struct_template_type_passed), is_function(is_function), args(args), return_type(return_type) {
+    Cpoint_Type(int type, bool is_ptr = false, int nb_ptr = 0, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_union = false, const std::string& union_name = "", bool is_enum = false, const std::string& enum_name = "", bool is_template_type = false, bool is_struct_template = false, /*const std::string&*/ Cpoint_Type* struct_template_type_passed = nullptr, bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr) 
+                : type(type), is_ptr(is_ptr), nb_ptr(nb_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_union(is_union), union_name(union_name), is_enum(is_enum), enum_name(enum_name), is_template_type(is_template_type), is_struct_template(is_struct_template), struct_template_type_passed(struct_template_type_passed), is_function(is_function), args(args), return_type(return_type) {
                     is_empty = false;
                 }
     Cpoint_Type() {

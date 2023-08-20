@@ -519,22 +519,30 @@ Type* EnumDeclarAST::codegen(){
         EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, std::move(this->clone()));
         return nullptr;
     }
+    Log::Info() << "codegen EnumDeclarAST with type" << "\n";
     std::vector<Type*> dataType;
     StructType* enumStructType = StructType::create(*TheContext);
     enumStructType->setName(Name);
     dataType.push_back(get_type_llvm(Cpoint_Type(int_type)));
+    Log::Info() << "EnumDeclarAST TEST" << "\n";
     int biggest_type_size = 0;
     Cpoint_Type biggest_type = Cpoint_Type(double_type);
     for (int i = 0; i < EnumMembers.size(); i++){
+        if (EnumMembers.at(i)->Type){
         if (get_type_number_of_bits(*(EnumMembers.at(i)->Type)) > biggest_type_size){
             biggest_type = *(EnumMembers.at(i)->Type);
             biggest_type_size = get_type_number_of_bits(*(EnumMembers.at(i)->Type));
+        }
         }
     }
     dataType.push_back(get_type_llvm(biggest_type));
     enumStructType->setBody(dataType);
     EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumStructType, std::move(this->clone()));
     return enumStructType;
+}
+
+Value* EnumCreation::codegen(){
+    return nullptr;
 }
 
 Value *BinaryExprAST::codegen() {
@@ -1552,6 +1560,9 @@ Value *VarExprAST::codegen() {
     Value *InitVal;
     bool no_explicit_init_val = false;
     if (Init) {
+      if (dynamic_cast<EnumCreation*>(Init)){
+        // TODO : write code here to initalize the enum without codegen
+      }
       InitVal = Init->codegen();
       if (!InitVal)
         return nullptr;

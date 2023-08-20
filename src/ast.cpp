@@ -22,6 +22,7 @@ extern int posArrayNb;
 extern std::unique_ptr<Compiler_context> Comp_context;
 extern std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 extern std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
+extern std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 //extern bool std_mode;
 //extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
@@ -102,6 +103,29 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string member = "";
   std::unique_ptr<ExprAST> indexAST = nullptr;
   bool is_array = false;
+  if (EnumDeclarations[IdName] != nullptr){
+    std::unique_ptr<ExprAST> Value = nullptr;
+    if (CurTok != ':'){
+        return LogError("expected \"::\" for creation of enum");
+    }
+    getNextToken();
+    if (CurTok != ':'){
+        return LogError("expected \"::\" for creation of enum");
+    }
+    getNextToken();
+    std::string memberName = IdentifierStr;
+    getNextToken();
+    if (CurTok == '('){
+        getNextToken();
+        Value = ParseExpression();
+        if (CurTok != ')'){
+            return LogError("expected ')' for the value in the creation of enum");
+        }
+        getNextToken();
+    }
+    return std::make_unique<EnumCreation>(IdName, memberName, std::move(Value));
+  }
+
   if (CurTok == ':'){
     getNextToken();
     if (CurTok != ':'){
@@ -373,6 +397,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   bool is_ptr = false;
   std::string struct_Name = "";
   std::string unionName = "";
+  std::string enumName = "";
   int nb_ptr = 0;
   bool is_function = false;
   bool is_template_type = false;
@@ -386,7 +411,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   if (eat_token){
   getNextToken(); // eat the ':'
   }
-  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union){
+  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union && CurTok != tok_enum){
     LogError("expected identifier after var in type declaration");
     return default_type;
   }
@@ -466,6 +491,10 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
       is_ptr = true;
       getNextToken();
     }
+  } else if (CurTok == tok_enum){
+    getNextToken();
+    enumName = IdentifierStr;
+    getNextToken();
   } else if (is_type(IdentifierStr)){
     type = get_type(IdentifierStr);
     Log::Info() << "Variable type : " << type << "\n";
@@ -486,7 +515,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, is_template_type, is_struct_template, /*struct_template_name*/ struct_template_type_passed, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_struct_template, /*struct_template_name*/ struct_template_type_passed, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -799,6 +828,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
         if (CurTok == '('){
             getNextToken();
             contains_value = true;
+            enum_member_contain_type = true;
             Type = std::make_unique<Cpoint_Type>(ParseTypeDeclaration(false));
             if (CurTok != ')'){
                 return LogErrorE("Expected ')' after '(' in type declaration of Enum member");
