@@ -103,6 +103,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string member = "";
   std::unique_ptr<ExprAST> indexAST = nullptr;
   bool is_array = false;
+  Log::Info() << "enum_name : " << IdName << "\n";
   if (EnumDeclarations[IdName] != nullptr){
     std::unique_ptr<ExprAST> Value = nullptr;
     if (CurTok != ':'){
@@ -200,6 +201,9 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     Log::Info() << "Struct member returned" << "\n";
     // make the struct members detection recursive : for example with a.b.c or in the linked list code
+    if (NamedValues[IdName] != nullptr && NamedValues[IdName]->type.is_enum){
+        // get Enum member (maybe not do it and replace with match)
+    }
     if (!is_function_call_member && NamedValues[IdName] != nullptr && NamedValues[IdName]->type.is_union){
         return std::make_unique<UnionMemberExprAST>(IdName, member);
     }

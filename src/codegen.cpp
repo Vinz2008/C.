@@ -1561,6 +1561,36 @@ Value *VarExprAST::codegen() {
     bool no_explicit_init_val = false;
     if (Init) {
       if (dynamic_cast<EnumCreation*>(Init)){
+        Log::Info() << "init val EnumCreation" << "\n";
+        AllocaInst* Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
+        NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+        Cpoint_Type cpoint_type = NamedValues[VarName]->type;
+        Cpoint_Type tag_type = Cpoint_Type(int_type);
+        auto* enumCreation = dynamic_cast<EnumCreation*>(Init);
+        auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+        auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+        auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+        auto ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct");
+        auto value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct");
+        auto EnumMembers = std::move(EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->clone()->EnumMembers);
+        std::unique_ptr<EnumMember> enumMember = nullptr;
+        int pos_member = -1;
+        for (int i = 0; i < EnumMembers.size(); i++){
+            if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
+                pos_member = i;
+                enumMember = EnumMembers.at(i)->clone();
+            }
+        }
+        if (!enumMember){
+            return LogErrorV(this->loc, "Couldn't find enum member %s", enumCreation->EnumMemberName.c_str());
+        }
+        Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(64, pos_member, true)), ptr_tag);
+        NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+        if (enumCreation->value){
+            Builder->CreateStore(enumCreation->value->clone()->codegen(), value_tag);
+            NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+        }
+        goto after_storing; 
         // TODO : write code here to initalize the enum without codegen
       }
       InitVal = Init->codegen();
@@ -1596,7 +1626,7 @@ Value *VarExprAST::codegen() {
        return LogErrorV(this->loc, "Assigning to a variable as default value a void value");
     }
     if (!cpoint_type.is_struct || !no_explicit_init_val){
-    Builder->CreateStore(InitVal, Alloca);
+        Builder->CreateStore(InitVal, Alloca);
     }
 
     // Remember the old variable binding so that we can restore the binding when
@@ -1637,6 +1667,7 @@ Value *VarExprAST::codegen() {
       }
     }
   }
+after_storing:
   CpointDebugInfo.emitLocation(this);
   // Pop all our variables from scope.
   /*for (unsigned i = 0, e = VarNames.size(); i != e; ++i)

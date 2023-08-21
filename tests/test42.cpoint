@@ -1,3 +1,5 @@
+import @std/print.cpoint
+
 enum test_enum {
     tag_int(int)
     tag_float(float)
@@ -8,4 +10,11 @@ func main(){
     var te : enum test_enum = test_enum::tag_int(1)
     var te2 : enum test_enum = test_enum::tag_float(2.0)
     var te3 : enum test_enum = test_enum::tag_alone
+    match te {
+        test_enum::tag_int(i) => printi(i),
+        test_enum::tag_float(f) => printd(f),
+        test_enum::tag_alone => { 
+            printstr("no tag")
+        }
+    }
 }

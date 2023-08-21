@@ -197,7 +197,11 @@ public:
     llvm::Value* codegen() override;
     //Value *codegen() override;
     std::unique_ptr<ExprAST> clone() override {
-        return std::make_unique<EnumCreation>(EnumVarName, EnumMemberName, value->clone());
+        std::unique_ptr<ExprAST> valueCloned = nullptr;
+        if (value){
+            valueCloned = value->clone();
+        }
+        return std::make_unique<EnumCreation>(EnumVarName, EnumMemberName, std::move(valueCloned));
     }
 };
 
