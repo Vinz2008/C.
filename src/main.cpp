@@ -517,6 +517,10 @@ int main(int argc, char **argv){
     TheModule->setTargetTriple(TargetTriple);
     std::string Error;
     auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
+    if (!Target) {
+        errs() << Error;
+        return 1;
+    }
     auto CPU = "generic";
     auto Features = "";
     TargetOptions opt;
@@ -529,12 +533,11 @@ int main(int argc, char **argv){
     auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
     std::error_code EC;
-    if (EC) {
-    errs() << _("Could not open file: ") << EC.message();
-    return 1;
-    }
     raw_fd_ostream dest(llvm::StringRef(object_filename), EC, sys::fs::OF_None);
-
+    if (EC) {
+        errs() << _("Could not open file: ") << EC.message();
+        return 1;
+    }
     llvm::CodeGenFileType FileType = CGFT_ObjectFile;
     if (asm_mode){
       FileType = CGFT_AssemblyFile;
