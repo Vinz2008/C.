@@ -26,12 +26,9 @@ mod system {
     }
     func get_processor_nb() int {
 ?[if OS == linux]
-    return get_nprocs()
+    get_nprocs()
 ?[endif]
-?[if OS == windows]  
-    0
-?[endif]
-?[if OS == darwin]
+?[if OS == windows or OS == darwin]  
     0
 ?[endif]
     }

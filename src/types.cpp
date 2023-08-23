@@ -19,6 +19,7 @@ extern std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector</*std::string*/ Cpoint_Type> typeDefTable;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
+extern Source_location emptyLoc;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
@@ -105,9 +106,9 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << cpoint_type.type << "\n";
         type = llvm::ArrayType::get(type, cpoint_type.nb_element);
     }
-    Log::Info() << "TEST before is function" << "\n";
+    //Log::Info() << "TEST before is function" << "\n";
     if (cpoint_type.is_function){
-        Log::Info() << "TEST in function" << "\n";
+        //Log::Info() << "TEST in function" << "\n";
         /*std::vector<Type *> args;
         for (int i = 0; i < cpoint_type.args.size(); i++){
             args.push_back(get_type_llvm(cpoint_type.args.at(i)));
@@ -120,7 +121,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);*/
         type = PointerType::get(*TheContext, 0);
     }
-     Log::Info() << "TEST after is function" << "\n";
+    //Log::Info() << "TEST after is function" << "\n";
     return type;   
 }
 
@@ -170,7 +171,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
             type = int_type;
         } else {
         if (!is_struct && !is_array && !is_function){
-        Log::Warning() << "Unknown Type" << "\n";
+        Log::Warning(emptyLoc) << "Unknown Type" << "\n";
         }
         }
     }

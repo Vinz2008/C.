@@ -10,6 +10,55 @@ std::string word;
 std::stringstream wordstrtream;
 //static std::string line;
 
+
+namespace Preprocessor {
+    void Context::add_variable(std::unique_ptr<Variable> var){
+        variables.push_back(std::move(var));
+    }
+    void Context::remove_variable(std::string name){
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i)->getName() == name){
+                variables.erase(variables.begin() + i);
+            }
+        }
+    }
+    int Context::get_variable_pos(std::string name){
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i)->getName() == name){
+                return i;
+            }
+        }
+        return -1;
+    }
+    std::string Context::get_variable_value(std::string name){
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i)->getName() == name){
+                return variables.at(i)->getValue();
+            }
+        }
+        return "";
+    }
+    void Context::replace_variable_preprocessor(std::string& str){
+        std::string variable_name;
+        Log::Preprocessor_Info() << "REPLACING VARIABLES" << "\n";
+        for (int i = 0; i < variables.size(); i++){
+            if (variables.at(i) != nullptr){
+            variable_name = variables.at(i)->getName();
+            size_t pos = 0;
+            while (pos != std::string::npos){
+                pos = str.find(variable_name, pos);
+                //std::cout << "TEST PREPROCESSOR VAR" << std::endl;
+                if (pos != std::string::npos){
+                    str.replace(pos, variable_name.length(), variables.at(i)->getValue());
+                }
+            }
+            }
+        }
+    }
+} // namespace name
+
+
+
 void init_context_preprocessor(){
     std::vector<std::unique_ptr<Preprocessor::Variable>> variables;
     context = std::make_unique<Preprocessor::Context>(std::move(variables));
@@ -56,6 +105,67 @@ bool compare_line(std::string line, std::string pattern){
     return without_space_line == pattern;
 }
 
+// TODO : refactor this code with a vector of expressions (with in the the next operator or empty string if it is the end of the expression) or a simple AST
+void preprocess_if(std::string instruction, int& pos){
+    std::string l2 = "";
+    std::string op2 = "";
+    std::string r2 = "";
+    std::string operator_in_between = "";
+    bool found_extra_expr = false;
+    get_next_word(instruction, pos);
+    std::string l = word;
+    get_next_word(instruction, pos);
+    std::string op = word;
+    get_next_word(instruction, pos);
+    std::string r = word;
+    get_next_word(instruction, pos);
+    if (word != ""){
+        operator_in_between = word;
+        get_next_word(instruction, pos);
+        l2 = word;
+        get_next_word(instruction, pos);
+        op2 = word;
+        get_next_word(instruction, pos);
+        r2 = word;
+        get_next_word(instruction, pos);
+    }
+    int pos_var = context->get_variable_pos(l);
+    if (pos_var == -1){
+        fprintf(stderr, "PREPROCESSOR : unknown variable %s\n", l.c_str());
+    } else {
+        if (op == "=="){
+        bool is_if_true = false;
+        is_if_true = context->get_variable_value(l) == r;
+        if (operator_in_between != ""){
+            if (operator_in_between == "or"){
+                bool is_if_true2 = false;
+                if (op2 == "=="){
+                    is_if_true2 = context->get_variable_value(l2) == r2;
+                } else {
+                    fprintf(stderr, "PREPROCESSOR : unknown operator '%s' in between expressions", op2.c_str());
+                }
+                is_if_true = (is_if_true || is_if_true2);
+            } else {
+                fprintf(stderr, "PREPROCESSOR : unknown operator '%s' in between expressions", op.c_str());
+            }
+        }
+        
+        if (is_if_true){
+            Log::Preprocessor_Info() << "if true" << "\n";
+                //go_to_next_line();
+        } else {
+            Log::Preprocessor_Info() << "if false" << "\n";
+             while (!compare_line(get_line_returned(), "?[endif]")){
+                Log::Preprocessor_Info() << "line passed " << get_line_returned() << "\n";
+                go_to_next_line();
+            }
+        }
+        } else {
+            fprintf(stderr, "PREPROCESSOR : unknown operator");
+        }
+    }
+}
+
 void preprocess_instruction(std::string line){
     Log::Info() << "LINE : " << line << "\n";
     std::string instruction;
@@ -68,6 +178,9 @@ void preprocess_instruction(std::string line){
     Log::Preprocessor_Info() << "instruction : " << instruction << "\n";
     get_next_word(instruction, pos);
     if (word == "if"){
+#if 1
+        preprocess_if(instruction, pos);
+#else
         get_next_word(instruction, pos);
         std::string l = word;
         get_next_word(instruction, pos);
@@ -93,7 +206,7 @@ void preprocess_instruction(std::string line){
                 fprintf(stderr, "PREPROCESSOR : unknown operator");
             }
         }
-
+#endif
     } else if (word == "endif"){
         Log::Preprocessor_Info() << "endif" << "\n";
     } else if (word == "define"){
@@ -116,7 +229,7 @@ void preprocess_instruction(std::string line){
             warning += (" " + word);
             get_next_word(instruction, pos);
         }
-        Log::Warning() << warning << "\n";
+        Log::Warning(emptyLoc) << warning << "\n";
     } else if (word == "error"){
         std::string error = "";
         get_next_word(instruction, pos);

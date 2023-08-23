@@ -37,6 +37,7 @@ Function* LogErrorF(Source_location astLoc, const char *Str, ...);
 extern bool silent_mode;
 
 extern std::unique_ptr<Compiler_context> Comp_context;
+extern Source_location emptyLoc;
 
 namespace Log {
     namespace Color {
@@ -85,10 +86,14 @@ namespace Log {
     };
     struct Warning {
         // TODO : add lines number and file like in error
-        Warning(){
+        Warning(Source_location loc){
             Color::Modifier red(Color::FG_RED);
             std::cout<<red;
-            std::cout << "[Warning] ";
+            if (loc != emptyLoc){
+                std::cout << "[Warning] at " << Comp_context->filename << ":" << loc.line_nb << ":" << ((loc.col_nb > 0) ? loc.col_nb-1 : loc.col_nb) << " ";
+            } else {
+                std::cout << "[Warning] ";
+            }
         }
         template< class T >
         Warning &operator<<(const T& val){

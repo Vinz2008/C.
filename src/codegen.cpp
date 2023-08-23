@@ -551,6 +551,7 @@ Value *BinaryExprAST::codegen() {
   if (!L || !R)
     return nullptr;
   if (L->getType() != R->getType()){
+    Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
     convert_to_type(get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
   }
   // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
@@ -979,6 +980,7 @@ Function *FunctionAST::codegen() {
   for (int i = 0; i < Body.size(); i++){
     RetVal = Body.at(i)->codegen();
   }
+  // 
   if (RetVal) {
     // Finish off the function.
     if (RetVal->getType() == get_type_llvm(void_type) && TheFunction->getReturnType() != get_type_llvm(void_type)){
@@ -986,7 +988,7 @@ Function *FunctionAST::codegen() {
             RetVal = ConstantInt::get(*TheContext, APInt(32, 0, true));
             // TODO : maybe do an error if main function doesn't return an int and verify it after converting instead of createing the return 0
         } else {
-            Log::Warning() << "Missing return value in function (the return value is void)" << "\n";
+            Log::Warning(emptyLoc) << "Missing return value in function (the return value is void)" << "\n";
         }
     }
 
@@ -995,7 +997,7 @@ Function *FunctionAST::codegen() {
     }
     if (RetVal->getType() != TheFunction->getReturnType()){
         //return LogErrorF(emptyLoc, "Return type is wrong in the %s function", P.getName().c_str());
-        Log::Warning() << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
+        Log::Warning(emptyLoc) << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
     }
 
     Builder->CreateRet(RetVal);
@@ -1015,7 +1017,7 @@ Function *FunctionAST::codegen() {
   if (debug_info_mode){
   CpointDebugInfo.LexicalBlocks.pop_back();
   }
-  return nullptr;
+  return LogErrorF(emptyLoc, "Return Value failed for the function");
 }
 
 void TypeDefAST::codegen(){
@@ -1138,14 +1140,16 @@ Value *IfExprAST::codegen() {
 
 Value* ReturnAST::codegen(){
   Value* value_returned = (returned_expr) ? returned_expr->codegen() : nullptr;
-  return Builder->CreateRet(value_returned);
+  //return Builder->CreateRet(value_returned);
+  Builder->CreateRet(value_returned);
+  return value_returned;
 }
 
 Value* GotoExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   BasicBlock* bb = get_basic_block(TheFunction, label_name);
   if (bb == nullptr){
-    Log::Warning() << "Basic block couldn't be found in goto" << "\n";
+    Log::Warning(this->loc) << "Basic block couldn't be found in goto" << "\n";
     return nullptr;
   }
   Builder->CreateBr(bb);
@@ -1178,7 +1182,7 @@ Value* RedeclarationExprAST::codegen(){
   Log::Info() << "is_global : " << is_global << "\n";
   Log::Info() << "VariableName : " << VariableName << "\n";
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  Log::Info() << "TEST\n";
+  //Log::Info() << "TEST\n";
   if (Val == nullptr){
     return LogErrorV(this->loc, "Val is Nullptr\n");
   }

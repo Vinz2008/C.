@@ -97,7 +97,7 @@ int getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::s
             std::string reponame = IdentifierStr;
             download_package_github(username, reponame);
             add_package(reponame);
-            //Log::Imports_Info() << "TEST" << "\n";
+            //Log::Imports_Info() << "" << "\n";
             Path_temp = DEFAULT_PACKAGE_PATH;
             Path_temp.append("/");
             Path_temp.append(reponame);
@@ -159,7 +159,7 @@ void getPathFromFilePOV(std::string& Path, std::string file_src){
     }
     Path_Temp.append(Path);
     Path = Path_Temp;
-    Log::Imports_Info() << "TEST " << Path << "\n";
+    //Log::Imports_Info() << "TEST " << Path << "\n";
     Path = realpath(Path.c_str(), NULL);
     Log::Imports_Info() << "Path after serialization : " << Path << "\n";
 }

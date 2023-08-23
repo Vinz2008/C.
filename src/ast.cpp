@@ -47,6 +47,205 @@ bool is_template_parsing_struct = false;
 
 Source_location emptyLoc = {0, 0, true, ""};
 
+std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
+    if (!ArgsCloned.empty()){
+      for (int i = 0; i < ArgsCloned.size(); i++){
+        ArgsCloned.push_back(Args.at(i)->clone());
+      }
+    }
+    return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, std::move(ArgsCloned));
+}
+
+std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> ArrayMembersClone;
+    if (!ArrayMembers.empty()){
+      for (int i = 0; i < ArrayMembers.size(); i++){
+        ArrayMembersClone.push_back(ArrayMembers.at(i)->clone());
+      }
+    }
+    return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersClone));
+}
+
+std::unique_ptr<ExprAST> EnumCreation::clone(){
+    std::unique_ptr<ExprAST> valueCloned = nullptr;
+    if (value){
+        valueCloned = value->clone();
+    }
+    return std::make_unique<EnumCreation>(EnumVarName, EnumMemberName, std::move(valueCloned));
+}
+
+std::unique_ptr<ExprAST> CallExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
+    if (!Args.empty()){
+      for (int i = 0; i < Args.size(); i++){
+        ArgsCloned.push_back(Args.at(i)->clone());
+      }
+    }
+    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, std::move(ArgsCloned), template_passed_type);
+}
+
+std::unique_ptr<ExprAST> VarExprAST::clone(){
+    std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNamesCloned;
+    if (!VarNames.empty()){
+      Log::Info() << "VarNames.size() " << VarNames.size() << "\n";
+      for (int i = 0; i < VarNames.size(); i++){
+        std::string name = VarNames.at(i).first;
+        if (VarNames.at(i).second == nullptr){
+          Log::Info() << "VarNames.at(i).second is nullptr" << "\n";
+        }
+        std::unique_ptr<ExprAST> val;
+        if (VarNames.at(i).second != nullptr){
+        val = VarNames.at(i).second->clone();
+        } else {
+          val = nullptr;
+        }
+        VarNamesCloned.push_back(std::make_pair(name, std::move(val)));
+      }
+    }
+    std::unique_ptr<ExprAST> indexCloned;
+    if (index == nullptr){
+      indexCloned = nullptr;
+    } else {
+      indexCloned = index->clone();
+    }
+    return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
+}
+
+std::unique_ptr<ExprAST> RedeclarationExprAST::clone(){
+    std::unique_ptr<ExprAST> indexCloned = nullptr;
+    if (index != nullptr){
+      indexCloned = index->clone();
+    }
+    return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, std::move(indexCloned));
+}
+
+std::unique_ptr<FunctionAST> FunctionAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyClone;
+    for (int i = 0; i < Body.size(); i++){
+      BodyClone.push_back(Body.at(i)->clone());
+    }
+    return std::make_unique<FunctionAST>(Proto->clone(), std::move(BodyClone));
+}
+
+std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
+    std::vector<std::unique_ptr<FunctionAST>> FunctionsCloned;
+    if (!Functions.empty()){
+      for (int i = 0; i < Functions.size(); i++){
+        FunctionsCloned.push_back(Functions.at(i)->clone());
+      }
+    }
+    std::vector<std::unique_ptr<PrototypeAST>> ExternFunctionsCloned;
+    if (!ExternFunctions.empty()){
+        for (int i = 0; i < ExternFunctions.size(); i++){
+            ExternFunctionsCloned.push_back(ExternFunctions.at(i)->clone());
+        }
+    }
+    std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
+    Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
+    if (!Vars.empty()){
+      for (int i = 0; i < Vars.size(); i++){
+        std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
+        std::unique_ptr<VarExprAST> VarTemp;
+        VarExprAST* VarTempPtr = dynamic_cast<VarExprAST*>(VarCloned.get());
+        if (!VarTempPtr){
+            return LogErrorS("Vars in struct is not a var and is an other type exprAST");
+        }
+        VarCloned.release();
+        VarTemp.reset(VarTempPtr);
+        VarsCloned.push_back(std::move(VarTemp));
+      }
+    }
+    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned), std::move(ExternFunctionsCloned), has_template, template_name);
+}
+
+std::unique_ptr<UnionDeclarAST> UnionDeclarAST::clone(){
+    std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
+    for (int i = 0; i < Vars.size(); i++){
+      std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
+      std::unique_ptr<VarExprAST> VarTemp;
+      VarExprAST* VarTempPtr = static_cast<VarExprAST*>(VarCloned.get());
+      VarCloned.release();
+      VarTemp.reset(VarTempPtr);
+      VarsCloned.push_back(std::move(VarTemp));
+    }
+    return std::make_unique<UnionDeclarAST>(Name, std::move(VarsCloned));
+}
+
+std::unique_ptr<EnumMember> EnumMember::clone(){
+    std::unique_ptr<Cpoint_Type> TypeCloned = nullptr;
+    if (Type){
+        TypeCloned = std::make_unique<Cpoint_Type>(*Type);
+    }
+    return std::make_unique<EnumMember>(Name, contains_value, std::move(TypeCloned));
+}
+
+std::unique_ptr<EnumDeclarAST> EnumDeclarAST::clone(){
+    std::vector<std::unique_ptr<EnumMember>> EnumMembersCloned;
+    if (!EnumMembers.empty()){
+        for (int i = 0; i < EnumMembers.size(); i++){
+            EnumMembersCloned.push_back(EnumMembers.at(i)->clone());
+        }
+    }
+    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembersCloned));
+}
+
+std::unique_ptr<TestAST> TestAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    if (!Body.empty()){
+      for (int i = 0; i < Body.size(); i++){
+        BodyCloned.push_back(Body.at(i)->clone());
+      }
+    }
+    return std::make_unique<TestAST>(description, std::move(BodyCloned));
+}
+
+std::unique_ptr<ExprAST> IfExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> ThenCloned;
+    if (!Then.empty()){
+      for (int i = 0; i < Then.size(); i++){
+        ThenCloned.push_back(Then.at(i)->clone());
+      }
+    }
+    std::vector<std::unique_ptr<ExprAST>> ElseCloned;
+    if (!Else.empty()){
+      for (int i = 0; i < Else.size(); i++){
+        ElseCloned.push_back(Else.at(i)->clone());
+      }
+    }
+    return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
+}
+
+std::unique_ptr<ExprAST> ForExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    if (!Body.empty()){
+      for (int i = 0; i < Body.size(); i++){
+        BodyCloned.push_back(Body.at(i)->clone());
+      }
+    }
+    return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), std::move(BodyCloned));
+}
+
+std::unique_ptr<ExprAST> WhileExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    if (!Body.empty()){
+      for (int i = 0; i < Body.size(); i++){
+        BodyCloned.push_back(Body.at(i)->clone());
+      }
+    }
+    return std::make_unique<WhileExprAST>(Cond->clone(), std::move(BodyCloned));
+}
+
+std::unique_ptr<ExprAST> LoopExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    if (!Body.empty()){
+      for (int i = 0; i < Body.size(); i++){
+        BodyCloned.push_back(Body.at(i)->clone());
+      }
+    }
+    return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
+}
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -103,8 +302,8 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string member = "";
   std::unique_ptr<ExprAST> indexAST = nullptr;
   bool is_array = false;
-  Log::Info() << "enum_name : " << IdName << "\n";
   if (EnumDeclarations[IdName] != nullptr){
+    Log::Info() << "enum_name : " << IdName << "\n";
     std::unique_ptr<ExprAST> Value = nullptr;
     if (CurTok != ':'){
         return LogError("expected \"::\" for creation of enum");

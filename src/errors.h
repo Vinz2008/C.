@@ -19,6 +19,7 @@ struct Source_location {
 
 
 std::ostream& operator<<(std::ostream& os, struct Source_location Loc);
+bool operator!=(Source_location loc1, Source_location loc2);
 
 class Compiler_context{
 public:
