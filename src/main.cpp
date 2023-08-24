@@ -449,6 +449,10 @@ int main(int argc, char **argv){
     BinopPrecedence["%"] = 30;
     BinopPrecedence["/"] = 30;
 
+#if ARRAY_MEMBER_OPERATOR_IMPL
+    BinopPrecedence["["] = 35;
+#endif
+
 
 
     /*BinopPrecedence["^"] = 5;

@@ -9,6 +9,7 @@
 #include "errors.h"
 #include "log.h"
 #include "codegen.h"
+#include "config.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -43,7 +44,6 @@ extern void HandleComment();
 
 bool is_template_parsing_definition = false;
 bool is_template_parsing_struct = false;
-
 
 Source_location emptyLoc = {0, 0, true, ""};
 
@@ -349,6 +349,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     IdName = module_mangled_function_name;
     Log::Info() << "Mangled call function name : " << IdName << "\n";
   }
+#if ARRAY_MEMBER_OPERATOR_IMPL == 0
   if (CurTok == '['){
     getNextToken();
     indexAST = ParseExpression();
@@ -361,6 +362,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     getNextToken();
     is_array = true;
   }
+#endif
   if (CurTok == '.'){
     Log::Info() << "Struct member found" << "\n";
     getNextToken();
@@ -409,10 +411,12 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     return std::make_unique<StructMemberExprAST>(IdName, member, is_function_call_member, std::move(Args));
   }
   if (CurTok != '(' && CurTok != /*'<'*/ '~'){ // Simple variable ref.
+#if ARRAY_MEMBER_OPERATOR_IMPL == 0
     if (is_array){
       Log::Info() << "Array member returned" << "\n";
       return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
     }
+#endif
     Log::Info() << "VariableExprAST" << "\n";
     std::unique_ptr<Cpoint_Type> type;
     if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
@@ -525,7 +529,12 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
       if (!RHS)
         return nullptr;
     }
-
+#if ARRAY_MEMBER_OPERATOR_IMPL
+    if (BinOp == "["){
+        // TODO add better verification for end ']'
+        getNextToken(); // pass ']'
+    }
+#endif
     // Merge LHS/RHS.
     LHS =
         std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));

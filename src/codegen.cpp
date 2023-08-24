@@ -23,6 +23,7 @@
 #include "operators.h"
 #include "checking.h"
 #include "templates.h"
+#include "config.h"
 
 using namespace llvm;
 
@@ -378,13 +379,6 @@ Value* ArrayMemberExprAST::codegen() {
     if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, this->loc)){
       return nullptr;
     }
-    /*if (indexConst->getType() == get_type_llvm(double_type)){
-      ConstantFP* indexConstFP = dyn_cast<ConstantFP>(indexConst);
-      double indexd = indexConstFP->getValue().convertToDouble();
-      if (indexd > cpoint_type.nb_element){
-        return LogErrorV(this->loc, "Index too big for array");
-      }
-    }*/
   }
 
   index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
@@ -547,6 +541,47 @@ Value* EnumCreation::codegen(){
     return nullptr;
 }
 
+#if ARRAY_MEMBER_OPERATOR_IMPL
+Value* getArrayMember(Value* array, Value* index){
+    Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
+    if (!index){
+        return LogErrorV(emptyLoc, "error in array index");
+    }
+    std::string ArrayName = (std::string)array->getName();
+    auto type_llvm = array->getType();
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    Value* firstIndex = index;
+    bool is_constant = false;
+    // TODO : for now this verification is not compatible
+    /*if (dyn_cast<Constant>(index) && cpoint_type.nb_element > 0){
+        is_constant = true;
+        Constant* indexConst = dyn_cast<Constant>(index);
+        if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, this->loc)){
+            return nullptr;
+        }
+    }*/
+    index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
+    if (!is_llvm_type_number(index->getType())){
+        return LogErrorV(emptyLoc, "index for array is not a number\n");
+    }
+
+    // TODO : same as above check
+    /*if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
+    if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
+      return nullptr;
+    }
+    }*/
+    
+    std::vector<Value*> indexes = { zero, index};
+    
+    
+    Value* ptr = Builder->CreateGEP(type_llvm, array, indexes);
+    auto member_type_llvm = array->getType()->getArrayElementType();
+    Value* value = Builder->CreateLoad(member_type_llvm, ptr, ArrayName);
+    return value;
+}
+#endif
+
 Value *BinaryExprAST::codegen() {
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
@@ -602,6 +637,11 @@ Value *BinaryExprAST::codegen() {
   case '|':
     L = Builder->CreateOr(L, R, "ortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+#if ARRAY_MEMBER_OPERATOR_IMPL
+  case '[':
+    // TODO get from rhs and lhs with getelementptr the array member
+    return getArrayMember(L, R);
+#endif
   case '=': {
     VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
     if (!LHSE)
