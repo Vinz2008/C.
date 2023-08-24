@@ -712,6 +712,12 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
     Log::Info() << "Template type in parsing type declaration" << "\n";
     is_template_type = true;
     getNextToken();
+    while (CurTok == tok_ptr){
+      is_ptr = true;
+      nb_ptr++;
+      Log::Info() << "Type Declaration ptr added : " << nb_ptr << "\n";
+      getNextToken();
+    }
   } else {
     Log::Info() << "TypeTemplatCallAst : " << TypeTemplateCallAst << "\n";
     LogError("wrong type %s found", IdentifierStr.c_str());

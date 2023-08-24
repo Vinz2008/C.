@@ -3,6 +3,7 @@ cpoint
 out.c
 *.ll
 *.bc
+*.S
 test
 out.s
 test-llvm.c

@@ -1,0 +1,8 @@
+import @std/list.cpoint
+import @std/print.cpoint
+
+func main(){
+    var l : struct list
+    l.append(2)
+    printi(l.at(0))
+}

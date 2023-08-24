@@ -361,6 +361,8 @@ Value* ConstantArrayExprAST::codegen(){
   return llvm::ConstantArray::get(arrayType, arrayMembersVal);
 }
 
+
+// TODO : transform this into an operator to use it in situations like : "self.list[0]"
 Value* ArrayMemberExprAST::codegen() {
   Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;

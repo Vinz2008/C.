@@ -11,12 +11,19 @@ struct list {
         self.allocated_size = 10
         self.length = 0
     }
-    func append(){
+    func append(data : int) {
         var list : struct list ptr = self
         if list.length == list.allocated_size {
             list.allocated_size = list.allocated_size * 2
             list.list = gc_realloc(list.list, list.allocated_size * sizeof int)
         }
+        var l = list.list
+        l[list.length] = data
+        list.length = list.length + 1
+    }
+    func at(pos : int)  {
+        var list : int ptr = self.list
+        list[pos]
     }
     func is_empty(){
         var list : struct list ptr = self

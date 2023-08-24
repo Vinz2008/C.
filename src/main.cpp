@@ -390,6 +390,9 @@ int main(int argc, char **argv){
     }
     if (asm_mode){
       link_files_mode = false;
+      if (object_filename == "out.o"){
+        object_filename = "out.S";
+      }
     }
     init_context_preprocessor();
     Comp_context->filename = filename;
@@ -551,6 +554,9 @@ int main(int argc, char **argv){
     std::string gc_path = DEFAULT_GC_PATH;
     Log::Print() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;
+    if (asm_mode){
+        goto end_asm_mode;
+    }
     if (std_path.back() != '/'){
       std_static_path.append("/");
     }
@@ -620,7 +626,8 @@ int main(int argc, char **argv){
       Log::Print() << "run executable at " << actualpath << "\n";
       runCommand(actualpath);
     }
-    if (remove_temp_file & !asm_mode){
+end_asm_mode:
+    if (remove_temp_file /*&& !asm_mode*/){
       remove(temp_filename.c_str());
     }
     return return_status;

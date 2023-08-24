@@ -41,7 +41,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix bug with type inference and struct pointers (for example in linked_list.cpoint "var tail = self.tail" that we needed to replace with "var tail : struct node_linked_list ptr = self.tail")
 - [ ] Add unions support in import
 - [ ] Add automatically when calling panic the file and line number to panic call
-- [ ] Move functions from headers to cpp files to lower compile times
+- [x] Move functions from headers to cpp files to lower compile times
+- [ ] Work on imports of template structs (for now in single file project you could include them)
+- [ ] Add macro functions
 
 ## Benchmarks compared to other languages
 
