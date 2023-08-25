@@ -344,6 +344,25 @@ public:
     }
 };
 
+class matchCase {
+public:
+    std::string enum_name;
+    std::string enum_member;
+    std::string var_name;
+    std::vector<std::unique_ptr<ExprAST>> Body; 
+    matchCase(const std::string& enum_name, const std::string& enum_member, const std::string& var_name, std::vector<std::unique_ptr<ExprAST>> Body) : enum_name(enum_name), enum_member(enum_member), var_name(var_name), Body(std::move(Body)) {}
+    std::unique_ptr<matchCase> clone();
+};
+
+class MatchExprAST : public ExprAST {
+public:
+    std::string matchVar;
+    std::vector<std::unique_ptr<matchCase>> matchCases;
+    MatchExprAST(const std::string& matchVar, std::vector<std::unique_ptr<matchCase>> matchCases) : matchVar(matchVar), matchCases(std::move(matchCases)) {}
+    Value *codegen() override;
+    std::unique_ptr<ExprAST> clone();
+};
+
 /*
 class StructDeclarAST {
   std::string Name;
@@ -713,6 +732,7 @@ std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseSizeofExpr();
 std::unique_ptr<ExprAST> ParseTypeidExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
+std::unique_ptr<ExprAST> ParseMatch();
 std::unique_ptr<ExprAST> ParseWhileExpr();
 std::unique_ptr<ExprAST> ParseGotoExpr();
 std::unique_ptr<ExprAST> ParseLabelExpr();

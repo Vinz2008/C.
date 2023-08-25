@@ -537,8 +537,21 @@ Type* EnumDeclarAST::codegen(){
     return enumStructType;
 }
 
+// TODO : add the creation of a struct here (struct {tag, value} in pseudo code). Maybe even replace it for the current implementation in RedeclarationExprAST
 Value* EnumCreation::codegen(){
     return nullptr;
+}
+
+Value* MatchExprAST::codegen(){
+    if (NamedValues[matchVar] == nullptr){
+        return LogErrorV(this->loc, "Match var is unknown");
+    }
+    auto enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
+    for (int i = 0; i < matchCases.size(); i++){
+        std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
+        // TODO : find the case in EnumDeclar, create the if to compare the tag and create the body after having created and stored to the variable if it is specified 
+    }
+    return Constant::getNullValue(get_type_llvm(double_type));
 }
 
 #if ARRAY_MEMBER_OPERATOR_IMPL

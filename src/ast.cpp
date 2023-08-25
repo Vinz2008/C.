@@ -246,6 +246,27 @@ std::unique_ptr<ExprAST> LoopExprAST::clone(){
     return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
 }
 
+std::unique_ptr<matchCase> matchCase::clone(){
+    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    if (!Body.empty()){
+      for (int i = 0; i < Body.size(); i++){
+        BodyCloned.push_back(Body.at(i)->clone());
+      }
+    }
+    return std::make_unique<matchCase>(enum_name, enum_member, var_name, std::move(BodyCloned));
+}
+
+std::unique_ptr<ExprAST> MatchExprAST::clone(){
+    std::vector<std::unique_ptr<matchCase>> matchCasesCloned;
+    if (!matchCases.empty()){
+        for (int i = 0; i < matchCases.size(); i++){
+            matchCasesCloned.push_back(matchCases.at(i)->clone());
+        }
+    }
+    return std::make_unique<MatchExprAST>(matchVar, std::move(matchCasesCloned));
+}
+
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -601,6 +622,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseLabelExpr();
   case tok_break:
     return ParseBreakExpr();
+  case tok_match:
+    return ParseMatch();
   }
 }
 
@@ -1362,6 +1385,76 @@ std::unique_ptr<ExprAST> ParseLabelExpr(){
   Log::Info() << "label_name in label : " << label_name << "\n";
   getNextToken();
   return std::make_unique<LabelExprAST>(label_name);
+}
+
+std::unique_ptr<ExprAST> ParseMatch(){
+    getNextToken();
+    std::vector<std::unique_ptr<matchCase>> matchCases;
+    std::string matchVar = IdentifierStr;
+    getNextToken();
+    if (CurTok != '{'){
+        return LogError("Missing '{' in match");
+    }
+    getNextToken();
+    while (CurTok == tok_identifier){
+        std::string VarName = "";
+        std::vector<std::unique_ptr<ExprAST>> Body;
+        std::string enum_name = IdentifierStr;
+        Log::Info() << "Match case enum_name : " << enum_name << "\n";
+        getNextToken();
+        if (CurTok != ':'){
+            return LogError("Missing \"::\" in match enum member case");
+        }
+        getNextToken();
+        if (CurTok != ':'){
+            return LogError("Missing \"::\" in match enum member case");
+        }
+        getNextToken();
+        std::string enum_member_name = IdentifierStr;
+        Log::Info() << "Match case enum_member_name : " << enum_member_name << "\n";
+        getNextToken();
+        if (CurTok == '('){
+            getNextToken();
+            VarName = IdentifierStr;
+            Log::Info() << "Match case found VarName : " << VarName << "\n";
+            getNextToken();
+            if (CurTok != ')'){
+                return LogError("Missing ) in value of match enum case");
+            }
+            getNextToken();
+        }
+        Log::Info() << "CurTok match : " << CurTok << "\n";
+        Log::Info() << "OpStringMultiChar : " << OpStringMultiChar << "\n";
+        if (CurTok != tok_op_multi_char && OpStringMultiChar != "=>"){
+            return LogError("Missing \"=>\" before match enum case body");
+        }
+        getNextToken();
+        Log::Info() << "CurTok match 2 : " << CurTok << "\n";
+        if (CurTok != '>'){
+            return LogError("Missing \"=>\" before match enum case body");
+        }
+        getNextToken();
+        if (CurTok == '{'){
+            getNextToken();
+            auto ret = ParseBodyExpressions(Body);
+            if (!ret){
+                return nullptr;
+            }
+            getNextToken(); // eat }
+        } else {
+            auto Expr = ParseExpression();
+            Body.push_back(std::move(Expr));
+            if (CurTok != ','){
+                return LogError("Expected ',' after single line body of match enum case");
+            }
+            getNextToken();
+        }
+        matchCases.push_back(std::make_unique<matchCase>(enum_name, enum_member_name, VarName, std::move(Body)));
+    }
+    if (CurTok != '}'){
+        return LogError("Missing '}' in match");
+    }
+    return std::make_unique<MatchExprAST>(matchVar, std::move(matchCases));
 }
 
 std::unique_ptr<ExprAST> ParseLoopExpr(){

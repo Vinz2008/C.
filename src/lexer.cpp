@@ -216,6 +216,8 @@ static int gettok() {
       return tok_goto;
     if (IdentifierStr == "label")
       return tok_label;
+    if (IdentifierStr == "match")
+        return tok_match;
     if (IdentifierStr == "type")
       return tok_typedef;
     if (IdentifierStr == "break")
