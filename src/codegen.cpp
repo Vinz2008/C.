@@ -510,11 +510,12 @@ Type* UnionDeclarAST::codegen(){
 
 Type* EnumDeclarAST::codegen(){
     Type* enumType = nullptr;
-    if (!enum_member_contain_type){
+    // TODO : add this optimization for enum without tag later (you need to verify and change the code in match to include this possibility)
+    /*if (!enum_member_contain_type){
         enumType = get_type_llvm(int_type);
         EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, std::move(this->clone()));
         return nullptr;
-    }
+    }*/
     Log::Info() << "codegen EnumDeclarAST with type" << "\n";
     std::vector<Type*> dataType;
     StructType* enumStructType = StructType::create(*TheContext);
@@ -542,15 +543,96 @@ Value* EnumCreation::codegen(){
     return nullptr;
 }
 
+void string_vector_erase(std::vector<std::string>& strings, std::string string){
+    std::vector<std::string>::iterator iter = strings.begin();
+    while (iter != strings.end())
+    {
+        if (*iter == string){
+            iter = strings.erase(iter);
+        }
+        else {
+           ++iter;
+        }
+    }
+
+}
+
 Value* MatchExprAST::codegen(){
+    Function *TheFunction = Builder->GetInsertBlock()->getParent();
     if (NamedValues[matchVar] == nullptr){
         return LogErrorV(this->loc, "Match var is unknown");
     }
     auto enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
+    auto enumDeclar = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->EnumDeclar->clone();
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+    Value* tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag });
+    Value* val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val });
+    //Value* tag_ptr = NamedValues[matchVar]->alloca_inst;
+    Value* tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
+    BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
+    std::vector<std::string> membersNotFound;
+    for (int i = 0; i < enumDeclar->EnumMembers.size(); i++){
+        membersNotFound.push_back(enumDeclar->EnumMembers.at(i)->Name);
+    }
     for (int i = 0; i < matchCases.size(); i++){
         std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
+        string_vector_erase(membersNotFound, matchCaseTemp->enum_member);
+        if (matchCaseTemp->enum_name != NamedValues[matchVar]->type.enum_name){
+            return LogErrorV(this->loc, "The match case is using a member of a different enum than the one in the expression");
+        }
+        int pos = -1;
+        for (int j = 0; j < enumDeclar->EnumMembers.size(); j++){
+            if (enumDeclar->EnumMembers[j]->Name == matchCaseTemp->enum_member){
+                pos = j;
+            }
+        }
+        if (pos == -1){
+            return LogErrorV(this->loc, "Couldn't find the member of this enum in match case");
+        }
+        //enumDeclar->EnumMembers[pos]
+        //enumDeclar->EnumMembers[pos]
+        Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos)));
+        cmp = Builder->CreateFCmpONE(cmp, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
+        BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then_match", TheFunction);
+        BasicBlock *ElseBB = BasicBlock::Create(*TheContext, "else_match");
+        Builder->CreateCondBr(cmp, ThenBB, ElseBB);
+        Builder->SetInsertPoint(ThenBB);
+        if (matchCaseTemp->var_name != ""){
+            if (!enumDeclar->EnumMembers[pos]->contains_value){
+                return LogErrorV(this->loc, "Enum Member doesn't contain a value");
+            }
+            AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, matchCaseTemp->var_name, *enumDeclar->EnumMembers[pos]->Type);
+            Value* enum_val = Builder->CreateLoad(get_type_llvm(*enumDeclar->EnumMembers[pos]->Type), val_ptr, "enum_val_load");
+            Builder->CreateStore(enum_val, Alloca);
+            NamedValues[matchCaseTemp->var_name] = std::make_unique<NamedValue>(Alloca, *enumDeclar->EnumMembers[pos]->Type);
+            Log::Info() << "Create var for match : " << enumDeclar->EnumMembers[pos]->Name << "\n";
+            //enumDeclar->EnumMembers[pos]->
+        }
+        //enumDeclar->EnumMembers[pos]
+        for (int i = 0; i < matchCaseTemp->Body.size(); i++){
+            matchCaseTemp->Body.at(i)->codegen();
+        }
+        Builder->CreateBr(AfterMatch);
+        //Builder->CreateBr(ElseBB);
+        TheFunction->getBasicBlockList().push_back(ElseBB);
+        Builder->SetInsertPoint(ElseBB);
+
         // TODO : find the case in EnumDeclar, create the if to compare the tag and create the body after having created and stored to the variable if it is specified 
     }
+    if (!membersNotFound.empty()){
+        std::string list_members_not_found_str = "";
+        int i;
+        for (i = 0; i < membersNotFound.size()-1; i++){
+            list_members_not_found_str += membersNotFound.at(i) + ", ";
+        }
+        list_members_not_found_str += membersNotFound.at(i);
+        return LogErrorV(this->loc, "These members were not found in the match case : %s\n", list_members_not_found_str.c_str());
+    }
+    Builder->CreateBr(AfterMatch);
+    TheFunction->getBasicBlockList().push_back(AfterMatch);
+    Builder->SetInsertPoint(AfterMatch);
     return Constant::getNullValue(get_type_llvm(double_type));
 }
 
@@ -1634,6 +1716,7 @@ Value *VarExprAST::codegen() {
         auto EnumMembers = std::move(EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->clone()->EnumMembers);
         std::unique_ptr<EnumMember> enumMember = nullptr;
         int pos_member = -1;
+        
         for (int i = 0; i < EnumMembers.size(); i++){
             if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
                 pos_member = i;
@@ -1643,10 +1726,14 @@ Value *VarExprAST::codegen() {
         if (!enumMember){
             return LogErrorV(this->loc, "Couldn't find enum member %s", enumCreation->EnumMemberName.c_str());
         }
-        Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(64, pos_member, true)), ptr_tag);
+        Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
         NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         if (enumCreation->value){
-            Builder->CreateStore(enumCreation->value->clone()->codegen(), value_tag);
+            Value* val = enumCreation->value->clone()->codegen();
+            if (val->getType() != get_type_llvm(*enumMember->Type)){
+                convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(*enumMember->Type), val);
+            }
+            Builder->CreateStore(val, value_tag);
             NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         }
         goto after_storing; 

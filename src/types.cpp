@@ -35,7 +35,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         }
         return get_type_llvm(typeDefTable.at(cpoint_type.type));
     }
-    Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
+    //Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
     if (cpoint_type.is_struct){
         Log::Info() << "cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
         std::string structName = cpoint_type.struct_name;
@@ -216,8 +216,10 @@ bool is_unsigned(Cpoint_Type cpoint_type){
     return type == u8_type || type == u16_type || type == u32_type || type == u64_type || type == u128_type;
 }
 
-bool is_signed(Cpoint_Type type){
-    return !is_unsigned(type);
+bool is_signed(Cpoint_Type cpoint_type){
+    int type = cpoint_type.type;
+    return type == i8_type || type == i16_type || type == i32_type || type == int_type || type == i64_type || type == i128_type;
+    //return !is_unsigned(cpoint_type);
 }
 
 bool is_decimal_number_type(Cpoint_Type type){
@@ -271,7 +273,22 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   }
 
   if (is_decimal_number_type(typeFrom)){
-    if (is_signed(typeTo_cpoint)){
+    Log::Info() << "TypeFrom is decimal" << "\n";
+    Log::Info() << "typeFrom : " << typeFrom << " " << "typeTo : " << typeTo_cpoint << "\n";
+    if (is_decimal_number_type(typeTo_cpoint)){
+        if (typeFrom.type == double_type && typeTo_cpoint.type == float_type){
+            Log::Info() << "From double to float" << "\n";
+            //val = Builder->CreateFPExt(val, typeTo, "cast");
+            val = Builder->CreateFPTrunc(val, typeTo, "cast");
+            return;
+        } else if (typeFrom.type == float_type && typeTo_cpoint.type == double_type){
+            Log::Info() << "From float to double" << "\n";
+            //val = Builder->CreateFPTrunc(val, typeTo, "cast");
+            val = Builder->CreateFPExt(val, typeTo, "cast");
+            return;
+        }
+        return;
+    } else if (is_signed(typeTo_cpoint)){
       Log::Info() << "From float/double to signed int" << "\n";
       val = Builder->CreateFPToUI(val, typeTo, "cast"); // change this to signed int conversion. For now it segfaults
       return;
@@ -279,9 +296,8 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
       Log::Info() << "From float/double to unsigned int" << "\n";
       val = Builder->CreateFPToUI(val, typeTo, "cast");
       return;
-    } else if (is_decimal_number_type(typeTo_cpoint)){
-      return;
     }
+    return;
   }
   int nb_bits_type_from = -1;
   int nb_bits_type_to = -1;

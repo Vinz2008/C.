@@ -642,7 +642,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   bool is_struct_template = false;
   //std::string struct_template_name;
   Cpoint_Type* struct_template_type_passed = nullptr;
-  Log::Info() << "type declaration found" << "\n";
+  //Log::Info() << "type declaration found" << "\n";
   if (eat_token){
   getNextToken(); // eat the ':'
   }
