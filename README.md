@@ -45,6 +45,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Work on imports of template structs (for now in single file project you could include them)
 - [ ] Add macro functions
 - [ ] Make if, for and while return values like in rust
+- [ ] Move preprocessing to import stage
 
 ## Benchmarks compared to other languages
 
