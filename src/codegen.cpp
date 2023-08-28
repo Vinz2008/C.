@@ -184,7 +184,35 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::vastart;
   } else if (Callee == "va_end"){
     intrisicId = Intrinsic::vaend;
-  }
+  } else if (Callee == "abs"){
+    intrisicId = Intrinsic::abs;
+  } else if (Callee == "cos"){
+    intrisicId = Intrinsic::cos;
+  } else if (Callee == "addressofreturnaddress"){
+    intrisicId = Intrinsic::addressofreturnaddress;
+  } else if (Callee == "bswap"){
+    intrisicId = Intrinsic::bswap;
+  } else if (Callee == "exp"){
+    intrisicId = Intrinsic::exp;
+  } else if (Callee == "fabs"){
+    intrisicId = Intrinsic::fabs;
+  } else if (Callee == "floor"){
+    intrisicId = Intrinsic::floor;
+  } else if (Callee == "log"){
+    intrisicId = Intrinsic::log;
+  } else if (Callee == "memcpy"){
+    intrisicId = Intrinsic::memcpy;
+  } else if (Callee == "memmove"){
+    intrisicId = Intrinsic::memmove;
+  } else if (Callee == "memset"){
+    intrisicId = Intrinsic::memset;
+  } else if (Callee == "trap"){
+    intrisicId = Intrinsic::trap;
+  } else if (Callee == "trunc"){
+    intrisicId = Intrinsic::trunc;
+  } else if (Callee == "read_register"){
+    intrisicId = Intrinsic::read_register;
+  } 
   Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -192,6 +220,13 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     ArgsV.push_back(temp_val);
     if (!ArgsV.back())
       return nullptr;
+  }
+  // TODO : add additional args
+  if (Callee == "memcpy" || Callee == "memset" || Callee == "memmove") {
+    ArgsV.push_back(BoolExprAST(false).codegen()); // the bool is if it is volatile
+  }
+  if (Callee == "abs"){
+    ArgsV.push_back(BoolExprAST(false).codegen());  // the bool is if it is a poison value
   }
   return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
 }
