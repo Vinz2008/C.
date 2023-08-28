@@ -573,8 +573,8 @@ Value* MatchExprAST::codegen(){
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-    Value* tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag });
-    Value* val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val });
+    Value* tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr");
+    Value* val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr");
     //Value* tag_ptr = NamedValues[matchVar]->alloca_inst;
     Value* tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
     BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
