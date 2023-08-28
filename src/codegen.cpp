@@ -56,6 +56,8 @@ std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have
 
 std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
+std::map<std::string, Value*> StringsGenerated;
+
 
 extern std::map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<DIBuilder> DBuilder;
@@ -212,10 +214,14 @@ Value *NumberExprAST::codegen() {
 }
 
 Value* StringExprAST::codegen() {
-  Log::Info() << "Before Codegen " << (std::string)StringRef(str.c_str()) << '\n';
-  Value* string = Builder->CreateGlobalStringPtr(StringRef(str.c_str()));
-  Log::Info() << "Codegen String" << "\n";
-  //string->print(outs());
+  Log::Info() << "Before Codegen " << str << '\n';
+  Value* string;
+  if (StringsGenerated[str]){
+    string = StringsGenerated[str];
+  } else {
+    string = Builder->CreateGlobalStringPtr(StringRef(str.c_str()));
+    StringsGenerated[str] = string;
+  }
   return string;
 }
 

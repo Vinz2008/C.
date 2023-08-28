@@ -9,9 +9,16 @@ func expect(expression : double){
     }
 }
 
-func expectx(expression : double, function : i8 ptr, filename : i8 ptr){
+func expectx(expression : double, filename : i8 ptr, function : i8 ptr){
     if expression == false {
         printf("assertion failed in the %s function in %s\n", function, filename)
+        exit(1)
+    }
+}
+
+func expectxplusexpr(expression : double, filename : i8 ptr, function : i8 ptr, expr_str : i8 ptr){
+    if expression == false {
+        printf("assertion %s failed in the %s function in %s\n", expr_str, function, filename)
         exit(1)
     }
 }

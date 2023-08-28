@@ -2,6 +2,7 @@
 #include <iostream>
 #include <utility>
 #include <cstdarg>
+#include <cstdlib>
 #include <stack>
 #include "ast.h"
 #include "lexer.h"
@@ -41,6 +42,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token);
 bool is_comment = false;
 
 extern void HandleComment();
+extern std::string filename;
 
 bool is_template_parsing_definition = false;
 bool is_template_parsing_struct = false;
@@ -575,6 +577,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   switch (CurTok) {
   default:
     return LogError("Unknown token %d when expecting an expression", CurTok);
+  case '#':
+    return ParseMacroCall();
   case tok_single_line_comment:
     HandleComment();
     return std::make_unique<CommentExprAST>();
@@ -625,6 +629,103 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   case tok_match:
     return ParseMatch();
   }
+}
+
+std::unique_ptr<StringExprAST> get_filename_tok(){
+    std::string filename_without_temp = filename;
+    int temp_pos;
+    if ((temp_pos = filename.rfind(".temp")) != std::string::npos){
+        filename_without_temp = filename.substr(0, temp_pos);
+    }
+    return std::make_unique<StringExprAST>(filename_without_temp);
+}
+
+std::unique_ptr<StringExprAST> stringify_macro(std::unique_ptr<ExprAST> expr){
+    return std::make_unique<StringExprAST>(expr->to_string());
+}
+
+std::unique_ptr<ExprAST> ParseMacroCall(){
+    Log::Info() << "Parsing macro call" << "\n";
+    getNextToken();
+    std::string function_name = IdentifierStr;
+    getNextToken();
+    if (CurTok != '('){
+        return LogError("missing '(' in the call of a macro function");
+    }
+    getNextToken();
+    // TODO : add parsing args
+    std::vector<std::unique_ptr<ExprAST>> ArgsMacro;
+    auto ret = ParseFunctionArgs(ArgsMacro);
+    if (!ret){
+        return nullptr;
+    }
+    /*if (CurTok != ')'){
+        return LogError("missing '(' in the call of a macro function");
+    }*/
+    getNextToken();
+    if (function_name == "file"){
+        return get_filename_tok();
+    } else if (function_name == "expect"){
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
+        if (ArgsMacro.size() != 1){
+            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
+        }
+        Args.push_back(ArgsMacro.at(0)->clone());
+        Args.push_back(get_filename_tok());
+        Args.push_back(std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_get_function_name", std::move(ArgsEmpty), Cpoint_Type(double_type)));
+        Args.push_back(stringify_macro(ArgsMacro.at(0)->clone()));
+        return std::make_unique<CallExprAST>(emptyLoc, "expectxplusexpr", std::move(Args), Cpoint_Type(double_type));
+    } else if (function_name == "panic"){
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
+        if (ArgsMacro.size() != 1){
+            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
+        }
+        Args.push_back(ArgsMacro.at(0)->clone());
+        Args.push_back(get_filename_tok());
+        Args.push_back(std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_get_function_name", std::move(ArgsEmpty), Cpoint_Type(double_type)));
+        return std::make_unique<CallExprAST>(emptyLoc, "panicx", std::move(Args), Cpoint_Type(double_type));
+    } else if (function_name == "stringify"){
+        if (ArgsMacro.size() != 1){
+            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "stringify", 1, ArgsMacro.size());
+        } 
+        return stringify_macro(std::move(ArgsMacro.at(0)));
+    } else if (function_name == "concat"){
+        std::string concatenated_str = "";
+        for (int i = 0; i < ArgsMacro.size(); i++){
+            if (dynamic_cast<StringExprAST*>(ArgsMacro.at(i).get())){
+                auto s = dynamic_cast<StringExprAST*>(ArgsMacro.at(i).get());
+                concatenated_str += s->str;
+            } else {
+                concatenated_str += ArgsMacro.at(i)->to_string();
+            }
+        }
+        return std::make_unique<StringExprAST>(concatenated_str);
+    } else if (function_name == "line"){
+        return std::make_unique<StringExprAST>(Comp_context->line);
+    } else if (function_name == "line_nb"){
+        return std::make_unique<NumberExprAST>((double)Comp_context->curloc.line_nb);
+    } else if (function_name == "column_nb"){
+        return std::make_unique<NumberExprAST>((double)Comp_context->curloc.col_nb);
+    } else if (function_name == "env"){
+        if (ArgsMacro.size() != 1){
+            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "env", 1, ArgsMacro.size());
+        }
+        StringExprAST* str = nullptr;
+        if (dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get())){
+            str = dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get());
+        } else {
+            return LogError("Wrong type of args for %s macro function call : expected a string", "env");
+        }
+        std::string env_name = str->str;
+        auto path_val = std::getenv(env_name.c_str());
+        if (path_val == nullptr){
+            return LogError("Env variable %s doesn't exist for %s macro function call", env_name.c_str(), "env");
+        }
+        return std::make_unique<StringExprAST>((std::string)path_val);
+    }
+    return LogError("unknown function macro called : %s", function_name.c_str());
 }
 
 Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
@@ -876,7 +977,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   } else {
   getNextToken();
-  if (CurTok != '('){
+  if (CurTok != ')'){
     int arg_nb = 0;
     while (1){
       if (CurTok == tok_format){
@@ -1227,7 +1328,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY" << "\n";
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[')
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#')
     return ParsePrimary();
 
   // If this is a unary operator, read it.

@@ -1,3 +1,4 @@
+import @std/panic.cpoint
 
 func test(){
     2
@@ -5,4 +6,5 @@ func test(){
 
 func main(){
     var p : int ptr = test
+    panic("panic test")
 }

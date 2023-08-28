@@ -8,6 +8,7 @@ struct test {
 }
 func main() void {
   var x : struct test
+  var y = x
   var v : double = 1
   printd(v)
   x.z = 2

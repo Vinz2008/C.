@@ -261,7 +261,8 @@ static int gettok() {
     return tok_number;
   }
 
-  if (LastChar == '#') {
+  // TODO : maybe move the detection of comments in the lexer ?
+  /*if (LastChar == '#') {
     // Comment until end of line.
     do
       LastChar = getCharLine();
@@ -269,7 +270,7 @@ static int gettok() {
 
     if (LastChar != EOF)
       return gettok();
-  }
+  }*/
   if (LastChar == '\"'){
     LastChar = getCharLine();
     strStatic = LastChar;

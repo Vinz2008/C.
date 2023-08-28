@@ -222,6 +222,9 @@ static void MainLoop() {
     case tok_eof:
       last_line = true; 
       return;
+    case '#':
+        // found call macro
+        break;
     case ';': // ignore top-level semicolons.
       getNextToken();
       break;

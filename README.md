@@ -34,18 +34,22 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix array members and array member redeclaration bugs
 - [ ] Maybe verify and warn in the manual allocation module in the standard library if an address was already freed by verifying in a list
 - [ ] Add type checking in separate file and remove implicit cast and only have explicit casts with the "cast" keyword
-- [ ] Add rust-styled enums with match
+- [x] Add rust-styled enums with match
 - [x] Add a syntax to import every cpoint files in package
 - [ ] Add chained struct members
 - [x] Add chained else if
 - [ ] Fix bug with type inference and struct pointers (for example in linked_list.cpoint "var tail = self.tail" that we needed to replace with "var tail : struct node_linked_list ptr = self.tail")
 - [ ] Add unions support in import
-- [ ] Add automatically when calling panic the file and line number to panic call
+- [ ] Add enum support in import
+- [x] Add automatically when calling panic the file and line number to panic call
 - [x] Move functions from headers to cpp files to lower compile times
-- [ ] Work on imports of template structs (for now in single file project you could include them)
-- [ ] Add macro functions
+- [ ] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
+- [x] Add macro functions (for example with a syntax like #function())
 - [ ] Make if, for and while return values like in rust
 - [ ] Move preprocessing to import stage
+- [x] Deduplicate identical strings when creating them by keeping them in a hashmap when generating them
+- [x] Add the string version of the expression in the expect macro
+- [ ] Add rust-like "traits" for simple types like i32 or float (It will be called "members" and not traits but it will be the same : add methods to types, but it will need to make the '.' an operator)  
 
 ## Benchmarks compared to other languages
 

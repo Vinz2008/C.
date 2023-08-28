@@ -36,6 +36,7 @@ public:
   virtual ~ExprAST() = default;
   virtual Value *codegen() = 0;
   virtual std::unique_ptr<ExprAST> clone() = 0;
+  virtual std::string to_string() = 0;
   int getLine() const { return loc.line_nb; }
   int getCol() const { return loc.col_nb; }
 };
@@ -45,7 +46,9 @@ public:
     EmptyExprAST(){};
     Value *codegen() override { return nullptr; }
     std::unique_ptr<ExprAST> clone() override { return std::make_unique<EmptyExprAST>(); }
-
+    std::string to_string() override {
+        return "";
+    }
 };
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".
@@ -58,15 +61,24 @@ public:
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<NumberExprAST>(Val);
   }
+  std::string to_string() override {
+    if (trunc(Val) == Val){
+        return std::to_string((int)Val);
+    }
+    return std::to_string(Val);
+  }
 };
 
 class StringExprAST : public ExprAST {
-  std::string str;
 public:
+  std::string str;
   StringExprAST(const std::string &str) : str(str) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<StringExprAST>(str);
+  }
+  std::string to_string() override {
+    return "\"" + str + "\"";
   }
 };
 
@@ -78,6 +90,9 @@ public:
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<CharExprAST>(c);
   }
+  std::string to_string() override {
+    return "" + c;
+  }
 };
 
 class BoolExprAST : public ExprAST {
@@ -88,6 +103,9 @@ public:
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<BoolExprAST>(val);
   }
+  std::string to_string() override {
+    return val ? "true" : "false";
+  }
 };
 
 class AddrExprAST : public ExprAST {
@@ -97,6 +115,9 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<AddrExprAST>(Name);
+  }
+  std::string to_string() override {
+    return "addr " + Name;
   }
 };
 
@@ -110,6 +131,9 @@ public:
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<SizeofExprAST>(type,is_variable, Name);
   }
+  std::string to_string() override {
+    return "sizeof " + Name != "" ? Name : create_pretty_name_for_type(type);
+  }
 };
 
 class TypeidExprAST : public ExprAST {
@@ -119,6 +143,10 @@ public:
     Value* codegen() override;
     std::unique_ptr<ExprAST> clone() override {
         return std::make_unique<TypeidExprAST>(val->clone());
+    }
+
+    std::string to_string() override {
+        return "typeId " + val->to_string();
     }
 };
 
@@ -131,6 +159,9 @@ public:
   const std::string &getName() const { return Name; }
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<VariableExprAST>(ExprAST::loc, Name, type);
+  }
+  std::string to_string() override {
+    return Name;
   }
 };
 
@@ -151,6 +182,17 @@ public:
     }
     return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, std::move(ArgsCloned));
   }*/
+  std::string to_string() override {
+    std::string args = "";
+    if (is_function_call){
+        args += "(";
+        for (int i = 0; i < Args.size(); i++){
+            args += Args.at(i)-> to_string() + ",";
+        }
+        args += ")";
+    }
+    return StructName + "." + MemberName + args;
+  }
 };
 
 /*class ClassMemberExprAST : public ExprAST {
@@ -170,6 +212,9 @@ public:
   std::unique_ptr<ExprAST> clone(){
     return std::make_unique<UnionMemberExprAST>(UnionName, MemberName);
   }
+  std::string to_string() override {
+    return UnionName + "." + MemberName;
+  }
 };
 
 class ConstantArrayExprAST : public ExprAST {
@@ -186,6 +231,13 @@ public:
     }
     return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersClone));
    }*/
+   std::string to_string() override {
+    std::string array = "";
+    for (int i = 0; i < ArrayMembers.size(); i++){
+        array += ArrayMembers.at(i)->to_string() + ",";
+    }
+    return "[" + array + "]";
+   }
 };
 
 class EnumCreation : public ExprAST {
@@ -203,6 +255,9 @@ public:
         }
         return std::make_unique<EnumCreation>(EnumVarName, EnumMemberName, std::move(valueCloned));
     }*/
+    std::string to_string() override {
+        return EnumVarName + "::" + EnumMemberName + "(" + value->to_string() + ")";
+    }
 };
 
 
@@ -214,6 +269,9 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<ArrayMemberExprAST>(ArrayName, posAST->clone());
+  }
+  std::string to_string() override {
+    return ArrayName + "[" + posAST->to_string() + "]";
   }
 };
 
@@ -229,6 +287,9 @@ public:
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<BinaryExprAST>(ExprAST::loc, Op, LHS->clone(), RHS->clone());
   }
+  std::string to_string() override {
+    return LHS->to_string() + " " + Op + " " + RHS->to_string();  
+  }
 };
 
 class UnaryExprAST : public ExprAST {
@@ -242,6 +303,9 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<UnaryExprAST>(Opcode, Operand->clone());
+  }
+  std::string to_string() override {
+    return Opcode + Operand->to_string();
   }
 };
 
@@ -264,6 +328,17 @@ public:
     }
     return std::make_unique<CallExprAST>(ExprAST::loc, Callee, std::move(ArgsCloned), template_passed_type);
   }*/
+  std::string to_string() override {
+    std::string args = "";
+    args += "(";
+    for (int i = 0; i < Args.size(); i++){
+        args += Args.at(i)-> to_string() + ",";
+    }
+    args += ")";
+    std::string template_type = "";
+    // TODO maybe add the template type to the string expression (add a bool in this class to identify if a type is passed in the template)
+    return Callee + template_type + args;
+  }
 };
 
 class VarExprAST : public ExprAST {
@@ -304,6 +379,10 @@ public:
     }
     return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
   }*/
+  std::string to_string() override {
+    // TODO : maybe add the type declaration
+    return "var " +  VarNames.at(0).first + " = " + VarNames.at(0).second->to_string(); 
+  }
 };
 
 class RedeclarationExprAST : public ExprAST {
@@ -322,6 +401,10 @@ public:
     }
     return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, std::move(indexCloned));
   }*/
+  std::string to_string() override {
+    std::string member_expr  = member != "" ? "." + member : "";
+    return VariableName + member_expr + " = " + Val->to_string();
+  }
 };
 
 class CastExprAST : public ExprAST {
@@ -333,6 +416,9 @@ public:
     std::unique_ptr<ExprAST> clone(){
         return std::make_unique<CastExprAST>(ValToCast->clone(), type);
     }
+    std::string to_string() override {
+      return "cast " + create_pretty_name_for_type(type) + " " + ValToCast->to_string();
+    }
 };
 
 class NullExprAST : public ExprAST {
@@ -341,6 +427,9 @@ public:
     Value *codegen() override;
     std::unique_ptr<ExprAST> clone(){
         return std::make_unique<NullExprAST>();
+    }
+    std::string to_string() override {
+        return "null";
     }
 };
 
@@ -361,6 +450,10 @@ public:
     MatchExprAST(const std::string& matchVar, std::vector<std::unique_ptr<matchCase>> matchCases) : matchVar(matchVar), matchCases(std::move(matchCases)) {}
     Value *codegen() override;
     std::unique_ptr<ExprAST> clone();
+    std::string to_string() override {
+        // TODO
+        return "";
+    }
 };
 
 /*
@@ -574,6 +667,9 @@ public:
     std::unique_ptr<ExprAST> clone() override {
         return std::make_unique<CommentExprAST>();
     }
+    std::string to_string() override {
+        return "";
+  }
 };
 
 class ModAST {
@@ -608,7 +704,10 @@ public:
     }
     return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
   }*/
-  
+  std::string to_string() override {
+    // TODO
+    return "";
+  }
 };
 
 class ReturnAST : public ExprAST {
@@ -622,6 +721,9 @@ public:
   std::unique_ptr<ExprAST> clone(){
     return std::make_unique<ReturnAST>(returned_expr->clone());
   }
+  std::string to_string() override {
+    return "return " + returned_expr->to_string();
+  }
 };
 
 class BreakExprAST : public ExprAST {
@@ -630,6 +732,9 @@ public:
   Value* codegen() override;
   std::unique_ptr<ExprAST> clone(){
     return std::make_unique<BreakExprAST>();
+  }
+  std::string to_string() override {
+    return "break";
   }
 };
 
@@ -641,6 +746,9 @@ public:
   std::unique_ptr<ExprAST> clone(){
     return std::make_unique<GotoExprAST>(label_name);
   }
+  std::string to_string() override {
+    return "goto " + label_name;
+  }
 };
 
 class LabelExprAST : public ExprAST {
@@ -650,6 +758,9 @@ public:
   Value* codegen() override;
   std::unique_ptr<ExprAST> clone(){
     return std::make_unique<LabelExprAST>(label_name);
+  }
+  std::string to_string() override {
+    return label_name + ":";
   }
 };
 
@@ -675,6 +786,10 @@ public:
     }
     return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), std::move(BodyCloned));
   }*/
+  std::string to_string() override {
+    // TODO
+    return "";
+  }
 };
 
 class WhileExprAST : public ExprAST {
@@ -692,6 +807,10 @@ public:
     }
     return std::make_unique<WhileExprAST>(Cond->clone(), std::move(BodyCloned));
   }*/
+  std::string to_string() override {
+    // TODO
+    return "";
+  }
 };
 
 class LoopExprAST : public ExprAST {
@@ -711,6 +830,10 @@ public:
     }
     return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
   }*/
+  std::string to_string() override {
+    // TODO
+    return "";
+  }
 };
 
 std::unique_ptr<ExprAST> ParseExpression();
@@ -748,6 +871,7 @@ std::unique_ptr<ModAST> ParseMod();
 std::unique_ptr<TestAST> ParseTest();
 std::unique_ptr<UnionDeclarAST> ParseUnion();
 std::unique_ptr<EnumDeclarAST> ParseEnum();
+std::unique_ptr<ExprAST> ParseMacroCall();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

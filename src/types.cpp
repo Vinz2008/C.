@@ -139,6 +139,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     bool is_array = false;
     bool is_struct = false;
     bool is_function = false;
+    std::string struct_name = "";
     //Type* not_ptr_type = llvm_type;
     if (llvm_type->isPointerTy()){
         is_ptr = true;
@@ -148,6 +149,10 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     }
     if (llvm_type->isStructTy()){
         is_struct = true;
+        StructType* struct_type = dyn_cast<StructType>(llvm_type);
+        if (struct_type){
+            struct_name = (std::string)struct_type->getName();
+        }
     }
     if (llvm_type->isFunctionTy()){
         is_function = true;
@@ -176,7 +181,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         }
     }
     int nb_ptr = (is_ptr) ? 1 : 0;
-    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, 0, is_struct, "", false, "", false, "", false, is_function);
+    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, 0, is_struct, struct_name, false, "", false, "", false, is_function);
 }
 
 Value* get_default_value(Cpoint_Type type){
