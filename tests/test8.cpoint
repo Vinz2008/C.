@@ -2,7 +2,8 @@ import @std/print.cpoint
 
 extern printptr(x)
 
-var z : int = 2
+var extern ext : float;
+var z : int = 2;
 
 func main() void {
   var c = "hello"

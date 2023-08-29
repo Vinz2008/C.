@@ -380,8 +380,7 @@ public:
     return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
   }*/
   std::string to_string() override {
-    // TODO : maybe add the type declaration
-    return "var " +  VarNames.at(0).first + " = " + VarNames.at(0).second->to_string(); 
+    return "var " +  VarNames.at(0).first + ": " + create_pretty_name_for_type(cpoint_type) + " = " + VarNames.at(0).second->to_string(); 
   }
 };
 
@@ -588,8 +587,6 @@ public:
   }*/
 };
 
-
-// TODO : maybe verify if it needs to be a subclass of ExprAST
 class EnumMember {
 public:
     std::string Name;
@@ -705,8 +702,15 @@ public:
     return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
   }*/
   std::string to_string() override {
-    // TODO
-    return "";
+    std::string body_then = "";
+    for (int i = 0; i < Then.size(); i++){
+        body_then += Then.at(i)->to_string() + "\n";
+    }
+    std::string body_else = "";
+    for (int i = 0; i < Else.size(); i++){
+        body_else += Else.at(i)->to_string() + "\n";
+    }
+    return "if " + Cond->to_string() + "{\n" + body_then + "} else {\n" + body_else + "}";
   }
 };
 
@@ -787,8 +791,11 @@ public:
     return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), std::move(BodyCloned));
   }*/
   std::string to_string() override {
-    // TODO
-    return "";
+    std::string for_body = "";
+    for (int i = 0; i < Body.size(); i++){
+        for_body += Body.at(i)->to_string() + "\n";
+    }
+    return "for " + VarName + " = " + Start->to_string() + ", " + End->to_string() + ", " + Step->to_string() + "{\n" + for_body + "}";
   }
 };
 
@@ -831,8 +838,15 @@ public:
     return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
   }*/
   std::string to_string() override {
-    // TODO
-    return "";
+    std::string loop_expr = "";
+    if (!is_infinite_loop){
+        loop_expr = VarName + " in " + Array->to_string();
+    }
+    std::string loop_body = "";
+    for (int i = 0; i < Body.size(); i++){
+        loop_body += Body.at(i)->to_string() + "\n";
+    }
+    return "loop " +  loop_expr + "{\n" + loop_body + "}";
   }
 };
 

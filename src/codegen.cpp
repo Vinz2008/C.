@@ -221,7 +221,7 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     if (!ArgsV.back())
       return nullptr;
   }
-  // TODO : add additional args
+  // add additional args for intrisics
   if (Callee == "memcpy" || Callee == "memset" || Callee == "memmove") {
     ArgsV.push_back(BoolExprAST(false).codegen()); // the bool is if it is volatile
   }
@@ -659,8 +659,6 @@ Value* MatchExprAST::codegen(){
         //Builder->CreateBr(ElseBB);
         TheFunction->getBasicBlockList().push_back(ElseBB);
         Builder->SetInsertPoint(ElseBB);
-
-        // TODO : find the case in EnumDeclar, create the if to compare the tag and create the body after having created and stored to the variable if it is specified 
     }
     if (!membersNotFound.empty()){
         std::string list_members_not_found_str = "";
@@ -1211,9 +1209,21 @@ Value* CommentExprAST::codegen(){
 }
 
 GlobalVariable* GlobalVariableAST::codegen(){
-  Constant* InitVal = get_default_constant(cpoint_type);
+  Constant* InitVal = nullptr;
+  if (is_extern && Init){
+    return LogErrorGLLVM("Init Value found even though the global variable is extern");
+  }
+  if (!is_extern) {
+  InitVal = get_default_constant(cpoint_type);
   if (Init){
-    InitVal = dyn_cast<ConstantFP>(Init->codegen()); // TODO : fix this cast to make it depending on the type
+    //InitVal = dyn_cast<ConstantFP>(Init->codegen());
+    //InitVal = from_val_to_constant_infer(Init->codegen());
+    InitVal = from_val_to_constant(Init->codegen(), cpoint_type);
+    if (!InitVal){
+        return LogErrorGLLVM("The constant initialization of the global variable wasn't a double so it couldn't be converted to a constant");
+    }
+    //InitVal = nullptr;
+  }
   }
   GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
   GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName);
@@ -1236,6 +1246,7 @@ Value *IfExprAST::codegen() {
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
   Type* phiType = Type::getDoubleTy(*TheContext);
+  // TODO : replace the phitype from the function return type to the type of the ThenV
   phiType = TheFunction->getReturnType();
 
   // Create blocks for the then and else cases.  Insert the 'then' block at the
@@ -1287,6 +1298,7 @@ Value *IfExprAST::codegen() {
   // Emit merge block.
   TheFunction->getBasicBlockList().push_back(MergeBB);
   Builder->SetInsertPoint(MergeBB);
+
   PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");
 
   if (ThenV->getType() == Type::getVoidTy(*TheContext) && phiType != Type::getVoidTy(*TheContext)){

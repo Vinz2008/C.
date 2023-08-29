@@ -653,15 +653,11 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return LogError("missing '(' in the call of a macro function");
     }
     getNextToken();
-    // TODO : add parsing args
     std::vector<std::unique_ptr<ExprAST>> ArgsMacro;
     auto ret = ParseFunctionArgs(ArgsMacro);
     if (!ret){
         return nullptr;
     }
-    /*if (CurTok != ')'){
-        return LogError("missing '(' in the call of a macro function");
-    }*/
     getNextToken();
     if (function_name == "file"){
         return get_filename_tok();

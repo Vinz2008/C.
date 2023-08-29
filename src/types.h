@@ -57,6 +57,10 @@ public:
         os << "{ type : " << type.type << " is_ptr : " << type.is_ptr << " nb_ptr : " << type.nb_ptr  << " is_struct : " << type.is_struct << " is_array : " << type.is_array << " }"; 
         return os;
     }
+    friend bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
+        // TODO : maybe add the comparaison of the template type passed, the return type and the args
+        return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_struct_template == rhs.is_struct_template && lhs.is_function == rhs.is_function;
+    }
 
 };
 
@@ -73,3 +77,5 @@ int get_type_number_of_bits(Cpoint_Type type);
 std::string get_string_from_type(Cpoint_Type type);
 std::string create_mangled_name_from_type(Cpoint_Type type);
 std::string create_pretty_name_for_type(Cpoint_Type type);
+llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
+llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);

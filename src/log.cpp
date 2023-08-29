@@ -120,3 +120,11 @@ Function* LogErrorF(Source_location astLoc, const char *Str, ...){
   va_end(args);
   return nullptr;
 }
+
+GlobalVariable* LogErrorGLLVM(const char *Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args, emptyLoc);
+  va_end(args);
+  return nullptr;
+}

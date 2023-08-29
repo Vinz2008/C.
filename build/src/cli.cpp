@@ -70,7 +70,7 @@ void compileFile(std::string target, std::string arguments, std::string path, st
     runCommand(cmd);
 }
 
-void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot){
+void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc){
     if  (outfilename == ""){
         outfilename = "a.out";
     }
@@ -96,7 +96,9 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
         cmd += out_path + " ";
     }
     cmd += " " DEFAULT_STD_PATH "/libstd.a";
-    cmd += " " DEFAULT_STD_PATH "/../bdwgc_prefix/lib/libgc.a"; // TODO : verify if gc is activated by adding in config file no_gc param
+    if (is_gc){
+        cmd += " " DEFAULT_STD_PATH "/../bdwgc_prefix/lib/libgc.a";
+    }
     if (target != ""){
         std::string path = DEFAULT_STD_PATH;
         rebuildSTD(target, path);

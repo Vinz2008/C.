@@ -29,6 +29,7 @@ std::unique_ptr<UnionDeclarAST> LogErrorU(const char* Str, ...);
 std::unique_ptr<EnumDeclarAST> LogErrorE(const char* Str, ...);
 Value* LogErrorV(Source_location astLoc, const char *Str, ...);
 Function* LogErrorF(Source_location astLoc, const char *Str, ...);
+GlobalVariable* LogErrorGLLVM(const char *Str, ...);
 
 #ifndef _LOG_HEADER_
 #define _LOG_HEADER_

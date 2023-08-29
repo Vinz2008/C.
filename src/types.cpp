@@ -258,6 +258,46 @@ Constant* get_default_constant(Cpoint_Type type){
     return ConstantFP::get(*TheContext, APFloat(0.0));
 }
 
+Constant* from_val_to_constant(Value* val, Cpoint_Type type){
+    Type* val_type = val->getType();
+    if (val_type != get_type_llvm(Cpoint_Type(double_type))){
+        return nullptr;
+    }
+    auto constFP = dyn_cast<ConstantFP>(val);
+    if (!constFP){
+        return nullptr;
+    }
+    // TODO : add more types for variable types
+    if (type == Cpoint_Type(int_type)){
+        int val_int = (int)constFP->getValue().convertToDouble();
+        return ConstantInt::get(*TheContext, llvm::APInt(32, val_int, true));
+    }
+
+    /*
+    if (type == Cpoint_Type(double_type) || type == Cpoint_Type(float_type)){
+        Log::Info() << "dyn_cast fp" << "\n";
+        return dyn_cast<ConstantFP>(val);
+    } else if (type == Cpoint_Type(int_type)){
+        if (val_type == get_type_llvm(Cpoint_Type(double_type))){
+
+        }
+        Log::Info() << "dyn_cast int" << "\n";
+        return dyn_cast<ConstantInt>(val);
+    }
+    std::cout << "dyn_cast default fp" << std::endl;*/
+    return dyn_cast<ConstantFP>(val);
+}
+
+Constant* from_val_to_constant_infer(Value* val){
+    Type* type = val->getType();
+    if (type == get_type_llvm(Cpoint_Type(double_type)) || type == get_type_llvm(Cpoint_Type(float_type))){
+        return dyn_cast<ConstantFP>(val);
+    } else if (type == get_type_llvm(Cpoint_Type(int_type))){
+        return dyn_cast<ConstantInt>(val);
+    }
+    return dyn_cast<ConstantFP>(val);
+}
+
 void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
   Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
