@@ -173,15 +173,7 @@ class StructMemberExprAST : public ExprAST {
 public:
   StructMemberExprAST(const std::string &StructName, const std::string &MemberName, bool is_function_call, std::vector<std::unique_ptr<ExprAST>> Args) : StructName(StructName), MemberName(MemberName), is_function_call(is_function_call), Args(std::move(Args)) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override; /*{
-    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
-    if (!ArgsCloned.empty()){
-      for (int i = 0; i < ArgsCloned.size(); i++){
-        ArgsCloned.push_back(Args.at(i)->clone());
-      }
-    }
-    return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, std::move(ArgsCloned));
-  }*/
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string args = "";
     if (is_function_call){
@@ -194,14 +186,6 @@ public:
     return StructName + "." + MemberName + args;
   }
 };
-
-/*class ClassMemberExprAST : public ExprAST {
-  std::string ClassName;
-  std::string MemberName;
-public:
-  ClassMemberExprAST(const std::string &ClassName, const std::string &MemberName) : ClassName(ClassName), MemberName(MemberName) {}
-  Value *codegen() override;
-};*/
 
 class UnionMemberExprAST : public ExprAST {
 public:
@@ -222,15 +206,7 @@ public:
   std::vector<std::unique_ptr<ExprAST>> ArrayMembers;
   ConstantArrayExprAST(std::vector<std::unique_ptr<ExprAST>> ArrayMembers) : ArrayMembers(std::move(ArrayMembers)) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override; /*{
-    std::vector<std::unique_ptr<ExprAST>> ArrayMembersClone;
-    if (!ArrayMembers.empty()){
-      for (int i = 0; i < ArrayMembers.size(); i++){
-        ArrayMembersClone.push_back(ArrayMembers.at(i)->clone());
-      }
-    }
-    return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersClone));
-   }*/
+  std::unique_ptr<ExprAST> clone() override;
    std::string to_string() override {
     std::string array = "";
     for (int i = 0; i < ArrayMembers.size(); i++){
@@ -248,13 +224,7 @@ public:
     EnumCreation(const std::string& EnumVarName, const std::string& EnumMemberName, std::unique_ptr<ExprAST> value) : EnumVarName(EnumVarName), EnumMemberName(EnumMemberName), value(std::move(value)) {}
     llvm::Value* codegen() override;
     //Value *codegen() override;
-    std::unique_ptr<ExprAST> clone() override; /*{
-        std::unique_ptr<ExprAST> valueCloned = nullptr;
-        if (value){
-            valueCloned = value->clone();
-        }
-        return std::make_unique<EnumCreation>(EnumVarName, EnumMemberName, std::move(valueCloned));
-    }*/
+    std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
         return EnumVarName + "::" + EnumMemberName + "(" + value->to_string() + ")";
     }
@@ -319,15 +289,7 @@ public:
               std::vector<std::unique_ptr<ExprAST>> Args, /*const std::string&*/ Cpoint_Type template_passed_type)
       : ExprAST(Loc), Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override; /*{
-    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
-    if (!Args.empty()){
-      for (int i = 0; i < Args.size(); i++){
-        ArgsCloned.push_back(Args.at(i)->clone());
-      }
-    }
-    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, std::move(ArgsCloned), template_passed_type);
-  }*/
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string args = "";
     args += "(";
@@ -353,32 +315,7 @@ public:
     : VarNames(std::move(VarNames))/*, Body(std::move(Body))*/, cpoint_type(cpoint_type), index(std::move(index)), infer_type(infer_type) {}
 
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override; /*{
-    std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNamesCloned;
-    if (!VarNames.empty()){
-      Log::Info() << "VarNames.size() " << VarNames.size() << "\n";
-      for (int i = 0; i < VarNames.size(); i++){
-        std::string name = VarNames.at(i).first;
-        if (VarNames.at(i).second == nullptr){
-          Log::Info() << "VarNames.at(i).second is nullptr" << "\n";
-        }
-        std::unique_ptr<ExprAST> val;
-        if (VarNames.at(i).second != nullptr){
-        val = VarNames.at(i).second->clone();
-        } else {
-          val = nullptr;
-        }
-        VarNamesCloned.push_back(std::make_pair(name, std::move(val)));
-      }
-    }
-    std::unique_ptr<ExprAST> indexCloned;
-    if (index == nullptr){
-      indexCloned = nullptr;
-    } else {
-      indexCloned = index->clone();
-    }
-    return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
-  }*/
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     return "var " +  VarNames.at(0).first + ": " + create_pretty_name_for_type(cpoint_type) + " = " + VarNames.at(0).second->to_string(); 
   }
@@ -393,13 +330,7 @@ public:
   RedeclarationExprAST(const std::string &VariableName, std::unique_ptr<ExprAST> Val, const std::string &member, std::unique_ptr<ExprAST> index = nullptr) 
 : VariableName(VariableName), Val(std::move(Val)), member(member), index(std::move(index)) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override; /*{
-    std::unique_ptr<ExprAST> indexCloned = nullptr;
-    if (index != nullptr){
-      indexCloned = index->clone();
-    }
-    return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, std::move(indexCloned));
-  }*/
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string member_expr  = member != "" ? "." + member : "";
     return VariableName + member_expr + " = " + Val->to_string();
@@ -455,26 +386,6 @@ public:
     }
 };
 
-/*
-class StructDeclarAST {
-  std::string Name;
-  std::vector<std::unique_ptr<VarExprAST>> Vars;
-public:
-  StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars)
-    : Name(name), Vars(std::move(Vars)) {}
-  Type* codegen();
-};
-
-class ClassDeclarAST {
-  std::string Name;
-  std::vector<std::unique_ptr<FunctionAST>> Functions;
-  std::vector<std::unique_ptr<VarExprAST>> Vars;
-public:
-  ClassDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions) 
-    : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)) {}
-  Type *codegen();
-};*/
-
 /// PrototypeAST - This class represents the "prototype" for a function,
 /// which captures its name, and its argument names (thus implicitly the number
 /// of arguments the function takes).
@@ -515,13 +426,7 @@ public:
               std::vector<std::unique_ptr<ExprAST>> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *codegen();
-  std::unique_ptr<FunctionAST> clone();/*{
-    std::vector<std::unique_ptr<ExprAST>> BodyClone;
-    for (int i = 0; i < Body.size(); i++){
-      BodyClone.push_back(Body.at(i)->clone());
-    }
-    return std::make_unique<FunctionAST>(Proto->clone(), std::move(BodyClone));
-  }*/
+  std::unique_ptr<FunctionAST> clone();
 };
 
 class StructDeclarAST {
@@ -535,36 +440,7 @@ public:
   StructDeclarAST(const std::string &name, std::vector<std::unique_ptr<VarExprAST>> Vars, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> ExternFunctions, bool has_template, std::string template_name) 
     : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)), ExternFunctions(std::move(ExternFunctions)), has_template(has_template), template_name(template_name) {}
   Type *codegen();
-  std::unique_ptr<StructDeclarAST> clone();/*{
-    std::vector<std::unique_ptr<FunctionAST>> FunctionsCloned;
-    if (!Functions.empty()){
-      for (int i = 0; i < Functions.size(); i++){
-        FunctionsCloned.push_back(Functions.at(i)->clone());
-      }
-    }
-    std::vector<std::unique_ptr<PrototypeAST>> ExternFunctionsCloned;
-    if (!ExternFunctions.empty()){
-        for (int i = 0; i < ExternFunctions.size(); i++){
-            ExternFunctionsCloned.push_back(ExternFunctions.at(i)->clone());
-        }
-    }
-    std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
-    Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
-    if (!Vars.empty()){
-      for (int i = 0; i < Vars.size(); i++){
-        std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
-        std::unique_ptr<VarExprAST> VarTemp;
-        VarExprAST* VarTempPtr = dynamic_cast<VarExprAST*>(VarCloned.get());
-        if (!VarTempPtr){
-            return LogErrorS("Vars in struct is not a var and is an other type exprAST");
-        }
-        VarCloned.release();
-        VarTemp.reset(VarTempPtr);
-        VarsCloned.push_back(std::move(VarTemp));
-      }
-    }
-    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned), std::move(ExternFunctionsCloned), has_template, template_name);
-  }*/
+  std::unique_ptr<StructDeclarAST> clone();
 };
 
 class UnionDeclarAST {
@@ -573,18 +449,7 @@ public:
   std::vector<std::unique_ptr<VarExprAST>> Vars;
   UnionDeclarAST(const std::string& Name, std::vector<std::unique_ptr<VarExprAST>> Vars) : Name(Name), Vars(std::move(Vars)) {}
   Type* codegen();
-  std::unique_ptr<UnionDeclarAST> clone();/*{
-    std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
-    for (int i = 0; i < Vars.size(); i++){
-      std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
-      std::unique_ptr<VarExprAST> VarTemp;
-      VarExprAST* VarTempPtr = static_cast<VarExprAST*>(VarCloned.get());
-      VarCloned.release();
-      VarTemp.reset(VarTempPtr);
-      VarsCloned.push_back(std::move(VarTemp));
-    }
-    return std::make_unique<UnionDeclarAST>(Name, std::move(VarsCloned));
-  }*/
+  std::unique_ptr<UnionDeclarAST> clone();
 };
 
 class EnumMember {
@@ -593,13 +458,7 @@ public:
     bool contains_value;
     std::unique_ptr<Cpoint_Type> Type;
     EnumMember(const std::string& Name, bool contains_value = false, std::unique_ptr<Cpoint_Type> Type = nullptr) : Name(Name), contains_value(contains_value), Type(std::move(Type)) {}
-    std::unique_ptr<EnumMember> clone();/*{
-        std::unique_ptr<Cpoint_Type> TypeCloned = nullptr;
-        if (Type){
-            TypeCloned = std::make_unique<Cpoint_Type>(*Type);
-        }
-        return std::make_unique<EnumMember>(Name, contains_value, std::move(TypeCloned));
-    }*/
+    std::unique_ptr<EnumMember> clone();
 };
 
 class EnumDeclarAST {
@@ -609,15 +468,7 @@ public:
     std::vector<std::unique_ptr<EnumMember>> EnumMembers;
     EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<std::unique_ptr<EnumMember>> EnumMembers) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)) {}
     Type* codegen();
-    std::unique_ptr<EnumDeclarAST> clone();/*{
-        std::vector<std::unique_ptr<EnumMember>> EnumMembersCloned;
-        if (!EnumMembers.empty()){
-            for (int i = 0; i < EnumMembers.size(); i++){
-                EnumMembersCloned.push_back(EnumMembers.at(i)->clone());
-            }
-        }
-        return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembersCloned));
-    }*/
+    std::unique_ptr<EnumDeclarAST> clone();
 };
 
 class TestAST {
@@ -626,15 +477,7 @@ public:
   std::vector<std::unique_ptr<ExprAST>> Body;
   TestAST(const std::string& description, std::vector<std::unique_ptr<ExprAST>> Body) : description(description), Body(std::move(Body)) {}
   void codegen();
-  std::unique_ptr<TestAST> clone();/*{
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }
-    return std::make_unique<TestAST>(description, std::move(BodyCloned));
-  }*/
+  std::unique_ptr<TestAST> clone();
 };
 
 class GlobalVariableAST {
@@ -686,21 +529,7 @@ public:
     : ExprAST(Loc), Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
 
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override; /*{
-    std::vector<std::unique_ptr<ExprAST>> ThenCloned;
-    if (!Then.empty()){
-      for (int i = 0; i < Then.size(); i++){
-        ThenCloned.push_back(Then.at(i)->clone());
-      }
-    }
-    std::vector<std::unique_ptr<ExprAST>> ElseCloned;
-    if (!Else.empty()){
-      for (int i = 0; i < Else.size(); i++){
-        ElseCloned.push_back(Else.at(i)->clone());
-      }
-    }
-    return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
-  }*/
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string body_then = "";
     for (int i = 0; i < Then.size(); i++){
@@ -781,15 +610,7 @@ public:
       Step(std::move(Step)), Body(std::move(Body)) {}
 
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone();/*{
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }
-    return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), std::move(BodyCloned));
-  }*/
+  std::unique_ptr<ExprAST> clone();
   std::string to_string() override {
     std::string for_body = "";
     for (int i = 0; i < Body.size(); i++){
@@ -805,15 +626,7 @@ class WhileExprAST : public ExprAST {
 public:
   WhileExprAST(std::unique_ptr<ExprAST> Cond, std::vector<std::unique_ptr<ExprAST>> Body) : Cond(std::move(Cond)), Body(std::move(Body)) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone();/*{
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }
-    return std::make_unique<WhileExprAST>(Cond->clone(), std::move(BodyCloned));
-  }*/
+  std::unique_ptr<ExprAST> clone();
   std::string to_string() override {
     // TODO
     return "";
@@ -828,15 +641,7 @@ class LoopExprAST : public ExprAST {
 public:
   LoopExprAST(std::string VarName, std::unique_ptr<ExprAST> Array, std::vector<std::unique_ptr<ExprAST>> Body, bool is_infinite_loop = false) : VarName(VarName), Array(std::move(Array)), Body(std::move(Body)), is_infinite_loop(is_infinite_loop) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone();/*{
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }
-    return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
-  }*/
+  std::unique_ptr<ExprAST> clone();
   std::string to_string() override {
     std::string loop_expr = "";
     if (!is_infinite_loop){
