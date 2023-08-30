@@ -619,6 +619,14 @@ Value* MatchExprAST::codegen(){
     }
     for (int i = 0; i < matchCases.size(); i++){
         std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
+        if (matchCaseTemp->is_underscore){
+            //Builder->CreateBr(AfterMatch);
+            for (int i = 0; i < matchCaseTemp->Body.size(); i++){
+                matchCaseTemp->Body.at(i)->codegen();
+            }
+            membersNotFound.clear();
+            break;
+        } else {
         string_vector_erase(membersNotFound, matchCaseTemp->enum_member);
         if (matchCaseTemp->enum_name != NamedValues[matchVar]->type.enum_name){
             return LogErrorV(this->loc, "The match case is using a member of a different enum than the one in the expression");
@@ -659,6 +667,7 @@ Value* MatchExprAST::codegen(){
         //Builder->CreateBr(ElseBB);
         TheFunction->getBasicBlockList().push_back(ElseBB);
         Builder->SetInsertPoint(ElseBB);
+        }
     }
     if (!membersNotFound.empty()){
         std::string list_members_not_found_str = "";

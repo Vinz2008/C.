@@ -50,6 +50,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Deduplicate identical strings when creating them by keeping them in a hashmap when generating them
 - [x] Add the string version of the expression in the expect macro
 - [ ] Add rust-like "traits" for simple types like i32 or float (It will be called "members" and not traits but it will be the same : add methods to types, but it will need to make the '.' an operator)  
+- [ ] Add number variable support to match (using it like a switch in c) 
 
 ## Benchmarks compared to other languages
 

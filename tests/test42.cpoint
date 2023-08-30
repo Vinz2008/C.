@@ -17,4 +17,10 @@ func main(){
             printstr("no tag")
         }
     }
+    match te2 {
+        test_enum::tag_int(i) => printi(i),
+        _ => {
+            printstr("not int tag")
+        }
+    }
 }
