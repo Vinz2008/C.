@@ -207,13 +207,26 @@ public:
   ConstantArrayExprAST(std::vector<std::unique_ptr<ExprAST>> ArrayMembers) : ArrayMembers(std::move(ArrayMembers)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override;
-   std::string to_string() override {
+  std::string to_string() override {
     std::string array = "";
     for (int i = 0; i < ArrayMembers.size(); i++){
         array += ArrayMembers.at(i)->to_string() + ",";
     }
     return "[" + array + "]";
-   }
+  }
+};
+
+class ConstantStructExprAST : public ExprAST {
+public:
+    std::string struct_name;
+    std::vector<std::unique_ptr<ExprAST>> StructMembers;
+    ConstantStructExprAST(const std::string& struct_name, std::vector<std::unique_ptr<ExprAST>> StructMembers) : struct_name(struct_name), StructMembers(std::move(StructMembers)) {}
+    Value* codegen() override;
+    std::unique_ptr<ExprAST> clone() override;
+    std::string to_string() override {
+        // TODO
+        return "";
+    }
 };
 
 class EnumCreation : public ExprAST {

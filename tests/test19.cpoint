@@ -8,4 +8,5 @@ func main() void {
     printstr(cli::read())
     var s : struct a
     s = a(1)
+    s = a { 1 }
 }

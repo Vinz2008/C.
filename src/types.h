@@ -18,6 +18,7 @@ enum types {
     u32_type = -12,
     u64_type = -13,
     u128_type = -14,
+    bool_type = -15,
     argv_type = -1000,
 };
 

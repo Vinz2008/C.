@@ -15,6 +15,8 @@ std::string gitignore_template = R"(*.out
 *.a
 *.ll
 *.o
+*.log
+*.temp
 )";
 
 // need to add type variable

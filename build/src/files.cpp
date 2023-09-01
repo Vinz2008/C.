@@ -12,12 +12,14 @@ std::vector<std::string> getFilenamesWithExtension(std::string extension, std::s
     for (const fs::directory_entry& de : fileList) {
 
         // Get path as string
+        if (!de.is_directory()){
         std::string p{ de.path().string() };
 
         // Check if it ends with the given extension
         if (p.find(".git") == std::string::npos){
         if (p.substr(p.size() - extension.size(), extension.size()) == extension)
             fileNameList.push_back(p);
+        }
         }
     }
     return fileNameList;

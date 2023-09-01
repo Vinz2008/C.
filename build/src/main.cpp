@@ -180,6 +180,12 @@ std::string get_pkg_config_linker_args(std::string library_name){
     return cmd_out->buffer;
 }
 
+std::string get_pkg_config_cflags_args(std::string library_name){
+    std::string cmd = "pkg-config --cflags " + library_name;
+    auto cmd_out = runCommand(cmd);
+    return cmd_out->buffer;
+}
+
 std::string get_libraries_linker_args(toml::v3::table&  config){
     std::string linker_args = "";
     auto libraries = config["build"]["libraries"];
@@ -192,8 +198,11 @@ std::string get_libraries_linker_args(toml::v3::table&  config){
                     linker_args += "-lpthread ";
                 } else if (library == "gtk"){
                     linker_args += get_pkg_config_linker_args("gtk4");
+                } else if (library == "raylib"){
+                    linker_args += get_pkg_config_linker_args((std::string)library);
                 } else {
                     std::cout << "Warning : unknown library : " << library << std::endl;
+                    linker_args += get_pkg_config_linker_args((std::string)library);
                 }
             }
         });

@@ -65,7 +65,7 @@ static void skip_spaces(std::string line, int& pos){
 }
 void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     IdentifierStr = "";
-    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '_')){
+    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '_' || line.at(pos) == '-')){
         IdentifierStr += line.at(pos);
         pos++;
     }
@@ -74,7 +74,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
 
 int getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::string>& Paths){
     std::string Path = "";
-    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || isdigit(line.at(pos)))){
+    while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || line.at(pos) == '-' || isdigit(line.at(pos)))){
         Path += line.at(pos);
         pos++;
     }

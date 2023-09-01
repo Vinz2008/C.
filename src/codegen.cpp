@@ -245,6 +245,12 @@ Value* getSizeOfStruct(AllocaInst *A){
 }
 
 Value *NumberExprAST::codegen() {
+  // TODO : create an int if the number is not decimal
+  /*if (trunc(Val) == Val){
+    return ConstantInt::get(*TheContext, APInt(32, (int)Val, true));
+  } else {
+    return ConstantFP::get(*TheContext, APFloat(Val));
+  }*/
   return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
@@ -401,6 +407,27 @@ Value* ConstantArrayExprAST::codegen(){
   llvm::ArrayType* arrayType = ArrayType::get(arrayMembersVal.at(0)->getType(), arrayMembersVal.size());
   // verify if everyone of them are constants of the same type
   return llvm::ConstantArray::get(arrayType, arrayMembersVal);
+}
+
+Value* ConstantStructExprAST::codegen(){
+    std::vector<Constant*> structMembersVal;
+    for (int i = 0; i < StructMembers.size(); i++){
+        Value* Vtemp = StructMembers.at(i)->codegen();
+        if (get_type_llvm(StructDeclarations[struct_name]->members.at(i).second) != Vtemp->getType()){
+            convert_to_type(get_cpoint_type_from_llvm(Vtemp->getType()), get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), Vtemp);
+        }
+        Constant* constant;
+        if (! (constant = dyn_cast<Constant>(Vtemp))){
+            return LogErrorV(this->loc, "The %d value of constant array is not a constant", i);
+        }
+        // convert type
+        /*if (get_type_llvm(StructDeclarations[struct_name]->members.at(i).second) != constant->getType()){
+            convert_to_type(get_cpoint_type_from_llvm(constant->getType()), get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), constant);
+        }*/
+        structMembersVal.push_back(constant);
+    }
+    auto structType = StructDeclarations[struct_name]->struct_type;
+    return ConstantStruct::get(dyn_cast<StructType>(structType), structMembersVal);
 }
 
 
@@ -815,6 +842,7 @@ Value *CallExprAST::codegen() {
   bool is_internal = false;
   CpointDebugInfo.emitLocation(this);
   if (StructDeclarations[Callee] != nullptr){
+    // TODO : maybe replace struct_test(1, 2) by struct_test {1, 2} ? so maybe remove this
     // function called is constructor of struct
     std::string constructor_name = struct_function_mangling(Callee, "Constructor__Default");
     if (FunctionProtos[constructor_name] != nullptr){

@@ -36,6 +36,7 @@ extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
+extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
 Cpoint_Type ParseTypeDeclaration(bool eat_token);
 
@@ -60,13 +61,23 @@ std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
 }
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> ArrayMembersClone;
+    std::vector<std::unique_ptr<ExprAST>> ArrayMembersCloned;
     if (!ArrayMembers.empty()){
       for (int i = 0; i < ArrayMembers.size(); i++){
-        ArrayMembersClone.push_back(ArrayMembers.at(i)->clone());
+        ArrayMembersCloned.push_back(ArrayMembers.at(i)->clone());
       }
     }
-    return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersClone));
+    return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersCloned));
+}
+
+std::unique_ptr<ExprAST> ConstantStructExprAST::clone(){
+    std::vector<std::unique_ptr<ExprAST>> StructMembersCloned;
+    if (!StructMembers.empty()){
+      for (int i = 0; i < StructMembers.size(); i++){
+        StructMembersCloned.push_back(StructMembers.at(i)->clone());
+      }
+    }
+    return std::make_unique<ConstantStructExprAST>(struct_name, std::move(StructMembersCloned));
 }
 
 std::unique_ptr<ExprAST> EnumCreation::clone(){
@@ -407,6 +418,34 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       return nullptr;
     }
     return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member, std::move(indexAST));
+  }
+  if (StructDeclarations[IdName] != nullptr && CurTok == '{'){
+    std::string struct_name = IdName;
+    std::vector<std::unique_ptr<ExprAST>> StructMembers;
+    /*if (CurTok != '{'){
+        return LogError("Missing '{' in struct constant declaration");
+    }*/
+    getNextToken();
+    int member_nb = 0;
+    while (true){
+        if (CurTok == '}'){
+            getNextToken();
+            break;
+        }
+        if (member_nb > 0){
+            if (CurTok != ','){
+            return LogError("missing \',\' in constant array");
+            }
+            getNextToken();
+        }
+        auto E = ParseExpression();
+        if (!E){
+            return nullptr;
+        }
+        StructMembers.push_back(std::move(E));
+        member_nb++;
+    }
+    return std::make_unique<ConstantStructExprAST>(struct_name, std::move(StructMembers));
   }
   if (member != ""){
     bool is_function_call_member = false;

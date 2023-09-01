@@ -81,6 +81,9 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         case u128_type:
             type = Type::getInt128Ty(*TheContext);
             break;
+        case bool_type:
+            type = Type::getInt1Ty(*TheContext);
+            break;
         case void_type:
             if (!cpoint_type.is_ptr){
             type = Type::getVoidTy(*TheContext);
@@ -169,6 +172,8 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         type = i16_type;
     } else if (llvm_type == Type::getInt64Ty(*TheContext)){
         type = i64_type;
+    } else if (llvm_type == Type::getInt1Ty(*TheContext)){
+        type = bool_type;
     } else if (llvm_type == Type::getVoidTy(*TheContext)){
         type = void_type;
     } else {
@@ -211,6 +216,8 @@ int get_type_number_of_bits(Cpoint_Type type){
     case double_type:
     case float_type:
         return 64;
+    case bool_type:
+        return 1;
     default:
         return -1;
     }
@@ -223,7 +230,7 @@ bool is_unsigned(Cpoint_Type cpoint_type){
 
 bool is_signed(Cpoint_Type cpoint_type){
     int type = cpoint_type.type;
-    return type == i8_type || type == i16_type || type == i32_type || type == int_type || type == i64_type || type == i128_type;
+    return type == i8_type || type == i16_type || type == i32_type || type == int_type || type == i64_type || type == i128_type || type == bool_type;
     //return !is_unsigned(cpoint_type);
 }
 
@@ -240,6 +247,7 @@ Constant* get_default_constant(Cpoint_Type type){
     }
 
     switch (type.type){
+        case bool_type:
         case i32_type:
         case int_type:
         case u32_type:
@@ -260,17 +268,28 @@ Constant* get_default_constant(Cpoint_Type type){
 
 Constant* from_val_to_constant(Value* val, Cpoint_Type type){
     Type* val_type = val->getType();
-    if (val_type != get_type_llvm(Cpoint_Type(double_type))){
+    /*if (val_type != get_type_llvm(Cpoint_Type(double_type))){
         return nullptr;
-    }
-    auto constFP = dyn_cast<ConstantFP>(val);
-    if (!constFP){
-        return nullptr;
-    }
-    // TODO : add more types for variable types
-    if (type == Cpoint_Type(int_type)){
-        int val_int = (int)constFP->getValue().convertToDouble();
-        return ConstantInt::get(*TheContext, llvm::APInt(32, val_int, true));
+    }*/
+    if (dyn_cast<ConstantFP>(val)){
+        auto constFP = dyn_cast<ConstantFP>(val);
+        // TODO : add more types for variable types
+        if (type == Cpoint_Type(int_type)){
+            int val_int = (int)constFP->getValue().convertToDouble();
+            return ConstantInt::get(*TheContext, llvm::APInt(32, val_int, true));
+        }
+        if (type == Cpoint_Type(double_type)){
+            return constFP;
+        }
+    } else if (dyn_cast<ConstantInt>(val)) {
+        auto constInt = dyn_cast<ConstantInt>(val);
+        if (type == Cpoint_Type(double_type)){
+            double val_double = (double)constInt->getSExtValue();
+            return ConstantFP::get(*TheContext, APFloat(val_double));
+        }
+        if (type == Cpoint_Type(int_type)){
+            return constInt;
+        }
     }
 
     /*
@@ -414,7 +433,8 @@ std::vector<std::string> types{
     "u16",
     "u32",
     "u64",
-    "u128"
+    "u128",
+    "bool"
 };
 
 
@@ -430,8 +450,8 @@ bool is_type(std::string type){
 int get_type(std::string type){
     for (int i = 0; i < types.size(); i++){
        if (type == types.at(i)){
-        if (i >= 14){
-            return i+1-15;
+        if (i >= 15){
+            return i+1-16;
         }
         return -(i + 1);
        }
@@ -443,7 +463,7 @@ std::string get_string_from_type(Cpoint_Type type){
     if (type.type < 0){
         return types.at(-(type.type + 1));
     } else {
-        return types.at(type.type-1+15);
+        return types.at(type.type-1+16);
     }
 }
 
