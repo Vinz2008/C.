@@ -692,7 +692,8 @@ Value* MatchExprAST::codegen(){
         }
         Builder->CreateBr(AfterMatch);
         //Builder->CreateBr(ElseBB);
-        TheFunction->getBasicBlockList().push_back(ElseBB);
+        //TheFunction->getBasicBlockList().push_back(ElseBB);
+        TheFunction->insert(TheFunction->end(), ElseBB);
         Builder->SetInsertPoint(ElseBB);
         }
     }
@@ -706,7 +707,8 @@ Value* MatchExprAST::codegen(){
         return LogErrorV(this->loc, "These members were not found in the match case : %s\n", list_members_not_found_str.c_str());
     }
     Builder->CreateBr(AfterMatch);
-    TheFunction->getBasicBlockList().push_back(AfterMatch);
+    //TheFunction->getBasicBlockList().push_back(AfterMatch);
+    TheFunction->insert(TheFunction->end(), AfterMatch);
     Builder->SetInsertPoint(AfterMatch);
     return Constant::getNullValue(get_type_llvm(double_type));
 }
@@ -1310,7 +1312,8 @@ Value *IfExprAST::codegen() {
   ThenBB = Builder->GetInsertBlock();
   Value *ElseV = nullptr;
   // Emit else block.
-  TheFunction->getBasicBlockList().push_back(ElseBB);
+  //TheFunction->getBasicBlockList().push_back(ElseBB);
+  TheFunction->insert(TheFunction->end(), ElseBB);
   Builder->SetInsertPoint(ElseBB);
   if (!Else.empty()){
   for (int i = 0; i < Else.size(); i++){
@@ -1333,7 +1336,8 @@ Value *IfExprAST::codegen() {
   ElseBB = Builder->GetInsertBlock();
 
   // Emit merge block.
-  TheFunction->getBasicBlockList().push_back(MergeBB);
+  //TheFunction->getBasicBlockList().push_back(MergeBB);
+  TheFunction->insert(TheFunction->end(), MergeBB);
   Builder->SetInsertPoint(MergeBB);
 
   PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");

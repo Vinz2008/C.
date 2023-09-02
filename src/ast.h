@@ -13,6 +13,7 @@
 #include <memory>
 #include <vector>
 #include <utility>
+#include <cmath>
 
 using namespace llvm;
 
@@ -62,7 +63,7 @@ public:
     return std::make_unique<NumberExprAST>(Val);
   }
   std::string to_string() override {
-    if (trunc(Val) == Val){
+    if (std::trunc(Val) == Val){
         return std::to_string((int)Val);
     }
     return std::to_string(Val);
