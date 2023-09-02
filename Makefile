@@ -1,5 +1,6 @@
 CXX=g++
-DESTDIR ?= /usr/bin
+DESTDIR ?= /
+BINDIR ?= $(DESTDIR)/usr/bin
 PREFIX ?= /usr/local
 NO_OPTI ?= false
 NO_STACK_PROTECTOR ?= false
@@ -99,11 +100,11 @@ USERNAME=$(shell logname)
 endif
 
 install: std_lib
-	cp cpoint $(DESTDIR)/
-	cp build/cpoint-build $(DESTDIR)/
-	cp tools/bindgen/cpoint-bindgen $(DESTDIR)/
-	cp tools/run/cpoint-run $(DESTDIR)/
-	cp tools/from-c/cpoint-from-c $(DESTDIR)/
+	cp cpoint $(BINDIR)/
+	cp build/cpoint-build $(BINDIR)/
+	cp tools/bindgen/cpoint-bindgen $(BINDIR)/
+	cp tools/run/cpoint-run $(BINDIR)/
+	cp tools/from-c/cpoint-from-c $(BINDIR)/
 	rm -rf $(PREFIX)/lib/cpoint
 	mkdir -p $(PREFIX)/lib/cpoint
 	mkdir -p $(PREFIX)/lib/cpoint/std
