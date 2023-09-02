@@ -13,6 +13,8 @@ OBJS = $(patsubst %.c,%.o,$(SRCS))
 
 CFLAGS = -c -g -Wall
 
+LDFLAGS = 
+
 all: $(OUTPUTBIN)
 
 release: set_release all
