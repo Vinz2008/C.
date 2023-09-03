@@ -52,7 +52,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add rust-like "traits" for simple types like i32 or float (It will be called "members" and not traits but it will be the same : add methods to types, but it will need to make the '.' an operator)  
 - [ ] Add number variable support to match (using it like a switch in c) 
 - [ ] Add static struct declaration (like with arrays) like in C ((struct struct_example){val1, val2})
-- [ ] Use precompiled header for the compiler code to speed up compilation
+- [ ] Use precompiled header for the compiler code to speed up compilation (problem : https://stackoverflow.com/questions/9580058/in-gcc-can-precompiled-headers-be-included-from-other-headers)
 
 ## Benchmarks compared to other languages
 
