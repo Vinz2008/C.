@@ -3,6 +3,7 @@
 #include <utility>
 #include <cstdarg>
 #include <cstdlib>
+#include <ctime>
 #include <stack>
 #include "ast.h"
 #include "lexer.h"
@@ -743,6 +744,16 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return std::make_unique<NumberExprAST>((double)Comp_context->curloc.line_nb);
     } else if (function_name == "column_nb"){
         return std::make_unique<NumberExprAST>((double)Comp_context->curloc.col_nb);
+    } else if (function_name == "time"){
+        std::string time_str;
+        char time_str_c[std::size("yyyy-mm-ddThh:mm:ssZ")];
+        std::time_t current_time;
+        std::tm* time_info;
+        time(&current_time);
+        time_info = localtime(&current_time);
+        strftime(std::data(time_str_c), std::size(time_str_c), "%H:%M:%S", time_info);
+        time_str = time_str_c;
+        return std::make_unique<StringExprAST>(time_str);
     } else if (function_name == "env"){
         if (ArgsMacro.size() != 1){
             return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "env", 1, ArgsMacro.size());
