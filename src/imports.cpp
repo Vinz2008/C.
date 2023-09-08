@@ -164,7 +164,54 @@ void getPathFromFilePOV(std::string& Path, std::string file_src){
     Log::Imports_Info() << "Path after serialization : " << Path << "\n";
 }
 
+std::string interpet_func_generics(std::string line, int pos, int nb_line, int& pos_line, bool should_write_to_file = true){
+    std::string declar = "";
+    for (int i = pos; i < line.size(); i++){
+        if (line.at(i) != '{'){
+        declar += line.at(i);
+        }
+    }
+    //Log::Imports_Info() << "Declar generics : " << declar << "\n";
+    if (pos_line != 0 && pos_line != nb_line){
+        out_file << "\n";
+    }
+    declar = "func " + declar + "{" + "\n";
+    /*if (should_write_to_file){
+    out_file << "func " << declar << "{";
+    pos_line++;
+    modifier_for_line_count++;
+    }*/
+    pos_line++;
+    modifier_for_line_count++;
+    int in_func_nb_of_opened_braces = 1;
+    while (1){
+        Log::Imports_Info() << "declar in body func generic : " << declar << "\n";
+        if (!std::getline(imported_file, line)){
+            break;
+        }
+        pos_line++;
+        declar += line + "\n";
+        if (line.find('{') != std::string::npos){
+            in_func_nb_of_opened_braces++;
+        }
+        if (line.find('}') != std::string::npos){
+            in_func_nb_of_opened_braces--;
+            if (in_func_nb_of_opened_braces == 0){
+                break;
+            }
+        }
+    }
+    if (should_write_to_file){
+        out_file << declar;
+    }
+    return declar;
+}
+
 std::string interpret_func(std::string line, int& pos, int nb_line, int& pos_line, bool should_write_to_file = true){
+    if (line.find('~') != std::string::npos){
+        return interpet_func_generics(line, pos, nb_line, pos_line, should_write_to_file);
+    }
+    
     std::string declar = "";
     for (int i = pos; i < line.size(); i++){
         if (line.at(i) != '{'){
@@ -242,6 +289,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
                 if (!std::getline(imported_file, line)){
                     break;
                 }
+                pos_line++;
             }
             //nb_of_opened_braces_struct--;
         } else if (IdentifierStr == "extern"){
@@ -253,6 +301,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
         if (!std::getline(imported_file, line)){
             break;
         } else {
+            pos_line++;
             struct_declar += '\n';
         }
     }
@@ -282,6 +331,7 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
         nb_of_opened_braces = 0;
     }
     while (std::getline(imported_file, line)){
+        pos_line++;
         Log::Imports_Info() << line << "\n";
         if (line.find('{') != std::string::npos){
             Log::Imports_Info() << "line mod contains {" << "\n";
@@ -331,6 +381,7 @@ void import_file(std::string Path, bool is_special_path){
         while (std::getline(imported_file, line)){
             Log::Imports_Info() << line << "\n";
             find_patterns(line, nb_line, pos_line);
+            pos_line++;
         }
     }
     imported_file.close();

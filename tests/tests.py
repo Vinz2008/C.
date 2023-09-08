@@ -33,7 +33,7 @@ for i, arg in enumerate(sys.argv):
 	if arg == "-v":
 		verbose = True
 
-for i in range(0,42):
+for i in range(0,44):
 	print(i+1)
 	test_file("./test" + str(i+1) + ".cpoint", verbose)
 print(colored("All " + str(nb_test) + " tests succeeded", "green"))

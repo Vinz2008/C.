@@ -22,6 +22,11 @@ struct utilstest {
 }
 }
 
+func test_generic~T~() T {
+    var a : T = 2
+    a
+}
+
 test "testing average" {
   expect(std::utils::average(2, 4) == 3)
   expect(std::utils::average(10, 20) == 15)

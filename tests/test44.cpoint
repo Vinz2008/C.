@@ -1,0 +1,5 @@
+import @std/utils.cpoint
+
+func main(){
+    test_generic~int~()
+}
