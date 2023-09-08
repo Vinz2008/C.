@@ -189,19 +189,14 @@ void interpret_extern(std::string line, int& pos, int& pos_line);
 
 int nb_of_opened_braces_struct;
 
-#define STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS 1
-
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     std::string struct_declar = "";
-#if STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS
     bool in_function = false;
     nb_of_opened_braces_struct = 0;
     //nb_of_opened_braces_struct++;
     line = line.substr(pos, line.size()-1);
-#endif
     while (true){
-#if STRUCT_NEW_PARSING_INTERNAL_FUNCTIONS
         /*if (nb_of_opened_braces_struct == 0 && line.find('}') != std::string::npos){
             Log::Imports_Info() << "break struct at line : " << line << "\n";
             break;
@@ -260,28 +255,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
         } else {
             struct_declar += '\n';
         }
-#else
-
-        for (int i = pos; i < line.size(); i++){
-        
-        if (line.at(i) != '}'){
-        struct_declar += line.at(i);
-        } else {
-            struct_declar += line.at(i);
-            //struct_declar += '\n';
-            //break;
-            goto after_while;
-        }
-        }
-        pos = 0;
-        if (!std::getline(imported_file, line)){
-            break;
-        } else {
-            struct_declar += '\n';
-        }
-#endif
     }
-after_while:
     Log::Imports_Info() << "struct_declar : " << struct_declar << "\n";
     //std::getline(imported_file, line); //get new line
     if (pos_line != 0 && pos_line != nb_line){

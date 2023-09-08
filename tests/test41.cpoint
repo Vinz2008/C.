@@ -1,6 +1,6 @@
 struct test_struct~T~ {
     var content : T
-    var other : int ptr
+    var other : T ptr
 }
 
 func test~T~() T {

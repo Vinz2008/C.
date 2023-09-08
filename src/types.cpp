@@ -25,7 +25,8 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     Type* type;
     if (cpoint_type.is_template_type){
         Log::Info() << "template type found get_type_llvm " << TypeTemplateCallCodegen.first << " -> " << TypeTemplateCallCodegen.second << "\n";
-        return get_type_llvm(TypeTemplateCallCodegen.second);
+        type = get_type_llvm(TypeTemplateCallCodegen.second);
+        goto before_is_ptr;
     }
     if (cpoint_type.type >= 0){
         Log::Info() << "Typedef type used to declare variable (size of typedef table : " << typeDefTable.size() << ")" << "\n";
@@ -98,6 +99,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             return Type::getInt8PtrTy(*TheContext)->getPointerTo();
     }
     }
+before_is_ptr:
     if (cpoint_type.is_ptr){
         /*for (int i = 0; i < cpoint_type.nb_ptr; i++){
         type = type->getPointerTo();

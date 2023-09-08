@@ -804,7 +804,14 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   if (CurTok == tok_identifier && IdentifierStr == TypeTemplateCallCodegen.first){
     Log::Info() << "Found template type in template call" << "\n";
     //IdentifierStr = TypeTemplateCallCodegen.second;
-    return TypeTemplateCallCodegen.second;
+    Cpoint_Type temp_type =  TypeTemplateCallCodegen.second;
+    /*getNextToken();
+    if (CurTok == tok_ptr){
+        temp_type.is_ptr = true;
+        temp_type.nb_ptr++;
+        getNextToken();
+    }*/
+    return temp_type;
   }
   if (CurTok == tok_func){
     is_function = true;
