@@ -34,6 +34,8 @@ std::vector<std::string> DependencyPathList;
 
 bool is_cross_compiling = false;
 
+bool src_folder_exists = true;
+
 void addDependencyToTempLinkableFiles(std::string dependency){
     std::string lib_path = DEFAULT_PACKAGE_PATH "/" + dependency + "/lib.a";
     DependencyPathList.push_back(lib_path);
@@ -107,6 +109,23 @@ void buildSubfolders(toml::v3::table& config, std::string_view type, std::string
             if constexpr (toml::is_string<decltype(sub)>){
                 std::cout << "sub : " << sub << std::endl;
                 buildFolder((std::string)sub, config, type, target, sysroot, is_gc);
+            }
+        });
+    }
+}
+
+
+void buildSubproject(std::string path){
+    runCommand("cd " + path + " && cpoint-build");
+}
+
+void buildSubprojects(toml::v3::table& config){
+    auto subfolders = config["subfolders"]["projects"];
+    if (toml::array* arr = subfolders.as_array()){
+        arr->for_each([&config](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                std::cout << "sub : " << sub << std::endl;
+                buildSubproject((std::string)sub);
             }
         });
     }
@@ -259,17 +278,58 @@ void cleanObjectFilesFolder(std::string folder){
     std::cout << std::endl;
 }
 
-void cleanObjectFiles(toml::v3::table& config, std::string src_folder){
-    cleanObjectFilesFolder(src_folder);
+void cleanFilesFolderExtension(std::string folder, std::string extension){
+    std::vector<std::string> PathList = getFilenamesWithExtension(extension, folder);
+    for (auto const& path : PathList){
+        std::string path_temp = path;
+        remove(path_temp.c_str());
+    }
+}
+
+void cleanFilesFolder(std::string folder){
+    cleanFilesFolderExtension(folder, ".ll");
+    cleanObjectFilesFolder(folder);
+}
+
+
+void cleanObjectFilesSubprojects(toml::v3::table& config){
+    auto subfolders = config["subfolders"]["projects"];
+    if (toml::array* arr = subfolders.as_array()){
+        arr->for_each([&config](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                std::cout << "sub : " << sub << std::endl;
+                cleanFilesFolder((std::string)sub);
+                runCommand("cd " + (std::string)sub + " && cpoint-build clean");
+                //cleanObjectFilesFolder((std::string)sub);
+            }
+        });
+    }
+}
+
+void cleanFiles(toml::v3::table& config, std::string src_folder, std::string type){
+    if (src_folder_exists){
+    cleanFilesFolder(src_folder);
+    //cleanObjectFilesFolder(src_folder);
+    }
     auto subfolders = config["subfolders"]["folders"];
     if (toml::array* arr = subfolders.as_array()){
         arr->for_each([&config](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
-                cleanObjectFilesFolder((std::string) sub);
+                cleanFilesFolder((std::string)sub);
+                //cleanObjectFilesFolder((std::string)sub);
             }
         });
     }
+    cleanObjectFilesSubprojects(config);
     runCustomCleanCommands(config);
+    std::cout << "type : " << type << std::endl;
+    if (type == "exe"){
+        std::string outfile = (std::string)config["build"]["outfile"].value_or("");
+        if (outfile == ""){
+            outfile = "a.out";
+        }
+        remove(outfile.c_str());
+    }
 }
 
 int main(int argc, char** argv){
@@ -361,9 +421,12 @@ int main(int argc, char** argv){
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
+    if (!fs::is_directory(src_folder)){
+        src_folder_exists = false;
+    }
     PathList.clear();
     if (modeBuild == CLEAN_MODE){
-        cleanObjectFiles(config, src_folder);
+        cleanFiles(config, src_folder, (std::string)type);
     } else if (modeBuild == INFO_MODE){
         std::string_view project_name = config["project"]["name"].value_or("");
         std::cout << "project name : " << project_name << "\n";
@@ -396,19 +459,24 @@ int main(int argc, char** argv){
         }
         runPrebuildCommands(config);
         buildSubfolders(config, type, target, sysroot, is_gc);
+        if (src_folder_exists){
         buildFolder(src_folder, config, type, target, sysroot, is_gc);
+        }
+        buildSubprojects(config);
         runCustomScripts(config);
         addCustomLinkableFiles(config);
         if (modeBuild != CROSS_COMPILE_MODE){
             addDependenciesToLinkableFiles();
         }
         linker_args += c_libraries_linker_args;
+        if (src_folder_exists){
         if (type == "exe"){
         linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc);
         } else if (type == "library"){
         linkLibrary(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "dynlib"){
             linkDynamicLibrary(PathList, outfilename, target, linker_args, sysroot);
+        }
         }
     }
 }

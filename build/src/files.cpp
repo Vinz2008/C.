@@ -17,7 +17,9 @@ std::vector<std::string> getFilenamesWithExtension(std::string extension, std::s
 
         // Check if it ends with the given extension
         if (p.find(".git") == std::string::npos){
-        if (p.substr(p.size() - extension.size(), extension.size()) == extension)
+        //std::cout << "p : " << p << std::endl;
+        //std::cout << "p.size() - extension.size() : " << p.size() - extension.size() << std::endl;;
+        if (p.size() - extension.size() != std::string::npos && p.size() > extension.size() && p.substr(p.size() - extension.size(), extension.size()) == extension)
             fileNameList.push_back(p);
         }
         }

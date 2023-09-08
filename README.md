@@ -55,6 +55,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Use precompiled header for the compiler code to speed up compilation (problem : https://stackoverflow.com/questions/9580058/in-gcc-can-precompiled-headers-be-included-from-other-headers)
 - [ ] Remove constructors in the language (to make it rust-like)
 - [ ] Add members to structs with "members" blocks
+- [ ] Add recursive install for binaries with subprojects
 
 ## Benchmarks compared to other languages
 
