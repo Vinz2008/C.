@@ -359,7 +359,7 @@ if_reflection:
     }
     Cpoint_Type member_type = members.at(pos).second;
     Log::Info() << "Pos for GEP struct member " << pos << "\n";
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
     Cpoint_Type cpoint_type = NamedValues[StructName]->type;
     //Value* tempval = Builder->CreateLoad(get_type_llvm(cpoint_type), Alloca, StructName);
@@ -501,6 +501,7 @@ Type* StructDeclarAST::codegen(){
     if (!VarExpr){
         Log::Info() << "VarExpr is nullptr" << "\n";
     }
+    Log::Info() << "Var StructDeclar type codegen : " << VarExpr->cpoint_type << "\n";
     if (VarExpr->cpoint_type.struct_name == Name && VarExpr->cpoint_type.is_ptr){
         VarExpr->cpoint_type.is_struct = false;
         VarExpr->cpoint_type.struct_name = "";
@@ -1493,7 +1494,7 @@ Value* RedeclarationExprAST::codegen(){
       }
     }
     Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
     auto structPtr = NamedValues[VariableName]->alloca_inst;
     Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
@@ -1528,7 +1529,7 @@ Value* RedeclarationExprAST::codegen(){
     }
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     //auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto indexVal = index->codegen();

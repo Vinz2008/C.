@@ -55,7 +55,7 @@ public:
         this->is_empty = true;
     }
     friend std::ostream& operator<<(std::ostream& os, const Cpoint_Type& type){
-        os << "{ type : " << type.type << " is_ptr : " << type.is_ptr << " nb_ptr : " << type.nb_ptr  << " is_struct : " << type.is_struct << " is_array : " << type.is_array << " }"; 
+        os << "{ type : " << type.type << " is_ptr : " << type.is_ptr << " nb_ptr : " << type.nb_ptr  << " is_struct : " << type.is_struct << " is_array : " << type.is_array << " nb_element : " << type.nb_element << " }"; 
         return os;
     }
     friend bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs){

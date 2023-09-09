@@ -1781,6 +1781,8 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     if (is_array){
         cpoint_type.is_array = is_array;
+        //cpoint_type.nb_element = from_val_to_constant_infer(index->clone()->codegen());
+        cpoint_type.nb_element = dyn_cast<ConstantFP>(index->clone()->codegen())->getValue().convertToDouble();
     }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;
