@@ -1,4 +1,5 @@
 import panic.cpoint
+import expect.cpoint
 
 extern malloc(size : int) void ptr;
 extern free(pointer : void ptr) void;
@@ -14,4 +15,8 @@ mod alloc {
 	func manual_dealloc(pointer : void ptr) void {
 		free(pointer)
 	}
+}
+
+test "manual_alloc" {
+    #expect(alloc::manual_alloc(sizeof int * 10) != null)
 }

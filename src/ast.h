@@ -308,7 +308,10 @@ public:
     std::string args = "";
     args += "(";
     for (int i = 0; i < Args.size(); i++){
-        args += Args.at(i)-> to_string() + ",";
+        args += Args.at(i)-> to_string() /*+ ","*/;
+        if (i != Args.size()-1){
+            args += ",";
+        }
     }
     args += ")";
     std::string template_type = "";

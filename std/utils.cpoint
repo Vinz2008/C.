@@ -27,11 +27,11 @@ func test_generic~T~() T {
     a
 }
 
-test "testing average" {
-  expect(std::utils::average(2, 4) == 3)
-  expect(std::utils::average(10, 20) == 15)
+test "average" {
+  #expect(std::utils::average(2, 4) == 3)
+  #expect(std::utils::average(10, 20) == 15)
 }
 
-test "testing absolute" {
-  expect(std::utils::absolute(-10) == 10)
+test "absolute" {
+  #expect(std::utils::absolute(-10) == 10)
 }

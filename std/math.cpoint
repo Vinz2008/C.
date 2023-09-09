@@ -96,10 +96,10 @@ mod math {
     }
 }
 
-test "testing sin" {
+test "sin" {
 	sin(2)
 }
 
-test "testing cos" {
+test "cos" {
 	cos(4)
 }
