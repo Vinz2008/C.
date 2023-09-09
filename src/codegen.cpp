@@ -969,7 +969,7 @@ Value* SizeofExprAST::codegen(){
   }
   if (NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr){
     Value* size =  getSizeOfStruct(A);
-    size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
+    //size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
     return size;
     /*std::vector<Value*> ArgsV;
     ArgsV.push_back(A);
@@ -987,7 +987,7 @@ Value* SizeofExprAST::codegen(){
   size = Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
   //size = Builder->CreateFPToUI(size, get_type_llvm(Cpoint_Type(int_type)), "cast");
   // size found is in bytes but we want the number of bits
-  size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
+  //size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
   return size;
   } 
 }

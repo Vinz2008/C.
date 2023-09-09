@@ -5,13 +5,37 @@ struct __timeval {
     var tv_usec : i64
 }
 
+struct __tm {
+    var tm_sec : int
+    var tm_min : int
+    var tm_hour : int
+    var tm_mday : int
+    var tm_mon : int
+    var tm_year : int
+    var tm_wday : int
+    var tm_yday : int
+    var tm_isdst : int
+    var tm_gmtoff : i64
+    var tm_zone : i8 ptr
+}
+
 extern gettimeofday(tv : struct __timeval ptr, tz : int ptr) int;
 extern __internal_get_time() i64;
-
+extern time(t : i64 ptr) i64;
+extern localtime(timer : i64 ptr) struct __tm ptr;
+extern strftime(str : i8 ptr, maxsize : int, format : i8 ptr, timeptr : struct __tm ptr) int;
 
 mod time {
     func get() i64 {
         var millisecondsSinceEpoch = __internal_get_time()
         millisecondsSinceEpoch
+    }
+    func get_date() i8 ptr {
+        var t : i64 = time(null)
+        var tm : struct __tm ptr = localtime(addr t)
+        var size = sizeof i8 * 64
+        var date : i8 ptr = gc_malloc(size)
+        strftime(date, size, "%c", addr tm)
+        date
     }
 }

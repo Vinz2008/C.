@@ -1,5 +1,7 @@
 include @std/libc.hpoint
 import @std/print.cpoint
+import @std/alloc.cpoint
+
 class test {
   var x : double 
   var z : double 
@@ -16,9 +18,10 @@ func main(){
   var x : class test 
   var y : class test ptr 
   var a : double = 2 
-  y = malloc(sizeof x)
+  y = alloc::manual_alloc(sizeof x)
   y.z = 3
   x.z = 2
-  x.test_function(2) 
-  y.test_function(3)
+  x.test_function(cast int 2) 
+  y.test_function(cast int 3)
+  alloc::manual_dealloc(y)
 }

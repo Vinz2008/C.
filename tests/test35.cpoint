@@ -1,5 +1,7 @@
 import @std/time.cpoint
+import @std/print.cpoint
 
 func main(){
     time::get()
+    printstr(time::get_date())
 }
