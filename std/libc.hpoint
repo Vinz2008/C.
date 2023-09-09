@@ -30,3 +30,12 @@ extern printf(format : i8 ptr ...) int;
 extern system(cmd : i8 ptr) int;
 
 type pthread_t i64;
+type time_t i64;
+
+struct dirent {
+    var d_ino : u32
+    var d_off : u32
+    var d_reclen : u16
+    var d_type : u8
+    var d_name[256] : u8
+}
