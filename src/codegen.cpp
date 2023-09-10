@@ -582,12 +582,11 @@ Type* UnionDeclarAST::codegen(){
 
 Type* EnumDeclarAST::codegen(){
     Type* enumType = nullptr;
-    // TODO : add this optimization for enum without tag later (you need to verify and change the code in match to include this possibility)
-    /*if (!enum_member_contain_type){
+    if (!enum_member_contain_type){
         enumType = get_type_llvm(int_type);
         EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, std::move(this->clone()));
         return nullptr;
-    }*/
+    }
     Log::Info() << "codegen EnumDeclarAST with type" << "\n";
     std::vector<Type*> dataType;
     StructType* enumStructType = StructType::create(*TheContext);
@@ -636,13 +635,23 @@ Value* MatchExprAST::codegen(){
     }
     auto enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
     auto enumDeclar = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->EnumDeclar->clone();
+    bool enum_member_contain_type = enumDeclar->enum_member_contain_type;
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-    Value* tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr");
-    Value* val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr");
+    Value* tag_ptr;
+    Value* val_ptr;
     //Value* tag_ptr = NamedValues[matchVar]->alloca_inst;
-    Value* tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
+    Value* tag;
+    
+    if (!enum_member_contain_type){
+        tag = Builder->CreateLoad(get_type_llvm(int_type), NamedValues[matchVar]->alloca_inst, matchVar);
+    } else {
+        tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr");
+        val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr");
+        tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
+    }
+    
     BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
     std::vector<std::string> membersNotFound;
     for (int i = 0; i < enumDeclar->EnumMembers.size(); i++){
@@ -719,7 +728,7 @@ Value* MatchExprAST::codegen(){
 
 #if ARRAY_MEMBER_OPERATOR_IMPL
 Value* getArrayMember(Value* array, Value* index){
-    Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
+    Log::Info() << "ARRAY MEMBER CODEGEN getArrayMember" << "\n";
     if (!index){
         return LogErrorV(emptyLoc, "error in array index");
     }
@@ -749,9 +758,10 @@ Value* getArrayMember(Value* array, Value* index){
     }*/
     
     std::vector<Value*> indexes = { zero, index};
-    
-    
+    Log::Info() << "TEST" << "\n";
+    Log::Info() << "array type : " << get_cpoint_type_from_llvm(type_llvm) << "\n";
     Value* ptr = Builder->CreateGEP(type_llvm, array, indexes);
+    Log::Info() << "TEST 2" << "\n";
     auto member_type_llvm = array->getType()->getArrayElementType();
     Value* value = Builder->CreateLoad(member_type_llvm, ptr, ArrayName);
     return value;
@@ -1201,8 +1211,13 @@ Function *FunctionAST::codegen() {
   }
   // 
   if (RetVal) {
+    if (RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
+        // void is represented by nullptr
+        RetVal = nullptr;
+        goto before_ret;
+    }
     // Finish off the function.
-    if (RetVal->getType() == get_type_llvm(void_type) && TheFunction->getReturnType() != get_type_llvm(void_type)){
+    if (RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() != get_type_llvm(Cpoint_Type(void_type))){
         if (P.getName() == "main"){
             RetVal = ConstantInt::get(*TheContext, APInt(32, 0, true));
             // TODO : maybe do an error if main function doesn't return an int and verify it after converting instead of createing the return 0
@@ -1211,15 +1226,19 @@ Function *FunctionAST::codegen() {
         }
     }
 
-    if (RetVal->getType() != get_type_llvm(void_type) && RetVal->getType() != TheFunction->getReturnType()){
+    if (RetVal->getType() != get_type_llvm(Cpoint_Type(void_type)) && RetVal->getType() != TheFunction->getReturnType()){
       convert_to_type(get_cpoint_type_from_llvm(RetVal->getType()), TheFunction->getReturnType(), RetVal);
     }
     if (RetVal->getType() != TheFunction->getReturnType()){
         //return LogErrorF(emptyLoc, "Return type is wrong in the %s function", P.getName().c_str());
         Log::Warning(emptyLoc) << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
     }
-
+before_ret:
+    if (RetVal){
     Builder->CreateRet(RetVal);
+    } else {
+    Builder->CreateRetVoid();
+    }
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
@@ -1270,8 +1289,6 @@ GlobalVariable* GlobalVariableAST::codegen(){
   }
   GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
   GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName);
-  //GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName, nullptr, llvm::GlobalValue::NotThreadLocal, llvm::None, is_extern);
-  //globalVar->setExternallyInitialized(is_extern); // TODO : implement extern global variables
   GlobalVariables[varName] = std::make_unique<GlobalVariableValue>(cpoint_type, globalVar);
   return globalVar;
 }
@@ -1674,13 +1691,20 @@ Value* WhileExprAST::codegen(){
   blocksForBreak.push(AfterBB);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
   Builder->SetInsertPoint(LoopBB);
+  Value* lastVal = nullptr;
   for (int i = 0; i < Body.size(); i++){
-    if (!Body.at(i)->codegen())
+    lastVal = Body.at(i)->codegen();
+    if (!lastVal)
       return nullptr;
   }
   blocksForBreak.pop();
   Builder->CreateBr(whileBB);
   Builder->SetInsertPoint(AfterBB);
+  // TODO : make while return value work
+  /*if (lastVal){
+    return lastVal;
+  }*/
+  
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
@@ -1713,8 +1737,10 @@ Value *ForExprAST::codegen(){
   Variable->addIncoming(StartVal, PreheaderBB);
   Value *OldVal = NamedValues[VarName];
   NamedValues[VarName] = Variable;*/
+  Value* lastVal = nullptr;
   for (int i = 0; i < Body.size(); i++){
-    if (!Body.at(i)->codegen())
+    lastVal = Body.at(i)->codegen();
+    if (!lastVal)
       return nullptr;
   }
   blocksForBreak.pop();
@@ -1761,6 +1787,9 @@ Value *ForExprAST::codegen(){
     NamedValues.erase(VarName);
 
   // for expr always returns 0.0.
+  if (lastVal){
+    return lastVal;
+  }
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
@@ -1806,11 +1835,13 @@ Value *VarExprAST::codegen() {
         Cpoint_Type cpoint_type = NamedValues[VarName]->type;
         Cpoint_Type tag_type = Cpoint_Type(int_type);
         auto* enumCreation = dynamic_cast<EnumCreation*>(Init);
+        
+    
         auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
         auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
         auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-        auto ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct");
-        auto value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct");
+        Value* ptr_tag = nullptr;
+        Value* value_tag = nullptr;
         auto EnumMembers = std::move(EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->clone()->EnumMembers);
         std::unique_ptr<EnumMember> enumMember = nullptr;
         int pos_member = -1;
@@ -1824,6 +1855,13 @@ Value *VarExprAST::codegen() {
         if (!enumMember){
             return LogErrorV(this->loc, "Couldn't find enum member %s", enumCreation->EnumMemberName.c_str());
         }
+        if (!EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->enum_member_contain_type){
+            Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), Alloca);
+            NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+            goto after_storing;
+        }
+        ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct");
+        value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct");
         Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
         NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         if (enumCreation->value){

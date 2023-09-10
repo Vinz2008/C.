@@ -1,4 +1,5 @@
 import @std/print.cpoint
+
 func test(x){
     var i = 1
     if 10 > i {
@@ -13,6 +14,8 @@ func test(x){
     printd(i)
     }
 }
+
 func main(){
     test(10)
+    0
 }

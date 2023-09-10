@@ -6,6 +6,11 @@ enum test_enum {
     tag_alone
 }
 
+enum test_enum_without_val {
+    tag_alone1
+    tag_alone2
+}
+
 func main(){
     var te : enum test_enum = test_enum::tag_int(1)
     var te2 : enum test_enum = test_enum::tag_float(2.0)
@@ -22,5 +27,10 @@ func main(){
         _ => {
             printstr("not int tag")
         }
+    }
+    var te_w : enum test_enum_without_val = test_enum_without_val::tag_alone2
+    match te_w {
+        test_enum_without_val::tag_alone2 => printstr("tag_alone2"),
+        _ => printstr("not tag_alone2"),
     }
 }
