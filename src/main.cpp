@@ -433,6 +433,7 @@ int main(int argc, char **argv){
     BinopPrecedence["&&"] = 11;
     BinopPrecedence["|"] = 12;
     BinopPrecedence["^"] = 13;
+    BinopPrecedence["&"] = 14;
 
     BinopPrecedence["!="] = 15;
     BinopPrecedence["=="] = 15;

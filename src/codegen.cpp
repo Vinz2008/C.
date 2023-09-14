@@ -820,6 +820,8 @@ Value *BinaryExprAST::codegen() {
   case '^':
     L = Builder->CreateXor(L, R, "xortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+  case '&':
+    return operators::LLVMCreateLogicalOr(L, R);
   case '|':
     L = Builder->CreateOr(L, R, "ortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");

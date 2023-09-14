@@ -1,0 +1,24 @@
+include libc.hpoint
+
+type fd_t int;
+
+mod os {
+    func close(fd : fd_t) void {
+        close(fd)
+    }
+    func change_dir(path : i8 ptr) void {
+        chdir(path)        
+    }
+    func dup(fd : fd_t) int {
+        dup(fd)
+    }
+    func is_a_tty(fd : fd_t) bool {
+        isatty(fd)
+    }
+
+    func get_working_dir() i8 ptr {
+        var buf : i8 ptr = gc_malloc(sizeof i8 * 4096)
+        getcwd(buf)
+        buf
+    }
+}

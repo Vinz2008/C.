@@ -28,6 +28,10 @@ extern realpath(path : i8 ptr, resolved_path : i8 ptr) i8 ptr;
 extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) int;
 extern printf(format : i8 ptr ...) int;
 extern system(cmd : i8 ptr) int;
+extern chdir(path : i8 ptr) int;
+extern dup(fd : int) int;
+extern isatty(fd : int) int;
+extern getcwd(buf : i8 ptr) i8 ptr;
 
 type pthread_t i64;
 type time_t i64;
