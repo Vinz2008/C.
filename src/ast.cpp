@@ -262,12 +262,16 @@ std::unique_ptr<ExprAST> LoopExprAST::clone(){
 
 std::unique_ptr<matchCase> matchCase::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyCloned;
+    std::unique_ptr<ExprAST> exprCloned;
     if (!Body.empty()){
       for (int i = 0; i < Body.size(); i++){
         BodyCloned.push_back(Body.at(i)->clone());
       }
+    } 
+    if (expr){
+        exprCloned = expr->clone();
     }
-    return std::make_unique<matchCase>(enum_name, enum_member, var_name, is_underscore, std::move(BodyCloned));
+    return std::make_unique<matchCase>(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, std::move(BodyCloned));
 }
 
 std::unique_ptr<ExprAST> MatchExprAST::clone(){
@@ -1552,9 +1556,10 @@ std::unique_ptr<ExprAST> ParseMatch(){
     }
     getNextToken();
     Log::Info() << "CurTok parsing match case : " << CurTok << "\n";
-    while (CurTok == tok_identifier){
+    while (CurTok != '}'){
         std::string VarName = "";
         std::vector<std::unique_ptr<ExprAST>> Body;
+        std::unique_ptr<ExprAST> expr = nullptr;
         std::string enum_name = "";
         std::string enum_member_name = "";
         bool is_underscore = false;
@@ -1564,6 +1569,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
             is_underscore = true;
             getNextToken();
         } else {
+        if (CurTok == tok_identifier){
         enum_name = IdentifierStr;
         Log::Info() << "Match case enum_name : " << enum_name << "\n";
         getNextToken();
@@ -1588,6 +1594,12 @@ std::unique_ptr<ExprAST> ParseMatch(){
             }
             getNextToken();
         }
+
+        } else {
+            expr = ParseExpression();
+        }
+
+
         }
         Log::Info() << "CurTok match : " << CurTok << "\n";
         Log::Info() << "OpStringMultiChar : " << OpStringMultiChar << "\n";
@@ -1615,11 +1627,11 @@ std::unique_ptr<ExprAST> ParseMatch(){
             }
             getNextToken();
         }
-        matchCases.push_back(std::make_unique<matchCase>(enum_name, enum_member_name, VarName, is_underscore, std::move(Body)));
+        matchCases.push_back(std::make_unique<matchCase>(std::move(expr), enum_name, enum_member_name, VarName, is_underscore, std::move(Body)));
     }
-    if (CurTok != '}'){
+    /*if (CurTok != '}'){
         return LogError("Missing '}' in match");
-    }
+    }*/
     getNextToken();
     return std::make_unique<MatchExprAST>(matchVar, std::move(matchCases));
 }

@@ -382,12 +382,13 @@ public:
 
 class matchCase {
 public:
+    std::unique_ptr<ExprAST> expr;
     std::string enum_name;
     std::string enum_member;
     std::string var_name;
     bool is_underscore;
     std::vector<std::unique_ptr<ExprAST>> Body; 
-    matchCase(const std::string& enum_name, const std::string& enum_member, const std::string& var_name, bool is_underscore, std::vector<std::unique_ptr<ExprAST>> Body) : enum_name(enum_name), enum_member(enum_member), var_name(var_name), is_underscore(is_underscore), Body(std::move(Body)) {}
+    matchCase(std::unique_ptr<ExprAST> expr, const std::string& enum_name, const std::string& enum_member, const std::string& var_name, bool is_underscore, std::vector<std::unique_ptr<ExprAST>> Body) : expr(std::move(expr)), enum_name(enum_name), enum_member(enum_member), var_name(var_name), is_underscore(is_underscore), Body(std::move(Body)) {}
     std::unique_ptr<matchCase> clone();
 };
 

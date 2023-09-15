@@ -33,4 +33,12 @@ func main(){
         test_enum_without_val::tag_alone2 => printstr("tag_alone2"),
         _ => printstr("not tag_alone2"),
     }
+    var n : double = 2
+    match n {
+        1 => printstr("1"),
+        2 => printstr("2"),
+        _ => {
+            printstr("other")
+        }
+    }
 }
