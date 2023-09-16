@@ -629,7 +629,75 @@ void string_vector_erase(std::vector<std::string>& strings, std::string string){
 }
 
 
-// refactor this code in multiple functions
+Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction){
+    // For now consider by default it will compare ints
+    AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
+    Value* val_from_var = Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, "load_match_const");
+    bool is_bool = false;
+    Log::Info() << "MatchNotEnumCodegen Alloca->getAllocatedType() : " << get_cpoint_type_from_llvm(Alloca->getAllocatedType()) << "\n";
+    if (Alloca->getAllocatedType() == Type::getInt1Ty(*TheContext)){
+        is_bool = true;
+    }
+    if (is_bool){
+        val_from_var = Builder->CreateZExt(val_from_var, get_type_llvm(Cpoint_Type(int_type)), "cast_bool_match");
+    } else if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(int_type))){
+        convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(int_type)), val_from_var);
+    }
+
+    // for testing
+    /*std::vector<Value*> Args;
+    Args.push_back(val_from_var);
+    Builder->CreateCall(getFunction("printi"), Args);*/
+
+    auto switch_inst = Builder->CreateSwitch(val_from_var, nullptr, matchCases.size());
+    BasicBlock* defaultDestBB;
+    BasicBlock* AfterBB = BasicBlock::Create(*TheContext, "After_match");
+    bool found_underscore = false;
+    for (int i = 0; i < matchCases.size(); i++){
+        std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
+        if (matchCaseTemp->is_underscore){
+            found_underscore = true;
+            defaultDestBB = BasicBlock::Create(*TheContext, "default_dest", TheFunction);
+            Builder->SetInsertPoint(defaultDestBB);
+            for (int j = 0; j < matchCaseTemp->Body.size(); j++){
+                matchCaseTemp->Body.at(j)->codegen();
+            }
+            Builder->CreateBr(AfterBB);
+            switch_inst->setDefaultDest(defaultDestBB);
+        } else {
+            BasicBlock* thenBB = BasicBlock::Create(*TheContext, "then_match_const", TheFunction);
+            Builder->SetInsertPoint(thenBB);
+            auto val = matchCaseTemp->expr->clone()->codegen();
+            if (val->getType() != get_type_llvm(int_type)){
+                convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(int_type), val);
+            }
+            for (int j = 0; j < matchCaseTemp->Body.size(); j++){
+                matchCaseTemp->Body.at(j)->codegen();
+            }
+            Builder->CreateBr(AfterBB);
+            switch_inst->addCase(dyn_cast<ConstantInt>(val), thenBB);
+        }
+    }
+    if (is_bool && !found_underscore){
+        defaultDestBB = BasicBlock::Create(*TheContext, "default_dest_unreachable", TheFunction);
+        Builder->SetInsertPoint(defaultDestBB);
+        // for testing
+        /*std::vector<std::unique_ptr<ExprAST>> Args;
+        Args.push_back(std::make_unique<StringExprAST>("not accessible"));
+        CallExprAST(emptyLoc, "printstr", std::move(Args), Cpoint_Type(double_type)).codegen();*/
+        Builder->CreateBr(AfterBB);
+        switch_inst->setDefaultDest(defaultDestBB);
+    }
+    if (!found_underscore && !is_bool){
+        return LogErrorV(emptyLoc, "Not all cases were verified in the int match case");
+    }
+    TheFunction->insert(TheFunction->end(), AfterBB);
+    Builder->SetInsertPoint(AfterBB);
+
+    return Constant::getNullValue(get_type_llvm(double_type));
+}
+
+// TODO : refactor this code in multiple functions
 Value* MatchExprAST::codegen(){
     Function *TheFunction = Builder->GetInsertBlock()->getParent();
     Type* enumType;
@@ -640,13 +708,11 @@ Value* MatchExprAST::codegen(){
     std::unique_ptr<EnumDeclarAST> enumDeclar;
     if (NamedValues[matchVar] == nullptr){
         return LogErrorV(this->loc, "Match var is unknown or the match expression is invalid");
-    } else {
-
     }
     if (!NamedValues[matchVar]->type.is_enum){
         is_enum = false;
-
-        AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
+        return MatchNotEnumCodegen(matchVar, std::move(matchCases), TheFunction);
+        /*AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
         Value* val_from_var = Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, "load_match_const");
         if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(int_type))){
             convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(int_type)), val_from_var);
@@ -681,38 +747,32 @@ Value* MatchExprAST::codegen(){
         TheFunction->insert(TheFunction->end(), AfterBB);
         Builder->SetInsertPoint(AfterBB);
 
-        return Constant::getNullValue(get_type_llvm(double_type));
-    } else {
-        is_enum = true;
-        enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
-        enumDeclar = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->EnumDeclar->clone();
-        bool enum_member_contain_type = enumDeclar->enum_member_contain_type;
-        auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-        auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-        auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+        return Constant::getNullValue(get_type_llvm(double_type));*/
+    }
+        
+    is_enum = true;
+    enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
+    enumDeclar = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->EnumDeclar->clone();
+    bool enum_member_contain_type = enumDeclar->enum_member_contain_type;
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     
-        if (!enum_member_contain_type){
-            tag = Builder->CreateLoad(get_type_llvm(int_type), NamedValues[matchVar]->alloca_inst, matchVar);
-        } else {
-            tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr");
-            val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr");
-            tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
-        }
+    if (!enum_member_contain_type){
+        tag = Builder->CreateLoad(get_type_llvm(int_type), NamedValues[matchVar]->alloca_inst, matchVar);
+    } else {
+        tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr");
+        val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr");
+        tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
     }
     BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
     std::vector<std::string> membersNotFound;
-    if (is_enum){
     for (int i = 0; i < enumDeclar->EnumMembers.size(); i++){
         membersNotFound.push_back(enumDeclar->EnumMembers.at(i)->Name);
-    }
-    } else {
-        // find all cases for numbers for example
-        // would probably need a function entirely for that
     }
     for (int i = 0; i < matchCases.size(); i++){
         std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
         BasicBlock *ElseBB;
-        if (is_enum){
         if (matchCaseTemp->is_underscore){
             //Builder->CreateBr(AfterMatch);
             for (int i = 0; i < matchCaseTemp->Body.size(); i++){
@@ -734,8 +794,6 @@ Value* MatchExprAST::codegen(){
         if (pos == -1){
             return LogErrorV(this->loc, "Couldn't find the member of this enum in match case");
         }
-        //enumDeclar->EnumMembers[pos]
-        //enumDeclar->EnumMembers[pos]
         Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos)));
         cmp = Builder->CreateFCmpONE(cmp, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
         BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then_match", TheFunction);
@@ -751,30 +809,8 @@ Value* MatchExprAST::codegen(){
             Builder->CreateStore(enum_val, Alloca);
             NamedValues[matchCaseTemp->var_name] = std::make_unique<NamedValue>(Alloca, *enumDeclar->EnumMembers[pos]->Type);
             Log::Info() << "Create var for match : " << enumDeclar->EnumMembers[pos]->Name << "\n";
-            //enumDeclar->EnumMembers[pos]->
         }
         }
-        } else {
-            //Builder->CreateSwitch()
-            /*Log::Info() << "matchCaseTemp->is_underscore : " << matchCaseTemp->is_underscore << "\n";
-            if (matchCaseTemp->is_underscore){
-                for (int i = 0; i < matchCaseTemp->Body.size(); i++){
-                    matchCaseTemp->Body.at(i)->codegen();
-                }
-                break;
-            } else {
-            auto matchCaseVal = matchCaseTemp->expr->codegen();
-            auto Alloca = NamedValues[matchVar]->alloca_inst;
-            auto valToCmp = Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, "load_match");
-            Value* cmp = operators::LLVMCreateCmp(valToCmp, matchCaseVal);
-            BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then_match", TheFunction);
-            
-            ElseBB = BasicBlock::Create(*TheContext, "else_match");
-            Builder->CreateCondBr(cmp, ThenBB, ElseBB);
-            Builder->SetInsertPoint(ThenBB);
-            }*/
-        }
-        //enumDeclar->EnumMembers[pos]
         for (int i = 0; i < matchCaseTemp->Body.size(); i++){
             matchCaseTemp->Body.at(i)->codegen();
         }
@@ -784,7 +820,7 @@ Value* MatchExprAST::codegen(){
         TheFunction->insert(TheFunction->end(), ElseBB);
         Builder->SetInsertPoint(ElseBB);
     }
-    if (is_enum && !membersNotFound.empty()){
+    if (!membersNotFound.empty()){
         std::string list_members_not_found_str = "";
         int i;
         for (i = 0; i < membersNotFound.size()-1; i++){
@@ -1095,9 +1131,9 @@ Value* NullExprAST::codegen(){
 
 Value* BoolExprAST::codegen(){
   if (val){
-    return ConstantInt::get(*TheContext, APInt(8, 1, true));
+    return ConstantInt::get(*TheContext, APInt(1, 1, true));
   } else {
-    return ConstantInt::get(*TheContext, APInt(8, 0, true));
+    return ConstantInt::get(*TheContext, APInt(1, 0, true));
   }
 }
 

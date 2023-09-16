@@ -41,4 +41,9 @@ func main(){
             printstr("other")
         }
     }
+    var b : bool = true
+    match b {
+        false => printstr("false"),
+        true => printstr("true"),
+    }
 }
