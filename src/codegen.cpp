@@ -470,6 +470,7 @@ Value* ArrayMemberExprAST::codegen() {
       cpoint_type.nb_element = 0;
     }
     Log::Info() << "Cpoint_type for array member which is ptr : " << cpoint_type << "\n";
+    index = Builder->CreateSExt(index, Type::getInt64Ty(*TheContext)); // try to use a i64 for index
     indexes = {index};
   }
 
