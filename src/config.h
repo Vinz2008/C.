@@ -1,4 +1,8 @@
+
+#ifndef DEFAULT_PREFIX_PATH
 #define DEFAULT_PREFIX_PATH "/usr/local"
+#endif
+
 #define DEFAULT_PREFIX_LIB_PATH DEFAULT_PREFIX_PATH "/lib"
 #define DEFAULT_STD_PATH DEFAULT_PREFIX_LIB_PATH "/cpoint/std"
 #define DEFAULT_PACKAGE_PATH DEFAULT_PREFIX_LIB_PATH "/cpoint/packages"

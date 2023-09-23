@@ -308,6 +308,10 @@ int main(int argc, char **argv){
     bool explicit_with_gc = false; // add gc even with -no-std
     bool PICmode = false;
     std::string linker_additional_flags = "";
+    if (argc < 2){
+        fprintf(stderr, "not enough arguments, expected at least 1, got %d\n", argc-1);
+        exit(1);
+    }
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -574,11 +578,11 @@ int main(int argc, char **argv){
     std_static_path.append("libstd.a");
     if (Comp_context->std_mode && link_files_mode){
       if (rebuild_std){
-      Log::Print() << _("Built the standard library") << "\n";
       if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
         fprintf(stderr, "Could not build std at path : %s\n", std_path.c_str());
         exit(1);
       }
+      Log::Print() << _("Built the standard library") << "\n";
       } else {
         if (!FileExists(std_static_path)){
           fprintf(stderr, "std static library %s has not be builded. You need to at least compile a file one time without the -no-rebuild-std flag\n", std_static_path.c_str());

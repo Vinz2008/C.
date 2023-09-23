@@ -1,7 +1,7 @@
 CXX=g++
 DESTDIR ?= /
 BINDIR ?= $(DESTDIR)/usr/bin
-PREFIX ?= /usr/local
+PREFIX ?= $(DESTDIR)/usr/local
 NO_OPTI ?= false
 NO_STACK_PROTECTOR ?= false
 
@@ -21,6 +21,10 @@ ifeq ($(NO_STACK_PROTECTOR),true)
 CXXFLAGS += -fno-stack-protector
 endif
 
+ifneq ($(PREFIX),$(DESTDIR)/usr/local)
+CXXFLAGS += -DDEFAULT_PREFIX_PATH=\"$(PREFIX)\"
+endif
+
 
 ifneq ($(OS), Windows_NT)
 ifneq ($(shell echo | $(CXX) -dM -E - | grep clang),"")
@@ -35,7 +39,7 @@ SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
 
-all: std_lib_plus_compiler_plus_gc cpoint-build cpoint-bindgen cpoint-run cpoint-from-c
+all: std_lib cpoint-build cpoint-bindgen cpoint-run cpoint-from-c
 
 release: set_release all
 
@@ -60,8 +64,6 @@ cpoint-run:
 
 cpoint-from-c:
 	+make -C tools/from-c $(MAKETARGET)
-
-std_lib_plus_compiler_plus_gc: std_lib
 
 
 gc:
@@ -99,7 +101,7 @@ ifneq ($(OS),Windows_NT)
 USERNAME=$(shell logname)
 endif
 
-install: std_lib
+install: all
 	cp cpoint $(BINDIR)/
 	cp build/cpoint-build $(BINDIR)/
 	cp tools/bindgen/cpoint-bindgen $(BINDIR)/
