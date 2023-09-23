@@ -218,6 +218,8 @@ static int gettok() {
       return tok_label;
     if (IdentifierStr == "match")
         return tok_match;
+    if (IdentifierStr == "members")
+        return tok_members;
     if (IdentifierStr == "type")
       return tok_typedef;
     if (IdentifierStr == "break")

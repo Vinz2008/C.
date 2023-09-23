@@ -1,4 +1,19 @@
+import @std/print.cpoint
+
+struct a {
+    var b : int
+}
+
+members for a {
+    func test(){
+        2
+    }
+}
+
+
 func main(){
     var d : double = 2
     var d2 = cast int d
+    var a_inst : struct a
+    printd(a_inst.test())
 }

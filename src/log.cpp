@@ -49,6 +49,14 @@ std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...){
   return nullptr;
 }
 
+std::unique_ptr<MembersDeclarAST> LogErrorMembers(const char *Str, ...){
+    va_list args;
+    va_start(args, Str);
+    vLogError(Str, args, emptyLoc);
+    va_end(args);
+    return nullptr;
+}
+
 std::unique_ptr<FunctionAST> LogErrorF(const char *Str, ...){
   va_list args;
   va_start(args, Str);

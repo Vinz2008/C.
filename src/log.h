@@ -14,6 +14,7 @@ class ModAST;
 class TestAST;
 class UnionDeclarAST;
 class EnumDeclarAST;
+class MembersDeclarAST;
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);
@@ -30,6 +31,7 @@ std::unique_ptr<EnumDeclarAST> LogErrorE(const char* Str, ...);
 Value* LogErrorV(Source_location astLoc, const char *Str, ...);
 Function* LogErrorF(Source_location astLoc, const char *Str, ...);
 GlobalVariable* LogErrorGLLVM(const char *Str, ...);
+std::unique_ptr<MembersDeclarAST> LogErrorMembers(const char *Str, ...);
 
 #ifndef _LOG_HEADER_
 #define _LOG_HEADER_

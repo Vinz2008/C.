@@ -189,6 +189,14 @@ static void HandleEnum(){
     }
 }
 
+static void HandleMembers(){
+    if (auto memberAST = ParseMembers()){
+        memberAST->codegen();
+    } else {
+        getNextToken();
+    }
+}
+
 void HandleComment(){
   Log::Info() << "token bef : " << CurTok << "\n";
   getNextToken(); // pass tok_single_line_comment token
@@ -256,6 +264,9 @@ static void MainLoop() {
     case tok_mod:
       HandleMod();
       break;
+    case tok_members:
+        HandleMembers();
+        break;
     case tok_single_line_comment:
       Log::Info() << "found single-line comment" << "\n";
       Log::Info() << "char found as a '/' : " << CurTok << "\n";

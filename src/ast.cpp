@@ -1180,6 +1180,43 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   return structDeclar;
 }
 
+std::unique_ptr<MembersDeclarAST> ParseMembers(){
+    std::string members_name = "";
+    std::string members_for = "";
+    std::vector<std::unique_ptr<FunctionAST>> Functions;
+    getNextToken(); // eat members
+    if (CurTok == tok_identifier){
+        members_name = IdentifierStr;
+        getNextToken();
+    }
+    if (CurTok != tok_for){
+        return LogErrorMembers("Expected Identifier or for token in members block");
+    }
+    getNextToken();
+    members_for = IdentifierStr;
+    getNextToken();
+    if (CurTok != '{')
+        return LogErrorMembers("Expected '{' in Struct");
+    getNextToken();
+    while (CurTok == tok_func && CurTok != '}'){
+        auto funcAST = ParseDefinition();
+        FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
+        if (functionAST == nullptr){
+            return LogErrorMembers("Error in members declaration funcs");
+        }
+        std::unique_ptr<FunctionAST> declar;
+        funcAST.release();
+        declar.reset(functionAST);
+        if (declar == nullptr){return nullptr;}
+        Functions.push_back(std::move(declar));
+    }
+    if (CurTok != '}'){
+        return LogErrorMembers("Expected '}' in members");
+    }
+    getNextToken();  // eat '}'.
+    return std::make_unique<MembersDeclarAST>(members_name, members_for, std::move(Functions));
+}
+
 std::unique_ptr<UnionDeclarAST> ParseUnion(){
   Log::Info() << "Parsing Union" << "\n";
   getNextToken(); // eat union

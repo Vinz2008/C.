@@ -610,6 +610,25 @@ Type* EnumDeclarAST::codegen(){
     return enumStructType;
 }
 
+void MembersDeclarAST::codegen(){
+    if (StructDeclarations[members_for] == nullptr){
+        LogError("Members for a struct that doesn't exist");
+        return;
+    }
+    for (int i = 0; i < Functions.size(); i++){
+        std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
+        std::string function_name = FunctionExpr->Proto->getName();
+        StructDeclarations[members_for]->functions.push_back(function_name);
+        std::string mangled_name_function = struct_function_mangling(members_for, function_name);
+        Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
+        self_pointer_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
+        FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
+        FunctionExpr->Proto->Name = mangled_name_function;
+        FunctionExpr->codegen();
+    }
+}
+
+
 // TODO : add the creation of a struct here (struct {tag, value} in pseudo code). Maybe even replace it for the current implementation in RedeclarationExprAST
 Value* EnumCreation::codegen(){
     return nullptr;

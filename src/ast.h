@@ -471,6 +471,15 @@ public:
   std::unique_ptr<UnionDeclarAST> clone();
 };
 
+class MembersDeclarAST {
+public:
+    std::string members_name; // to add trait system like in rust ? TODO ?
+    std::string members_for;
+    std::vector<std::unique_ptr<FunctionAST>> Functions;
+    MembersDeclarAST(const std::string& members_name, const std::string& members_for, std::vector<std::unique_ptr<FunctionAST>> Functions) : members_name(members_name), members_for(members_for), Functions(std::move(Functions)) {}
+    void codegen();
+};
+
 class EnumMember {
 public:
     std::string Name;
@@ -689,6 +698,7 @@ std::unique_ptr<ExprAST> ParseUnary();
 std::unique_ptr<ExprAST> ParseVarExpr();
 std::unique_ptr<StructDeclarAST> ParseStruct();
 //std::unique_ptr<ClassDeclarAST> ParseClass();
+std::unique_ptr<MembersDeclarAST> ParseMembers();
 std::unique_ptr<ExprAST> ParseAddrExpr();
 std::unique_ptr<ExprAST> ParseSizeofExpr();
 std::unique_ptr<ExprAST> ParseTypeidExpr();
