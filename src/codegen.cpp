@@ -875,7 +875,17 @@ Value* getArrayMember(Value* array, Value* index){
             return nullptr;
         }
     }*/
+    Log::Info() << "Index " << (std::string)index->getName() << " type : " << get_cpoint_type_from_llvm(index->getType()) << "\n";
+    Log::Info() << "Array " << (std::string)array->getName() << " type : " << get_cpoint_type_from_llvm(array->getType()) << "\n";
+    if (index->getType() == get_type_llvm(Cpoint_Type(double_type))){
     index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
+    }
+    if (!array->getType()->isArrayTy() && !array->getType()->isPointerTy()){
+        return LogErrorV(emptyLoc, "array for array member is not an array\n");
+    }
+    /*if (array->getType()->isPointerTy()){
+        
+    }*/
     if (!is_llvm_type_number(index->getType())){
         return LogErrorV(emptyLoc, "index for array is not a number\n");
     }
@@ -890,7 +900,7 @@ Value* getArrayMember(Value* array, Value* index){
     std::vector<Value*> indexes = { zero, index};
     Log::Info() << "TEST" << "\n";
     Log::Info() << "array type : " << get_cpoint_type_from_llvm(type_llvm) << "\n";
-    Value* ptr = Builder->CreateGEP(type_llvm, array, indexes);
+    Value* ptr = Builder->CreateGEP(type_llvm, Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), array) /*array*/, indexes);
     Log::Info() << "TEST 2" << "\n";
     auto member_type_llvm = array->getType()->getArrayElementType();
     Value* value = Builder->CreateLoad(member_type_llvm, ptr, ArrayName);
@@ -958,6 +968,8 @@ Value *BinaryExprAST::codegen() {
 #if ARRAY_MEMBER_OPERATOR_IMPL
   case '[':
     // TODO get from rhs and lhs with getelementptr the array member
+    Log::Info() << "L " << (std::string)L->getName() << " type : " << get_cpoint_type_from_llvm(L->getType()) << "\n";
+    Log::Info() << "R " << (std::string)R->getName() << " type : " << get_cpoint_type_from_llvm(R->getType()) << "\n";
     return getArrayMember(L, R);
 #endif
   case '=': {

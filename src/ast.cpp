@@ -598,6 +598,8 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     }
 #if ARRAY_MEMBER_OPERATOR_IMPL
     if (BinOp == "["){
+        Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
+        Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
         // TODO add better verification for end ']'
         getNextToken(); // pass ']'
     }

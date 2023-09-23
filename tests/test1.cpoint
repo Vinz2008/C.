@@ -7,7 +7,7 @@ func main(){
   var p : int ptr = addr i
   p = temp
   printi(i)
-  var s = "hello world"
+  var s : i8 ptr = "hello world"
   var c : i8 = s[2]
   printf("%c", c)
   var b : bool
