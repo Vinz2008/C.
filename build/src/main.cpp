@@ -25,6 +25,7 @@ enum mode {
     CROSS_COMPILE_MODE = -8,
     INSTALL_MODE = -9,
     INSTALL_PATH_MODE = -10,
+    INIT_MODE = -11,
 };
 
 std::string filename_config = "build.toml";
@@ -363,6 +364,8 @@ int main(int argc, char** argv){
     } else if (arg == "open-page"){
         modeBuild = OPEN_PAGE_MODE;
         //i++;
+    } else if (arg == "init"){
+        modeBuild = INIT_MODE;
     } else if (arg == "cross-compile"){
         modeBuild = CROSS_COMPILE_MODE;
         is_cross_compiling = true;
@@ -382,6 +385,10 @@ int main(int argc, char** argv){
     // instruction that don't need the toml file
     if (modeBuild == NEW_PROJECT_MODE){
         createProject("exe", project_name_to_create);
+        return 0;
+    }
+    if (modeBuild == INIT_MODE){
+        initProject("exe", "./");
         return 0;
     }
     if (modeBuild == INSTALL_MODE){

@@ -26,9 +26,7 @@ homepage = "https://github.com/test"
 license = "GPL"
 )";
 
-
-void createProject(std::string type, std::string project_name){
-    std::string folder = "./" + project_name + "/";
+void initProject(std::string type, std::string folder){
     fs::create_directories(folder);
     std::string code_folder = folder + "src/";
     fs::create_directories(code_folder);
@@ -42,4 +40,10 @@ void createProject(std::string type, std::string project_name){
     config_file.close();
     main_file.close();
     gitignore_file.close();
+}
+
+
+void createProject(std::string type, std::string project_name){
+    std::string folder = "./" + project_name + "/";
+    initProject(type, folder);
 }

@@ -451,8 +451,12 @@ Value* ArrayMemberExprAST::codegen() {
       return nullptr;
     }
   }
-
-  index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
+  
+  //index = Builder->CreateFPToUI(index, Type::getInt64Ty(*TheContext), "cast_gep_index");
+  if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
+    convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
+  }
+  
   if (!is_llvm_type_number(index->getType())){
     return LogErrorV(this->loc, "index for array is not a number\n");
   }
@@ -485,7 +489,13 @@ Value* ArrayMemberExprAST::codegen() {
   member_type.nb_element = 0;
   
   Type* type_llvm = get_type_llvm(cpoint_type);
-  Value* ptr = Builder->CreateGEP(type_llvm, Alloca, indexes);
+
+  Value* array_or_ptr = Alloca;
+  // To make argv[0] work
+  if (cpoint_type.is_ptr && cpoint_type.nb_ptr > 1){
+  array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), Alloca, "load_gep_ptr");
+  }
+  Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
   Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
   return value;
 }

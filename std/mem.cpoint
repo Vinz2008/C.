@@ -1,7 +1,8 @@
 import expect.cpoint
+import print.cpoint
 
 mod mem {
-    func memcpy(dst_ptr : void ptr, src_ptr : void ptr, size : int) {
+    func memcpy(dst_ptr : void ptr, src_ptr : void ptr, size : int) void ptr {
         var dst : i8 ptr =  dst_ptr
         var src : i8 ptr = src_ptr
         for i = 0, i < size, 1.0 {
@@ -9,7 +10,7 @@ mod mem {
         }
         dst_ptr
     }
-    func memset(buf_ptr : void ptr, value : int, size : int){
+    func memset(buf_ptr : void ptr, value : int, size : int) void ptr{
         var buf : i8 ptr = buf_ptr
         for i = 0, i < size, 1.0 {
             buf[i] = value
