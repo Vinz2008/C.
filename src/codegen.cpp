@@ -438,6 +438,7 @@ Value* ArrayMemberExprAST::codegen() {
     return LogErrorV(this->loc, "Tried to get a member of an array that doesn't exist : %s", ArrayName.c_str());
   }
   Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
+  Cpoint_Type cpoint_type_not_modified = cpoint_type;
   auto index = posAST->codegen();
   if (!index){
     return LogErrorV(this->loc, "error in array index");
@@ -492,7 +493,7 @@ Value* ArrayMemberExprAST::codegen() {
 
   Value* array_or_ptr = Alloca;
   // To make argv[0] work
-  if (cpoint_type.is_ptr && cpoint_type.nb_ptr > 1){
+  if (cpoint_type_not_modified.is_ptr && cpoint_type_not_modified.nb_ptr > 1){
   array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), Alloca, "load_gep_ptr");
   }
   Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
@@ -1196,7 +1197,7 @@ void afterAllTests(){
   }
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
   Args.push_back(std::make_pair("argc", Cpoint_Type(double_type, false)));
-  Args.push_back(std::make_pair("argv",  Cpoint_Type(argv_type, false)));
+  Args.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "main", Args, Cpoint_Type(double_type));
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (/*std_mode &&*/ Comp_context->gc_mode){
@@ -1335,6 +1336,7 @@ Function *FunctionAST::codegen() {
                           DILocation::get(SP->getContext(), LineNo, 0, SP),
                           Builder->GetInsertBlock());*/
       Builder->CreateStore(&Arg, Alloca);
+      Log::Info() << "type args MAIN function : " << type << "\n";
       NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, /*Cpoint_Type(type, false)*/ type);
       i++;
     }
