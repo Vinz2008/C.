@@ -10,3 +10,7 @@
 int cwritefile(int fd, const char* buf){
     return write(fd, buf, strlen(buf));
 }
+
+void* c_getaddress_char_array(char* buf, int pos){
+    return &buf[pos];
+}

@@ -434,10 +434,10 @@ Value* ConstantStructExprAST::codegen(){
 // TODO : transform this into an operator to use it in situations like : "self.list[0]"
 Value* ArrayMemberExprAST::codegen() {
   Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
-  if (!NamedValues[ArrayName]){
+  if (!NamedValues[ArrayName] && !GlobalVariables[ArrayName]){
     return LogErrorV(this->loc, "Tried to get a member of an array that doesn't exist : %s", ArrayName.c_str());
   }
-  Cpoint_Type cpoint_type = NamedValues[ArrayName]->type;
+  Cpoint_Type cpoint_type = NamedValues[ArrayName] ? NamedValues[ArrayName]->type : GlobalVariables[ArrayName]->type;
   Cpoint_Type cpoint_type_not_modified = cpoint_type;
   auto index = posAST->codegen();
   if (!index){
