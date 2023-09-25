@@ -875,10 +875,12 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
         Log::Info() << "added to StructTemplatesToGenerate" << "\n";
         is_struct_template = true;
     }
-    if (CurTok == tok_ptr){
+    while (CurTok == tok_ptr){
       is_ptr = true;
+      nb_ptr++;
+      Log::Info() << "Type Declaration ptr added : " << nb_ptr << "\n";
       getNextToken();
-    }    
+    }
   } else if (CurTok == tok_union){
     getNextToken();
     unionName = IdentifierStr;

@@ -325,6 +325,16 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
   Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
+  if (typeFrom.is_array && typeTo_cpoint.is_ptr){
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    Log::Info() << "from array to ptr TEST typeFrom : " << typeFrom << "\n";
+    val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), val, "load_gep_ptr");
+    Log::Info() << "from array to ptr TEST2" << "\n";
+    val = Builder->CreateGEP(get_type_llvm(typeFrom), val, {zero, zero});
+    Log::Info() << "from array to ptr TEST3" << "\n";
+    val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true, 1)), val);
+    return;
+  }
   if (typeFrom.is_array || typeFrom.is_struct || typeTo_cpoint.is_array || typeTo_cpoint.is_struct){
     return;
   }
