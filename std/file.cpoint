@@ -23,13 +23,18 @@ func remove(path : i8 ptr) int {
 }
 
 func get_line(fd : int) i8 ptr {
-    var line : i8 ptr = gc_malloc(20 * sizeof i8)
+    var line_size = 20
+    var line : i8 ptr = gc_malloc(line_size * sizeof i8)
     var i : int = 0
     while read(fd, c_getaddress_char_array(line, i), 1) == 1 {
         if line[i] == '\n' {
             return line
         }
         i = i+1
+        if i >= line_size {
+            line_size = line_size + 10
+            line = gc_realloc(line, line_size * sizeof i8)
+        }
     }
     line
 }

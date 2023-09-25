@@ -461,7 +461,15 @@ Value* ArrayMemberExprAST::codegen() {
   if (!is_llvm_type_number(index->getType())){
     return LogErrorV(this->loc, "index for array is not a number\n");
   }
-  AllocaInst* Alloca = NamedValues[ArrayName]->alloca_inst;
+  
+  Value* allocated_value;
+  AllocaInst* Alloca;
+  if (NamedValues[ArrayName]){
+  Alloca = NamedValues[ArrayName]->alloca_inst;
+  allocated_value = Alloca;
+  } else {
+    allocated_value = GlobalVariables[ArrayName]->globalVar;
+  }
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   std::vector<Value*> indexes = { zero, index};
   Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
@@ -491,10 +499,10 @@ Value* ArrayMemberExprAST::codegen() {
   
   Type* type_llvm = get_type_llvm(cpoint_type);
 
-  Value* array_or_ptr = Alloca;
+  Value* array_or_ptr = allocated_value;
   // To make argv[0] work
   if (cpoint_type_not_modified.is_ptr && cpoint_type_not_modified.nb_ptr > 1){
-  array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), Alloca, "load_gep_ptr");
+  array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
   }
   Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
   Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
