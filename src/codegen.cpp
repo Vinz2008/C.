@@ -1580,6 +1580,8 @@ Value* LabelExprAST::codegen(){
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
+
+// TODO : remove the useless allocas
 Value* RedeclarationExprAST::codegen(){
   // TODO move this from a AST node to an operator 
   Log::Info() << "REDECLARATION CODEGEN" << "\n";
@@ -1648,7 +1650,8 @@ Value* RedeclarationExprAST::codegen(){
   }
   if (is_union){
     Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
-    AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+    //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+    AllocaInst *Alloca = (!is_global) ? NamedValues[VariableName]->alloca_inst : nullptr;
     auto members = UnionDeclarations[NamedValues[VariableName]->type.union_name]->members;
     int pos_union = -1;
     Log::Info() << "members.size() : " << members.size() << "\n";
@@ -1703,7 +1706,8 @@ Value* RedeclarationExprAST::codegen(){
         member_type.nb_element = 0;
     }
     if (ValDeclared->getType()->isArrayTy()){
-      AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+      //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+      AllocaInst *Alloca = NamedValues[VariableName]->alloca_inst;
       Builder->CreateStore(ValDeclared, Alloca);
       NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
       return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -1743,7 +1747,8 @@ Value* RedeclarationExprAST::codegen(){
   if (is_global){
     Builder->CreateStore(ValDeclared, GlobalVariables[VariableName]->globalVar);
   } else {
-  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+  //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
+  AllocaInst *Alloca = NamedValues[VariableName]->alloca_inst;
   if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
     return LogErrorV(this->loc, "Assigning to a variable a void value");
   }
