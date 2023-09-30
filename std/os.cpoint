@@ -2,8 +2,10 @@ include libc.hpoint
 
 type fd_t int;
 
+?[define PATH_MAX 4096]
+
 mod os {
-    func close(fd : fd_t) void {
+    func close(fd : fd_t) int {
         close(fd)
     }
     func change_dir(path : i8 ptr) void {
@@ -17,7 +19,7 @@ mod os {
     }
 
     func get_working_dir() i8 ptr {
-        var buf : i8 ptr = gc_malloc(sizeof i8 * 4096)
+        var buf : i8 ptr = gc_malloc(sizeof i8 * PATH_MAX)
         getcwd(buf)
         buf
     }

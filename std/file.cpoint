@@ -26,7 +26,7 @@ func get_line(fd : int) i8 ptr {
     var line_size = 20
     var line : i8 ptr = gc_malloc(line_size * sizeof i8)
     var i : int = 0
-    while read(fd, c_getaddress_char_array(line, i), 1) == 1 {
+    while read(fd, addr line[i], 1) == 1 {
         if line[i] == '\n' {
             return line
         }

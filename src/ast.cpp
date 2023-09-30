@@ -1352,9 +1352,17 @@ std::unique_ptr<ExprAST> ParseCharExpr(){
 
 std::unique_ptr<ExprAST> ParseAddrExpr(){
   getNextToken();  // eat addr.
-  std::string Name = IdentifierStr;
-  auto addr = std::make_unique<AddrExprAST>(Name);
-  getNextToken();
+  std::unique_ptr<ExprAST> exprAddr;
+  //std::string Name = "";
+  /*if (CurTok == tok_identifier){
+    Name = IdentifierStr;
+    getNextToken();
+  } else {*/
+    exprAddr = ParseExpression();
+  //}
+  //auto addr = std::make_unique<AddrExprAST>(Name);
+  auto addr = std::make_unique<AddrExprAST>(/*Name,*/ std::move(exprAddr));
+  //getNextToken();
   return addr;
 }
 

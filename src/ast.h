@@ -110,15 +110,17 @@ public:
 };
 
 class AddrExprAST : public ExprAST {
-  std::string Name;
+  //std::string Ident;
+  std::unique_ptr<ExprAST> Expr;
 public:
-  AddrExprAST(const std::string &Name) : Name(Name) {}
+  //AddrExprAST(const std::string &Name) : Name(Name) {}
+  AddrExprAST(/*const std::string &Ident,*/ std::unique_ptr<ExprAST> Expr) : /*Ident(Ident),*/ Expr(std::move(Expr)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
-    return std::make_unique<AddrExprAST>(Name);
+    return std::make_unique<AddrExprAST>(/*Ident,*/ Expr->clone());
   }
   std::string to_string() override {
-    return "addr " + Name;
+    return "addr " + /*((Expr) ?*/ Expr->to_string() /*: Ident)*/;
   }
 };
 
@@ -246,9 +248,9 @@ public:
 
 
 class ArrayMemberExprAST : public ExprAST {
+public:
   std::string ArrayName;
   std::unique_ptr<ExprAST> posAST;
-public:
   ArrayMemberExprAST(const std::string &ArrayName, std::unique_ptr<ExprAST> posAST) : ArrayName(ArrayName), posAST(std::move(posAST)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
