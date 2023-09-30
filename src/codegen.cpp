@@ -11,6 +11,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Verifier.h"
 #include "llvm/IR/DIBuilder.h"
+#include "llvm/IR/InlineAsm.h"
 #include <iostream>
 #include <map>
 #include <stack>
@@ -949,6 +950,11 @@ Value* getArrayMember(Value* array, Value* index){
     return value;
 }
 #endif
+
+Value* AsmExprAST::codegen(){
+    auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(Cpoint_Type(void_type)), false), (StringRef)assembly_code, (StringRef)"~{dirflag},~{fpsr},~{flags}", true, false, InlineAsm::AD_ATT);
+    return Builder->CreateCall(inlineAsm);
+}
 
 Value *BinaryExprAST::codegen() {
   Value *L = LHS->codegen();

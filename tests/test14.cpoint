@@ -12,4 +12,10 @@ func main(){
     var path = file::canonicalize("../tests")
     printstr(path)
     file::symlink("test14.cpoint", "symlinked_test14.cpoint.temp")
+
+
+    var fd2 = file::open("test_read.txt")
+    for i = 0, i < 2, 1.0 {
+        // printstr(file::get_line(fd2))
+    }
 }

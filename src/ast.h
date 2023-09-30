@@ -153,6 +153,19 @@ public:
     }
 };
 
+class AsmExprAST : public ExprAST {
+    std::string assembly_code;
+public:
+    AsmExprAST(const std::string& assembly_code) : assembly_code(assembly_code) {}
+    Value* codegen() override;
+    std::unique_ptr<ExprAST> clone() override {
+        return std::make_unique<AsmExprAST>(assembly_code);
+    }
+    std::string to_string() override {
+        return "#asm(\"" + assembly_code + "\")";
+    }
+};
+
 class VariableExprAST : public ExprAST {
   std::string Name;
   Cpoint_Type type;

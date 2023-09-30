@@ -777,6 +777,18 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
             return LogError("Env variable %s doesn't exist for %s macro function call", env_name.c_str(), "env");
         }
         return std::make_unique<StringExprAST>((std::string)path_val);
+    } else if (function_name == "asm"){
+        if (ArgsMacro.size() != 1){
+            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "asm", 1, ArgsMacro.size());
+        }
+        StringExprAST* str = nullptr;
+        if (dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get())){
+            str = dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get());
+        } else {
+            return LogError("Wrong type of args for %s macro function call : expected a string", "asm");
+        }
+        std::string assembly_code = str->str;
+        return std::make_unique<AsmExprAST>(assembly_code);
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
 }

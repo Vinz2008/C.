@@ -1,0 +1,4 @@
+type c_char i8
+type c_short i16
+type c_long i32
+type c_long_long i64

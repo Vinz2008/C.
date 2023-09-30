@@ -1,5 +1,5 @@
-import @std/args.cpoint
 
 func main() void {
-    handle_args(argc, argv)
+    #asm("movq $$60, %rax\n movq $$2, %rdi \n syscall")
+    0
 }
