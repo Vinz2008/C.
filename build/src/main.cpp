@@ -418,8 +418,28 @@ int main(int argc, char** argv){
         if (install_outfile == "a.out"){
             install_outfile = repo_name;
         }
+        if (fs::exists((fs::path){ repo_path + "/" + outfile })){
         installBinary(repo_path + "/" + outfile, install_outfile);
+        }
         std::cout << "Installed successfully the " << username << "/" << repo_name << " repo to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
+        auto subprojects = config["subfolders"]["projects"];
+        if (toml::array* arr = subprojects.as_array()){
+        arr->for_each([&config, repo_path, username, repo_name](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                //std::cout << "sub : " << sub << std::endl;
+                //buildSubproject((std::string)sub);
+                std::string sub_path = repo_path + "/" + (std::string)sub;
+                auto sub_config = toml::parse_file(sub_path + "/build.toml");
+                std::string sub_outfile = (std::string)sub_config["build"]["outfile"].value_or("");
+                std::string install_sub_outfile = sub_outfile;
+                if (install_sub_outfile == "a.out"){
+                    install_sub_outfile = (std::string)sub;
+                }
+                installBinary(sub_path + "/" + sub_outfile, install_sub_outfile);
+                std::cout << "Installed successfully the " << username << "/" << repo_name << " repo " << sub << " binary " << " to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_sub_outfile << "\n";
+            }
+        });
+    }
         return 0;
     }
     fs::path f{ filename_config };

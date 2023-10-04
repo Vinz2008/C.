@@ -1,12 +1,12 @@
 import @std/print.cpoint
 import ../bindings.cpoint
 import @test_cpoint_package
-func test(x){
+func test(x) void {
   for i = 1, i < x, 1.0 {
      printd(i)
   }
 }
-func main(){
+func main() void {
   test(10) 
   test_c_function()
   test_github(2)

@@ -43,7 +43,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add enum support in import
 - [x] Add automatically when calling panic the file and line number to panic call
 - [x] Move functions from headers to cpp files to lower compile times
-- [ ] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
+- [x] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
 - [x] Add macro functions (for example with a syntax like #function())
 - [ ] Make if, for and while return values like in rust
 - [ ] Move preprocessing to import stage
@@ -54,8 +54,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add static struct declaration (like with arrays) like in C ((struct struct_example){val1, val2})
 - [ ] Use precompiled header for the compiler code to speed up compilation (problem : https://stackoverflow.com/questions/9580058/in-gcc-can-precompiled-headers-be-included-from-other-headers)
 - [ ] Remove constructors in the language (to make it rust-like)
-- [ ] Add members to structs with "members" blocks
-- [ ] Add recursive install for binaries with subprojects
+- [x] Add members to structs with "members" blocks
+- [x] Add recursive install for binaries with subprojects with cpoint-build
+- [ ] In cpoint-build, find subdependencies, compile them and link them
 
 ## Benchmarks compared to other languages
 
