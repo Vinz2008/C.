@@ -153,6 +153,11 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     if (llvm_type->isArrayTy()){
         is_array = true;
         nb_element = llvm_type->getArrayNumElements();
+        llvm_type = llvm_type->getArrayElementType();
+        if (llvm_type->isPointerTy()){
+            is_ptr = true;
+        }
+        goto finding_type;
     }
     if (llvm_type->isStructTy()){
         is_struct = true;
@@ -164,6 +169,8 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     if (llvm_type->isFunctionTy()){
         is_function = true;
     }
+
+finding_type:
     if (llvm_type == Type::getDoubleTy(*TheContext)){
         type = double_type;
     } else if (llvm_type == Type::getInt32Ty(*TheContext)){
@@ -329,7 +336,6 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     Log::Info() << "from array to ptr TEST typeFrom : " << typeFrom << "\n";
     val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), val, "load_gep_ptr");
-    Log::Info() << "from array to ptr TEST2" << "\n";
     val = Builder->CreateGEP(get_type_llvm(typeFrom), val, {zero, zero});
     Log::Info() << "from array to ptr TEST3" << "\n";
     val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true, 1)), val);
