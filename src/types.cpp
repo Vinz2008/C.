@@ -333,7 +333,7 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
   if (typeFrom.is_array && typeTo_cpoint.is_ptr){
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     Log::Info() << "from array to ptr TEST typeFrom : " << typeFrom << "\n";
     val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), val, "load_gep_ptr");
     val = Builder->CreateGEP(get_type_llvm(typeFrom), val, {zero, zero});
@@ -341,7 +341,7 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true, 1)), val);
     return;
   }
-  if (typeFrom.is_array || typeFrom.is_struct || typeTo_cpoint.is_array || typeTo_cpoint.is_struct){
+  if (typeFrom.is_array || (typeFrom.is_struct && !typeFrom.is_ptr) || typeTo_cpoint.is_array || (typeTo_cpoint.is_struct && !typeTo_cpoint.is_ptr)){
     return;
   }
   if (typeFrom.is_ptr && !typeTo_cpoint.is_ptr){

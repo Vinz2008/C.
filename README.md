@@ -57,6 +57,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add members to structs with "members" blocks
 - [x] Add recursive install for binaries with subprojects with cpoint-build
 - [ ] In cpoint-build, find subdependencies, compile them and link them
+- [ ] Warn about/Remove unused functions
 
 ## Benchmarks compared to other languages
 

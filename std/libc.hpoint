@@ -13,6 +13,10 @@
 ?[define W_OK 2]
 ?[define X_OK 1]
 
+?[define EACCES 13]
+?[define EEXIST 17]
+?[define ENAMETOOLONG 36]
+
 extern puts(s : i8 ptr) int;
 extern putchar(c : int) int;
 extern exit(code : int) void;
@@ -27,6 +31,7 @@ extern strncat(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
 extern strncpy(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
 extern strlen(str : i8 ptr) i64;
 extern remove(path : i8 ptr) int;
+extern mkdir(path : i8 ptr, mode : int) int;
 extern realpath(path : i8 ptr, resolved_path : i8 ptr) i8 ptr;
 extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) int;
 extern printf(format : i8 ptr ...) int;
@@ -36,13 +41,23 @@ extern dup(fd : int) int;
 extern isatty(fd : int) int;
 extern getcwd(buf : i8 ptr) i8 ptr;
 
-type pthread_t i64;
-type time_t i64;
 
+// opaque type
+struct DIR {
+    var i : int
+}
+extern opendir(name : i8 ptr) struct DIR ptr;
+
+// opaque type
 struct dirent {
-    var d_ino : u32
-    var d_off : u32
+    var d_ino : i64
+    var d_off : i64
     var d_reclen : u16
     var d_type : u8
-    var d_name[256] : u8
+    var d_name[256] : i8
 }
+extern readdir(dir : struct DIR ptr) struct dirent ptr;
+extern closedir(dir : struct DIR ptr) int; 
+
+type pthread_t i64;
+type time_t i64;

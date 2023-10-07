@@ -232,7 +232,7 @@ std::string interpret_func(std::string line, int& pos, int nb_line, int& pos_lin
 }
 
 void find_patterns(std::string line, int nb_line, int& pos_line);
-void interpret_extern(std::string line, int& pos, int& pos_line);
+void interpret_extern(std::string line, int& pos_line);
 
 int nb_of_opened_braces_struct;
 
@@ -293,7 +293,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
             }
             //nb_of_opened_braces_struct--;
         } else if (IdentifierStr == "extern"){
-            interpret_extern(line, pos, pos_line);
+            interpret_extern(line, pos_line);
         } else {
         struct_declar += line;
         }
@@ -314,7 +314,12 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     pos_line++;
 }
 
-void interpret_extern(std::string line, int& pos, int& pos_line){
+void interpret_extern(std::string line, int& pos_line){
+    out_file << line << "\n";
+    pos_line++;
+}
+
+void interpret_type(std::string line, int& pos_line){
     out_file << line << "\n";
     pos_line++;
 }
@@ -354,6 +359,14 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
 // find funcs, structs, etc
 void find_patterns(std::string line, int nb_line, int& pos_line){
     int pos = 0;
+    if (line.find("?[") != std::string::npos){
+        if (line.find("define") != std::string::npos){
+        out_file << line << "\n";
+        pos_line++;
+        }
+        return;
+    }
+    // TODO : verify if in line contains "?[" to find preprocessor directives 
     skip_spaces(line, pos);
     getIdentifierStr(line, pos, IdentifierStr);
     Log::Imports_Info() << "IdentifierStr : " << IdentifierStr << "\n";
@@ -363,9 +376,11 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
         Log::Imports_Info() << "STRUCT FOUND" << "\n";
         interpret_struct(line, pos, nb_line, pos_line);
     } else if (IdentifierStr == "extern"){
-        interpret_extern(line, pos, pos_line);
+        interpret_extern(line, pos_line);
     } else if (IdentifierStr == "mod"){
         interpret_mod(line, pos, nb_line, pos_line);
+    } else if (IdentifierStr == "type"){
+        interpret_type(line, pos_line);
     }
 }
 

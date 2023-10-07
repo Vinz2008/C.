@@ -23,4 +23,7 @@ mod os {
         getcwd(buf)
         buf
     }
+    func mkdir(path : i8 ptr, mode : int) int {
+        mkdir(path, mode)
+    }
 }

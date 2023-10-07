@@ -2,7 +2,7 @@ include capi.hpoint
 include libc.hpoint
 import print.cpoint
 
-extern printf(format: i8 ptr ...) int;
+type fd_t int;
 
 mod file {
 
@@ -19,6 +19,15 @@ func write(fd : int, buf : i8 ptr) int {
 
 func close(fd : int){
     close(fd)
+}
+
+func create(path : i8 ptr) int {
+    if file::open(path) == -1 {
+        return -1
+    }
+    if file::close(path) == -1 {
+        return -1
+    }
 }
 
 func remove(path : i8 ptr) int {
