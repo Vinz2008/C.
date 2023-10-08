@@ -159,7 +159,8 @@ void buildDependencies(toml::v3::table& config){
             std::string dependency = *dep;
             std::string username = dependency.substr(0, dependency.find('/'));
             std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
-            buildDependency(repo_name);
+            std::string repo_path = DEFAULT_PACKAGE_PATH "/" + repo_name;
+            buildDependency(repo_path);
             }
         });
     }
@@ -351,12 +352,13 @@ int main(int argc, char** argv){
     std::string dependency_to_add = "";
     std::string binary_to_install = "";
     std::string project_name_to_create = "";
+    std::string install_local_project_path = "";
     bool is_gc = true;
     for (int i = 0; i < argc; i++){
     std::string arg = argv[i];
     if (arg == "-f"){
-    i++;
-    filename_config = argv[i];
+        i++;
+        filename_config = argv[i];
     } else if (arg == "build"){
         modeBuild = BUILD_MODE;
     } else if (arg == "clean"){
@@ -385,7 +387,12 @@ int main(int argc, char** argv){
     } else if (arg == "install"){
         modeBuild = INSTALL_MODE;
         i++;
+        if ((std::string)argv[i] == "--path"){
+        i++;
+        install_local_project_path = argv[i];
+        } else {
         binary_to_install = argv[i];
+        }
     } else if (arg == "install_path"){
         modeBuild = INSTALL_PATH_MODE;
     }
@@ -404,24 +411,37 @@ int main(int argc, char** argv){
         return 0;
     }
     if (modeBuild == INSTALL_MODE){
-        std::string username = binary_to_install.substr(0, binary_to_install.find('/'));
-        std::string repo_name = binary_to_install.substr(binary_to_install.find('/')+1, binary_to_install.size());
-        cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
-        std::string repo_path = DEFAULT_PACKAGE_PATH "/" + repo_name;
-        buildDependency(repo_name);
+        std::string repo_path = "";
+        std::string username = "";
+        std::string repo_name = "";
+        std::string package_name = "";
+        if (install_local_project_path != ""){
+            repo_path = install_local_project_path;
+        } else {
+            username = binary_to_install.substr(0, binary_to_install.find('/'));
+            repo_name = binary_to_install.substr(binary_to_install.find('/')+1, binary_to_install.size());
+            cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
+            repo_path = DEFAULT_PACKAGE_PATH "/" + repo_name;
+            package_name = repo_name;
+        }
+        buildDependency(repo_path);
         auto config = toml::parse_file(repo_path + "/build.toml");
         std::string outfile = (std::string)config["build"]["outfile"].value_or("");
         if (outfile == ""){
             outfile = "a.out";
         }
         std::string install_outfile = outfile;
-        if (install_outfile == "a.out"){
+        if (install_outfile == "a.out" && repo_name != ""){
             install_outfile = repo_name;
+        } else {
+            install_outfile = config["project"]["name"].value_or("");
+            package_name = install_outfile;         
         }
         if (fs::exists((fs::path){ repo_path + "/" + outfile })){
         installBinary(repo_path + "/" + outfile, install_outfile);
         }
-        std::cout << "Installed successfully the " << username << "/" << repo_name << " repo to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
+        std::string username_or_nothing = (username != "") ? username + "/" : (std::string)"";
+        std::cout << "Installed successfully the " << username_or_nothing << /*repo_name*/ package_name << " repo to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
         auto subprojects = config["subfolders"]["projects"];
         if (toml::array* arr = subprojects.as_array()){
         arr->for_each([&config, repo_path, username, repo_name](auto&& sub){
@@ -436,7 +456,8 @@ int main(int argc, char** argv){
                     install_sub_outfile = (std::string)sub;
                 }
                 installBinary(sub_path + "/" + sub_outfile, install_sub_outfile);
-                std::cout << "Installed successfully the " << username << "/" << repo_name << " repo " << sub << " binary " << " to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_sub_outfile << "\n";
+                std::string username_or_nothing = (username != "") ? username + "/" : (std::string)"";
+                std::cout << "Installed successfully the " << username_or_nothing << repo_name << "repo " << sub << " binary " << " to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_sub_outfile << "\n";
             }
         });
     }

@@ -12,6 +12,7 @@
 #include "log.h"
 #include "codegen.h"
 #include "config.h"
+#include "preprocessor.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -38,6 +39,8 @@ extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodeg
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
 extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+
+extern std::unique_ptr<Preprocessor::Context> context;
 
 Cpoint_Type ParseTypeDeclaration(bool eat_token);
 
@@ -789,6 +792,8 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         }
         std::string assembly_code = str->str;
         return std::make_unique<AsmExprAST>(assembly_code);
+    } else if (function_name == "arch"){
+        return std::make_unique<StringExprAST>(context->get_variable_value("ARCH"));
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
 }

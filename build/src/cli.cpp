@@ -44,8 +44,8 @@ void buildProject(std::string path){
     runCommand("cd " + path + " && cpoint-build");
 }
 
-void buildDependency(std::string dependency){
-    std::string path = DEFAULT_PACKAGE_PATH "/" + dependency;
+void buildDependency(std::string path /*dependency*/){
+    //std::string path = DEFAULT_PACKAGE_PATH "/" + dependency;
     buildProject(path);
 }
 
