@@ -40,6 +40,9 @@ extern chdir(path : i8 ptr) int;
 extern dup(fd : int) int;
 extern isatty(fd : int) int;
 extern getcwd(buf : i8 ptr) i8 ptr;
+extern getenv(var_name : i8 ptr) i8 ptr;
+extern setenv(var_name : i8 ptr, value : i8 ptr, overwrite : int) int;
+extern unsetenv(var_name : i8 ptr) int;
 
 
 // opaque type

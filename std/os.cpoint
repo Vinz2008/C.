@@ -8,20 +8,11 @@ mod os {
     func close(fd : fd_t) int {
         close(fd)
     }
-    func change_dir(path : i8 ptr) void {
-        chdir(path)        
-    }
     func dup(fd : fd_t) int {
         dup(fd)
     }
     func is_a_tty(fd : fd_t) bool {
         isatty(fd)
-    }
-
-    func get_working_dir() i8 ptr {
-        var buf : i8 ptr = gc_malloc(sizeof i8 * PATH_MAX)
-        getcwd(buf)
-        buf
     }
     func mkdir(path : i8 ptr, mode : int) int {
         mkdir(path, mode)
