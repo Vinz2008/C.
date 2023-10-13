@@ -5,27 +5,28 @@ extern get_nprocs() int;
 ?[endif]
 
 mod system {
-    func open_url(url : i8 ptr){
+    func open_url(url : i8 ptr) void {
         var len = strlen(url) + 10
         var cmd : i8 ptr = gc_malloc(sizeof i8 * len)
-
+        var open_cmd : i8 ptr = " " 
 ?[if OS == linux]
-        var open_cmd : i8 ptr = "xdg-open "
+        open_cmd = "xdg-open "
 ?[endif]
 ?[if OS == darwin]  
-        var open_cmd : i8 ptr = "open "
+        open_cmd = "open "
 ?[endif]
 ?[if OS == windows] 
-        var open_cmd : i8 ptr = "start "
+        open_cmd = "start "
 ?[endif]
         strncpy(cmd, open_cmd, strlen(open_cmd))
         strcat(cmd, url)
         system(cmd)
     }
-    func open_browser(){
+    func open_browser() void {
         system::open_url("https://github.com/Vinz2008/C.")
     }
     func get_processor_nb() int {
+    0
 ?[if OS == linux]
     get_nprocs()
 ?[endif]
