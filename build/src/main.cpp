@@ -34,6 +34,8 @@ std::vector<std::string> PathList;
 
 std::vector<std::string> DependencyPathList;
 
+std::vector<std::string> LibrariesList;
+
 bool is_cross_compiling = false;
 
 bool src_folder_exists = true;
@@ -49,13 +51,36 @@ void addDependenciesToLinkableFiles(){
     }
 }
 
+void addLibrariesToList(toml::v3::node_view<toml::v3::node>& libraries){
+    if (toml::array* arr = libraries.as_array()){
+        arr->for_each([](auto&& dep){
+            if constexpr (toml::is_string<decltype(dep)>){
+                //std::cout << "add to LibrariesList : " << (std::string)dep << std::endl;
+                LibrariesList.push_back((std::string)dep);
+            }
+        });
+    }
+}
+
+// also add dependencies libraries
 void downloadSubDependencies(std::string username, std::string repo_name){
     std::string root_build_toml_path = DEFAULT_PACKAGE_PATH "/" + repo_name + "/build.toml";
     if (!fs::exists(fs::path(root_build_toml_path))){
         return;
     }
+    //std::cout << "DOWNLOAD SUB DEPENDENCIES" << std::endl;
     auto dependency_config = toml::parse_file(root_build_toml_path);
     auto github_dependencies = dependency_config["dependencies"]["github"];
+    auto libraries =  dependency_config["build"]["libraries"];
+    //addLibrariesToList(libraries);
+    if (toml::array* arr = libraries.as_array()){
+        arr->for_each([](auto&& dep){
+            if constexpr (toml::is_string<decltype(dep)>){
+                //std::cout << "add to LibrariesList : " << (std::string)dep << std::endl;
+                LibrariesList.push_back((std::string)dep);
+            }
+        });
+    }
     if (toml::array* arr = github_dependencies.as_array()){
         arr->for_each([](auto&& dep){
             if constexpr (toml::is_string<decltype(dep)>){
@@ -217,6 +242,21 @@ std::string get_pkg_config_cflags_args(std::string library_name){
     return cmd_out->buffer;
 }
 
+void handle_library_name(std::string library, std::string& linker_args){
+    if (library == "pthread"){
+        linker_args += "-lpthread ";
+    } else if (library == "gtk"){
+        linker_args += get_pkg_config_linker_args("gtk4");
+    } else if (library == "raylib" || library == "lua"){
+        linker_args += get_pkg_config_linker_args((std::string)library);
+    } else if (library == "llvm"){
+        linker_args += get_llvm_config_linker_args();
+    } else {
+        std::cout << "Warning : unknown library : " << library << std::endl;
+        linker_args += get_pkg_config_linker_args((std::string)library);
+    }
+}
+
 std::string get_libraries_linker_args(toml::v3::table&  config){
     std::string linker_args = "";
     auto libraries = config["build"]["libraries"];
@@ -225,23 +265,30 @@ std::string get_libraries_linker_args(toml::v3::table&  config){
         arr->for_each([&linker_args, &found_at_least_one](auto&& library){
             if constexpr (toml::is_string<decltype(library)>){
                 found_at_least_one = true;
-                if (library == "pthread"){
+                /*if (library == "pthread"){
                     linker_args += "-lpthread ";
                 } else if (library == "gtk"){
                     linker_args += get_pkg_config_linker_args("gtk4");
-                } else if (library == "raylib"){
+                } else if (library == "raylib" || library == "lua"){
                     linker_args += get_pkg_config_linker_args((std::string)library);
                 } else if (library == "llvm"){
                     linker_args += get_llvm_config_linker_args();
                 } else {
                     std::cout << "Warning : unknown library : " << library << std::endl;
                     linker_args += get_pkg_config_linker_args((std::string)library);
-                }
+                }*/
+                handle_library_name((std::string)library, linker_args);
             }
         });
     }
-    if (!found_at_least_one){
+    //std::cout << "LibrariesList.size() " << LibrariesList.size() << std::endl;
+    if (!found_at_least_one && LibrariesList.size() == 0){
         return "";
+    }
+    for (int i = 0; i < LibrariesList.size(); i++){
+        //linker_args LibrariesList.at(i);
+        std::cout << "adding lib " << LibrariesList.at(i) << std::endl;
+        handle_library_name(LibrariesList.at(i), linker_args);
     }
     if (linker_args.back() == '\n'){
         linker_args.resize(linker_args.size()-1);
@@ -476,7 +523,6 @@ int main(int argc, char** argv){
     std::string linker_args = (std::string)config["build"]["linker_arguments"].value_or("");   
     std::string cross_compile_linker_args = (std::string)config["cross-compile"]["linker_arguments"].value_or("");
     std::string sysroot_cross = (std::string)config["cross-compile"]["sysroot"].value_or("");   
-    std::string c_libraries_linker_args = get_libraries_linker_args(config);
     is_gc = config["build"]["gc"].value_or(true);
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
@@ -517,6 +563,7 @@ int main(int argc, char** argv){
             downloadDependencies(config);
             buildDependencies(config);
         }
+        std::string c_libraries_linker_args = get_libraries_linker_args(config);
         runPrebuildCommands(config);
         buildSubfolders(config, type, target, sysroot, is_gc);
         if (src_folder_exists){
