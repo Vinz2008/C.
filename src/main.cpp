@@ -3,6 +3,7 @@
 #include <map>
 #include <cstdio>
 #include <cstdlib>
+#include <filesystem>
 #include <libintl.h>
 #include <locale.h>
 #include "llvm/IR/Module.h"
@@ -398,6 +399,10 @@ int main(int argc, char **argv){
         }
     }
     Log::Info() << "filename at end : " << filename << "\n";
+    if (!filesystem::exists(filename)){
+        fprintf(stderr, RED "File %s doesn't exist\n" CRESET, filename.c_str());
+        exit(1);
+    }
     first_filename = filename;
     if (output_temp_found){
       if (link_files_mode){
