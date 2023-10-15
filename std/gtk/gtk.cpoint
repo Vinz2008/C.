@@ -1,5 +1,0 @@
-mod Gtk {
-    func gtk_init(){
-        1
-    }
-}

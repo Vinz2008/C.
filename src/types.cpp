@@ -328,7 +328,7 @@ Constant* from_val_to_constant_infer(Value* val){
     return dyn_cast<ConstantFP>(val);
 }
 
-void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
+bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
   Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
@@ -339,21 +339,21 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     val = Builder->CreateGEP(get_type_llvm(typeFrom), val, {zero, zero});
     Log::Info() << "from array to ptr TEST3" << "\n";
     val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true, 1)), val);
-    return;
+    return true;
   }
   if (typeFrom.is_array || (typeFrom.is_struct && !typeFrom.is_ptr) || typeTo_cpoint.is_array || (typeTo_cpoint.is_struct && !typeTo_cpoint.is_ptr)){
-    return;
+    return false;
   }
   if (typeFrom.is_ptr && !typeTo_cpoint.is_ptr){
     val = Builder->CreatePtrToInt(val, typeTo, "ptrtoint_cast");
-    return;
+    return true;
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
     val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast"); // TODO : test to readdd them
-    return;
+    return true;
   }
   if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){
-    return;
+    return false;
   }
 
   if (is_decimal_number_type(typeFrom)){
@@ -364,24 +364,24 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
             Log::Info() << "From double to float" << "\n";
             //val = Builder->CreateFPExt(val, typeTo, "cast");
             val = Builder->CreateFPTrunc(val, typeTo, "cast");
-            return;
+            return true;
         } else if (typeFrom.type == float_type && typeTo_cpoint.type == double_type){
             Log::Info() << "From float to double" << "\n";
             //val = Builder->CreateFPTrunc(val, typeTo, "cast");
             val = Builder->CreateFPExt(val, typeTo, "cast");
-            return;
+            return true;
         }
-        return;
+        return false;
     } else if (is_signed(typeTo_cpoint)){
       Log::Info() << "From float/double to signed int" << "\n";
       val = Builder->CreateFPToUI(val, typeTo, "cast"); // change this to signed int conversion. For now it segfaults
-      return;
+      return true;
     } else if (is_unsigned(typeTo_cpoint)){
       Log::Info() << "From float/double to unsigned int" << "\n";
       val = Builder->CreateFPToUI(val, typeTo, "cast");
-      return;
+      return true;
     }
-    return;
+    return false;
   }
   int nb_bits_type_from = -1;
   int nb_bits_type_to = -1;
@@ -392,7 +392,7 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
         } else {
             val = Builder->CreateUIToFP(val, typeTo, "uitofp_cast");
         }
-        return;
+        return true;
     } else if ((nb_bits_type_from = get_type_number_of_bits(typeFrom)) != -1 && nb_bits_type_from != (nb_bits_type_to = get_type_number_of_bits(typeTo_cpoint))){
         if (nb_bits_type_from < nb_bits_type_to){
             if (is_signed(typeFrom.type)){
@@ -402,14 +402,14 @@ void convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
                 Log::Info() << "Zext cast" << "\n";
                 val = Builder->CreateZExt(val, typeTo, "zext_cast");
             }
-            return;
+            return true;
         } else {
             Log::Info() << "Trunc cast" << "\n";
             val = Builder->CreateTrunc(val, typeTo, "trunc_cast");
-            return;
+            return true;
         }
     } else if (typeTo_cpoint.type == typeFrom.type){
-        return;
+        return false; // TODO : maybe return true because technically the types are the same ?
     }
 
 
@@ -504,7 +504,11 @@ std::string create_mangled_name_from_type(Cpoint_Type type){
 
 std::string create_pretty_name_for_type(Cpoint_Type type){
     if (type.is_struct){
-        return "struct " + type.struct_name;
+        std::string name =  "struct " + type.struct_name;
+        if (type.is_ptr){
+            name += " ptr";
+        }
+        return name;
     }
     std::string name;
     name = get_string_from_type(type);

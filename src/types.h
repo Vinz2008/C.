@@ -22,8 +22,11 @@ enum types {
     argv_type = -1000,
 };
 
+class Cpoint_Type;
+
 bool is_type(std::string type);
 int get_type(std::string type);
+std::string create_pretty_name_for_type(Cpoint_Type type);
 
 
 // TODO : add union type
@@ -62,6 +65,10 @@ public:
         // TODO : maybe add the comparaison of the template type passed, the return type and the args
         return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_struct_template == rhs.is_struct_template && lhs.is_function == rhs.is_function;
     }
+    const char* c_stringify(){
+        std::string str = create_pretty_name_for_type(*this);
+        return str.c_str();
+    }
 
 };
 
@@ -73,10 +80,9 @@ bool is_llvm_type_number(llvm::Type* llvm_type);
 llvm::Type* get_array_llvm_type(llvm::Type* type, int nb_element);
 bool is_decimal_number_type(Cpoint_Type type);
 bool is_signed(Cpoint_Type type);
-void convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
+bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 int get_type_number_of_bits(Cpoint_Type type);
 std::string get_string_from_type(Cpoint_Type type);
 std::string create_mangled_name_from_type(Cpoint_Type type);
-std::string create_pretty_name_for_type(Cpoint_Type type);
 llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
 llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);

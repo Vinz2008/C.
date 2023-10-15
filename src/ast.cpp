@@ -794,6 +794,19 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return std::make_unique<AsmExprAST>(assembly_code);
     } else if (function_name == "arch"){
         return std::make_unique<StringExprAST>(context->get_variable_value("ARCH"));
+    } else if (function_name == "todo") {
+        if (ArgsMacro.size() > 2){
+            return LogError("Wrong number of args for %s macro function call : expected less or equal to %d, got %d", "todo", 2, ArgsMacro.size());
+        }
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        std::string basic_message = "not implemented";
+        if (ArgsMacro.empty()){
+            Args.push_back(std::make_unique<StringExprAST>(basic_message + "\n"));
+        } else {
+            //Args.push_back(std::make_unique<StringExprAST>(basic_message + " : "));
+            return LogError("You can't use the todo macro with args for now"); // TODO
+        }
+        return std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(Args), Cpoint_Type());
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
 }

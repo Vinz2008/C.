@@ -1565,9 +1565,12 @@ Value *IfExprAST::codegen() {
     if (!ThenV)
       return nullptr;
   }
-  if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
-    convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
+  if (ThenV->getType() != Type::getVoidTy(*TheContext)){
+  phiType = ThenV->getType();
   }
+  /*if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
+    convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
+  }*/
 
   Builder->CreateBr(MergeBB);
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
@@ -1577,6 +1580,7 @@ Value *IfExprAST::codegen() {
   //TheFunction->getBasicBlockList().push_back(ElseBB);
   TheFunction->insert(TheFunction->end(), ElseBB);
   Builder->SetInsertPoint(ElseBB);
+  bool is_else_empty = Else.empty();
   if (!Else.empty()){
   for (int i = 0; i < Else.size(); i++){
     ElseV = Else.at(i)->codegen();
@@ -1584,7 +1588,9 @@ Value *IfExprAST::codegen() {
       return nullptr;
   }
   if (ElseV->getType() != Type::getVoidTy(*TheContext) && ElseV->getType() != phiType){
-    convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV);
+    if (!convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV)){
+        return LogErrorV(this->loc, "Mismatch, expected : %s, got : %s", get_cpoint_type_from_llvm(phiType).c_stringify(), get_cpoint_type_from_llvm(ElseV->getType()).c_stringify());
+    }
   }
 
   } /*else {
@@ -1612,7 +1618,17 @@ Value *IfExprAST::codegen() {
   if (ElseV == nullptr || ElseV->getType() == Type::getVoidTy(*TheContext)){
     if (phiType != Type::getVoidTy(*TheContext)){
     //ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
+    
+    // TODO : for now creates a constant if else is empty. It creates a problem in this case
+    // var a = if [EXPRESSION] { 
+    //   gc_malloc(sizeof int * 2)
+    // }
+    // Here we should not create a null pointer by default without the user knowing
+    // we should make an error if the if side is not void and the else has no return value 
+    //if (is_else_empty){
     ElseV = get_default_constant(get_cpoint_type_from_llvm(phiType));
+    //}
+    //return LogErrorV(this->loc, "Mismatch of th")
     }
   }
 
@@ -1626,6 +1642,9 @@ Value *IfExprAST::codegen() {
     convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV);
   }*/
 
+  /*if (ThenV->getType() == Type::getVoidTy(*TheContext) || ElseV->getType() == Type::getVoidTy(*TheContext) || phiType == Type::getVoidTy(*TheContext)){
+    return nullptr;
+  }*/
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
   return PN;
