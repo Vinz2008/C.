@@ -31,3 +31,5 @@
 **-d** : activate debug mode to see debug logs
 
 **-fPIC** : make the compiler produce position-independent code
+
+**-compile-time-sizeof** : the compiler gets the size of types at compile time and not at runtime
