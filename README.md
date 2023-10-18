@@ -59,6 +59,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] In cpoint-build, find subdependencies, compile them and link them
 - [ ] Warn about/Remove unused functions
 - [x] In cpoint-build, find libraries linked to dependencies and link them
+- [ ] Add "-compile-time-sizeof" flag to have sizeof not use getelementptr and the compiler insert the values at compile time
+- [ ] Have specific flags for optimizations (ex : -optimize-return) or checking (-check-arrays) and global flags (-O2, -C0 for checking level 0)
 
 ## Benchmarks compared to other languages
 
