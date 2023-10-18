@@ -32,7 +32,8 @@ public:
     bool debug_mode;
     bool is_release_mode;
     bool test_mode;
-    Compiler_context(const std::string &filename, int line_nb, int col_nb, const std::string &line, bool std_mode = true, bool gc_mode = true, bool debug_mode = false, bool is_release_mode = false, bool test_mode = false) 
+    bool compile_time_sizeof;
+    Compiler_context(const std::string &filename, int line_nb, int col_nb, const std::string &line, bool std_mode = true, bool gc_mode = true, bool debug_mode = false, bool is_release_mode = false, bool test_mode = false, bool compile_time_sizeof = false) 
                     : filename(filename), lexloc({line_nb, col_nb}), line(line), curloc({line_nb, col_nb}), std_mode(std_mode), gc_mode(gc_mode), debug_mode(debug_mode), is_release_mode(is_release_mode), test_mode(test_mode) {}
 };
 

@@ -95,6 +95,8 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
   FnAST->codegen();
 }
 
+string TargetTriple;
+
 void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
   add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false, false, "");
@@ -381,6 +383,8 @@ int main(int argc, char **argv){
 	        rebuild_gc = true;
         } else if (arg.compare("-no-rebuild-std") == 0){
           rebuild_std = false;
+        } else if (arg.compare("-compile-time-sizeof") == 0){
+            Comp_context->compile_time_sizeof = true;
         } else if (arg.compare("-test") == 0){
           Comp_context->test_mode = true;
         } else if (arg.compare("-run") == 0){
@@ -489,7 +493,6 @@ int main(int argc, char **argv){
     BinopPrecedence["%"] = 40;
     BinopPrecedence["*"] = 40;*/  // highest.
 
-    string TargetTriple;
     legacy::PassManager pass;
     if (target_triplet_found_bool){
     TargetTriple = target_triplet_found;
@@ -552,6 +555,7 @@ int main(int argc, char **argv){
         errs() << Error;
         return 1;
     }
+
     auto CPU = "generic";
     auto Features = "";
     TargetOptions opt;

@@ -71,6 +71,8 @@ extern Source_location emptyLoc;
 
 extern bool debug_info_mode;
 
+extern std::string TargetTriple;
+
 //extern bool test_mode;
 //extern bool std_mode;
 //extern bool gc_mode;
@@ -1192,7 +1194,40 @@ Value* AddrExprAST::codegen(){
   return LogErrorV(this->loc, "Trying to use addr with an expression which it is not implemented for");
 }
 
+Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable, Source_location loc){
+    Cpoint_Type sizeof_type = type;
+    if (is_variable){
+        AllocaInst *A = NamedValues[Name]->alloca_inst;
+        if (!A){
+            return LogErrorV(loc, "Sizeof Unknown variable name %s", Name.c_str());
+        }
+        sizeof_type = NamedValues[Name]->type;
+    }
+    if (sizeof_type.is_struct && !sizeof_type.is_ptr){
+        return LogErrorV(loc, "For now, compile time sizeof of structs is not implemented"); // TODO
+        // for now can't find the size because of padding. Take just the size without padding ? find a way to calculate the padding ? Juste x2 the size to be safe ?
+    }
+    if (sizeof_type.is_array){
+        return LogErrorV(loc, "For now, compile time sizeof of array is not implemented");
+    }
+    if (sizeof_type.is_ptr){
+        auto triple = Triple(TargetTriple);
+        if (triple.isArch64Bit()){
+            return ConstantInt::get(*TheContext, APInt(32, (uint64_t)64/8, false));
+        } else if (triple.isArch32Bit()){
+            return ConstantInt::get(*TheContext, APInt(32, (uint64_t)32/8, false));
+        } else {
+            return LogErrorV(loc, "16 bits targets are not supported with compile time sizeof on pointers");
+        }
+    }
+    int size_type = get_type_number_of_bits(type);
+    return ConstantInt::get(*TheContext, APInt(32, (uint64_t)size_type/8, false));
+}
+
 Value* SizeofExprAST::codegen(){
+  if (Comp_context->compile_time_sizeof){
+    return compile_time_sizeof(type, Name, is_variable, this->loc);
+  }
   Log::Info() << "codegen sizeof" << "\n";
   //auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
@@ -1213,11 +1248,11 @@ Value* SizeofExprAST::codegen(){
     return size;
   } else {
     Log::Info() << "codegen sizeof is variable" << "\n";
-  AllocaInst *A = NamedValues[Name]->alloca_inst;
-  if (!A){
-    return LogErrorV(this->loc, "Addr Unknown variable name %s", Name.c_str());
-  }
-  if (NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr){
+    AllocaInst *A = NamedValues[Name]->alloca_inst;
+    if (!A){
+        return LogErrorV(this->loc, "Sizeof Unknown variable name %s", Name.c_str());
+    }
+    if (NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr){
     Value* size =  getSizeOfStruct(A);
     //size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
     return size;
@@ -1231,7 +1266,7 @@ Value* SizeofExprAST::codegen(){
     OverloadedTypes.push_back(get_type_llvm(i64_type));
     Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
     return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");*/
-  }
+    }
   Type* llvm_type = get_type_llvm(NamedValues[Name]->type);
   Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
   size = Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
