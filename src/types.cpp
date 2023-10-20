@@ -388,6 +388,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
         Log::Info() << "is_signed typeFrom.type " << typeFrom.type << " : " << is_signed(typeFrom.type) << "\n";
         if (is_signed(typeFrom.type)){
+            Log::Info() << "SIToFP\n";
             val = Builder->CreateSIToFP(val, typeTo, "sitofp_cast");
         } else {
             val = Builder->CreateUIToFP(val, typeTo, "uitofp_cast");
@@ -408,9 +409,11 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
             val = Builder->CreateTrunc(val, typeTo, "trunc_cast");
             return true;
         }
-    } else if (typeTo_cpoint.type == typeFrom.type){
+    }
+    if (typeTo_cpoint.type == typeFrom.type){
         return false; // TODO : maybe return true because technically the types are the same ?
     }
+    return false;
 
 
   /*switch (typeFrom.type)

@@ -1575,6 +1575,10 @@ Value *IfExprAST::codegen() {
   if (!CondV)
     return nullptr;
 
+  if (CondV->getType() == get_type_llvm(Cpoint_Type(bool_type))){
+    Log::Info() << "Got bool i1 to if" << "\n";
+    convert_to_type(Cpoint_Type(bool_type), get_type_llvm(Cpoint_Type(double_type)), CondV);
+  }
   // Convert condition to a bool by comparing non-equal to 0.0.
   CondV = Builder->CreateFCmpONE(
       CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
@@ -1734,6 +1738,44 @@ Value* RedeclarationExprAST::codegen(){
   //Log::Info() << "TEST\n";
   if (Val == nullptr){
     return LogErrorV(this->loc, "Val is Nullptr\n");
+  }
+  if (dynamic_cast<EnumCreation*>(Val.get())){
+    auto Alloca = NamedValues[VariableName]->alloca_inst;
+    auto* enumCreation = dynamic_cast<EnumCreation*>(Val.get());
+    auto EnumMembers = std::move(EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->clone()->EnumMembers);
+    std::unique_ptr<EnumMember> enumMember = nullptr;
+    int pos_member = -1;
+    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+    for (int i = 0; i < EnumMembers.size(); i++){
+        if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
+            pos_member = i;
+            enumMember = EnumMembers.at(i)->clone();
+        }
+    }
+    if (!enumMember){
+        return LogErrorV(this->loc, "Couldn't find enum member %s", enumCreation->EnumMemberName.c_str());
+    }
+    if (!EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->enum_member_contain_type){
+        Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), Alloca);
+        NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+        return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+    }
+    Value* ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct");
+    Value* value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct");
+    Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
+    NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+    if (enumCreation->value){
+        Value* val = enumCreation->value->clone()->codegen();
+        if (val->getType() != get_type_llvm(*enumMember->Type)){
+            convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(*enumMember->Type), val);
+        }
+        Builder->CreateStore(val, value_tag);
+        NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+    }
+    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
   }
   Value* ValDeclared = Val->codegen();
   Cpoint_Type type = Cpoint_Type(0);
