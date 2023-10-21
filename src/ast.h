@@ -320,6 +320,32 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
+    std::string function_name = Callee;
+    if (function_name.find("___") != std::string::npos){
+        std::string mangled_function_name = "";
+        int underscore_number = 0;
+        for (int i = 0; i < function_name.size(); i++){
+            if (function_name.at(i) == '_'){
+                underscore_number++;
+            } else {
+                if (underscore_number == 1){
+                    mangled_function_name += '_';
+                }
+                if (underscore_number == 2){
+                // TODO : how to find struct name on which the function is used
+                mangled_function_name += "__";
+                underscore_number = 0;
+                }
+                mangled_function_name += function_name.at(i);
+                underscore_number = 0;
+            }
+            if (underscore_number == 3){
+                mangled_function_name += "::";
+                underscore_number = 0;
+            }
+        }
+        function_name = mangled_function_name;
+    }
     std::string args = "";
     args += "(";
     for (int i = 0; i < Args.size(); i++){
@@ -331,7 +357,7 @@ public:
     args += ")";
     std::string template_type = "";
     // TODO maybe add the template type to the string expression (add a bool in this class to identify if a type is passed in the template)
-    return Callee + template_type + args;
+    return function_name + template_type + args;
   }
 };
 

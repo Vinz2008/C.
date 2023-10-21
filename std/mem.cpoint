@@ -47,5 +47,5 @@ test "memcpy" {
     var a = 2
     var b = 0
     mem::memcpy(b, a, sizeof double)
-//    #expect(mem::memcmp(a, b, sizeof double) == 0)
+    // #expect(mem::memcmp(a, b, sizeof double) == 0)
 }
