@@ -349,6 +349,9 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     return true;
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
+    if (typeFrom.type == double_type || typeFrom.type ==  float_type){
+        val = Builder->CreateFPToUI(val, get_type_llvm(Cpoint_Type(int_type)), "ui_to_fp_inttoptr");
+    }
     val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast"); // TODO : test to readdd them
     return true;
   }

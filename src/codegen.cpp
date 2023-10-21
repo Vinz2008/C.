@@ -174,6 +174,27 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   return nullptr;
 }
 
+
+bool is_var_local(std::string name){
+    if (NamedValues[name]){
+        return true;
+    } else if (GlobalVariables[name]){
+        return false;
+    } else {
+        return false;
+    }
+}
+
+bool is_var_global(std::string name){
+    if (NamedValues[name]){
+        return false;
+    } else if (GlobalVariables[name]){
+        return true;
+    } else {
+        return false;
+    }
+}
+
 Cpoint_Type* get_variable_type(std::string name){
     if (NamedValues[name]){ 
         return &NamedValues[name]->type;
@@ -1866,7 +1887,8 @@ Value* RedeclarationExprAST::codegen(){
     NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
   } else if (is_array) {
     Log::Info() << "array redeclaration" << "\n";
-    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+    Cpoint_Type cpoint_type = *get_variable_type(VariableName);
+    //Cpoint_Type cpoint_type = is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
     Cpoint_Type member_type = cpoint_type;
     Log::Info() << "member type : " << member_type << "\n";
     if (member_type.is_ptr && !member_type.is_array){
@@ -1898,7 +1920,8 @@ Value* RedeclarationExprAST::codegen(){
     if (!index){
       return LogErrorV(this->loc, "couldn't find index for array %s", VariableName.c_str());
     }
-    auto arrayPtr = NamedValues[VariableName]->alloca_inst;
+    // auto arrayPtr = NamedValues[VariableName]->alloca_inst;
+    auto arrayPtr = get_var_allocation(VariableName);
     Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
     std::vector<Value*> indexes = { zero, indexVal};
     if (cpoint_type.is_ptr && !cpoint_type.is_array){
@@ -1914,7 +1937,9 @@ Value* RedeclarationExprAST::codegen(){
       convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
     }
     Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[VariableName] = std::make_unique<NamedValue>(arrayPtr, cpoint_type);
+    if (is_var_local(VariableName)){
+        NamedValues[VariableName] = std::make_unique<NamedValue>(dyn_cast<AllocaInst>(arrayPtr), cpoint_type);
+    }
   } else {
   Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
   if (is_global){
