@@ -23,6 +23,7 @@ using namespace llvm;
 #include "types.h"
 #include "errors.h"
 #include "log.h"
+#include "c_translator.h"
 
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
@@ -476,6 +477,7 @@ public:
   std::unique_ptr<PrototypeAST> clone(){
     return std::make_unique<PrototypeAST>((Source_location){Line, 0}, Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
   }
+  c_translator::Function* c_codegen();
 };
 
 class FunctionAST {
@@ -486,6 +488,7 @@ public:
               std::vector<std::unique_ptr<ExprAST>> Body)
     : Proto(std::move(Proto)), Body(std::move(Body)) {}
   Function *codegen();
+  c_translator::Function* c_codegen();
   std::unique_ptr<FunctionAST> clone();
 };
 

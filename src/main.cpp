@@ -33,6 +33,7 @@
 #include "utils.h"
 #include "color.h"
 #include "gettext.h"
+#include "c_translator.h"
 
 using namespace std;
 using namespace llvm;
@@ -54,7 +55,7 @@ struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 // TODO : add those variable in a struct called cpointContext or in Compiler_context
 string std_path = DEFAULT_STD_PATH;
-string filename ="";
+string filename = "";
 /*bool std_mode = true;
 bool gc_mode = true;*/
 extern std::string IdentifierStr;
@@ -117,9 +118,13 @@ void add_externs_for_test(){
 
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
+    if (Comp_context->c_translator){
+        FnAST->c_codegen();
+    } else {
 	if (/*auto *FnIR =*/ FnAST->codegen()) {
     Log::Info() << "Parsed a function definition." << "\n";
     //FnIR->print(*file_out_ostream);
+    }
     }
   } else {
     if (!is_template_parsing_definition){
@@ -131,9 +136,13 @@ static void HandleDefinition() {
 
 static void HandleExtern() {
   if (auto ProtoAST = ParseExtern()) {
+    if (Comp_context->c_translator){
+        ProtoAST->c_codegen();
+    } else {
     if (/*auto *FnIR =*/ ProtoAST->codegen()) {
       Log::Info() << "Read Extern" << "\n";
       //FnIR->print(*file_out_ostream);
+    }
     }
   } else {
     // Skip token for error recovery.
@@ -387,6 +396,8 @@ int main(int argc, char **argv){
             Comp_context->compile_time_sizeof = true;
         } else if (arg.compare("-test") == 0){
           Comp_context->test_mode = true;
+        } else if (arg.compare("-c-translator") == 0){
+            Comp_context->c_translator = true;
         } else if (arg.compare("-run") == 0){
           run_mode = true;
         } else if (arg.compare("-run-test") == 0){
@@ -449,6 +460,9 @@ int main(int argc, char **argv){
     file_in.open(filename);
     //file_out_ostream = std::make_unique<llvm::raw_fd_ostream>(llvm::StringRef(filename), &ec);
     //file_out_ostream = raw_fd_ostream(llvm::StringRef(filename), &ec);
+    
+    c_translator::init_context();
+    
     // Install standard binary operators.
     // 1 is lowest precedence.
     BinopPrecedence["="] = 5;
@@ -543,6 +557,11 @@ int main(int argc, char **argv){
       fprintf(stderr, _(RED "exited with %d errors\n" CRESET), error_count);
       exit(1);
     }
+
+    if (Comp_context->c_translator){
+        c_translator::generate_c_code("out.c");
+    } else {
+
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
@@ -590,7 +609,7 @@ int main(int argc, char **argv){
     Log::Print() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;
     if (asm_mode){
-        goto end_asm_mode;
+        goto after_linking;
     }
     if (std_path.back() != '/'){
       std_static_path.append("/");
@@ -661,7 +680,8 @@ int main(int argc, char **argv){
       Log::Print() << "run executable at " << actualpath << "\n";
       runCommand(actualpath);
     }
-end_asm_mode:
+    }
+after_linking:
     if (remove_temp_file /*&& !asm_mode*/){
       remove(temp_filename.c_str());
     }
