@@ -71,6 +71,8 @@ extern Source_location emptyLoc;
 
 extern bool debug_info_mode;
 
+extern bool is_in_struct_templates_codegen;
+
 extern std::string TargetTriple;
 
 //extern bool test_mode;
@@ -592,6 +594,9 @@ Type* StructDeclarAST::codegen(){
     }
 
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
+    /*if (is_in_struct_templates_codegen){
+        mangled_name_function += "____" + create_mangled_name_from_type(TypeTemplateCallCodegen.second);
+    }*/
     Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
     self_pointer_type = Cpoint_Type(double_type, true, 0, false, 0, true, Name);
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));

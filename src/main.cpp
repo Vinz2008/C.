@@ -34,6 +34,7 @@
 #include "color.h"
 #include "gettext.h"
 #include "c_translator.h"
+#include "templates.h"
 
 using namespace std;
 using namespace llvm;

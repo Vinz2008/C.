@@ -1,0 +1,9 @@
+// add a function
+struct tuple~T~ {
+    var first : T
+    var second : T
+}
+
+func test(){
+    var tuple : struct tuple~int~
+}

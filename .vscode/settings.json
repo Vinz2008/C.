@@ -111,7 +111,8 @@
         "__std_stream": "cpp",
         "coroutine": "cpp",
         "__memory": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "*.def": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }

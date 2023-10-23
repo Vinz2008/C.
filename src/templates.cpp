@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <algorithm>
 #include "codegen.h"
 #include "log.h"
 
@@ -8,6 +9,7 @@ extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGen
 extern std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
+bool is_in_struct_templates_codegen = false;
 
 // TODO : add this declaration to a header file
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
@@ -36,17 +38,27 @@ void callTemplate(std::string& Callee, /*std::string*/ Cpoint_Type template_pass
   TemplatesToGenerate.push_back(std::make_unique<TemplateCall>(template_passed_type, std::move(templateProto->functionAST)));
 }
 
+std::vector<std::pair<std::string, Cpoint_Type>> codegenedStructTemplates;
+
+
+// TODO : fix functions in templated structs
 void codegenStructTemplates(){
     Log::Info() << "CODEGEN STRUCT TEMPLATES (nb : "  << StructTemplatesToGenerate.size() << ")" << "\n";
     for (int i = 0; i < StructTemplatesToGenerate.size(); i++){
         TypeTemplateCallCodegen = std::make_pair(StructTemplatesToGenerate.at(i)->structDeclarAST->template_name, StructTemplatesToGenerate.at(i)->type);
         Log::Info()  << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.size() : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size() << "\n";
         for (int j = 0; j < StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size(); j++){
-            if (!StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j)){
+            Log::Info() << "Struct Named " << StructTemplatesToGenerate.at(i)->structDeclarAST->Name << "\n";
+            if (StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j) == nullptr){
                 Log::Info() << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.at(" << j <<") is nullptr" << "\n";
             }
             //Log::Info() << "StructTemplatesToGenerate.at(" << i << ") : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j)->VarNames.at(0).first << "\n";
         }
-        StructTemplatesToGenerate.at(i)->structDeclarAST->codegen();
+        bool find_in_codegened_templates = std::find(codegenedStructTemplates.begin(), codegenedStructTemplates.end(), TypeTemplateCallCodegen) != codegenedStructTemplates.end();
+        //if (find_in_codegened_templates){
+            Log::Info() << "Generating Struct " << StructTemplatesToGenerate.at(i)->structDeclarAST->Name << "\n";
+            StructTemplatesToGenerate.at(i)->structDeclarAST->codegen();
+            //codegenedStructTemplates.push_back(TypeTemplateCallCodegen);
+        //}
     }
 }

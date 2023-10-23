@@ -1,7 +1,10 @@
 import @std/print.cpoint
+include @std/tuple.cpoint
+
 func main() double {
     var a : double = 2
     if a == 2 {
         printi(argc)
     }
+    var t : struct tuple~int~ 
 }
