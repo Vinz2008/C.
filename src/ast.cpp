@@ -1449,7 +1449,7 @@ std::unique_ptr<TestAST> ParseTest(){
   if (!ret){
     return nullptr;
   }
-  getNextToken(); // eat '{'
+  getNextToken(); // eat '}'
   return std::make_unique<TestAST>(description, std::move(Body));
 }
 
@@ -1873,6 +1873,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     if (is_array){
         cpoint_type.is_array = is_array;
         //cpoint_type.nb_element = from_val_to_constant_infer(index->clone()->codegen());
+        // TODO : need to add a function that would extract a value from a constant whether a double or an int
         cpoint_type.nb_element = dyn_cast<ConstantFP>(index->clone()->codegen())->getValue().convertToDouble();
     }
     // Read the optional initializer.

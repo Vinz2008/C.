@@ -543,6 +543,12 @@ int main(int argc, char **argv){
     }
     if (Comp_context->test_mode){
       add_externs_for_test();
+      if (Comp_context->std_mode){
+        add_test_imports();
+      }
+    }
+    if (Comp_context->test_mode && !Comp_context->std_mode){
+        Log::Warning() << "Using tests without the standard library. You will not be able to use expect and you will need to have linked a libc" << "\n";
     }
     MainLoop();
     codegenTemplates();

@@ -1,11 +1,18 @@
+import expect.cpoint
+
 mod ascii {
-    func is_ascii(c : i8) bool {
-        c < 128
-    }
     func to_upper(c : i8) i8 {
         c & 223
     }
     func to_lower(c : i8) i8 {
         c | 32
     }
+}
+
+test "to_upper" {
+    #expect(ascii::to_upper('a') == 'A')
+}
+
+test "to_lower" {
+    #expect(ascii::to_lower('A') == 'a')
 }

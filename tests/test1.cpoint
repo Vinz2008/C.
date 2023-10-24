@@ -1,5 +1,6 @@
 import @std/print.cpoint
-include @std/libc.hpoint
+
+extern printf(format : i8 ptr ...) int;
 
 func main(){
   var i : int = 2

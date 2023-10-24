@@ -499,3 +499,12 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
     out_file.close();
     return nb_imports;
 }
+
+
+void add_test_imports(){
+    std::vector<std::string> Paths;
+    int pos_src = 0;
+    std::string line = "@std/assert.cpoint";
+    bool is_special_path = getPath(line, pos_src, Paths);
+    import_file(Paths.at(0), is_special_path);
+}

@@ -1037,7 +1037,8 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateXor(L, R, "xortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '&':
-    return operators::LLVMCreateLogicalOr(L, R);
+    //return operators::LLVMCreateLogicalOr(L, R);
+    return operators::LLVMCreateLogicalAnd(L, R);
   case '|':
     L = Builder->CreateOr(L, R, "ortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");

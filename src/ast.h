@@ -93,7 +93,7 @@ public:
     return std::make_unique<CharExprAST>(c);
   }
   std::string to_string() override {
-    return "" + c;
+    return "\'" + std::string(1, (char)c) + "\'";
   }
 };
 
