@@ -34,7 +34,7 @@ endif
 SRC := $(wildcard *.cpoint) $(wildcard */*.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 #TESTS_EXE := $(patsubst %.cpoint, %.test, $(SRC))
-TESTS_EXE := math.test path.test utils.test alloc.test mem.test ascii.test
+TESTS_EXE := math.test path.test utils.test alloc.test mem.test ascii.test env.test
 TEST_DEPENDENCIES = expect.cpoint print.cpoint panic.cpoint
 TEST_DEPENDENCIES_OBJ = $(patsubst %.cpoint, %.o, $(TEST_DEPENDENCIES))
 SRC_C := $(wildcard c_api/*.c)

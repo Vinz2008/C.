@@ -27,6 +27,7 @@ extern malloc(size : int) void ptr;
 extern strdup(s : i8 ptr) i8 ptr;
 extern strcpy(dest : i8 ptr, src : i8 ptr) i8 ptr;
 extern strcat(dest : i8 ptr, src : i8 ptr) i8 ptr;
+extern strcmp(s1 : i8 ptr, s2 : i8 ptr) int;
 extern strncat(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
 extern strncpy(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
 extern strlen(str : i8 ptr) i64;
