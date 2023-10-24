@@ -1161,8 +1161,11 @@ Value *CallExprAST::codegen() {
     if (!ArgsV.back())
       return nullptr;
   }
-
-  return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+  std::string NameCallTmp = "calltmp";
+  if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
+    NameCallTmp = "";
+  }
+  return Builder->CreateCall(CalleeF, ArgsV, NameCallTmp);
 }
 
 Value* AddrExprAST::codegen(){

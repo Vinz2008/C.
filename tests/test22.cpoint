@@ -18,6 +18,7 @@ func main(){
   var x : class test 
   var y : class test ptr 
   var a : double = 2 
+  printd(sizeof x)
   y = alloc::manual_alloc(sizeof x)
   y.z = 3
   x.z = 2
