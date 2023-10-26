@@ -251,6 +251,8 @@ void handle_library_name(std::string library, std::string& linker_args){
         linker_args += get_pkg_config_linker_args((std::string)library);
     } else if (library == "llvm"){
         linker_args += get_llvm_config_linker_args();
+    } else if (library == "clang"){
+        linker_args += "-lclang";
     } else {
         std::cout << "Warning : unknown library : " << library << std::endl;
         linker_args += get_pkg_config_linker_args((std::string)library);

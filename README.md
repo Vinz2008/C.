@@ -63,6 +63,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Have specific flags for optimizations (ex : -optimize-return) or checking (-check-arrays) and global flags (-O2, -C0 for checking level 0)
 - [ ] Make comments in structs, enums, etc work
 - [ ] Make numbers in compiler ints when there is no decimal part
+- [ ] Add custom numbers for enum without types included (example : variant being 0x200 or 0x100)
 
 ## Benchmarks compared to other languages
 

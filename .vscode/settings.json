@@ -113,7 +113,9 @@
         "__memory": "cpp",
         "*.inc": "cpp",
         "*.def": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "index.h": "c",
+        "platform.h": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }
