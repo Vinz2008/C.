@@ -25,13 +25,17 @@ const char* get_type_string_from_type_libclang(CXType type){
         case CXType_Int:
             return "int";
         case CXType_Char_S:
-        case CXType_Char16:
-        case CXType_Char32:
+        case CXType_SChar:
+        case CXType_UChar:
             return "i8";
         case CXType_Pointer:
             return "int ptr";
         case CXType_Void:
             return "void";
+        case CXType_Bool:
+            return "bool";
+        case CXType_Long:
+            return "i64";
         case CXType_LongDouble:
         case CXType_Double:
         default:

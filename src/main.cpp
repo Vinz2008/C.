@@ -687,6 +687,8 @@ int main(int argc, char **argv){
       Log::Print() << "run executable at " << actualpath << "\n";
       runCommand(actualpath);
     }
+
+    delete TheTargetMachine; // call the TargetMachine destructor to not leak memory
     }
 after_linking:
     if (remove_temp_file /*&& !asm_mode*/){

@@ -1,8 +1,9 @@
-#include "ast.h"
 #include "c_translator.h"
 #include <fstream>
 #include <cstdarg>
 #include <iostream>
+#include "ast.h"
+//#include "log.h"
 
 std::unique_ptr<c_translator::Context> c_translator_context;
 
@@ -18,21 +19,34 @@ namespace c_translator {
         c_translator_context->write_output_code(file_out);
     }
     std::string Function::generate_c(){
-        std::string body;
-        body += return_type.to_c_type_str() + " " + function_name + "(";
+        std::string function_str;
+        function_str += return_type.to_c_type_str() + " " + function_name + "(";
         for (int i = 0; i < args.size(); i++){
-            body += args.at(i).to_c_type_str() + " arg" + std::to_string(i);
+            function_str += args.at(i).to_c_type_str() + " arg" + std::to_string(i);
             if (i != args.size()-1){
-                body += ", ";
+                function_str += ", ";
             }
         }
-        body += ")";
+        function_str += ")";
         if (is_extern){
-            body += ";";
+            function_str += ";";
         } else {
-            body += "{}\n";
+            function_str += "{\n";
+            if (!body.empty()){
+            for (int i = 0; i < body.size(); i++){
+                function_str += body.at(i)->generate_c();
+            }
+            }
+            function_str += "}\n";
         }
-        return body;
+        return function_str;
+    }
+    std::unique_ptr<Function> Function::clone(){
+            std::vector<std::unique_ptr<ExprAST>> bodyCloned;
+            for (int i = 0; i < body.size(); i++){
+                bodyCloned.push_back(body.at(i)->clone());
+            }
+            return std::make_unique<Function>(return_type, function_name, args, std::move(bodyCloned), is_extern);
     }
     void Context::write_output_code(std::ofstream& stream){
         for (int i = 0; i < headers_to_add.size(); i++){
@@ -75,6 +89,11 @@ std::string C_Type::to_c_type_str(){
     default:
         break;
     }
+    if (is_ptr){
+        for (int i = 0; i < nb_ptr; i++){
+            s += "*";
+        }
+    }
     return s;
 }
 
@@ -84,6 +103,7 @@ void types_used(int nb, ...){
     for (int i = 0; i < nb; i++){
         C_Type temp_type = *va_arg(args, C_Type*);
         //std::cout << temp_type.to_c_type_str() << std::endl;
+        //std::cout << temp_type.type << std::endl;
         if (temp_type.type == c_translator::bool_type){
             if(std::find(c_translator_context->headers_to_add.begin(), c_translator_context->headers_to_add.end(), "stdbool.h") == c_translator_context->headers_to_add.end()){
                 c_translator_context->headers_to_add.push_back("stdbool.h");
@@ -94,6 +114,15 @@ void types_used(int nb, ...){
     va_end(args);
 }
 
+
+/*c_translator::Expr* from_cpoint_to_c_class(std::unique_ptr<ExprAST> expr){
+    if (dynamic_cast<ForExprAST*>(expr.get())){
+        ForExprAST* forTemp = expr.get();
+
+    } else {
+        Log::Warning() << "Not implemented Expression in C backend" << "\n";
+    }
+}*/
 
 c_translator::Function* FunctionAST::c_codegen(){
     std::string function_name = Proto->getName();
@@ -108,8 +137,14 @@ c_translator::Function* FunctionAST::c_codegen(){
         return_type = C_Type(c_translator::int_type);
     }
     TYPES_USED(&return_type);
-    auto functionTemp = new c_translator::Function(return_type, function_name, args,  false);
-    c_translator_context->Functions.push_back(std::make_unique<c_translator::Function>(*functionTemp));
+    std::vector<std::unique_ptr<ExprAST>> body;
+    if (!Body.empty()){
+    for (int i = 0; i < Body.size(); i++){
+        body.push_back(std::move(Body.at(i)));
+    }
+    }
+    auto functionTemp = new c_translator::Function(return_type, function_name, args, std::move(body), false);
+    c_translator_context->Functions.push_back(/*std::make_unique<c_translator::Function>(*functionTemp)*/ functionTemp->clone());
     return functionTemp;
 }
 
@@ -122,8 +157,8 @@ c_translator::Function* PrototypeAST::c_codegen(){
         TYPES_USED(&type_temp);
     }
     TYPES_USED(&return_type);
-    auto functionTemp = new c_translator::Function(return_type, Name, args, true);
-    c_translator_context->Functions.push_back(std::make_unique<c_translator::Function>(*functionTemp));
+    auto functionTemp = new c_translator::Function(return_type, Name, args, {}, true);
+    c_translator_context->Functions.push_back(/*std::make_unique<c_translator::Function>(*functionTemp)*/ functionTemp->clone());
     return functionTemp;
 }
 

@@ -57,11 +57,11 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
 
 int convertToC(char* path){
 	CXIndex index = clang_createIndex(0, 0);
-        CXTranslationUnit unit = clang_parseTranslationUnit(index, path, NULL, 0, NULL, 0, CXTranslationUnit_None);
+    CXTranslationUnit unit = clang_parseTranslationUnit(index, path, NULL, 0, NULL, 0, CXTranslationUnit_None);
 	if (unit == NULL){
-            fprintf(stderr, "Unable to parse Translation Unit\n");
-            exit(1);
-    	}
+        fprintf(stderr, "Unable to parse Translation Unit\n");
+        exit(1);
+    }
 	CXCursor cursor = clang_getTranslationUnitCursor(unit);
 	clang_visitChildren(cursor, cursorVisitor, NULL);
 	close_previous_blocks();
