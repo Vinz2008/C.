@@ -8,6 +8,7 @@
 FILE* outf;
 bool in_function_declaration = false;
 bool in_struct_declaration = false;
+bool in_enum_declaration = false;
 enum CXCursorKind cursorKind;
 int param_number = 0;
 bool pass_block = false;
@@ -50,6 +51,9 @@ void close_previous_blocks(){
         printf("closing struct so not passing block\n");
         fprintf(outf,"}\n");
         in_struct_declaration = false;
+    } else if (in_enum_declaration && !pass_block && !is_in_typedef){
+        fprintf(outf,"}\n");
+        in_enum_declaration = false;
     }
     pass_block = false;
     is_in_typedef = false;
@@ -140,6 +144,20 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             fprintf(outf, "type %s %s;\n", new_type_name, value_type_name);
             clang_disposeString(clangstr_new_type_name);
             break;
+        case CXCursor_EnumDecl:
+            close_previous_blocks();
+            CXString clangstr_enum_name = clang_getCursorSpelling(cursor);
+            const char* enum_name = clang_getCString(clangstr_enum_name);
+            printf("enum name : %s\n", enum_name);
+            fprintf(outf, "enum %s {\n", enum_name);
+            in_enum_declaration = true;
+            clang_disposeString(clangstr_enum_name);
+            break;
+        case CXCursor_EnumConstantDecl:
+            CXString clangstr_enum_field = clang_getCursorSpelling(cursor);
+            fprintf(outf, "\t%s\n", clang_getCString(clangstr_enum_field));
+            clang_disposeString(clangstr_enum_field);
+            break;
         default:
             break;
     }
@@ -157,11 +175,12 @@ void generateBindings(char* path){
     }
     CXCursor cursor = clang_getTranslationUnitCursor(unit);
     clang_visitChildren(cursor, cursorVisitor, NULL);
-    if (cursorKind == CXCursor_FieldDecl){
+    if (cursorKind == CXCursor_FieldDecl || cursorKind == CXCursor_EnumConstantDecl){
         if (!pass_block){
         fprintf(outf, "}\n");
         }
         in_struct_declaration = false;
+        in_enum_declaration = false;
     } else {
         fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
         in_function_declaration = false;

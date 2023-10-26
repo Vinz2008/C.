@@ -13,3 +13,7 @@ typedef int test_t;
 int testfunction(){
     return 1;
 }
+enum a {
+    a1,
+    a2,
+};
