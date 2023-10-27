@@ -420,6 +420,10 @@ if_reflection:
     return value;
 }
 
+Value* StructMemberExprASTNew::codegen(){
+    return nullptr;
+}
+
 Value* UnionMemberExprAST::codegen(){
   AllocaInst* Alloca = nullptr;
   if (NamedValues[UnionName] == nullptr){
@@ -1515,9 +1519,9 @@ Function *FunctionAST::codegen() {
   for (int i = 0; i < Body.size(); i++){
     RetVal = Body.at(i)->codegen();
   }
-  // 
-  if (RetVal) {
-    if (RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
+  
+  //if (RetVal) {
+    if (/*RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) ||*/ TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
         // void is represented by nullptr
         RetVal = nullptr;
         goto before_ret;
@@ -1549,9 +1553,9 @@ before_ret:
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);
     return TheFunction;
-  }
-
-  // Error reading body, remove function.
+  //}
+  
+  /*// Error reading body, remove function.
   TheFunction->eraseFromParent();
   if (P.isBinaryOp()){
     std::string op = "";
@@ -1561,7 +1565,7 @@ before_ret:
   if (debug_info_mode){
   CpointDebugInfo.LexicalBlocks.pop_back();
   }
-  return LogErrorF(emptyLoc, "Return Value failed for the function");
+  return LogErrorF(emptyLoc, "Return Value failed for the function");*/
 }
 
 void TypeDefAST::codegen(){
@@ -1677,6 +1681,9 @@ Value *IfExprAST::codegen() {
   TheFunction->insert(TheFunction->end(), MergeBB);
   Builder->SetInsertPoint(MergeBB);
 
+  if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
+    return nullptr;
+  }
   PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");
 
   if (ThenV->getType() == Type::getVoidTy(*TheContext) && phiType != Type::getVoidTy(*TheContext)){

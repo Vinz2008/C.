@@ -64,6 +64,16 @@ std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
     return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, std::move(ArgsCloned));
 }
 
+std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
+    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
+    if (!ArgsCloned.empty()){
+      for (int i = 0; i < ArgsCloned.size(); i++){
+        ArgsCloned.push_back(Args.at(i)->clone());
+      }
+    }
+    return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, std::move(ArgsCloned));
+}
+
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> ArrayMembersCloned;
     if (!ArrayMembers.empty()){
@@ -608,8 +618,18 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     }
 #endif
     // Merge LHS/RHS.
-    LHS =
-        std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
+#if STRUCT_MEMBER_OPERATOR_IMPL == 0
+    LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
+#else
+    auto tempLHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
+    if (tempLHS->Op == "."){
+        // look manually if next token is '(' and add the args if it is the case
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        LHS = std::make_unique<StructMemberExprASTNew>(std::move(LHS), std::move(RHS), false, std::move(Args));
+    } else {
+        LHS = std::move(tempLHS);
+    }
+#endif
   }
 }
 

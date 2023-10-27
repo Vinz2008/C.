@@ -24,6 +24,7 @@ using namespace llvm;
 #include "errors.h"
 #include "log.h"
 #include "c_translator.h"
+#include "config.h"
 
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
@@ -216,6 +217,31 @@ public:
   std::string generate_c() override { return ""; }
 };
 
+//#if STRUCT_MEMBER_OPERATOR_IMPL
+class StructMemberExprASTNew : public ExprAST {
+  std::unique_ptr<ExprAST> Struct;
+  std::unique_ptr<ExprAST> Member;
+  bool is_function_call;
+  std::vector<std::unique_ptr<ExprAST>> Args;
+public:
+  StructMemberExprASTNew(std::unique_ptr<ExprAST> Struct, std::unique_ptr<ExprAST> Member, bool is_function_call, std::vector<std::unique_ptr<ExprAST>> Args) : Struct(std::move(Struct)), Member(std::move(Member)), is_function_call(is_function_call), Args(std::move(Args)) {}
+  Value *codegen() override;
+  std::unique_ptr<ExprAST> clone() override;
+  std::string to_string() override {
+    std::string args = "";
+    if (is_function_call){
+        args += "(";
+        for (int i = 0; i < Args.size(); i++){
+            args += Args.at(i)-> to_string() + ",";
+        }
+        args += ")";
+    }
+    return Struct->to_string() + "." + Member->to_string() + args;
+  }
+  std::string generate_c() override { return ""; }
+};
+//#endif
+
 class UnionMemberExprAST : public ExprAST {
 public:
   std::string UnionName;
@@ -293,10 +319,9 @@ public:
 };
 
 class BinaryExprAST : public ExprAST {
+public:
   std::string Op;
   std::unique_ptr<ExprAST> LHS, RHS;
-
-public:
   BinaryExprAST(Source_location Loc, const std::string& op, std::unique_ptr<ExprAST> LHS,
                 std::unique_ptr<ExprAST> RHS)
     : ExprAST(Loc), Op(op), LHS(std::move(LHS)), RHS(std::move(RHS)) {}
