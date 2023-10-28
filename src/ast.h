@@ -180,8 +180,8 @@ public:
 
 class VariableExprAST : public ExprAST {
   std::string Name;
-  Cpoint_Type type;
 public:
+  Cpoint_Type type;
   VariableExprAST(Source_location Loc, const std::string &Name, Cpoint_Type type) : ExprAST(Loc), Name(Name), type(type) {}
   Value *codegen() override;
   const std::string &getName() const { return Name; }

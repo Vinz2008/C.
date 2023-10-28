@@ -827,6 +827,13 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
             return LogError("You can't use the todo macro with args for now"); // TODO
         }
         return std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(Args), Cpoint_Type());
+    } else if (function_name == "dbg"){
+        if (ArgsMacro.size() != 1){
+            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "dbg", 1, ArgsMacro.size());
+        }
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        Args.push_back(std::move(ArgsMacro.at(0)));
+        return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_dbg", std::move(Args), Cpoint_Type());
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
 }

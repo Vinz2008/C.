@@ -223,6 +223,49 @@ std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cp
     return struct_name + "____" + create_mangled_name_from_type(type);
 }
 
+Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    auto valueCopy = VarDbg->codegen();
+    std::string format = "%s"; // change format depending of type
+    bool is_string_found = false;
+    if (dynamic_cast<StringExprAST*>(VarDbg.get())){
+        is_string_found = true;
+    } else if (dynamic_cast<VariableExprAST*>(VarDbg.get())){
+        Log::Info() << "Variable in Dbg Macro codegen" << "\n";
+        auto varTemp = dynamic_cast<VariableExprAST*>(VarDbg.get());
+        auto varTempCpointType = varTemp->type;
+        Log::Info() << "type : " << varTempCpointType << "\n";
+        if (varTempCpointType.type == i8_type && varTempCpointType.is_ptr){
+            Log::Info() << "Variable in Dbg Macro codegen is string" << "\n";
+            is_string_found = true;
+        }
+    }
+    auto valueCopyCpointType = get_cpoint_type_from_llvm(valueCopy->getType());
+    Log::Info() << "valueCopyCpointType type : " << valueCopyCpointType.type << "\n";
+    if (valueCopyCpointType.is_ptr){
+        if (valueCopyCpointType.type == i8_type  || is_string_found){
+            format = "\"%s\"";
+        } else {
+            format = "%p";
+        }
+    } /*else if (valueCopyCpointType.type == i8_type){
+        format = "%c";
+        // TODO activate this or not ?
+    }*/ else if (is_signed(valueCopyCpointType) || is_unsigned(valueCopyCpointType)){
+        format = "%d";
+    } else if (is_decimal_number_type(valueCopyCpointType)) {
+        format = "%f";
+    } else {
+        return LogErrorV(emptyLoc, "Not Printable type in debug macro");
+    }
+    Args.push_back(std::make_unique<StringExprAST>(VarDbg->to_string() + " = " + format + "\n"));
+    Args.push_back(std::move(VarDbg));
+    
+    auto call = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(Args), Cpoint_Type());
+    return call->codegen();
+}
+
+// TODO : change name of these function to be with underscodes ?
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
   Callee = Callee.substr(5, Callee.size());
   Log::Info() << "llvm intrisic called " << Callee << "\n";
@@ -1120,6 +1163,10 @@ Value *CallExprAST::codegen() {
     if (Callee == "get_function_name"){
       Function *TheFunction = Builder->GetInsertBlock()->getParent();
       return StringExprAST((std::string)TheFunction->getName()).codegen();
+    }
+    if (Callee == "dbg"){
+        std::unique_ptr<ExprAST> varDbg = std::move(Args.at(0));
+        return DbgMacroCodegen(std::move(varDbg));
     }
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;

@@ -80,6 +80,7 @@ bool is_llvm_type_number(llvm::Type* llvm_type);
 llvm::Type* get_array_llvm_type(llvm::Type* type, int nb_element);
 bool is_decimal_number_type(Cpoint_Type type);
 bool is_signed(Cpoint_Type type);
+bool is_unsigned(Cpoint_Type type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 int get_type_number_of_bits(Cpoint_Type type);
 std::string get_string_from_type(Cpoint_Type type);
