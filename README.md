@@ -66,7 +66,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make numbers in compiler ints when there is no decimal part
 - [ ] Add custom numbers for enum without types included (example : variant being 0x200 or 0x100)
 - [x] Make va_args work in C. (maybe reimplement printfmt in c and compare the generated assemblies : see it with objdump -S)
-- [ ] Implement dbg macro
+- [x] Implement dbg macro
+- [ ] Automatically make additional args in variadic functions i32s
 
 ## Benchmarks compared to other languages
 

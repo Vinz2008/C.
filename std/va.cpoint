@@ -13,3 +13,10 @@ func printfmt_cpoint(format : i8 ptr ...) void {
     vprintf(format, cpoint_internal_get_va_adress_systemv(va))
     cpoint_internal_llvm_va_end(cpoint_internal_get_va_adress_systemv(va))
 }
+
+func cpoint_printf(format : i8 ptr ...) void {
+    var va[1] : struct va_list 
+    cpoint_internal_llvm_va_start(cpoint_internal_get_va_adress_systemv(va))
+    vprintf(format, cpoint_internal_get_va_adress_systemv(va))
+    cpoint_internal_llvm_va_end(cpoint_internal_get_va_adress_systemv(va))
+}

@@ -1,6 +1,14 @@
 extern printfmt(x : i8 ptr ...) void;
+extern printf(format : i8 ptr ...) int;
+
 func main() void {
     var x : double = 2
-    var str : i8 ptr = "\thello world %f\n"
-    printfmt(str, x)
+    var test = "test string"
+    printfmt("\thello world %f\n", x)
+    printfmt("test string : %s\n", test)
+    printfmt("test char : %c\n", 'a')
+    printfmt("test int : %d\n", cast int x)
+    printfmt("test hex : %x\n", cast int 7833)
+    printfmt("test ptr : %p\n", addr x)
+    printf("printf ptr : %p\n", addr x)
 }
