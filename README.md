@@ -60,7 +60,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Warn about/Remove unused functions
 - [x] In cpoint-build, find libraries linked to dependencies and link them
 - [ ] Add "-compile-time-sizeof" flag to have sizeof not use getelementptr and the compiler insert the values at compile time
-- [ ] Have specific flags for optimizations (ex : -optimize-return) or checking (-check-arrays) and global flags (-O2, -C0 for checking level 0)
+- [ ] Have specific flags for optimizations (ex : -optimize-return) or checking (-check-arrays) and global flags (-O2, -C0 for checking level 0) 
+- [ ] maybe create a config file to have specific profile for flags (you could have -build-mode fast-no-opti with custom profile that would be defined in the config)
 - [ ] Make comments in structs, enums, etc work
 - [ ] Make numbers in compiler ints when there is no decimal part
 - [ ] Add custom numbers for enum without types included (example : variant being 0x200 or 0x100)
