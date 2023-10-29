@@ -179,8 +179,8 @@ public:
 };
 
 class VariableExprAST : public ExprAST {
-  std::string Name;
 public:
+  std::string Name;
   Cpoint_Type type;
   VariableExprAST(Source_location Loc, const std::string &Name, Cpoint_Type type) : ExprAST(Loc), Name(Name), type(type) {}
   Value *codegen() override;

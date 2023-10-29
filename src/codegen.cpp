@@ -223,6 +223,23 @@ std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cp
     return struct_name + "____" + create_mangled_name_from_type(type);
 }
 
+Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
+    if (!dynamic_cast<VariableExprAST*>(va.get())){
+        return LogErrorV(emptyLoc, "Not implemented internal function to get address of va list with amd64 systemv abi for non variables");
+    }
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto varVa = dynamic_cast<VariableExprAST*>(va.get());
+    auto vaCodegened = va->codegen();
+    return Builder->CreateGEP(vaCodegened->getType(), get_var_allocation(varVa->Name), {zero, zero}, "gep_for_va");
+    /*auto vaCodegened = va->codegen();
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto debugCpointType = get_cpoint_type_from_llvm(vaCodegened->getType());
+    Log::Info() << "vaCodegened->getType() : " << get_cpoint_type_from_llvm(vaCodegened->getType()) << "\n";
+    Log::Info() << "struct " << (std::string)vaCodegened->getType()->getArrayElementType()->getStructName() << "\n";
+    auto vaPtr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true)), vaCodegened);
+    return Builder->CreateGEP(vaCodegened->getType(), vaPtr, {zero, zero}, "gep_for_va");*/
+}
+
 Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     std::vector<std::unique_ptr<ExprAST>> Args;
     auto valueCopy = VarDbg->codegen();
@@ -1167,6 +1184,9 @@ Value *CallExprAST::codegen() {
     if (Callee == "dbg"){
         std::unique_ptr<ExprAST> varDbg = std::move(Args.at(0));
         return DbgMacroCodegen(std::move(varDbg));
+    }
+    if (Callee == "get_va_adress_systemv"){
+        return GetVaAdressSystemV(std::move(Args.at(0)));
     }
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;

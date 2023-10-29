@@ -8,8 +8,8 @@ struct va_list {
 extern vprintf(format : i8 ptr, arg : struct va_list ptr) int;
 
 func printfmt_cpoint(format : i8 ptr ...) void {
-    var va : struct va_list 
-    cpoint_internal_llvm_va_start(addr va)
-    vprintf(format, addr va)
-    cpoint_internal_llvm_va_end(addr va)
+    var va[1] : struct va_list 
+    cpoint_internal_llvm_va_start(cpoint_internal_get_va_adress_systemv(va))
+    vprintf(format, cpoint_internal_get_va_adress_systemv(va))
+    cpoint_internal_llvm_va_end(cpoint_internal_get_va_adress_systemv(va))
 }
