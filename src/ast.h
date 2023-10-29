@@ -579,7 +579,9 @@ public:
     std::string Name;
     bool contains_value;
     std::unique_ptr<Cpoint_Type> Type;
-    EnumMember(const std::string& Name, bool contains_value = false, std::unique_ptr<Cpoint_Type> Type = nullptr) : Name(Name), contains_value(contains_value), Type(std::move(Type)) {}
+    bool contains_custom_index;
+    int Index;
+    EnumMember(const std::string& Name, bool contains_value = false, std::unique_ptr<Cpoint_Type> Type = nullptr, bool contains_custom_index = false, int Index = -1) : Name(Name), contains_value(contains_value), Type(std::move(Type)), contains_custom_index(contains_custom_index), Index(Index) {}
     std::unique_ptr<EnumMember> clone();
 };
 

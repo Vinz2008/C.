@@ -204,7 +204,7 @@ std::unique_ptr<EnumMember> EnumMember::clone(){
     if (Type){
         TypeCloned = std::make_unique<Cpoint_Type>(*Type);
     }
-    return std::make_unique<EnumMember>(Name, contains_value, std::move(TypeCloned));
+    return std::make_unique<EnumMember>(Name, contains_value, std::move(TypeCloned), contains_custom_index, Index);
 }
 
 std::unique_ptr<EnumDeclarAST> EnumDeclarAST::clone(){
@@ -1320,7 +1320,9 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
     while (CurTok == tok_identifier && CurTok != '}'){
         std::unique_ptr<EnumMember> enumMember;
         bool contains_value = false;
+        bool contains_custom_index = false;
         std::unique_ptr<Cpoint_Type> Type = nullptr;
+        int Index = -1;
         std::string memberName = IdentifierStr;
         getNextToken();
         if (CurTok == '('){
@@ -1333,7 +1335,19 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
             }
             getNextToken();
         }
-        EnumMembers.push_back(std::make_unique<EnumMember>(memberName, contains_value, std::move(Type)));
+        if (CurTok == '='){
+            getNextToken();
+            contains_custom_index = true;
+            auto IndexTemp = ParseExpression();
+            auto indexCodegened = IndexTemp->codegen();
+            if (!dyn_cast<Constant>(indexCodegened)){
+                return LogErrorE("Index in Declaration of enum is not a constant");
+            }
+            Index = from_val_to_int(indexCodegened);
+            Log::Info() << "EnumDeclarAST parsing custom Index : " << Index << " " << contains_custom_index << "\n";
+        }
+        Log::Info() << "EnumDeclarAST contains_custom_index : " << contains_custom_index << "\n";
+        EnumMembers.push_back(std::make_unique<EnumMember>(memberName, contains_value, std::move(Type), contains_custom_index, Index));
     }
     if (CurTok != '}'){
         return LogErrorE("Expected '}' in Enum");

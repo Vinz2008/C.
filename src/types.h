@@ -87,3 +87,4 @@ std::string get_string_from_type(Cpoint_Type type);
 std::string create_mangled_name_from_type(Cpoint_Type type);
 llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
 llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);
+int from_val_to_int(llvm::Value* val);

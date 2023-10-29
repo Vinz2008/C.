@@ -11,6 +11,11 @@ enum test_enum_without_val {
     tag_alone2
 }
 
+enum test_enum_custom_index {
+    tag_index1 = 3
+    tag_index2 = 4
+}
+
 func main(){
     var te : enum test_enum = test_enum::tag_int(1)
     var te2 : enum test_enum = test_enum::tag_float(2.0)
@@ -32,6 +37,15 @@ func main(){
     match te_w {
         test_enum_without_val::tag_alone2 => printstr("tag_alone2"),
         _ => printstr("not tag_alone2"),
+    }
+    var te_c : enum test_enum_custom_index = test_enum_custom_index::tag_index2
+    match te_c {
+        test_enum_custom_index::tag_index1 => {
+            printstr("tag_index1")
+        }
+        test_enum_custom_index::tag_index2 => {
+            printstr("tag_index2")
+        }
     }
     var n : double = 2
     match n {

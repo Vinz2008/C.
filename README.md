@@ -64,10 +64,11 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] maybe create a config file to have specific profile for flags (you could have -build-mode fast-no-opti with custom profile that would be defined in the config)
 - [ ] Make comments in structs, enums, etc work
 - [ ] Make numbers in compiler ints when there is no decimal part
-- [ ] Add custom numbers for enum without types included (example : variant being 0x200 or 0x100)
+- [x] Add custom numbers for enum without types included (example : variant being 0x200 or 0x100)
 - [x] Make va_args work in C. (maybe reimplement printfmt in c and compare the generated assemblies : see it with objdump -S)
 - [x] Implement dbg macro
 - [ ] Automatically make additional args in variadic functions i32s
+- [ ] Add hex notation (example 0x77)
 
 ## Benchmarks compared to other languages
 

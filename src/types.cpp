@@ -277,6 +277,21 @@ Constant* get_default_constant(Cpoint_Type type){
     return ConstantFP::get(*TheContext, APFloat(0.0));
 }
 
+
+int from_val_to_int(Value* val){
+    if (dyn_cast<ConstantFP>(val)){
+        auto constFP = dyn_cast<ConstantFP>(val);
+        int val_int = (int)constFP->getValue().convertToDouble();
+        return val_int;
+    } else if (dyn_cast<ConstantInt>(val)) {
+        auto constInt = dyn_cast<ConstantInt>(val);
+        int val_int = (int)constInt->getSExtValue();
+        return val_int;
+    }
+    // TODO : make error because not supported constant/not constant
+    return -1;
+}
+
 Constant* from_val_to_constant(Value* val, Cpoint_Type type){
     Type* val_type = val->getType();
     /*if (val_type != get_type_llvm(Cpoint_Type(double_type))){

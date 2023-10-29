@@ -941,12 +941,18 @@ Value* MatchExprAST::codegen(){
             return LogErrorV(this->loc, "The match case is using a member of a different enum than the one in the expression");
         }
         int pos = -1;
+        bool has_custom_index = false;
         for (int j = 0; j < enumDeclar->EnumMembers.size(); j++){
             if (enumDeclar->EnumMembers[j]->Name == matchCaseTemp->enum_member){
-                pos = j;
+                if (enumDeclar->EnumMembers[j]->contains_custom_index){
+                    has_custom_index = true;
+                    pos = enumDeclar->EnumMembers[j]->Index;
+                } else {
+                    pos = j;
+                }
             }
         }
-        if (pos == -1){
+        if (pos == -1 && !has_custom_index){
             return LogErrorV(this->loc, "Couldn't find the member of this enum in match case");
         }
         Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos)));
@@ -2297,8 +2303,19 @@ Value *VarExprAST::codegen() {
         int pos_member = -1;
         
         for (int i = 0; i < EnumMembers.size(); i++){
+            Log::Info() << "EnumMembers.at(i)->contains_custom_index other : " << EnumMembers.at(i)->contains_custom_index << "\n";
             if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
-                pos_member = i;
+                Log::Info() << "EnumMembers.at(i)->contains_custom_index : " << EnumMembers.at(i)->contains_custom_index << "\n";
+                if (EnumMembers.at(i)->contains_custom_index){
+                    /*auto indexCodegened = EnumMembers.at(i)->Index->codegen();
+                    if (!dyn_cast<Constant*>(indexCodegened)){
+                        return LogErrorV(this->loc, "In enum DeclarASt ")
+                    }*/
+                    Log::Info() << "EnumMembers.at(i)->Index : " << EnumMembers.at(i)->Index << "\n";
+                    pos_member = EnumMembers.at(i)->Index;
+                } else {
+                    pos_member = i;
+                }
                 enumMember = EnumMembers.at(i)->clone();
             }
         }
