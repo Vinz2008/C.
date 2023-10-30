@@ -528,21 +528,6 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   if (!ret){
     return nullptr;
   }
-  /*if (CurTok != ')') {
-    while (1) {
-      if (auto Arg = ParseExpression())
-        Args.push_back(std::move(Arg));
-      else
-        return nullptr;
-
-      if (CurTok == ')')
-        break;
-
-      if (CurTok != ',')
-        return LogError("Expected ')' or ',' in argument list");
-      getNextToken();
-    }
-  }*/
 
   // Eat the ')'.
   getNextToken();
