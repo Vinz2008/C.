@@ -68,7 +68,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Make va_args work in C. (maybe reimplement printfmt in c and compare the generated assemblies : see it with objdump -S)
 - [x] Implement dbg macro
 - [ ] Automatically make additional args in variadic functions i32s ? (for now it works without)
-- [ ] Add hex notation (example 0x77)
+- [x] Add hex notation (example 0x77)
+- [ ] Add section selection for global variables ?
 
 ## Benchmarks compared to other languages
 
