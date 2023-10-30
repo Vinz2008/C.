@@ -145,5 +145,7 @@ std-test:
 	make -C std test
 	make -C std run-test
 
+all-tests: test std-test
+
 onefetch:
 	onefetch --exclude bdwgc/* bdwgc_prefix/* build/tomlplusplus/*

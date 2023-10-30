@@ -2025,9 +2025,7 @@ Value* BreakExprAST::codegen(){
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
-Value* LoopExprAST::codegen(){
-  Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  if (is_infinite_loop || Array == nullptr){
+Value* InfiniteLoopCodegen(std::vector<std::unique_ptr<ExprAST>>& Body, Function* TheFunction){
     BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
     Builder->CreateBr(loopBB);
     Builder->SetInsertPoint(loopBB);
@@ -2041,6 +2039,25 @@ Value* LoopExprAST::codegen(){
     Builder->CreateBr(loopBB);
 
     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+}
+
+Value* LoopExprAST::codegen(){
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  if (is_infinite_loop || Array == nullptr){
+    return InfiniteLoopCodegen(Body, TheFunction);
+    /*BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
+    Builder->CreateBr(loopBB);
+    Builder->SetInsertPoint(loopBB);
+    BasicBlock* afterBB = BasicBlock::Create(*TheContext, "after_loop_infinite", TheFunction);
+    blocksForBreak.push(afterBB);
+    for (int i = 0; i < Body.size(); i++){
+      if (!Body.at(i)->codegen())
+        return nullptr;
+    }
+    blocksForBreak.pop();
+    Builder->CreateBr(loopBB);
+
+    return Constant::getNullValue(Type::getDoubleTy(*TheContext));*/
   } else {
     auto double_cpoint_type = Cpoint_Type(double_type, false);
     AllocaInst *PosArrayAlloca = CreateEntryBlockAlloca(TheFunction, "pos_loop_in", double_cpoint_type);
@@ -2087,8 +2104,9 @@ Value* LoopExprAST::codegen(){
     Builder->CreateStore(value /*ptr*/, TempValueArray);
     blocksForBreak.push(AfterLoop);
     for (int i = 0; i < Body.size(); i++){
-    if (!Body.at(i)->codegen())
+    if (!Body.at(i)->codegen()){
       return nullptr;
+    }
     }
     blocksForBreak.pop();
     Value* StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
