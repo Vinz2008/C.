@@ -15,4 +15,6 @@ func main() void {
   printi(z)
   z = 3
   printi(z)
+  var i : int = 0x25 // 37 in decimal
+  printi(i)
 }

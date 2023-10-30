@@ -314,6 +314,34 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     pos_line++;
 }
 
+void interpret_enum(std::string line, int& pos, int nb_line, int& pos_line){
+    std::string enum_declar = "";
+    
+    //nb_of_opened_braces_struct++;
+    while (true){
+        for (int i = pos; i < line.size(); i++){
+        if (line.at(i) != '}'){
+            enum_declar += line.at(i);
+        } else {
+            enum_declar += line.at(i);
+            goto after_while;
+        }
+        }
+        pos = 0;
+        if (!std::getline(imported_file, line)){
+            break;
+        } else {
+            enum_declar += '\n';
+        }
+    }
+after_while:
+    if (pos_line != 0 && pos_line != nb_line){
+        out_file << "\n";
+    }
+    out_file << "enum " << enum_declar;
+    pos_line++;
+}
+
 void interpret_extern(std::string line, int& pos_line){
     out_file << line << "\n";
     pos_line++;
@@ -375,6 +403,8 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
     } else if (IdentifierStr == "struct"){
         Log::Imports_Info() << "STRUCT FOUND" << "\n";
         interpret_struct(line, pos, nb_line, pos_line);
+    } else if (IdentifierStr == "enum"){
+        interpret_enum(line, pos, nb_line, pos_line);
     } else if (IdentifierStr == "extern"){
         interpret_extern(line, pos_line);
     } else if (IdentifierStr == "mod"){

@@ -52,6 +52,16 @@ std::string get_line_returned(){
   return line;
 }
 
+
+bool is_char_one_of_these(int c, std::string chars){
+    for (int i = 0; i < chars.size(); i++){
+        if (c == chars.at(i)){
+            return true;
+        }
+    }
+    return false;
+}
+
 void goToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
   Comp_context->lexloc.line_nb++;
@@ -251,15 +261,43 @@ static int gettok() {
 
 
   if (isdigit(LastChar)) { // Number: [0-9.]+
-    std::string NumStr;
+    std::string NumStr = "";
+    if (LastChar == '0'){ // is hex (ex : 0x3F78)
+        LastChar = getCharLine();
+        if (LastChar == 'x' || LastChar == 'X'){
+            LastChar = getCharLine();
+            if (isdigit(LastChar) || is_char_one_of_these(LastChar, "abcdef") || is_char_one_of_these(LastChar, "ABCDEF")){
+            do { // TODO : replace the two do whiles in this function with before them ifs by just whiles
+                NumStr += LastChar;
+                LastChar = getCharLine();
+            } while (isdigit(LastChar) || is_char_one_of_these(LastChar, "abcdef") || is_char_one_of_these(LastChar, "ABCDEF"));
+            }
+            NumVal = strtol(NumStr.c_str(), nullptr, 16);
+            return tok_number;
+            //return tok_hex_number;
+        } else {
+            NumStr += '0';
+            if (isdigit(LastChar) || LastChar == '.' || LastChar == '_'){
+            if (LastChar != '_'){
+                NumStr += LastChar;
+            }
+            LastChar = getCharLine();
+            } else {
+                goto after_number_lex_loop;
+            }
+        }
+    }
+    if (isdigit(LastChar) || LastChar == '.' || LastChar == '_'){
     do {
       if (LastChar != '_'){
           NumStr += LastChar;
       }
       LastChar = getCharLine();
     } while (isdigit(LastChar) || LastChar == '.' || LastChar == '_');
-
+    }
+after_number_lex_loop:
     NumVal = strtod(NumStr.c_str(), nullptr);
+    Log::Info() << "NumVal : " << NumVal << "\n";
     return tok_number;
   }
 

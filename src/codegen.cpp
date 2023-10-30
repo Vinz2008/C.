@@ -231,13 +231,6 @@ Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     auto varVa = dynamic_cast<VariableExprAST*>(va.get());
     auto vaCodegened = va->codegen();
     return Builder->CreateGEP(vaCodegened->getType(), get_var_allocation(varVa->Name), {zero, zero}, "gep_for_va");
-    /*auto vaCodegened = va->codegen();
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto debugCpointType = get_cpoint_type_from_llvm(vaCodegened->getType());
-    Log::Info() << "vaCodegened->getType() : " << get_cpoint_type_from_llvm(vaCodegened->getType()) << "\n";
-    Log::Info() << "struct " << (std::string)vaCodegened->getType()->getArrayElementType()->getStructName() << "\n";
-    auto vaPtr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true)), vaCodegened);
-    return Builder->CreateGEP(vaCodegened->getType(), vaPtr, {zero, zero}, "gep_for_va");*/
 }
 
 Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
@@ -766,7 +759,28 @@ void MembersDeclarAST::codegen(){
 
 // TODO : add the creation of a struct here (struct {tag, value} in pseudo code). Maybe even replace it for the current implementation in RedeclarationExprAST
 Value* EnumCreation::codegen(){
-    return nullptr;
+    if (!EnumDeclarations[EnumVarName]){
+        return LogErrorV(this->loc, "Enum %s doesn't exist", EnumVarName.c_str());
+    }
+    if (EnumDeclarations[EnumVarName]->EnumDeclar->enum_member_contain_type){
+        return LogErrorV(this->loc, "Enum containing types are not supported to be created not in default values of var for now");
+    }
+    int index = -1;
+    bool is_custom_value = false;
+    for (int i = 0; i < EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.size(); i++){
+        if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->Name == EnumMemberName){
+            if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->contains_custom_index){
+                is_custom_value = true;
+                index = EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->Index;
+            } else {
+                index = i;
+            }
+        }
+    }
+    if (!is_custom_value && index == -1){
+        return LogErrorV(this->loc, "Couldn't find member %s in enum %s", EnumMemberName.c_str(), EnumVarName.c_str());
+    }
+    return ConstantInt::get(*TheContext, llvm::APInt(64, index, true));
 }
 
 void string_vector_erase(std::vector<std::string>& strings, std::string string){
@@ -867,42 +881,6 @@ Value* MatchExprAST::codegen(){
     if (!NamedValues[matchVar]->type.is_enum){
         is_enum = false;
         return MatchNotEnumCodegen(matchVar, std::move(matchCases), TheFunction);
-        /*AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
-        Value* val_from_var = Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, "load_match_const");
-        if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(int_type))){
-            convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(int_type)), val_from_var);
-        }
-        auto switch_inst = Builder->CreateSwitch(val_from_var, nullptr, matchCases.size());
-        BasicBlock* defaultDestBB;
-        BasicBlock* AfterBB = BasicBlock::Create(*TheContext, "After_match");
-        for (int i = 0; i < matchCases.size(); i++){
-            std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
-            if (matchCaseTemp->is_underscore){
-                defaultDestBB = BasicBlock::Create(*TheContext, "default_dest", TheFunction);
-                Builder->SetInsertPoint(defaultDestBB);
-                for (int j = 0; j < matchCaseTemp->Body.size(); j++){
-                    matchCaseTemp->Body.at(j)->codegen();
-                }
-                Builder->CreateBr(AfterBB);
-                switch_inst->setDefaultDest(defaultDestBB);
-            } else {
-                BasicBlock* thenBB = BasicBlock::Create(*TheContext, "then_match_const", TheFunction);
-                Builder->SetInsertPoint(thenBB);
-                auto val = matchCaseTemp->expr->clone()->codegen();
-                if (val->getType() != get_type_llvm(int_type)){
-                    convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(int_type), val);
-                }
-                for (int j = 0; j < matchCaseTemp->Body.size(); j++){
-                    matchCaseTemp->Body.at(j)->codegen();
-                }
-                Builder->CreateBr(AfterBB);
-                switch_inst->addCase(dyn_cast<ConstantInt>(val), thenBB);
-            }
-        }
-        TheFunction->insert(TheFunction->end(), AfterBB);
-        Builder->SetInsertPoint(AfterBB);
-
-        return Constant::getNullValue(get_type_llvm(double_type));*/
     }
         
     is_enum = true;
@@ -1990,7 +1968,6 @@ Value* RedeclarationExprAST::codegen(){
         member_type.nb_element = 0;
     }
     if (ValDeclared->getType()->isArrayTy()){
-      //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
       AllocaInst *Alloca = NamedValues[VariableName]->alloca_inst;
       Builder->CreateStore(ValDeclared, Alloca);
       NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
@@ -1999,8 +1976,6 @@ Value* RedeclarationExprAST::codegen(){
     //Log::Info() << "Pos for GEP : " << pos_array << "\n";
     Log::Info() << "ArrayName : " << VariableName << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-    //auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-    //auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_array, true)); 
     auto indexVal = index->codegen();
     if (indexVal->getType() != get_type_llvm(int_type)){
         convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(int_type), indexVal) ;
@@ -2009,7 +1984,6 @@ Value* RedeclarationExprAST::codegen(){
     if (!index){
       return LogErrorV(this->loc, "couldn't find index for array %s", VariableName.c_str());
     }
-    // auto arrayPtr = NamedValues[VariableName]->alloca_inst;
     auto arrayPtr = get_var_allocation(VariableName);
     Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
     std::vector<Value*> indexes = { zero, indexVal};
@@ -2034,7 +2008,6 @@ Value* RedeclarationExprAST::codegen(){
   if (is_global){
     Builder->CreateStore(ValDeclared, GlobalVariables[VariableName]->globalVar);
   } else {
-  //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
   AllocaInst *Alloca = NamedValues[VariableName]->alloca_inst;
   if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
     return LogErrorV(this->loc, "Assigning to a variable a void value");

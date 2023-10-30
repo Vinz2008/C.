@@ -53,10 +53,10 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add number variable support to match (using it like a switch in c) 
 - [x] Add static struct declaration (like with arrays) like in C ((struct struct_example){val1, val2})
 - [ ] Use precompiled header for the compiler code to speed up compilation (problem : https://stackoverflow.com/questions/9580058/in-gcc-can-precompiled-headers-be-included-from-other-headers)
-- [ ] Remove constructors in the language (to make it rust-like)
+- [ ] Remove constructors in the language (to make it rust-like) ?
 - [x] Add members to structs with "members" blocks
 - [x] Add recursive install for binaries with subprojects with cpoint-build
-- [ ] In cpoint-build, find subdependencies, compile them and link them
+- [x] In cpoint-build, find subdependencies, compile them and link them
 - [ ] Warn about/Remove unused functions
 - [x] In cpoint-build, find libraries linked to dependencies and link them
 - [ ] Add "-compile-time-sizeof" flag to have sizeof not use getelementptr and the compiler insert the values at compile time
