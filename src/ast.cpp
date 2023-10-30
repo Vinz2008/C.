@@ -66,58 +66,27 @@ std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v)
     return v_cloned;
 }
 
-// TODO : remove this because template above already exists ?
-/*std::vector<std::unique_ptr<ExprAST>> clone_exprAST_vector(std::vector<std::unique_ptr<ExprAST>>& v){
-    std::vector<std::unique_ptr<ExprAST>> v_cloned;
-    if (!v.empty()){
-        for (int i = 0; i < v.size(); i++){
-            v_cloned.push_back(v.at(i)->clone());
-        }
-    }
-    return v_cloned;
-}*/
-
 std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
     ArgsCloned = clone_vector<ExprAST>(Args);
-    /*if (!Args.empty()){
-      for (int i = 0; i < Args.size(); i++){
-        ArgsCloned.push_back(Args.at(i)->clone());
-      }
-    }*/
     return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, std::move(ArgsCloned));
 }
 
 std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
     std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
     ArgsCloned = clone_vector<ExprAST>(Args);
-    /*if (!Args.empty()){
-      for (int i = 0; i < Args.size(); i++){
-        ArgsCloned.push_back(Args.at(i)->clone());
-      }
-    }*/
     return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, std::move(ArgsCloned));
 }
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> ArrayMembersCloned;
     ArrayMembersCloned = clone_vector<ExprAST>(ArrayMembers);
-    /*if (!ArrayMembers.empty()){
-      for (int i = 0; i < ArrayMembers.size(); i++){
-        ArrayMembersCloned.push_back(ArrayMembers.at(i)->clone());
-      }
-    }*/
     return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersCloned));
 }
 
 std::unique_ptr<ExprAST> ConstantStructExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> StructMembersCloned;
     StructMembersCloned = clone_vector<ExprAST>(StructMembers);
-    /*if (!StructMembers.empty()){
-      for (int i = 0; i < StructMembers.size(); i++){
-        StructMembersCloned.push_back(StructMembers.at(i)->clone());
-      }
-    }*/
     return std::make_unique<ConstantStructExprAST>(struct_name, std::move(StructMembersCloned));
 }
 
@@ -132,11 +101,6 @@ std::unique_ptr<ExprAST> EnumCreation::clone(){
 std::unique_ptr<ExprAST> CallExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
     ArgsCloned = clone_vector<ExprAST>(Args);
-    /*if (!Args.empty()){
-      for (int i = 0; i < Args.size(); i++){
-        ArgsCloned.push_back(Args.at(i)->clone());
-      }
-    }*/
     return std::make_unique<CallExprAST>(ExprAST::loc, Callee, std::move(ArgsCloned), template_passed_type);
 }
 
@@ -177,27 +141,14 @@ std::unique_ptr<ExprAST> RedeclarationExprAST::clone(){
 std::unique_ptr<FunctionAST> FunctionAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyClone;
     BodyClone = clone_vector<ExprAST>(Body);
-    /*for (int i = 0; i < Body.size(); i++){
-      BodyClone.push_back(Body.at(i)->clone());
-    }*/
     return std::make_unique<FunctionAST>(Proto->clone(), std::move(BodyClone));
 }
 
 std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
     std::vector<std::unique_ptr<FunctionAST>> FunctionsCloned;
     FunctionsCloned = clone_vector<FunctionAST>(Functions);
-    /*if (!Functions.empty()){
-      for (int i = 0; i < Functions.size(); i++){
-        FunctionsCloned.push_back(Functions.at(i)->clone());
-      }
-    }*/
     std::vector<std::unique_ptr<PrototypeAST>> ExternFunctionsCloned;
     ExternFunctionsCloned = clone_vector<PrototypeAST>(ExternFunctions);
-    /*if (!ExternFunctions.empty()){
-        for (int i = 0; i < ExternFunctions.size(); i++){
-            ExternFunctionsCloned.push_back(ExternFunctions.at(i)->clone());
-        }
-    }*/
     std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
     Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
     if (!Vars.empty()){
@@ -240,84 +191,44 @@ std::unique_ptr<EnumMember> EnumMember::clone(){
 std::unique_ptr<EnumDeclarAST> EnumDeclarAST::clone(){
     std::vector<std::unique_ptr<EnumMember>> EnumMembersCloned;
     EnumMembersCloned = clone_vector<EnumMember>(EnumMembers);
-    /*if (!EnumMembers.empty()){
-        for (int i = 0; i < EnumMembers.size(); i++){
-            EnumMembersCloned.push_back(EnumMembers.at(i)->clone());
-        }
-    }*/
     return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembersCloned));
 }
 
 std::unique_ptr<TestAST> TestAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyCloned;
     BodyCloned = clone_vector<ExprAST>(Body);
-    /*if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }*/
     return std::make_unique<TestAST>(description, std::move(BodyCloned));
 }
 
 std::unique_ptr<ExprAST> IfExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> ThenCloned;
     ThenCloned = clone_vector<ExprAST>(Then);
-    /*if (!Then.empty()){
-      for (int i = 0; i < Then.size(); i++){
-        ThenCloned.push_back(Then.at(i)->clone());
-      }
-    }*/
     std::vector<std::unique_ptr<ExprAST>> ElseCloned;
     ElseCloned = clone_vector<ExprAST>(Else);
-    /*if (!Else.empty()){
-      for (int i = 0; i < Else.size(); i++){
-        ElseCloned.push_back(Else.at(i)->clone());
-      }
-    }*/
     return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
 }
 
 std::unique_ptr<ExprAST> ForExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyCloned;
     BodyCloned = clone_vector<ExprAST>(Body);
-    /*if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }*/
     return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), std::move(BodyCloned));
 }
 
 std::unique_ptr<ExprAST> WhileExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyCloned;
     BodyCloned = clone_vector<ExprAST>(Body);
-    /*if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }*/
     return std::make_unique<WhileExprAST>(Cond->clone(), std::move(BodyCloned));
 }
 
 std::unique_ptr<ExprAST> LoopExprAST::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyCloned;
     BodyCloned = clone_vector<ExprAST>(Body);
-    /*if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }*/
     return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
 }
 
 std::unique_ptr<matchCase> matchCase::clone(){
     std::vector<std::unique_ptr<ExprAST>> BodyCloned;
     BodyCloned = clone_vector<ExprAST>(Body);
-    /*if (!Body.empty()){
-      for (int i = 0; i < Body.size(); i++){
-        BodyCloned.push_back(Body.at(i)->clone());
-      }
-    }*/
     std::unique_ptr<ExprAST> exprCloned;
     if (expr){
         exprCloned = expr->clone();
@@ -328,11 +239,6 @@ std::unique_ptr<matchCase> matchCase::clone(){
 std::unique_ptr<ExprAST> MatchExprAST::clone(){
     std::vector<std::unique_ptr<matchCase>> matchCasesCloned;
     matchCasesCloned = clone_vector<matchCase>(matchCases);
-    /*if (!matchCases.empty()){
-        for (int i = 0; i < matchCases.size(); i++){
-            matchCasesCloned.push_back(matchCases.at(i)->clone());
-        }
-    }*/
     return std::make_unique<MatchExprAST>(matchVar, std::move(matchCasesCloned));
 }
 
