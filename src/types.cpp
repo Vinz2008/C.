@@ -293,7 +293,7 @@ int from_val_to_int(Value* val){
 }
 
 Constant* from_val_to_constant(Value* val, Cpoint_Type type){
-    Type* val_type = val->getType();
+    //Type* val_type = val->getType();
     /*if (val_type != get_type_llvm(Cpoint_Type(double_type))){
         return nullptr;
     }*/

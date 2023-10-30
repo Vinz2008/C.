@@ -27,7 +27,7 @@ public:
     std::string to_c_type_str();
     C_Type(int type, bool is_ptr) : type(type), is_ptr(is_ptr) {}
     C_Type(Cpoint_Type cpoint_type){
-        enum c_translator::c_types c_type;
+        enum c_translator::c_types c_type = c_translator::int_type;
         switch (cpoint_type.type){
             default:
                 std::cout << "Unknown type" << std::endl;

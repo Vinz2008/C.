@@ -67,27 +67,19 @@ std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v)
 }
 
 std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
-    ArgsCloned = clone_vector<ExprAST>(Args);
-    return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, std::move(ArgsCloned));
+    return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, clone_vector<ExprAST>(Args));
 }
 
 std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
-    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
-    ArgsCloned = clone_vector<ExprAST>(Args);
-    return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, std::move(ArgsCloned));
+    return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, clone_vector<ExprAST>(Args));
 }
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> ArrayMembersCloned;
-    ArrayMembersCloned = clone_vector<ExprAST>(ArrayMembers);
-    return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembersCloned));
+    return std::make_unique<ConstantArrayExprAST>(clone_vector<ExprAST>(ArrayMembers));
 }
 
 std::unique_ptr<ExprAST> ConstantStructExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> StructMembersCloned;
-    StructMembersCloned = clone_vector<ExprAST>(StructMembers);
-    return std::make_unique<ConstantStructExprAST>(struct_name, std::move(StructMembersCloned));
+    return std::make_unique<ConstantStructExprAST>(struct_name, clone_vector<ExprAST>(StructMembers));
 }
 
 std::unique_ptr<ExprAST> EnumCreation::clone(){
@@ -99,9 +91,7 @@ std::unique_ptr<ExprAST> EnumCreation::clone(){
 }
 
 std::unique_ptr<ExprAST> CallExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> ArgsCloned;
-    ArgsCloned = clone_vector<ExprAST>(Args);
-    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, std::move(ArgsCloned), template_passed_type);
+    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, clone_vector<ExprAST>(Args), template_passed_type);
 }
 
 std::unique_ptr<ExprAST> VarExprAST::clone(){
@@ -139,16 +129,10 @@ std::unique_ptr<ExprAST> RedeclarationExprAST::clone(){
 }
 
 std::unique_ptr<FunctionAST> FunctionAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> BodyClone;
-    BodyClone = clone_vector<ExprAST>(Body);
-    return std::make_unique<FunctionAST>(Proto->clone(), std::move(BodyClone));
+    return std::make_unique<FunctionAST>(Proto->clone(), clone_vector<ExprAST>(Body));
 }
 
 std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
-    std::vector<std::unique_ptr<FunctionAST>> FunctionsCloned;
-    FunctionsCloned = clone_vector<FunctionAST>(Functions);
-    std::vector<std::unique_ptr<PrototypeAST>> ExternFunctionsCloned;
-    ExternFunctionsCloned = clone_vector<PrototypeAST>(ExternFunctions);
     std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
     Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
     if (!Vars.empty()){
@@ -164,7 +148,7 @@ std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
         VarsCloned.push_back(std::move(VarTemp));
       }
     }
-    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), std::move(FunctionsCloned), std::move(ExternFunctionsCloned), has_template, template_name);
+    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), clone_vector<FunctionAST>(Functions), clone_vector<PrototypeAST>(ExternFunctions), has_template, template_name);
 }
 
 std::unique_ptr<UnionDeclarAST> UnionDeclarAST::clone(){
@@ -189,59 +173,40 @@ std::unique_ptr<EnumMember> EnumMember::clone(){
 }
 
 std::unique_ptr<EnumDeclarAST> EnumDeclarAST::clone(){
-    std::vector<std::unique_ptr<EnumMember>> EnumMembersCloned;
-    EnumMembersCloned = clone_vector<EnumMember>(EnumMembers);
-    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembersCloned));
+    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, clone_vector<EnumMember>(EnumMembers));
 }
 
 std::unique_ptr<TestAST> TestAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    BodyCloned = clone_vector<ExprAST>(Body);
-    return std::make_unique<TestAST>(description, std::move(BodyCloned));
+    return std::make_unique<TestAST>(description, clone_vector<ExprAST>(Body));
 }
 
 std::unique_ptr<ExprAST> IfExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> ThenCloned;
-    ThenCloned = clone_vector<ExprAST>(Then);
-    std::vector<std::unique_ptr<ExprAST>> ElseCloned;
-    ElseCloned = clone_vector<ExprAST>(Else);
-    return std::make_unique<IfExprAST>(ExprAST::loc, Cond->clone(), std::move(ThenCloned), std::move(ElseCloned));
+    return std::make_unique<IfExprAST>(this->loc, Cond->clone(), clone_vector<ExprAST>(Then), clone_vector<ExprAST>(Else));
 }
 
 std::unique_ptr<ExprAST> ForExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    BodyCloned = clone_vector<ExprAST>(Body);
-    return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), std::move(BodyCloned));
+    return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), clone_vector<ExprAST>(Body));
 }
 
 std::unique_ptr<ExprAST> WhileExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    BodyCloned = clone_vector<ExprAST>(Body);
-    return std::make_unique<WhileExprAST>(Cond->clone(), std::move(BodyCloned));
+    return std::make_unique<WhileExprAST>(Cond->clone(), clone_vector<ExprAST>(Body));
 }
 
 std::unique_ptr<ExprAST> LoopExprAST::clone(){
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    BodyCloned = clone_vector<ExprAST>(Body);
-    return std::make_unique<LoopExprAST>(VarName, Array->clone(), std::move(BodyCloned), is_infinite_loop);
+    return std::make_unique<LoopExprAST>(VarName, Array->clone(), clone_vector<ExprAST>(Body), is_infinite_loop);
 }
 
 std::unique_ptr<matchCase> matchCase::clone(){
-    std::vector<std::unique_ptr<ExprAST>> BodyCloned;
-    BodyCloned = clone_vector<ExprAST>(Body);
     std::unique_ptr<ExprAST> exprCloned;
     if (expr){
         exprCloned = expr->clone();
     }
-    return std::make_unique<matchCase>(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, std::move(BodyCloned));
+    return std::make_unique<matchCase>(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, clone_vector<ExprAST>(Body));
 }
 
 std::unique_ptr<ExprAST> MatchExprAST::clone(){
-    std::vector<std::unique_ptr<matchCase>> matchCasesCloned;
-    matchCasesCloned = clone_vector<matchCase>(matchCases);
-    return std::make_unique<MatchExprAST>(matchVar, std::move(matchCasesCloned));
+    return std::make_unique<MatchExprAST>(matchVar, clone_vector<matchCase>(matchCases));
 }
-
 
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);

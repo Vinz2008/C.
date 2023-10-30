@@ -377,9 +377,9 @@ Value *VariableExprAST::codegen() {
     for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){
       args.push_back(get_type_llvm(FunctionProtos[Name]->Args.at(i).second));
     }
-    Type* return_type = get_type_llvm(FunctionProtos[Name]->cpoint_type);
+    //Type* return_type = get_type_llvm(FunctionProtos[Name]->cpoint_type);
     Log::Info() << "Created Function return type" << "\n";
-    FunctionType* functionType = FunctionType::get(return_type, args, FunctionProtos[Name]->is_variable_number_args);
+    //FunctionType* functionType = FunctionType::get(return_type, args, FunctionProtos[Name]->is_variable_number_args);
     Log::Info() << "Created Function type" << "\n";
     return GeneratedFunctions[Name];
     //return Builder->CreateLoad(functionType, FunctionProtos[Name]->codegen(), Name.c_str());
@@ -699,7 +699,7 @@ Type* UnionDeclarAST::codegen(){
   }
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
-    Type* var_type = get_type_llvm(VarExpr->cpoint_type);
+    //Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     std::string VarName = VarExpr->VarNames.at(0).first;
     members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
   }
@@ -872,7 +872,7 @@ Value* MatchExprAST::codegen(){
     Type* enumType;
     Value* tag;
     Value* tag_ptr;
-    Value* val_ptr;
+    Value* val_ptr = nullptr;
     bool is_enum = true;
     std::unique_ptr<EnumDeclarAST> enumDeclar;
     if (NamedValues[matchVar] == nullptr){
@@ -1704,7 +1704,7 @@ Value *IfExprAST::codegen() {
   //TheFunction->getBasicBlockList().push_back(ElseBB);
   TheFunction->insert(TheFunction->end(), ElseBB);
   Builder->SetInsertPoint(ElseBB);
-  bool is_else_empty = Else.empty();
+  //bool is_else_empty = Else.empty();
   if (!Else.empty()){
   for (int i = 0; i < Else.size(); i++){
     ElseV = Else.at(i)->codegen();
@@ -1822,8 +1822,7 @@ Value* RedeclarationExprAST::codegen(){
   }
   Log::Info() << "is_global : " << is_global << "\n";
   Log::Info() << "VariableName : " << VariableName << "\n";
-  Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  //Log::Info() << "TEST\n";
+  //Function *TheFunction = Builder->GetInsertBlock()->getParent();
   if (Val == nullptr){
     return LogErrorV(this->loc, "Val is Nullptr\n");
   }

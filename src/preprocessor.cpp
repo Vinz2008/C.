@@ -111,7 +111,7 @@ void preprocess_if(std::string instruction, int& pos){
     std::string op2 = "";
     std::string r2 = "";
     std::string operator_in_between = "";
-    bool found_extra_expr = false;
+    //bool found_extra_expr = false;
     get_next_word(instruction, pos);
     std::string l = word;
     get_next_word(instruction, pos);
