@@ -869,22 +869,22 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
 // TODO : refactor this code in multiple functions
 Value* MatchExprAST::codegen(){
     Function *TheFunction = Builder->GetInsertBlock()->getParent();
-    Type* enumType;
+    //Type* enumType;
     Value* tag;
     Value* tag_ptr;
     Value* val_ptr = nullptr;
-    bool is_enum = true;
+    //bool is_enum = true;
     std::unique_ptr<EnumDeclarAST> enumDeclar;
     if (NamedValues[matchVar] == nullptr){
         return LogErrorV(this->loc, "Match var is unknown or the match expression is invalid");
     }
     if (!NamedValues[matchVar]->type.is_enum){
-        is_enum = false;
+        //is_enum = false;
         return MatchNotEnumCodegen(matchVar, std::move(matchCases), TheFunction);
     }
         
-    is_enum = true;
-    enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
+    //is_enum = true;
+    //enumType = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->enumType;
     enumDeclar = EnumDeclarations[NamedValues[matchVar]->type.enum_name]->EnumDeclar->clone();
     bool enum_member_contain_type = enumDeclar->enum_member_contain_type;
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));

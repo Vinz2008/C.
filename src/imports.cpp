@@ -239,7 +239,7 @@ int nb_of_opened_braces_struct;
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     std::string struct_declar = "";
-    bool in_function = false;
+    //bool in_function = false;
     nb_of_opened_braces_struct = 0;
     //nb_of_opened_braces_struct++;
     line = line.substr(pos, line.size()-1);
