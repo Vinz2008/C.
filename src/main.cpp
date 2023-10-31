@@ -46,6 +46,10 @@ using namespace llvm::sys;
 #define DLLEXPORT
 #endif
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 int return_status = 0;
 
 extern std::unique_ptr<DIBuilder> DBuilder;

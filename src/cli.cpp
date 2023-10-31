@@ -3,6 +3,10 @@
 #include <memory>
 #include <array>
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
     int exit_status = 0;
     auto pipe = popen(cmd.c_str(), "r");

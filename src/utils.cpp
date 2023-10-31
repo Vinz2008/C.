@@ -23,11 +23,12 @@ bool FolderExists(std::string foldername){
     }
 }
 
+// TODO use the c++17 filesystem api to make it compatible with windows msys
 void listFiles(const std::string &path, std::function<void(const std::string &)> cb) {
     if (auto dir = opendir(path.c_str())) {
         while (auto f = readdir(dir)) {
             if (f->d_name[0] == '.') continue;
-            if (f->d_type == DT_DIR) 
+            if (f->d_type == DT_DIR)
                 listFiles(path + "/" + f->d_name + "/", cb);
 
             if (f->d_type == DT_REG)
