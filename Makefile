@@ -25,14 +25,19 @@ ifneq ($(PREFIX),$(DESTDIR)/usr/local)
 CXXFLAGS += -DDEFAULT_PREFIX_PATH=\"$(PREFIX)\"
 endif
 
+LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 
 ifneq ($(OS), Windows_NT)
 ifneq ($(shell echo | $(CXX) -dM -E - | grep clang),"")
 CXXFLAGS += -frtti
 endif
+UNAME := $(shell uname)
+ifeq ($(UNAME),Darwin)
+# is MacOS
+LDFLAGS += -lintl
+endif
 endif
 
-LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 SRCDIR=src
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
