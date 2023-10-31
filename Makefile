@@ -1,16 +1,36 @@
-CXX=g++
+CXX ?= g++
+# CC set to export it for other Makefiles
+CC ?= gcc
 DESTDIR ?= /
 BINDIR ?= $(DESTDIR)/usr/bin
 PREFIX ?= $(DESTDIR)/usr/local
 NO_OPTI ?= false
 NO_STACK_PROTECTOR ?= false
+export CC
+export CXX
+
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
 else
 OUTPUTBIN = cpoint
 endif
-CXXFLAGS = -c -g -Wall $(shell llvm-config --cxxflags) -Wno-sign-compare
+
+CXXFLAGS = -c -g -Wall -Wno-sign-compare
+
+# change it when it is changed with the llvm version
+WINDOWS_CXXFLAGS = -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
+
+ifeq ($(OS),Windows_NT)
+CXXFLAGS += $(WINDOWS_CXXFLAGS)
+else
+ifneq (,$(findstring mingw,$(CXX)))
+CXXFLAGS += $(WINDOWS_CXXFLAGS)
+else
+CXXFLAGS += $(shell llvm-config --cxxflags)
+endif
+endif
+
 ifeq ($(NO_OPTI),true)
 CXXFLAGS += -O0
 else
@@ -25,7 +45,15 @@ ifneq ($(PREFIX),$(DESTDIR)/usr/local)
 CXXFLAGS += -DDEFAULT_PREFIX_PATH=\"$(PREFIX)\"
 endif
 
+ifeq ($(OS), Windows_NT)
+LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-16 -lstdc++
+else
+ifneq (,$(findstring mingw,$(CXX)))
+LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-16 -lstdc++ -lintl
+else
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
+endif
+endif
 
 ifneq ($(OS), Windows_NT)
 ifneq ($(shell echo | $(CXX) -dM -E - | grep clang),"")

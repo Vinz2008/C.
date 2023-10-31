@@ -61,7 +61,7 @@ void rebuildSTD(std::string target, std::string path){
 void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot){
     std::string cmd = "cpoint -c " + arguments + " " + path + " ";
     fs::path path_fs{ path };
-    std::string out_path = path_fs.replace_extension(".o");
+    std::string out_path = path_fs.replace_extension(".o").string();
     cmd += "-o " + out_path;
     if (target != ""){
         cmd += " -target-triplet " + target + " ";
@@ -87,11 +87,11 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
         std::string out_path;
-        out_path = path_fs;
+        out_path = path_fs.string();
         if (path_fs.extension() == ".cpoint" || path_fs.extension() == ".c"){
-            out_path = path_fs.replace_extension(".o");
+            out_path = (std::string)path_fs.replace_extension(".o").string();
         } else {
-            out_path = path_fs;
+            out_path = path_fs.string();
         }
         cmd += out_path + " ";
     }
@@ -114,7 +114,7 @@ void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std
     std::string cmd = "llvm-ar rcs " + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
-        std::string out_path = path_fs.replace_extension(".o");
+        std::string out_path = path_fs.replace_extension(".o").string();
         cmd += out_path + " ";
     }
     std::cout << "lib link cmd : " << cmd << std::endl;
@@ -129,7 +129,7 @@ void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilena
     std::string cmd = "clang -shared -o " + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
-        std::string out_path = path_fs.replace_extension(".o");
+        std::string out_path = path_fs.replace_extension(".o").string();
         cmd += out_path + " ";
     }
     std::cout << "dynlib link cmd : " << cmd << std::endl;

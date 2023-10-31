@@ -1,4 +1,4 @@
-CXX = g++
+CXX ?= g++
 
 OUTPUTBIN = cpoint-build
 

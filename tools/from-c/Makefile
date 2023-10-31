@@ -1,4 +1,4 @@
-CC = gcc
+CC ?= gcc
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint-from-c.exe

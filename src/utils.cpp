@@ -3,6 +3,10 @@
 #include <dirent.h>
 #include <functional>
 #include <sys/stat.h>
+#include <filesystem>
+
+namespace fs = std::filesystem;
+
 
 bool FileExists(std::string filename){
     std::ifstream file(filename);
@@ -25,7 +29,12 @@ bool FolderExists(std::string foldername){
 
 // TODO use the c++17 filesystem api to make it compatible with windows msys
 void listFiles(const std::string &path, std::function<void(const std::string &)> cb) {
-    if (auto dir = opendir(path.c_str())) {
+    for (const fs::directory_entry& dir_entry : fs::recursive_directory_iterator(path)){
+        if (dir_entry.is_regular_file()){
+            cb(dir_entry.path().string());
+        }
+    }
+    /*if (auto dir = opendir(path.c_str())) {
         while (auto f = readdir(dir)) {
             if (f->d_name[0] == '.') continue;
             if (f->d_type == DT_DIR)
@@ -35,7 +44,7 @@ void listFiles(const std::string &path, std::function<void(const std::string &)>
                 cb(path + "/" + f->d_name);
         }
         closedir(dir);
-    }
+    }*/
 }
 
 std::string getFileExtension(std::string path){

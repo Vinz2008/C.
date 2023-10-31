@@ -17,7 +17,7 @@ namespace fs = std::filesystem;
 void installBinary(std::string exe_path, std::string name_binary){
     std::string out_path = DEFAULT_BUILD_INSTALL_PATH "/";
     if (name_binary == ""){
-     out_path += fs::path(exe_path).filename();
+     out_path += fs::path(exe_path).filename().string();
     } else {
         out_path += name_binary;
     }
