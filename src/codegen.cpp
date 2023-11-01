@@ -579,6 +579,10 @@ Value* ArrayMemberExprAST::codegen() {
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   std::vector<Value*> indexes = { zero, index};
   Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
+  // TODO : WHY SOME TYPES HAVE NB_PTR > 0 BUT IS_PTR FALSE ? IT IS NOT SUPPOSED TO BE POSSIBLE, BUT WE STILL NEED THIS CHECK FOR NOW. FIX IT!!
+  if (cpoint_type.nb_ptr > 0 && !cpoint_type.is_ptr){
+    cpoint_type.is_ptr = true;
+  }
   if (cpoint_type.is_ptr && !cpoint_type.is_array){
     Log::Info() << "array for array member is ptr" << "\n";
     if (cpoint_type.nb_ptr > 1){
@@ -1890,6 +1894,10 @@ Value* RedeclarationExprAST::codegen(){
       //Log::Info() << "string distance : " << temp_distance << "\n";
     }
     return LogErrorV(this->loc, "couldn't find variable \"%s\", maybe you meant \"%s\"", VariableName.c_str(), nearest_variable.c_str());
+  }
+  Log::Info() << "Redeclar var type : " << type << "\n";
+  if (type.nb_ptr > 0 && !type.is_ptr){
+    type.is_ptr = true;
   }
   if (!type.is_template_type && type.type != 0 && member == ""){ 
   if (ValDeclared->getType() != get_type_llvm(type)){
