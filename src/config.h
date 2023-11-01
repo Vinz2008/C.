@@ -1,6 +1,10 @@
 
 #ifndef DEFAULT_PREFIX_PATH
+#ifndef _WIN32
 #define DEFAULT_PREFIX_PATH "/usr/local"
+#else
+#define DEFAULT_PREFIX_PATH "C:/cpoint"
+#endif
 #endif
 
 #define DEFAULT_PREFIX_LIB_PATH DEFAULT_PREFIX_PATH "/lib"
