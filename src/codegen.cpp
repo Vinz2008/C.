@@ -1289,6 +1289,11 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         sizeof_type = NamedValues[Name]->type;
     }
     if (sizeof_type.is_struct && !sizeof_type.is_ptr){
+        /*int struct_size = 0;
+        for (int i = 0; i < StructDeclarations[sizeof_type.struct_name]->members.size(); i++){
+            StructDeclarations[sizeof_type.struct_name]->members.at(i).second
+        }
+        return ConstantInt::get(*TheContext, APInt(32, (uint64_t)struct_size, false));*/
         return LogErrorV(loc, "For now, compile time sizeof of structs is not implemented"); // TODO
         // for now can't find the size because of padding. Take just the size without padding ? find a way to calculate the padding ? Juste x2 the size to be safe ?
     }

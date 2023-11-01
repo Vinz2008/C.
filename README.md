@@ -59,7 +59,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] In cpoint-build, find subdependencies, compile them and link them
 - [ ] Warn about/Remove unused functions
 - [x] In cpoint-build, find libraries linked to dependencies and link them
-- [ ] Add "-compile-time-sizeof" flag to have sizeof not use getelementptr and the compiler insert the values at compile time
+- [x] Add "-compile-time-sizeof" flag to have sizeof not use getelementptr and the compiler insert the values at compile time
 - [ ] Have specific flags for optimizations (ex : -optimize-return) or checking (-check-arrays) and global flags (-O2, -C0 for checking level 0) 
 - [ ] maybe create a config file to have specific profile for flags (you could have -build-mode fast-no-opti with custom profile that would be defined in the config)
 - [ ] Make comments in structs, enums, etc work
@@ -70,6 +70,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Automatically make additional args in variadic functions i32s ? (for now it works without)
 - [x] Add hex notation (example 0x77)
 - [ ] Add section selection for global variables ?
+- [ ] Fix for loop (add verification at the start in special basic block) (after doing this, change '<' into '<=' in the fibonacci benchmark)
 
 ## Benchmarks compared to other languages
 
