@@ -19,7 +19,9 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 #include "windows.h"
 #endif
 
-int build_std(string path, string target_triplet, bool verbose_std_build){
+
+// TODO : replace all these "append" by +=
+int build_std(string path, string target_triplet, bool verbose_std_build, bool use_native_target){
     string cmd_clean = "make -C ";
     cmd_clean.append(path);
     cmd_clean.append(" clean");
@@ -31,9 +33,11 @@ int build_std(string path, string target_triplet, bool verbose_std_build){
     cout << out_clean->buffer << endl;
     }
     int retcode = -1;
-
-    string cmd = "TARGET=";
-    cmd.append(target_triplet);
+    string cmd = "";
+    if (!use_native_target){
+        cmd += "TARGET=";   
+        cmd += target_triplet;
+    }
     cmd.append(" make -C ");
     cmd.append(path);
     if (debug_info_mode){

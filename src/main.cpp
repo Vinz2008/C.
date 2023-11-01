@@ -335,6 +335,8 @@ int main(int argc, char **argv){
     bool is_optimised = false;
     bool explicit_with_gc = false; // add gc even with -no-std
     bool PICmode = false;
+    // use native target even if -target is used. Needed for now in windows
+    bool use_native_target = false;
     std::string linker_additional_flags = "";
     if (argc < 2){
         fprintf(stderr, "not enough arguments, expected at least 1, got %d\n", argc-1);
@@ -403,6 +405,8 @@ int main(int argc, char **argv){
           Comp_context->test_mode = true;
         } else if (arg.compare("-c-translator") == 0){
             Comp_context->c_translator = true;
+        } else if (arg.compare("-use-native-target") == 0){
+            use_native_target = true;
         } else if (arg.compare("-run") == 0){
           run_mode = true;
         } else if (arg.compare("-run-test") == 0){
@@ -628,7 +632,7 @@ int main(int argc, char **argv){
     std_static_path.append("libstd.a");
     if (Comp_context->std_mode && link_files_mode){
       if (rebuild_std){
-      if (build_std(std_path, TargetTriple, verbose_std_build) == -1){
+      if (build_std(std_path, TargetTriple, verbose_std_build, use_native_target) == -1){
         fprintf(stderr, "Could not build std at path : %s\n", std_path.c_str());
         exit(1);
       }
