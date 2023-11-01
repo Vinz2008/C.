@@ -19,7 +19,7 @@ Namespaced functions will be mangled with 3 underscores :
 ### Templates
 
 Templated functions and structs will be mangled with 4 underscores and then the type :  
-"function_name~int~()" -> "function_name____int()"  
-"function_name~i64 ptr~()" -> "function_name____i64_ptr()"  
-"struct struct_name~int~" -> "struct struct_name____int"  
-"struct struct_name~i16 ptr~" -> "struct struct_name____i16_ptr"  
+"function_name\~int\~()" -> "function_name____int()"  
+"function_name\~i64 ptr\~()" -> "function_name____i64_ptr()"  
+"struct struct_name\~int\~" -> "struct struct_name____int"  
+"struct struct_name\~i16 ptr\~" -> "struct struct_name____i16_ptr"  
