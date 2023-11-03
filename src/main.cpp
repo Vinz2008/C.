@@ -366,7 +366,7 @@ int main(int argc, char **argv){
           is_optimised = true;
         } else if (arg.compare("-g") == 0){
           debug_info_mode = true;
-        } else if (arg.compare("-nostd") == 0){
+        } else if (arg.compare("-no-std") == 0){
           Comp_context->std_mode = false;
         } else if (arg.compare("-fPIC") == 0){
           PICmode = true;

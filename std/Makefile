@@ -39,7 +39,7 @@ TEST_DEPENDENCIES = expect.cpoint print.cpoint panic.cpoint
 TEST_DEPENDENCIES_OBJ = $(patsubst %.cpoint, %.o, $(TEST_DEPENDENCIES))
 SRC_C := $(wildcard c_api/*.c)
 OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
-CPOINTFLAGS=-c -nostd -target-triplet $(TARGET)
+CPOINTFLAGS=-c -no-std -target-triplet $(TARGET)
 CPOINTFLAGS += -with-gc
 
 ifeq ($(DEBUG),TRUE)
