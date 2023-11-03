@@ -1041,6 +1041,11 @@ Value *BinaryExprAST::codegen() {
   Value *R = RHS->codegen();
   if (!L || !R)
     return nullptr;
+  if (L->getType() == get_type_llvm(Cpoint_Type(i8_type)) || L->getType() == get_type_llvm(Cpoint_Type(i16_type))){
+    convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(int_type)), L);
+  } else if (R->getType() == get_type_llvm(Cpoint_Type(i8_type)) || R->getType() == get_type_llvm(Cpoint_Type(i16_type))){
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(int_type)), R);
+  }
   if (L->getType() != R->getType()){
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
     convert_to_type(get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
@@ -1090,7 +1095,7 @@ Value *BinaryExprAST::codegen() {
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '&':
     //return operators::LLVMCreateLogicalOr(L, R);
-    return operators::LLVMCreateLogicalAnd(L, R);
+    return operators::LLVMCreateAnd(L, R);
   case '|':
     L = Builder->CreateOr(L, R, "ortmp");
     return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");

@@ -1624,6 +1624,9 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   return std::make_unique<WhileExprAST>(std::move(Cond), std::move(Body));
 }
 
+
+// TODO : add types in for variable 
+// ex : for i : i8 = 0, i < 10, 1.0
 std::unique_ptr<ExprAST> ParseForExpr() {
   getNextToken();  // eat the for.
 

@@ -18,4 +18,5 @@ namespace operators {
     Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R);
     Value* LLVMCreateLogicalOr(Value* L, Value* R);
     Value* LLVMCreateLogicalAnd(Value* L, Value* R);
+    Value* LLVMCreateAnd(Value* L, Value* R);
 }

@@ -120,5 +120,9 @@ Value* LLVMCreateLogicalAnd(Value* L, Value* R){
     return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
+Value* LLVMCreateAnd(Value* L, Value* R){
+    return Builder->CreateAnd(L, R, "andtmp");
+}
+
 }
 
