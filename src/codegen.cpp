@@ -1786,8 +1786,14 @@ Value *IfExprAST::codegen() {
   return PN;
 }
 
+
+// TODO : maybe make all type converts in ast ? (with a convert type/implicit convert type ast node like in the clang ast)
 Value* ReturnAST::codegen(){
   Value* value_returned = (returned_expr) ? returned_expr->codegen() : nullptr;
+  Function *TheFunction = Builder->GetInsertBlock()->getParent();
+  if (TheFunction->getReturnType() != value_returned->getType() && TheFunction->getReturnType() != get_type_llvm(Cpoint_Type(void_type))){
+    convert_to_type(get_cpoint_type_from_llvm(value_returned->getType()), TheFunction->getReturnType(), value_returned);
+  }
   //return Builder->CreateRet(value_returned);
   Builder->CreateRet(value_returned);
   return value_returned;

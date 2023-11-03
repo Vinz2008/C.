@@ -348,6 +348,10 @@ Constant* from_val_to_constant_infer(Value* val){
     return dyn_cast<ConstantFP>(val);
 }
 
+
+// TODO : have multiple version of this function with args : Cpoint_Type and Cpoint_Type, Type* and Type*, Cpoint_type and Type*, just with differences like :
+// Cpoint_Type and Type* is just calling the Cpoint_Type and Cpoint_Type one after calling get_cpoint_type_from_llvm on the Type*
+// it will make the function more optimised in a lot of cases 
 bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
   Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
