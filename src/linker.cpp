@@ -21,7 +21,7 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 
 
 int build_std(string path, string target_triplet, bool verbose_std_build, bool use_native_target){
-    string cmd_clean = "make -C " + path + "clean";
+    string cmd_clean = "make -C " + path + " clean";
     if (Comp_context->debug_mode){
     cout << "cmd clean : " << cmd_clean << endl;
     }

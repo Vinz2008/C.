@@ -641,6 +641,8 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return generate_todo_macro(ArgsMacro);
     } else if (function_name == "dbg"){
         return generate_dbg_macro(ArgsMacro);
+    } else if (function_name == "print"){
+        return generate_print_macro(ArgsMacro);
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
 }

@@ -123,3 +123,9 @@ std::unique_ptr<ExprAST> generate_dbg_macro(std::vector<std::unique_ptr<ExprAST>
     Args.push_back(std::move(ArgsMacro.at(0)));
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_dbg", std::move(Args), Cpoint_Type());
 }
+
+std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
+    // call internal function
+    std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
+    return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_print", std::move(Args), Cpoint_Type());
+}

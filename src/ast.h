@@ -835,4 +835,7 @@ std::unique_ptr<ExprAST> ParseMacroCall();
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);
 
+template <class T>
+std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v);
+
 #endif

@@ -472,6 +472,29 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   }*/
 }
 
+std::string from_cpoint_type_to_printf_format(Cpoint_Type type){
+    std::string format;
+    if (type.is_ptr){
+        if (type.type == i8_type){
+            //format = "\"%s\"";
+            format = "%s";
+        } else {
+            format = "%p";
+        }
+    } /*else if (valueCopyCpointType.type == i8_type){
+        format = "%c";
+        // TODO activate this or not ?
+    }*/ else if (is_signed(type) || is_unsigned(type)){
+        format = "%d";
+    } else if (is_decimal_number_type(type)) {
+        format = "%f";
+    } else {
+        //return LogErrorV(emptyLoc, "Not Printable type in debug macro");
+        return "";
+    }
+    return format;
+}
+
 
 std::vector<std::string> types{
     "double",

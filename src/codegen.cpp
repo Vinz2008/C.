@@ -223,6 +223,7 @@ std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cp
     return struct_name + "____" + create_mangled_name_from_type(type);
 }
 
+// TODO : move this in builtin_macros.cpp
 Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     if (!dynamic_cast<VariableExprAST*>(va.get())){
         return LogErrorV(emptyLoc, "Not implemented internal function to get address of va list with amd64 systemv abi for non variables");
@@ -231,6 +232,58 @@ Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     auto varVa = dynamic_cast<VariableExprAST*>(va.get());
     auto vaCodegened = va->codegen();
     return Builder->CreateGEP(vaCodegened->getType(), get_var_allocation(varVa->Name), {zero, zero}, "gep_for_va");
+}
+
+Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
+    std::vector<std::unique_ptr<ExprAST>> PrintfArgs;
+    if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
+        return LogErrorV(emptyLoc, "First argument of the print macro is not a constant string"); // TODO : pass loc to this function ?
+    }
+    auto print_format_expr = dynamic_cast<StringExprAST*>(Args.at(0).get());
+    std::string print_format = print_format_expr->str;
+    std::string generated_printf_format = "";
+    int arg_nb = 1;
+    for (int i = 0; i < print_format.size(); i++){
+        if (print_format.at(i) == '{' && print_format.at(i+1) && '}'){
+            bool is_string_found = false;
+            if (dynamic_cast<StringExprAST*>(Args.at(arg_nb).get())){
+                Log::Info() << "StringExpr in Print Macro codegen" << "\n";
+                is_string_found = true;
+            } else if (dynamic_cast<VariableExprAST*>(Args.at(arg_nb).get())){
+                Log::Info() << "Variable in Print Macro codegen" << "\n";
+                auto varTemp = dynamic_cast<VariableExprAST*>(Args.at(arg_nb).get());
+                auto varTempCpointType = varTemp->type;
+                if (varTempCpointType.type == i8_type && varTempCpointType.is_ptr){
+                    Log::Info() << "Variable in Print Macro codegen is string" << "\n";
+                    is_string_found = true;
+                }
+            } 
+            if (is_string_found){
+                generated_printf_format += "%s";
+            } else {
+            Value* valueTemp = Args.at(arg_nb)->clone()->codegen();
+            Type* arg_type = valueTemp->getType();
+            Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
+            std::string temp_format = from_cpoint_type_to_printf_format(arg_cpoint_type);
+            if (temp_format == ""){
+                return LogErrorV(emptyLoc, "Not Printable type in print macro");
+            }
+            generated_printf_format += temp_format; 
+            }
+            arg_nb++;
+            i++;
+        } else {
+            generated_printf_format += print_format.at(i);
+        }
+    }
+
+    PrintfArgs.push_back(std::make_unique<StringExprAST>(generated_printf_format));
+    for (int i = 1; i < Args.size(); i++){
+        PrintfArgs.push_back(std::move(Args.at(i)));
+    }
+
+    auto call = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(PrintfArgs), Cpoint_Type());
+    return call->codegen();
 }
 
 Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
@@ -252,22 +305,34 @@ Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     }
     auto valueCopyCpointType = get_cpoint_type_from_llvm(valueCopy->getType());
     Log::Info() << "valueCopyCpointType type : " << valueCopyCpointType.type << "\n";
-    if (valueCopyCpointType.is_ptr){
+    if (is_string_found){
+        format = "\"%s\"";
+    } else {
+        format = from_cpoint_type_to_printf_format(valueCopyCpointType);
+        if (format.find("%s") != std::string::npos){
+            format = "\"" + format + "\"";
+        }
+    }
+    if (format == ""){
+        return LogErrorV(emptyLoc, "Not Printable type in debug macro");
+    }
+    /*if (valueCopyCpointType.is_ptr){
         if (valueCopyCpointType.type == i8_type  || is_string_found){
             format = "\"%s\"";
         } else {
             format = "%p";
         }
-    } /*else if (valueCopyCpointType.type == i8_type){
-        format = "%c";
+    } //else if (valueCopyCpointType.type == i8_type){
+        // format = "%c";
         // TODO activate this or not ?
-    }*/ else if (is_signed(valueCopyCpointType) || is_unsigned(valueCopyCpointType)){
+    //} 
+    else if (is_signed(valueCopyCpointType) || is_unsigned(valueCopyCpointType)){
         format = "%d";
     } else if (is_decimal_number_type(valueCopyCpointType)) {
         format = "%f";
     } else {
         return LogErrorV(emptyLoc, "Not Printable type in debug macro");
-    }
+    }*/
     Args.push_back(std::make_unique<StringExprAST>(VarDbg->to_string() + " = " + format + "\n"));
     Args.push_back(std::move(VarDbg));
     
@@ -1180,6 +1245,9 @@ Value *CallExprAST::codegen() {
     }
     if (Callee == "get_va_adress_systemv"){
         return GetVaAdressSystemV(std::move(Args.at(0)));
+    }
+    if (Callee == "print"){
+        return PrintMacroCodegen(std::move(Args));
     }
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;
