@@ -380,7 +380,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     if (typeFrom.type == double_type || typeFrom.type ==  float_type){
         val = Builder->CreateFPToUI(val, get_type_llvm(Cpoint_Type(int_type)), "ui_to_fp_inttoptr");
     }
-    val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast"); // TODO : test to readdd them
+    val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast");
     return true;
   }
   if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){
@@ -548,7 +548,11 @@ std::string create_pretty_name_for_type(Cpoint_Type type){
     name = get_string_from_type(type);
     if (type.is_ptr){
         name += " ptr";
-        // TODO : maybe use the nb_ptr to mangle differently
+        if (type.nb_ptr > 1){
+            for (int i = 0; i < type.nb_ptr-1; i++){
+                name += " ptr";
+            }
+        }
     }
     if (type.is_array){
         name += " array";

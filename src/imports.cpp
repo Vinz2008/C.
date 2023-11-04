@@ -394,7 +394,6 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
         }
         return;
     }
-    // TODO : verify if in line contains "?[" to find preprocessor directives 
     skip_spaces(line, pos);
     getIdentifierStr(line, pos, IdentifierStr);
     Log::Imports_Info() << "IdentifierStr : " << IdentifierStr << "\n";

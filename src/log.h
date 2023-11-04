@@ -88,7 +88,6 @@ namespace Log {
         }
     };
     struct Warning {
-        // TODO : add lines number and file like in error
         Warning(Source_location loc = emptyLoc){
             Color::Modifier red(Color::FG_RED);
             std::cout<<red;

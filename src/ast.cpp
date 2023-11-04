@@ -99,16 +99,16 @@ std::unique_ptr<ExprAST> VarExprAST::clone(){
     if (!VarNames.empty()){
       Log::Info() << "VarNames.size() " << VarNames.size() << "\n";
       for (int i = 0; i < VarNames.size(); i++){
-        std::string name = VarNames.at(i).first;
-        std::unique_ptr<ExprAST> val;
+        //std::string name = VarNames.at(i).first;
+        /*std::unique_ptr<ExprAST> val;
         if (VarNames.at(i).second != nullptr){
         val = VarNames.at(i).second->clone();
         } else {
           val = nullptr;
-        }
-        VarNamesCloned.push_back(std::make_pair(name, std::move(val)));
-        // TODO why replacing the above code by this doesn't work ?
-        // VarNamesCloned.push_back(std::make_pair(VarNames.at(i).first, VarNames.at(i).second->clone()));
+        }*/
+        //VarNamesCloned.push_back(std::make_pair(name, std::move(val)));
+        //VarNamesCloned.push_back(std::make_pair(VarNames.at(i).first, std::move(val)));
+        VarNamesCloned.push_back(std::make_pair(VarNames.at(i).first, VarNames.at(i).second ? VarNames.at(i).second->clone() : nullptr));
       }
     }
     std::unique_ptr<ExprAST> indexCloned;
@@ -1724,8 +1724,8 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     if (is_array){
         cpoint_type.is_array = is_array;
         //cpoint_type.nb_element = from_val_to_constant_infer(index->clone()->codegen());
-        // TODO : need to add a function that would extract a value from a constant whether a double or an int
-        cpoint_type.nb_element = dyn_cast<ConstantFP>(index->clone()->codegen())->getValue().convertToDouble();
+        //cpoint_type.nb_element = dyn_cast<ConstantFP>(index->clone()->codegen())->getValue().convertToDouble();
+        cpoint_type.nb_element = from_val_to_int(index->clone()->codegen());;
     }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;

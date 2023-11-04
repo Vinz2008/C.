@@ -58,7 +58,6 @@ extern bool is_template_parsing_definition;
 extern bool is_template_parsing_struct;
 struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
-// TODO : add those variable in a struct called cpointContext or in Compiler_context
 string std_path = DEFAULT_STD_PATH;
 string filename = "";
 /*bool std_mode = true;
@@ -94,7 +93,9 @@ extern std::vector<std::string> modulesNamesContext;
 extern Source_location emptyLoc;
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName){
-  // TODO : verify in FunctionProtos if function already exists before redeclaring it
+  if (FunctionProtos[fnName]){
+    return;
+  }
   auto FnAST =  std::make_unique<PrototypeAST>(emptyLoc, fnName, std::move(ArgNames), cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args);
   FunctionProtos[fnName] = FnAST->clone();
   Log::Info() << "add extern name " << fnName << "\n";
@@ -107,7 +108,7 @@ void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
   add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false, false, "");
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
-  args_gc_malloc.push_back(make_pair("size", Cpoint_Type(i64_type))); // TODO : change this to i64 ? in clang it is a i64 because it is a size_t
+  args_gc_malloc.push_back(make_pair("size", Cpoint_Type(i64_type)));
   add_manually_extern("gc_malloc", Cpoint_Type(void_type, true), std::move(args_gc_malloc), 0, 30, false, false, "");
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_realloc;
   args_gc_realloc.push_back(make_pair("ptr", Cpoint_Type(void_type, true)));

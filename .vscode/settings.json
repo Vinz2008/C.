@@ -115,7 +115,8 @@
         "*.def": "cpp",
         "*.ipp": "cpp",
         "index.h": "c",
-        "platform.h": "c"
+        "platform.h": "c",
+        "gc.h": "c"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang"
 }

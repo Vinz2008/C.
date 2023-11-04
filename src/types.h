@@ -29,7 +29,6 @@ int get_type(std::string type);
 std::string create_pretty_name_for_type(Cpoint_Type type);
 
 
-// TODO : add union type
 class Cpoint_Type {
 public:
     int type;
@@ -62,7 +61,6 @@ public:
         return os;
     }
     friend bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
-        // TODO : maybe add the comparaison of the template type passed, the return type and the args
         return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_struct_template == rhs.is_struct_template && lhs.is_function == rhs.is_function;
     }
     const char* c_stringify(){
@@ -82,6 +80,7 @@ bool is_decimal_number_type(Cpoint_Type type);
 bool is_signed(Cpoint_Type type);
 bool is_unsigned(Cpoint_Type type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
+bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo, llvm::Value* &val);
 int get_type_number_of_bits(Cpoint_Type type);
 std::string get_string_from_type(Cpoint_Type type);
 std::string create_mangled_name_from_type(Cpoint_Type type);
