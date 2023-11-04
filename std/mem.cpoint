@@ -4,7 +4,7 @@ import print.cpoint
 extern strcpy(dest : i8 ptr, src : i8 ptr) i8 ptr;
 
 mod mem {
-    func memcpy(dst_ptr : void ptr, src_ptr : void ptr, size : int) void ptr {
+    func memcpy(dst_ptr : void ptr, src_ptr : void ptr, size : i64) void ptr {
         var dst : i8 ptr =  dst_ptr
         var src : i8 ptr = src_ptr
         for i = 0, i < size, 1.0 {
@@ -12,14 +12,14 @@ mod mem {
         }
         dst_ptr
     }
-    func memset(buf_ptr : void ptr, value : int, size : int) void ptr{
+    func memset(buf_ptr : void ptr, value : int, size : i64) void ptr{
         var buf : i8 ptr = buf_ptr
         for i = 0, i < size, 1.0 {
             buf[i] = value
         }
         buf_ptr
     }
-    func memcmp(a_ptr : void ptr, b_ptr : void ptr, size : int){
+    func memcmp(a_ptr : void ptr, b_ptr : void ptr, size : i64) int {
         var a : i8 ptr = a_ptr
         var b : i8 ptr = b_ptr
         for i = 0, i < size, 1.0 {
@@ -40,12 +40,19 @@ mod mem {
 test "memcmp" {
     var a = 2
     var b = 2
-    #expect(mem::memcmp(a, b, sizeof double) == 0)
+    #expect(mem::memcmp(addr a, addr b, sizeof double) == 0)
 }
 
 test "memcpy" {
     var a = 2
     var b = 0
-    mem::memcpy(b, a, sizeof double)
-    // #expect(mem::memcmp(a, b, sizeof double) == 0)
+    mem::memcpy(addr b, addr a, sizeof double)
+    #expect(mem::memcmp(addr b, addr a, sizeof double) == 0)
+    // #expect(mem::memcmp(addr a, addr b, sizeof double) == 0)
+}
+
+test "memset" {
+    var buf1 : i8 ptr = gc_malloc(10 * sizeof i8)
+    var buf2 : i8 ptr = gc_malloc(10 * sizeof i8)
+    // mem::memset(buf1, 0, 10)
 }

@@ -71,6 +71,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add hex notation (example 0x77)
 - [ ] Add section selection for global variables ?
 - [ ] Fix for loop (add verification at the start in special basic block) (after doing this, change '<' into '<=' in the fibonacci benchmark)
+- [ ] Make the compiler less "double focused" (make numbers that have no decimal part ints by default, use by default in for loop ints for the variable and then add the possibility to set the type manually)
 
 ## Benchmarks compared to other languages
 

@@ -1910,7 +1910,7 @@ Value* RedeclarationExprAST::codegen(){
   if (type.nb_ptr > 0 && !type.is_ptr){
     type.is_ptr = true;
   }
-  if (!type.is_template_type && type.type != 0 && member == ""){ 
+  if (!type.is_template_type && type.type != 0 && member == "" && !is_array){ 
   if (ValDeclared->getType() != get_type_llvm(type)){
     convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(type), ValDeclared);
   }

@@ -133,6 +133,7 @@ public:
   std::string generate_c() override { return ""; }
 };
 
+// TODO : fix sizeof not being printed in assertions with expect (to_string() return "" ?)
 class SizeofExprAST : public ExprAST {
   Cpoint_Type type;
   bool is_variable;
@@ -394,7 +395,7 @@ public:
     std::string args = "";
     args += "(";
     for (int i = 0; i < Args.size(); i++){
-        args += Args.at(i)-> to_string() /*+ ","*/;
+        args += Args.at(i)->to_string() /*+ ","*/;
         if (i != Args.size()-1){
             args += ",";
         }

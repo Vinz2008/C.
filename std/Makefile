@@ -79,6 +79,6 @@ test: clean-objects capi $(TEST_DEPENDENCIES_OBJ) set_test_flag $(TESTS_EXE)
 
 run-test:
 	@for program in $(TESTS_EXE) ; do \
-		./$$program ; \
+		./$$program || exit 1 ; \
 	done
 	
