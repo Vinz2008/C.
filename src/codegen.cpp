@@ -1732,6 +1732,9 @@ GlobalVariable* GlobalVariableAST::codegen(){
   }
   GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
   GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName);
+  if (section_name != ""){
+    globalVar->setSection(section_name);
+  }
   GlobalVariables[varName] = std::make_unique<GlobalVariableValue>(cpoint_type, globalVar);
   return globalVar;
 }

@@ -1378,7 +1378,13 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   if (!Init)
     return nullptr;
   }
-  return std::make_unique<GlobalVariableAST>(Name, is_const, is_extern, cpoint_type, std::move(Init));
+  std::string section_name = "";
+  if (CurTok == tok_identifier && IdentifierStr == "section"){
+    getNextToken();
+    auto section_name_expression = static_cast<StringExprAST*>(ParseStrExpr().get());
+    section_name = section_name_expression->str;
+  }
+  return std::make_unique<GlobalVariableAST>(Name, is_const, is_extern, cpoint_type, std::move(Init), section_name);
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {

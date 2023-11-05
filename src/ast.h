@@ -612,8 +612,9 @@ public:
   bool is_extern;
   Cpoint_Type cpoint_type;
   std::unique_ptr<ExprAST> Init;
-  GlobalVariableAST(const std::string& varName, bool is_const, bool is_extern, Cpoint_Type cpoint_type, std::unique_ptr<ExprAST> Init) 
-    : varName(varName), is_const(is_const), is_extern(is_extern), cpoint_type(cpoint_type), Init(std::move(Init)) {} 
+  std::string section_name;
+  GlobalVariableAST(const std::string& varName, bool is_const, bool is_extern, Cpoint_Type cpoint_type, std::unique_ptr<ExprAST> Init, std::string section_name) 
+    : varName(varName), is_const(is_const), is_extern(is_extern), cpoint_type(cpoint_type), Init(std::move(Init)), section_name(section_name) {} 
   GlobalVariable* codegen();
 };
 
