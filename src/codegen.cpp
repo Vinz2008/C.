@@ -207,6 +207,10 @@ Cpoint_Type* get_variable_type(std::string name){
     }
 }
 
+bool var_exists(std::string name){
+    return (GlobalVariables[name] != nullptr || NamedValues[name] != nullptr);
+}
+
 // to get either AllocaInst or GlobalVariable
 Value* get_var_allocation(std::string name){
     if (NamedValues[name]){
@@ -1313,10 +1317,17 @@ Value* AddrExprAST::codegen(){
     std::unique_ptr<VariableExprAST> VariableExpr;
     Expr.release();
     VariableExpr.reset(VariableExprPtr);
+    if (is_var_local(VariableExpr->getName())){
     AllocaInst *A = NamedValues[VariableExpr->getName()]->alloca_inst;
     if (!A)
         return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
     return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VariableExpr->getName().c_str());
+    } else {
+        GlobalVariable* G = GlobalVariables[VariableExpr->getName()]->globalVar;
+        if (!G)
+            return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
+        return Builder->CreateLoad(PointerType::get(G->getType(), G->getAddressSpace()), G, VariableExpr->getName().c_str());
+    }
   } else if (dynamic_cast<ArrayMemberExprAST*>(Expr.get())){
     auto arrayMemberPtr = static_cast<ArrayMemberExprAST*>(Expr.get());
     std::unique_ptr<ArrayMemberExprAST> arrayMember;
@@ -1731,6 +1742,13 @@ GlobalVariable* GlobalVariableAST::codegen(){
   }
   }
   GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
+  if (is_array){
+    auto indexVal = index->codegen();
+    auto constFP = dyn_cast<ConstantFP>(indexVal);
+    double indexD = constFP->getValueAPF().convertToDouble();
+    cpoint_type.is_array = true;
+    cpoint_type.nb_element = indexD;
+  }
   GlobalVariable* globalVar = new GlobalVariable(*TheModule, get_type_llvm(cpoint_type), is_const, linkage, InitVal, varName);
   if (section_name != ""){
     globalVar->setSection(section_name);
@@ -1957,10 +1975,12 @@ Value* RedeclarationExprAST::codegen(){
   }
   Value* ValDeclared = Val->codegen();
   Cpoint_Type type = Cpoint_Type(0);
-  if (is_global && GlobalVariables[VariableName] != nullptr){
+  /*if (is_global && GlobalVariables[VariableName] != nullptr){
     type = GlobalVariables[VariableName]->type;
   } else if (NamedValues[VariableName] != nullptr){
-    type = NamedValues[VariableName]->type;
+    type = NamedValues[VariableName]->type;*/
+  if (var_exists(VariableName) /*GlobalVariables[VariableName] != nullptr || NamedValues[VariableName] != nullptr*/){
+    type = *get_variable_type(VariableName);
   } else {
     std::string nearest_variable;
     int lowest_distance = 20;
@@ -1991,11 +2011,11 @@ Value* RedeclarationExprAST::codegen(){
   //bool is_class = false;
   if (member != ""){
   Log::Info() << "objectName : " << VariableName << "\n";
-  if (NamedValues[VariableName] != nullptr){
-    if (UnionDeclarations[NamedValues[VariableName]->type.union_name] != nullptr){
+  if (var_exists(VariableName) /*NamedValues[VariableName] != nullptr*/){
+    if (UnionDeclarations[get_variable_type(VariableName)->union_name] != nullptr){
       Log::Info() << "IS_UNION" << "\n";
       is_union = true;
-    } else if (StructDeclarations[NamedValues[VariableName]->type.struct_name] != nullptr){
+    } else if (StructDeclarations[get_variable_type(VariableName)->struct_name] != nullptr){
       Log::Info() << "IS_STRUCT" << "\n";
       is_struct = true;
     } else {
@@ -2003,6 +2023,7 @@ Value* RedeclarationExprAST::codegen(){
     }
   }
   }
+  // TODO : replace all the NamedValues[VariableName]->type by get_variable_type(VariableName)
   if (is_union){
     Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
     //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
@@ -2023,7 +2044,7 @@ Value* RedeclarationExprAST::codegen(){
     NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
   } else if (is_struct){
     Log::Info() << "StructName : " << VariableName << "\n";
-    auto members = StructDeclarations[NamedValues[VariableName]->type.struct_name]->members;
+    auto members = StructDeclarations[get_variable_type(VariableName)->struct_name]->members;
     int pos_struct = -1;
     Log::Info() << "members.size() : " << members.size() << "\n";
     for (int i = 0; i < members.size(); i++){
@@ -2035,8 +2056,9 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
-    auto structPtr = NamedValues[VariableName]->alloca_inst;
-    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
+    auto structPtr = /*NamedValues[VariableName]->alloca_inst*/ get_var_allocation(VariableName);
+    Cpoint_Type cpoint_type = *get_variable_type(VariableName);
+    // TODO : should we use the cpoint_type in the NamedValue reassigning because it is changed here ?
     if (cpoint_type.is_ptr){
       cpoint_type.is_ptr = false;
     }
@@ -2045,7 +2067,12 @@ Value* RedeclarationExprAST::codegen(){
         convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_struct).second), ValDeclared);
     }
     Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[VariableName] = std::make_unique<NamedValue>(structPtr, cpoint_type);
+    // TODO : verify if this code is needed and remove it in all the code if not
+    if (is_var_local(VariableName)){
+        NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
+    } else {
+        GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
+    }
   } else if (is_array) {
     Log::Info() << "array redeclaration" << "\n";
     Cpoint_Type cpoint_type = *get_variable_type(VariableName);
@@ -2445,6 +2472,7 @@ Value *VarExprAST::codegen() {
     auto constFP = dyn_cast<ConstantFP>(indexVal);
     double indexD = constFP->getValueAPF().convertToDouble();
     Log::Info() << "index for varexpr array : " << indexD << "\n";
+    cpoint_type.is_array = true;
     cpoint_type.nb_element = indexD;
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);

@@ -1368,6 +1368,17 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   }
   std::string Name = IdentifierStr;
   getNextToken(); // eat identifier.
+  std::unique_ptr<ExprAST> Index;
+  bool is_array = false;
+  if (CurTok == '['){
+    is_array = true;
+    getNextToken();
+    Index = ParseNumberExpr();
+    if (CurTok != ']'){
+        return LogErrorG("missing ']'");
+    }
+    getNextToken();
+  }
   if (CurTok == ':'){
     cpoint_type = ParseTypeDeclaration();
   }
@@ -1384,7 +1395,7 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
     auto section_name_expression = static_cast<StringExprAST*>(ParseStrExpr().get());
     section_name = section_name_expression->str;
   }
-  return std::make_unique<GlobalVariableAST>(Name, is_const, is_extern, cpoint_type, std::move(Init), section_name);
+  return std::make_unique<GlobalVariableAST>(Name, is_const, is_extern, cpoint_type, std::move(Init), is_array, std::move(Index), section_name);
 }
 
 std::unique_ptr<ExprAST> ParseIfExpr() {
