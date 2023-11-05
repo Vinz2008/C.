@@ -73,7 +73,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix for loop (add verification at the start in special basic block) (after doing this, change '<' into '<=' in the fibonacci benchmark)
 - [ ] Make the compiler less "double focused" (make numbers that have no decimal part ints by default, use by default in for loop ints for the variable and then add the possibility to set the type manually)
 - [x] Create a print/printfmt macro that will print vars/values .have using it be like #print("{} {}", a, 2), which will generate printfmt("%s %d", a, 2) by detecting types
-- [ ] Create a println macro equivalent to #print but adding automatically a '\n' at the end of the line
+- [x] Create a println macro equivalent to #print but adding automatically a '\n' at the end of the line
 - [x] Remove python from benchmark pictures (to see better the differences between the system programming languages)
 
 ## Benchmarks compared to other languages

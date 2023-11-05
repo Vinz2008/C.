@@ -18,7 +18,7 @@ func main() void {
   #dbg(1 + 4)
   var test : i8 ptr = "hello world"
   #dbg(test)
-  #print("test print macro : {} {}\n",  hello, test)
+  #println("test print macro : {} {}",  hello, test)
   #expect(argc > 4)
   expectx(1 < 3, #file(), function_name)
   #panic("panic test")

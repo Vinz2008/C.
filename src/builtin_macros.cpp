@@ -124,8 +124,16 @@ std::unique_ptr<ExprAST> generate_dbg_macro(std::vector<std::unique_ptr<ExprAST>
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_dbg", std::move(Args), Cpoint_Type());
 }
 
-std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
+std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro, bool is_println){
     // call internal function
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
+    if (is_println){
+        if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
+            return LogError("First argument of the println macro is not a constant string");
+        }
+        auto stringExpr = dynamic_cast<StringExprAST*>(Args.at(0).get());
+        stringExpr->str += "\n";
+    }
+
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_print", std::move(Args), Cpoint_Type());
 }
