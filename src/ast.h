@@ -133,6 +133,20 @@ public:
   std::string generate_c() override { return ""; }
 };
 
+class DerefExprAST : public ExprAST {
+    std::unique_ptr<ExprAST> Expr;
+public:
+    DerefExprAST(std::unique_ptr<ExprAST> Expr) : Expr(std::move(Expr)) {}
+    Value *codegen() override;
+    std::unique_ptr<ExprAST> clone() override {
+        return std::make_unique<DerefExprAST>(Expr->clone());
+    }
+    std::string to_string() override {
+        return "deref " + Expr->to_string();
+    }
+    std::string generate_c() override { return ""; }
+};
+
 // TODO : fix sizeof not being printed in assertions with expect (to_string() return "" ?)
 class SizeofExprAST : public ExprAST {
   Cpoint_Type type;
@@ -814,6 +828,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct();
 //std::unique_ptr<ClassDeclarAST> ParseClass();
 std::unique_ptr<MembersDeclarAST> ParseMembers();
 std::unique_ptr<ExprAST> ParseAddrExpr();
+std::unique_ptr<ExprAST> ParseDerefExpr();
 std::unique_ptr<ExprAST> ParseSizeofExpr();
 std::unique_ptr<ExprAST> ParseTypeidExpr();
 std::unique_ptr<ExprAST> ParseArrayMemberExpr();
@@ -840,5 +855,20 @@ std::unique_ptr<ExprAST> LogError(const char *Str, ...);
 
 template <class T>
 std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v);
+
+void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body);
+std::unique_ptr<VarExprAST> get_VarExpr_from_ExprAST(std::unique_ptr<ExprAST> E);
+
+template <class T>
+std::unique_ptr<T> get_Expr_from_ExprAST(std::unique_ptr<ExprAST> E){
+    std::unique_ptr<T> SubClass;
+    T* SubClassPtr = dynamic_cast<T*>(E.get());
+    if (!SubClassPtr){
+        return nullptr;
+    }
+    E.release();
+    SubClass.reset(SubClassPtr);
+    return SubClass;
+}
 
 #endif

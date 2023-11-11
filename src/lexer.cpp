@@ -214,6 +214,8 @@ static int gettok() {
       return tok_class;
     if (IdentifierStr == "addr")
       return tok_addr;
+    if (IdentifierStr == "deref")
+        return tok_deref;
     if (IdentifierStr == "sizeof")
       return tok_sizeof;
     if (IdentifierStr == "ptr")

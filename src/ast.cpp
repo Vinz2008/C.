@@ -55,6 +55,29 @@ bool is_template_parsing_struct = false;
 
 Source_location emptyLoc = {0, 0, true, ""};
 
+/*template <class T>
+std::unique_ptr<T> get_Expr_from_ExprAST(std::unique_ptr<ExprAST> E){
+    std::unique_ptr<T> SubClass;
+    T* SubClassPtr = dynamic_cast<T*>(E.get());
+    if (!SubClassPtr){
+        return nullptr;
+    }
+    E.release();
+    SubClass.reset(SubClassPtr);
+    return SubClass;
+}*/
+
+/*std::unique_ptr<VarExprAST> get_VarExpr_from_ExprAST(std::unique_ptr<ExprAST> E){
+    std::unique_ptr<VarExprAST> Var;
+    VarExprAST* VarTempPtr = dynamic_cast<VarExprAST*>(E.get());
+    if (!VarTempPtr){
+        return nullptr;
+    }
+    E.release();
+    Var.reset(VarTempPtr);
+    return Var;
+}*/
+
 template <class T>
 std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v){
     std::vector<std::unique_ptr<T>> v_cloned;
@@ -137,14 +160,19 @@ std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
     Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
     if (!Vars.empty()){
       for (int i = 0; i < Vars.size(); i++){
-        std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
+        //std::unique_ptr<VarExprAST> VarTemp = get_VarExpr_from_ExprAST(Vars.at(i)->clone());
+        std::unique_ptr<VarExprAST> VarTemp = get_Expr_from_ExprAST<VarExprAST>(Vars.at(i)->clone());
+        if (!VarTemp){
+            return LogErrorS("Vars in struct is not a var and is an other type exprAST");
+        }
+        /*std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
         std::unique_ptr<VarExprAST> VarTemp;
         VarExprAST* VarTempPtr = dynamic_cast<VarExprAST*>(VarCloned.get());
         if (!VarTempPtr){
             return LogErrorS("Vars in struct is not a var and is an other type exprAST");
         }
         VarCloned.release();
-        VarTemp.reset(VarTempPtr);
+        VarTemp.reset(VarTempPtr);*/
         VarsCloned.push_back(std::move(VarTemp));
       }
     }
@@ -206,6 +234,13 @@ std::unique_ptr<matchCase> matchCase::clone(){
 
 std::unique_ptr<ExprAST> MatchExprAST::clone(){
     return std::make_unique<MatchExprAST>(matchVar, clone_vector<matchCase>(matchCases));
+}
+
+
+void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
+    std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
+    auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type());
+    Body.push_back(std::move(E_gc_init));
 }
 
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
@@ -572,6 +607,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseCharExpr();
   case tok_addr:
     return ParseAddrExpr();
+  case tok_deref:
+    return ParseDerefExpr();
   case tok_sizeof:
     return ParseSizeofExpr();
   case tok_while:
@@ -985,27 +1022,30 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     has_template = true;
     TypeTemplateCallAst = template_name;
   }
-  if (CurTok != '{')
+  if (CurTok != '{'){
     return LogErrorS("Expected '{' in Struct");
+  }
   getNextToken();
   while ((CurTok == tok_var || CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
     Log::Info() << "Curtok in struct parsing : " << CurTok << "\n";
     if (CurTok == tok_var){
-    auto exprAST = ParseVarExpr();
-    if (!exprAST){
-        return nullptr;
-    }
-    VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
-    if (varExprAST == nullptr){
+        auto exprAST = ParseVarExpr();
+        if (!exprAST){
+            return nullptr;
+        }
+        std::unique_ptr<VarExprAST> declar = get_Expr_from_ExprAST<VarExprAST>(std::move(exprAST));
+        if (!declar){
+            return LogErrorS("Error in struct declaration vars");
+        }
+    /*VarExprAST* varExprAST = dynamic_cast<VarExprAST*>(exprAST.get());
+    if (!varExprAST){
       return LogErrorS("Error in struct declaration vars");
     }
     std::unique_ptr<VarExprAST> declar;
     exprAST.release();
     declar.reset(varExprAST);
-    if (!declar){return nullptr;}
-    VarList.push_back(std::move(declar));
-    //getNextToken();
-    //std::cout << "currTok IN LOOP : " << CurTok << std::endl;
+    if (!declar){return nullptr;}*/
+        VarList.push_back(std::move(declar));
     } else if (CurTok == tok_extern){
         getNextToken();
         auto protoExpr = ParsePrototype();
@@ -1188,9 +1228,10 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   Log::Info() << "cleared StructTemplatesToGenerate" << "\n";
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (Comp_context->std_mode && Proto->Name == "main" && Comp_context->gc_mode){
-  std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
-  auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type(double_type));
-  Body.push_back(std::move(E_gc_init));
+  generate_gc_init(Body);
+  /*std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
+  auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type());
+  Body.push_back(std::move(E_gc_init));*/
   }
   auto ret = ParseBodyExpressions(Body, true);
   if (!ret){
@@ -1243,9 +1284,21 @@ std::unique_ptr<ExprAST> ParseAddrExpr(){
     exprAddr = ParseExpression();
   //}
   //auto addr = std::make_unique<AddrExprAST>(Name);
+  if (!exprAddr){
+    return nullptr;
+  }
   auto addr = std::make_unique<AddrExprAST>(/*Name,*/ std::move(exprAddr));
   //getNextToken();
   return addr;
+}
+
+std::unique_ptr<ExprAST> ParseDerefExpr(){
+    getNextToken();  // eat deref.
+    std::unique_ptr<ExprAST> exprDeref = ParseExpression();
+    if (!exprDeref){
+        return nullptr;
+    }
+    return std::make_unique<DerefExprAST>(std::move(exprDeref));
 }
 
 std::unique_ptr<ExprAST> ParseSizeofExpr(){

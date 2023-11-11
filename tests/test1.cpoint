@@ -8,8 +8,9 @@ func main(){
   var p : int ptr = addr i
   p = temp
   printi(i)
+  printi(deref p)
   var s : i8 ptr = "hello world"
   var c : i8 = s[2]
-  printf("%c", c)
+  printf("%c\n", c)
   var b : bool
 }

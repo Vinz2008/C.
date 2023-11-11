@@ -75,6 +75,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Create a print/printfmt macro that will print vars/values .have using it be like #print("{} {}", a, 2), which will generate printfmt("%s %d", a, 2) by detecting types
 - [x] Create a println macro equivalent to #print but adding automatically a '\n' at the end of the line
 - [x] Remove python from benchmark pictures (to see better the differences between the system programming languages)
+- [ ] add a deref expression ? (ex : "var a : int = deref p")
+- [ ] Make no_gc work (see gc.c)
 
 ## Benchmarks compared to other languages
 

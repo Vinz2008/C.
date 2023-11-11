@@ -55,7 +55,7 @@ std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen; // 
 std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have multiple templates in the future ?
 
 
-std::vector<std::unique_ptr<TestAST>> testASTNodes;
+extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
 std::map<std::string, Value*> StringsGenerated;
 
@@ -680,7 +680,7 @@ Value* ArrayMemberExprAST::codegen() {
 
   Value* array_or_ptr = allocated_value;
   // To make argv[0] work
-  if (cpoint_type_not_modified.is_ptr && cpoint_type_not_modified.nb_ptr > 1){
+  if (/*cpoint_type_not_modified.is_ptr &&*/ cpoint_type_not_modified.nb_ptr > 1){
   array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
   }
   Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
@@ -1313,15 +1313,18 @@ Value* AddrExprAST::codegen(){
     return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Ident.c_str());
   }*/
   if (dynamic_cast<VariableExprAST*>(Expr.get())){
-    auto VariableExprPtr = static_cast<VariableExprAST*>(Expr.get());
+    std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Expr));
+    /*auto VariableExprPtr = static_cast<VariableExprAST*>(Expr.get());
     std::unique_ptr<VariableExprAST> VariableExpr;
     Expr.release();
-    VariableExpr.reset(VariableExprPtr);
+    VariableExpr.reset(VariableExprPtr);*/
+
     if (is_var_local(VariableExpr->getName())){
-    AllocaInst *A = NamedValues[VariableExpr->getName()]->alloca_inst;
-    if (!A)
-        return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
-    return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VariableExpr->getName().c_str());
+        AllocaInst *A = NamedValues[VariableExpr->getName()]->alloca_inst;
+        if (!A){
+            return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
+        }
+        return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VariableExpr->getName().c_str());
     } else {
         GlobalVariable* G = GlobalVariables[VariableExpr->getName()]->globalVar;
         if (!G)
@@ -1329,24 +1332,22 @@ Value* AddrExprAST::codegen(){
         return Builder->CreateLoad(PointerType::get(G->getType(), G->getAddressSpace()), G, VariableExpr->getName().c_str());
     }
   } else if (dynamic_cast<ArrayMemberExprAST*>(Expr.get())){
-    auto arrayMemberPtr = static_cast<ArrayMemberExprAST*>(Expr.get());
+    std::unique_ptr<ArrayMemberExprAST> arrayMember = get_Expr_from_ExprAST<ArrayMemberExprAST>(std::move(Expr));
+    /*auto arrayMemberPtr = static_cast<ArrayMemberExprAST*>(Expr.get());
     std::unique_ptr<ArrayMemberExprAST> arrayMember;
     Expr.release();
-    arrayMember.reset(arrayMemberPtr);
+    arrayMember.reset(arrayMemberPtr);*/
     //Cpoint_Type cpoint_type = NamedValues[arrayMemberPtr->ArrayName] ? NamedValues[arrayMemberPtr->ArrayName]->type : GlobalVariables[arrayMemberPtr->ArrayName]->type;
     if (!get_variable_type(arrayMember->ArrayName)){
-        return LogErrorV(arrayMember->loc, "Tried to get a member of an array that doesn't exist : %s", arrayMemberPtr->ArrayName.c_str());
+        return LogErrorV(arrayMember->loc, "Tried to get a member of an array that doesn't exist : %s", arrayMember->ArrayName.c_str());
     }
-    Cpoint_Type cpoint_type = *get_variable_type(arrayMemberPtr->ArrayName);
+    Cpoint_Type cpoint_type = *get_variable_type(arrayMember->ArrayName);
     Type* type_llvm = get_type_llvm(cpoint_type);
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-
-
-
     auto index = arrayMember->posAST->clone()->codegen();
     if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
     convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
-     }
+    }
     std::vector<Value*> indexes = { zero, index};
     
     if (cpoint_type.is_ptr && !cpoint_type.is_array){
@@ -1365,6 +1366,25 @@ Value* AddrExprAST::codegen(){
   //return Builder->CreateLoad(PointerType::get(val->getType(), 0), val, "addr_load");
   }
   return LogErrorV(this->loc, "Trying to use addr with an expression which it is not implemented for");
+}
+
+Value* DerefExprAST::codegen(){
+    if (dynamic_cast<VariableExprAST*>(Expr.get())){
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Expr));
+        if (!var_exists(VariableExpr->getName())){
+            return LogErrorV(this->loc, "Unknown variable in deref : %s", VariableExpr->getName().c_str());
+        }
+        if (!get_variable_type(VariableExpr->getName())->is_ptr){
+            return LogErrorV(this->loc, "Derefencing a variable (%s) that is not a pointer", VariableExpr->getName().c_str());
+        }
+
+        llvm::Value* VarAlloc = get_var_allocation(VariableExpr->getName());
+        Cpoint_Type contained_type = *get_variable_type(VariableExpr->getName());
+        contained_type.is_ptr = false;
+        Log::Info() << "Deref Type : " << contained_type << "\n";
+        return Builder->CreateLoad(get_type_llvm(contained_type), VarAlloc, VariableExpr->getName().c_str());
+    }
+    return LogErrorV(this->loc, "Trying to use deref with an expression which it is not implemented for");
 }
 
 Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable, Source_location loc){
@@ -1489,8 +1509,8 @@ void TestAST::codegen(){
   testASTNodes.push_back(this->clone());
 }
 
-void afterAllTests(){
-  if (!Comp_context->test_mode /*|| testASTNodes.empty()*/){
+/*void generateTests(){
+  if (!Comp_context->test_mode){
     return;
   }
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
@@ -1498,7 +1518,8 @@ void afterAllTests(){
   Args.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "main", Args, Cpoint_Type(double_type));
   std::vector<std::unique_ptr<ExprAST>> Body;
-  if (/*std_mode &&*/ Comp_context->gc_mode){
+  // add a function to generate gc_init
+  if (Comp_context->gc_mode){
     std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
     auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type(double_type));
     Body.push_back(std::move(E_gc_init));
@@ -1527,7 +1548,7 @@ void afterAllTests(){
   
   auto funcAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   funcAST->codegen();
-}
+}*/
 
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.
@@ -2362,12 +2383,15 @@ Value *ForExprAST::codegen(){
 }
 
 Value *UnaryExprAST::codegen() {
+  if (Opcode == '-'){
+    return operators::LLVMCreateSub(ConstantFP::get(*TheContext, APFloat(0.0)), Operand->codegen());
+  }
+  if (Opcode == '&'){
+    return std::make_unique<AddrExprAST>(std::move(Operand))->codegen();
+  }
   Value *OperandV = Operand->codegen();
   if (!OperandV)
     return nullptr;
-  if (Opcode == '-'){
-    return operators::LLVMCreateSub(ConstantFP::get(*TheContext, APFloat(0.0)), OperandV);
-  }
   Function *F = getFunction(std::string("unary") + Opcode);
   if (!F){
     Log::Info() << "UnaryExprAST : " << Opcode << "\n";

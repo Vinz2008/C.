@@ -35,6 +35,7 @@
 #include "gettext.h"
 #include "c_translator.h"
 #include "templates.h"
+#include "tests.h"
 
 using namespace std;
 using namespace llvm;
@@ -562,7 +563,7 @@ int main(int argc, char **argv){
     MainLoop();
     codegenTemplates();
     //codegenStructTemplates();
-    afterAllTests();
+    generateTests();
     if (debug_info_mode){
     DBuilder->finalize();
     }
