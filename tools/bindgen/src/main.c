@@ -18,12 +18,30 @@ CXType return_type;
 
 bool is_custom_enum_value = false;
 
-const char* get_type_string_from_type_libclang(CXType type, const char* type_c_spelling){
+bool startswith(char* str, char* line){
+    int similarity = 0;
+    int length = strlen(str);
+    int i;
+    for (i = 0; i < length; i++){
+        if (str[i] == line[i]){
+            similarity++;
+        }
+    }
+    return similarity >= length;
+}
+
+bool is_typedefed_type(char* type_string){
+    return (!startswith("struct", type_string) && !startswith("enum", type_string));
+}
+
+const char* get_type_string_from_type_libclang(CXType type){
     printf("get_type  type enum : %d\n", type.kind);
     switch(type.kind){
         case CXType_Float:
         case CXType_Float16:
             return "float";
+        case CXType_UInt:
+            return "u32";
         case CXType_Int:
             return "int";
         case CXType_Char_S:
@@ -31,15 +49,30 @@ const char* get_type_string_from_type_libclang(CXType type, const char* type_c_s
         case CXType_UChar:
             return "i8";
         case CXType_Pointer:
-            return "int ptr";
+            CXType pointee_type = clang_getPointeeType(type);
+            const char* pointee_type_str = get_type_string_from_type_libclang(pointee_type);
+            char* ptr_str = " ptr";
+            char* pointer_type = malloc((strlen(pointee_type_str) + strlen(ptr_str)) * sizeof(char));
+            sprintf(pointer_type, "%s%s", pointee_type_str, ptr_str);
+            return pointer_type;
         case CXType_Void:
             return "void";
+        // TODO : replace bool with int ? (because in C, int is represented by an int while in C., the bool type is a i1)
         case CXType_Bool:
             return "bool";
         case CXType_Long:
             return "i64";
         case CXType_Elaborated:
-            return type_c_spelling;
+            CXString clangstr_type_spelling = clang_getTypeSpelling(type);
+            const char* type_spelling = clang_getCString(clangstr_type_spelling);
+            if (is_typedefed_type((char*)type_spelling)){
+                char* struct_str = "struct ";
+                char* typedef_type_with_struct = malloc((strlen(struct_str) + strlen(type_spelling)+1) * sizeof(char));
+                sprintf(typedef_type_with_struct, "%s%s", struct_str, clang_getCString(clang_getTypeSpelling(type)));
+                return typedef_type_with_struct;
+            }
+            clang_disposeString(clangstr_type_spelling);
+            return type_spelling;
         case CXType_LongDouble:
         case CXType_Double:
         default:
@@ -54,7 +87,7 @@ void close_previous_blocks(){
             fprintf(outf, ", ...");
         }
         CXString return_type_name = clang_getTypeSpelling(return_type);
-        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type, clang_getCString(return_type_name)));
+        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
         in_function_declaration = false;
         clang_disposeString(return_type_name);
     } else if (in_struct_declaration && !pass_block && !is_in_typedef){
@@ -102,11 +135,11 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             printf("type param : %s\n", clang_getCString(clangstr_param_type_name));
             printf("type enum : %d\n", param_type.kind);
             if (param_number > 0){
-                fprintf(outf, ",");
+                fprintf(outf, ", ");
             }
             CXString clangstr_param_name = clang_getCursorSpelling(cursor);
             fprintf(outf, "%s", clang_getCString(clangstr_param_name));
-            fprintf(outf, " : %s", get_type_string_from_type_libclang(param_type, clang_getCString(clangstr_param_type_name)));
+            fprintf(outf, " : %s", get_type_string_from_type_libclang(param_type));
             param_number++;
             clang_disposeString(clangstr_param_type_name);
             clang_disposeString(clangstr_param_name);
@@ -136,7 +169,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             CXString field_type_name = clang_getTypeSpelling(field_type);
             CXString clangstr_var_name = clang_getCursorSpelling(cursor);
             fprintf(outf, "\tvar %s", clang_getCString(clangstr_var_name));
-            fprintf(outf, " : %s \n", get_type_string_from_type_libclang(field_type, clang_getCString(field_type_name)));
+            fprintf(outf, " : %s \n", get_type_string_from_type_libclang(field_type));
             clang_disposeString(clangstr_var_name);
             clang_disposeString(field_type_name);
             }
@@ -151,7 +184,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
                 clang_disposeString(clangstr_new_type_name);
                 break;
             }
-            const char* value_type_name = get_type_string_from_type_libclang(value_type_clang, clang_getCString(clangstr_new_type_name));
+            const char* value_type_name = get_type_string_from_type_libclang(value_type_clang);
             printf("typedef from %s to %s\n", new_type_name, value_type_name);
             fprintf(outf, "type %s %s;\n", new_type_name, value_type_name);
             clang_disposeString(clangstr_new_type_name);
@@ -210,8 +243,7 @@ void generateBindings(char* path){
         in_struct_declaration = false;
         in_enum_declaration = false;
     } else {
-        CXString return_type_name = clang_getTypeSpelling(return_type);
-        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type, clang_getCString(return_type_name)));
+        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
         in_function_declaration = false;
     }
     clang_disposeTranslationUnit(unit);

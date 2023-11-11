@@ -14,6 +14,7 @@ int testfunction(){
     return 1;
 }
 void function_with_struct_arg(struct hello a_arg);
+void function_with_char_ptr(char* s);
 enum a {
     a1,
     a2,
