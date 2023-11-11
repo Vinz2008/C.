@@ -840,6 +840,7 @@ Value* EnumCreation::codegen(){
     }
     int index = -1;
     bool is_custom_value = false;
+    // TODO : move the finding of the index in a different function
     for (int i = 0; i < EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.size(); i++){
         if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->Name == EnumMemberName){
             if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->contains_custom_index){

@@ -16,7 +16,9 @@ bool is_in_typedef = false;
 bool is_variable_number_args = false;
 CXType return_type;
 
-const char* get_type_string_from_type_libclang(CXType type){
+bool is_custom_enum_value = false;
+
+const char* get_type_string_from_type_libclang(CXType type, const char* type_c_spelling){
     printf("get_type  type enum : %d\n", type.kind);
     switch(type.kind){
         case CXType_Float:
@@ -36,6 +38,8 @@ const char* get_type_string_from_type_libclang(CXType type){
             return "bool";
         case CXType_Long:
             return "i64";
+        case CXType_Elaborated:
+            return type_c_spelling;
         case CXType_LongDouble:
         case CXType_Double:
         default:
@@ -49,14 +53,16 @@ void close_previous_blocks(){
         if (is_variable_number_args){
             fprintf(outf, ", ...");
         }
-        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
+        CXString return_type_name = clang_getTypeSpelling(return_type);
+        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type, clang_getCString(return_type_name)));
         in_function_declaration = false;
+        clang_disposeString(return_type_name);
     } else if (in_struct_declaration && !pass_block && !is_in_typedef){
         printf("closing struct so not passing block\n");
         fprintf(outf,"}\n");
         in_struct_declaration = false;
     } else if (in_enum_declaration && !pass_block && !is_in_typedef){
-        fprintf(outf,"}\n");
+        fprintf(outf,"\n}\n");
         in_enum_declaration = false;
     }
     pass_block = false;
@@ -100,7 +106,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             }
             CXString clangstr_param_name = clang_getCursorSpelling(cursor);
             fprintf(outf, "%s", clang_getCString(clangstr_param_name));
-            fprintf(outf, " : %s", get_type_string_from_type_libclang(param_type));
+            fprintf(outf, " : %s", get_type_string_from_type_libclang(param_type, clang_getCString(clangstr_param_type_name)));
             param_number++;
             clang_disposeString(clangstr_param_type_name);
             clang_disposeString(clangstr_param_name);
@@ -127,10 +133,12 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
         case CXCursor_FieldDecl:
             CXType field_type = clang_getCursorType(cursor);
             if (!pass_block && !is_in_typedef){
+            CXString field_type_name = clang_getTypeSpelling(field_type);
             CXString clangstr_var_name = clang_getCursorSpelling(cursor);
             fprintf(outf, "\tvar %s", clang_getCString(clangstr_var_name));
-            fprintf(outf, " : %s \n", get_type_string_from_type_libclang(field_type));
+            fprintf(outf, " : %s \n", get_type_string_from_type_libclang(field_type, clang_getCString(field_type_name)));
             clang_disposeString(clangstr_var_name);
+            clang_disposeString(field_type_name);
             }
             break;
         case CXCursor_TypedefDecl:
@@ -143,7 +151,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
                 clang_disposeString(clangstr_new_type_name);
                 break;
             }
-            const char* value_type_name = get_type_string_from_type_libclang(value_type_clang);
+            const char* value_type_name = get_type_string_from_type_libclang(value_type_clang, clang_getCString(clangstr_new_type_name));
             printf("typedef from %s to %s\n", new_type_name, value_type_name);
             fprintf(outf, "type %s %s;\n", new_type_name, value_type_name);
             clang_disposeString(clangstr_new_type_name);
@@ -153,14 +161,27 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             CXString clangstr_enum_name = clang_getCursorSpelling(cursor);
             const char* enum_name = clang_getCString(clangstr_enum_name);
             printf("enum name : %s\n", enum_name);
-            fprintf(outf, "enum %s {\n", enum_name);
+            //fprintf(outf, "enum %s {\n", enum_name);
+            fprintf(outf, "enum %s {", enum_name);
             in_enum_declaration = true;
             clang_disposeString(clangstr_enum_name);
             break;
         case CXCursor_EnumConstantDecl:
+            is_custom_enum_value = false;
             CXString clangstr_enum_field = clang_getCursorSpelling(cursor);
-            fprintf(outf, "\t%s\n", clang_getCString(clangstr_enum_field));
+            fprintf(outf, "\n\t%s", clang_getCString(clangstr_enum_field));
+            /*if (!is_custom_enum_value){
+                fprintf(outf, "\n");
+            }*/
             clang_disposeString(clangstr_enum_field);
+            break;
+        case CXCursor_IntegerLiteral:
+            if (in_enum_declaration){
+                CXEvalResult res = clang_Cursor_Evaluate(cursor);
+                fprintf(outf, " = %d", clang_EvalResult_getAsInt(res));
+                clang_EvalResult_dispose(res);
+                is_custom_enum_value = true;
+            }
             break;
         default:
             break;
@@ -179,14 +200,18 @@ void generateBindings(char* path){
     }
     CXCursor cursor = clang_getTranslationUnitCursor(unit);
     clang_visitChildren(cursor, cursorVisitor, NULL);
-    if (cursorKind == CXCursor_FieldDecl || cursorKind == CXCursor_EnumConstantDecl){
+    if (in_enum_declaration && is_custom_enum_value){
+        fprintf(outf, "\n");
+    }
+    if (cursorKind == CXCursor_FieldDecl || cursorKind == CXCursor_EnumConstantDecl || in_enum_declaration){
         if (!pass_block){
         fprintf(outf, "}\n");
         }
         in_struct_declaration = false;
         in_enum_declaration = false;
     } else {
-        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type));
+        CXString return_type_name = clang_getTypeSpelling(return_type);
+        fprintf(outf,") %s;\n", get_type_string_from_type_libclang(return_type, clang_getCString(return_type_name)));
         in_function_declaration = false;
     }
     clang_disposeTranslationUnit(unit);

@@ -13,7 +13,12 @@ typedef int test_t;
 int testfunction(){
     return 1;
 }
+void function_with_struct_arg(struct hello a_arg);
 enum a {
     a1,
     a2,
+};
+enum b {
+    b1 = 1,
+    b2 = 2,
 };
