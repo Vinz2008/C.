@@ -2389,6 +2389,9 @@ Value *UnaryExprAST::codegen() {
   if (Opcode == '&'){
     return std::make_unique<AddrExprAST>(std::move(Operand))->codegen();
   }
+  if (Opcode == '*'){
+    return std::make_unique<DerefExprAST>(std::move(Operand))->codegen();
+  }
   Value *OperandV = Operand->codegen();
   if (!OperandV)
     return nullptr;
