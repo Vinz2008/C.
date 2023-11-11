@@ -46,6 +46,11 @@ ifeq ($(DEBUG),TRUE)
 	CPOINTFLAGS += -d
 endif
 
+ifeq ($(NO_GC),TRUE)
+#	CPOINTFLAGS += -DNO_STD
+# TODO ?
+endif
+
 all: libstd.a
 
 debug: CPOINTFLAGS += -g
@@ -59,7 +64,7 @@ libstd.a: $(OBJECTS) capi
 	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C)
 
 capi:
-	+TARGET=$(TARGET) make $(MAKETARGET) -C c_api
+	+TARGET=$(TARGET) NO_GC=$(NO_GC) make $(MAKETARGET) -C c_api
 
 %.o: %.cpoint
 	$(CCPOINT) $(CPOINTFLAGS) $< -o $@

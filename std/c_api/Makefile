@@ -3,9 +3,14 @@ SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
 TARGET ?= $(shell gcc -dumpmachine)
 CFLAGS=-Wall -target $(TARGET) -I../../bdwgc_prefix/include
+
 ifneq (,$(findstring wasi,$(TARGET)))
 WASI_SYSROOT ?= /usr/share/wasi-sysroot
-CFLAGS+=-D__WASM__ --sysroot $(WASI_SYSROOT)
+CFLAGS += -D__WASM__ --sysroot $(WASI_SYSROOT)
+endif
+
+ifeq ($(NO_GC),TRUE)
+CFLAGS += -DNO_STD
 endif
 
 all: libc_api.a 

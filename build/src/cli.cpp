@@ -4,6 +4,7 @@
 #include <array>
 #include <vector>
 #include <filesystem>
+#include <toml++/toml.h>
 #include "../../src/config.h"
 
 namespace fs = std::filesystem;
@@ -30,6 +31,9 @@ namespace fs = std::filesystem;
 
 }*/
 
+bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc);
+void writeLastBuildToml(std::string std_path, std::string target, bool is_gc);
+
 void openWebPage(std::string url){
 #ifdef _WIN32
     std::string cmd = "start ";
@@ -49,11 +53,14 @@ void buildDependency(std::string path /*dependency*/){
     buildProject(path);
 }
 
-void rebuildSTD(std::string target, std::string path){
+void rebuildSTD(std::string target, std::string path, bool is_gc){
     runCommand("make -C " + path + " clean");
     std::string cmd_start = "";
     if (target != ""){
         cmd_start += "TARGET=" + target + " "; 
+    }
+    if (!is_gc){
+        cmd_start += "NO_GC=TRUE ";
     }
     std::cout << runCommand(cmd_start + "make -C " + path)->buffer << std::endl;
 }
@@ -99,10 +106,12 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     if (is_gc){
         cmd += " " DEFAULT_STD_PATH "/../bdwgc_prefix/lib/libgc.a";
     }
-    if (target != ""){
+    if (/*target != ""*/ shouldRebuildSTD(DEFAULT_STD_PATH, target, is_gc)){
         std::string path = DEFAULT_STD_PATH;
-        rebuildSTD(target, path);
+        rebuildSTD(target, path, is_gc);
+        //writeLastBuildToml(path, target, is_gc);
     }
+    writeLastBuildToml(DEFAULT_STD_PATH, target, is_gc);
     std::cout << "exe link cmd : " << cmd << std::endl;
     runCommand(cmd);
 }

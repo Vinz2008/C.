@@ -40,6 +40,40 @@ bool is_cross_compiling = false;
 
 bool src_folder_exists = true;
 
+// keep it in this file to not have multiple file with the tomlplusplus header included
+bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc){
+    std::string last_build_toml_path = std_path + "/last_build.toml";
+    if (!fs::exists(fs::path(std_path + "/libstd.a"))){
+        return true;
+    }
+    if (fs::exists(fs::path(last_build_toml_path))){ 
+        auto last_build_toml = toml::parse_file(last_build_toml_path);
+        if (!last_build_toml["target"].is_value()){
+            return true;
+        }
+        std::string last_target = last_build_toml["target"].value_or("");
+        /*if (last_target == ""){
+            return true;
+        }*/
+        bool last_is_gc = last_build_toml["is_gc"].value_or(true);
+        return (last_target != target || last_is_gc != is_gc);
+    }
+    return true;
+}
+
+void writeLastBuildToml(std::string std_path, std::string target, bool is_gc){
+    std::string last_build_toml_path = std_path + "/last_build.toml";
+    fs::remove(fs::path(last_build_toml_path));
+    std::ofstream LastBuildFstream(last_build_toml_path);
+    LastBuildFstream << "target = \"" << target <<"\"\n";
+    LastBuildFstream << "is_gc = " << ((is_gc) ? "true" : "false") << "\n"; 
+    LastBuildFstream.close();
+    //build_toml["is_gc"] = is_gc;
+    //build_toml["target"] = target;
+}
+
+// TODO : maybe move some functions in other files/create new files
+
 void addDependencyToTempLinkableFiles(std::string dependency){
     std::string lib_path = DEFAULT_PACKAGE_PATH "/" + dependency + "/lib.a";
     DependencyPathList.push_back(lib_path);
