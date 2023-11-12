@@ -1,0 +1,7 @@
+extern rand() int;
+
+mod rand {
+    func random() int {
+        rand()
+    }
+}

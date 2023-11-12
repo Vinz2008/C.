@@ -46,6 +46,8 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         }
         if (StructDeclarations[structName] == nullptr){
             Log::Info() << "StructDeclarations[structName] is nullptr" << "\n";
+            LogError("Using unkown struct type : %s", structName.c_str());
+            return nullptr;
         }
         type = StructDeclarations[structName]->struct_type;
     } else if (cpoint_type.is_union){

@@ -80,6 +80,11 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add a little toml file in the std location to track if the latest build has the same options (no_gc, target, etc) as the current one to see if it is needed to rebuild the standard library
 - [x] Make no gc subprojects in cpoint-build be build first, then the gc ones or the other way to have the standard library rebuilt max 2 times
 - [ ] Make custom values for enums work even with only the first set like in C (those after are just incremented by 1 each time, ex : the first is set manually to 2, so the second is 3, the third is 4, etc)
+- [ ] Generate typedefed structs in bindgen
+- [ ] Add a custom file written in cpoint to do complex builds (like build.rs or build.zig) (it could give infos using the stdout like rust does)
+- [ ] Make declarations private with private keyword (it will just be passed by the lexer) or even blocks (pass private blocks in the same way as mod blocks in imports)
+
+- [ ] Only generate the externs when functions are called
 
 ## Benchmarks compared to other languages
 
