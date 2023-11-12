@@ -31,7 +31,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Importing structs with function members
 - [ ] Finish refactoring the code for operators to make it compatible with every types
 - [ ] Make redeclarations just the equal operator
-- [ ] Fix array members and array member redeclaration bugs
+- [x] Fix array members and array member redeclaration bugs
 - [ ] Maybe verify and warn in the manual allocation module in the standard library if an address was already freed by verifying in a list
 - [ ] Add type checking in separate file and remove implicit cast and only have explicit casts with the "cast" keyword
 - [x] Add rust-styled enums with match
