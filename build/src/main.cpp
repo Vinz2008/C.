@@ -61,6 +61,14 @@ bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc){
     return true;
 }
 
+bool isSubprojectGC(std::string path){
+    //std::cout << "project gc path : " << path + "/build.toml" << std::endl;
+    auto subproject_config = toml::parse_file(path + "/build.toml");
+    bool is_gc = subproject_config["build"]["gc"].value_or(true);
+    //std::cout << "project gc : " << is_gc << std::endl;
+    return is_gc;
+}
+
 void writeLastBuildToml(std::string std_path, std::string target, bool is_gc){
     std::string last_build_toml_path = std_path + "/last_build.toml";
     fs::remove(fs::path(last_build_toml_path));
@@ -181,14 +189,33 @@ void buildSubproject(std::string path){
 }
 
 void buildSubprojects(toml::v3::table& config){
+    std::vector<std::string> no_gc_subprojects;
+    std::vector<std::string> gc_subprojects;
     auto subfolders = config["subfolders"]["projects"];
     if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config](auto&& sub){
+        arr->for_each([&config, &gc_subprojects, &no_gc_subprojects](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
-                std::cout << "sub : " << sub << std::endl;
-                buildSubproject((std::string)sub);
+                //std::cout << "sub : " << sub << std::endl;
+                //buildSubproject((std::string)sub);
+                
+                if (isSubprojectGC((std::string)sub)){
+                    gc_subprojects.push_back((std::string)sub);
+                } else {
+                    no_gc_subprojects.push_back((std::string)sub);
+                }
+                //subprojects.push_back((std::string)sub);
             }
         });
+    }
+    for (int i = 0; i < no_gc_subprojects.size(); i++){
+        //std::cout << "building no gc subprojects" << std::endl;
+        std::cout << "sub : " << no_gc_subprojects.at(i) << std::endl;
+        buildSubproject(no_gc_subprojects.at(i));
+    }
+    for (int i = 0; i < gc_subprojects.size(); i++){
+        //std::cout << "building gc subprojects" << std::endl;
+        std::cout << "sub : " << gc_subprojects.at(i) << std::endl;
+        buildSubproject(gc_subprojects.at(i));
     }
 }
 

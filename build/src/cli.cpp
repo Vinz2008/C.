@@ -108,6 +108,7 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     }
     if (/*target != ""*/ shouldRebuildSTD(DEFAULT_STD_PATH, target, is_gc)){
         std::string path = DEFAULT_STD_PATH;
+        //std::cout << "Rebuilding std ..." << std::endl;
         rebuildSTD(target, path, is_gc);
         //writeLastBuildToml(path, target, is_gc);
     }

@@ -18,6 +18,8 @@ endif
 
 CXXFLAGS = -c -g -Wall -Wno-sign-compare
 
+# CXXFLAGS += -MMD
+
 # change it when it is changed with the llvm version
 WINDOWS_CXXFLAGS = -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 
@@ -71,6 +73,8 @@ SRCDIR=src
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 
+#DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))
+
 
 all: std_lib cpoint-build cpoint-bindgen cpoint-run cpoint-from-c
 
@@ -123,8 +127,10 @@ std_lib: gc $(OUTPUTBIN)
 $(OUTPUTBIN): $(OBJS)
 	$(CXX) -o $@ $^ $(LDFLAGS)
 
+#-include $(OBJS:%.o=%.d)
+
 $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
-	$(CXX) $(CXXFLAGS) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $<
 
 clean-build:
 	rm -f ./src/*.o ./src/*.temp
