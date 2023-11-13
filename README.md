@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 700 KB stripped, ≈20MB not stripped
+- compiler less than 710 KB stripped, ≈21.5MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -83,8 +83,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Generate typedefed structs in bindgen
 - [ ] Add a custom file written in cpoint to do complex builds (like build.rs or build.zig) (it could give infos using the stdout like rust does)
 - [ ] Make declarations private with private keyword (it will just be passed by the lexer) or even blocks (pass private blocks in the same way as mod blocks in imports)
-
-- [ ] Only generate the externs when functions are called
+- [x] Only generate the externs when functions are called
 
 ## Benchmarks compared to other languages
 
