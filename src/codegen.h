@@ -98,10 +98,19 @@ public:
     EnumDeclaration(llvm::Type* enumType, std::unique_ptr<EnumDeclarAST> EnumDeclar) : enumType(enumType), EnumDeclar(std::move(EnumDeclar)) {} 
 };
 
+class ExternToGenerate {
+public:
+    std::string Name;
+    llvm::FunctionType* functionType;
+    std::vector<std::pair<std::string, Cpoint_Type>> Args;
+    ExternToGenerate(std::string Name, llvm::FunctionType* functionType, std::vector<std::pair<std::string, Cpoint_Type>> Args) : Name(Name), functionType(functionType), Args(Args) {}
+};
+
 std::string module_function_mangling(std::string module_name, std::string function_name);
 void codegenTemplates();
 //void codegenStructTemplates();
 //void generateTests();
 std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type);
+void generateExterns();
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);

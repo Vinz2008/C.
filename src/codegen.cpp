@@ -54,11 +54,14 @@ std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen; // contains the type of template in function call
 std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have multiple templates in the future ?
 
+std::vector<std::unique_ptr<ExternToGenerate>> externFunctionsToGenerate;
+
 
 extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
 std::map<std::string, Value*> StringsGenerated;
 
+bool is_in_extern = false;
 
 extern std::map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<DIBuilder> DBuilder;
@@ -1551,6 +1554,20 @@ void TestAST::codegen(){
   funcAST->codegen();
 }*/
 
+/*void generateExterns(){
+    std::set<std::string> alreadyGeneratedFunctions;
+    for (int i = 0; i < externFunctionsToGenerate.size(); i++){
+        if (alreadyGeneratedFunctions.find(externFunctionsToGenerate.at(i)->Name) == alreadyGeneratedFunctions.end()){
+            Function *F = Function::Create(externFunctionsToGenerate.at(i)->functionType, Function::ExternalLinkage, externFunctionsToGenerate.at(i)->Name, TheModule.get());
+            unsigned Idx = 0;
+            for (auto &Arg : F->args()){
+                Arg.setName(externFunctionsToGenerate.at(i)->Args[Idx++].first);
+            }
+            alreadyGeneratedFunctions.insert(externFunctionsToGenerate.at(i)->Name);
+        }
+    }
+}*/
+
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.
   //std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
@@ -1570,8 +1587,14 @@ Function *PrototypeAST::codegen() {
   } else {
   FT = FunctionType::get(get_type_llvm(cpoint_type), type_args, is_variable_number_args);
   }
-  Function *F =
-      Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
+
+  if (is_in_extern){
+    externFunctionsToGenerate.push_back(std::make_unique<ExternToGenerate>(Name, FT, Args));
+    FunctionProtos[this->getName()] = this->clone();
+    return nullptr;
+  }
+
+  Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
 
   // Set names for all arguments.
   unsigned Idx = 0;
