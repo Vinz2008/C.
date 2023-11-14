@@ -495,7 +495,13 @@ if_reflection:
         return refletionInstruction(MemberName, std::move(Args));
       }
       bool found_function = false;
-      auto functions =  StructDeclarations[NamedValues[StructName]->type.struct_name]->functions;
+      std::string struct_type_name = NamedValues[StructName]->type.struct_name;
+      Log::Info() << "StructName call struct function : " << struct_type_name << "\n";
+      if (NamedValues[StructName]->type.is_struct_template){
+        struct_type_name = get_struct_template_name(struct_type_name, *NamedValues[StructName]->type.struct_template_type_passed);
+        Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
+      }
+      auto functions =  StructDeclarations[struct_type_name]->functions;
       for (int i = 0; i < functions.size(); i++){
       Log::Info() << "functions.at(i) : " << functions.at(i) << "\n";
       if (functions.at(i) == MemberName){
@@ -512,7 +518,7 @@ if_reflection:
       for (int i = 0; i < Args.size(); i++){
         CallArgs.push_back(Args.at(i)->codegen());
       }
-      Function *F = getFunction(struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName));
+      Function *F = getFunction(struct_function_mangling(struct_type_name, MemberName));
       if (!F){
         Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName) << "\n";
         return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
@@ -699,7 +705,7 @@ Type* StructDeclarAST::codegen(){
   std::vector<std::pair<std::string,Cpoint_Type>> members;
   std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
-    std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
+    std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(Vars.at(i)->clone());
     if (!VarExpr){
         Log::Info() << "VarExpr is nullptr" << "\n";
     }
@@ -717,7 +723,7 @@ Type* StructDeclarAST::codegen(){
   Log::Info() << "added struct declaration name " << Name << " to StructDeclarations" << "\n";
   StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, members, functions);
   for (int i = 0; i < Functions.size(); i++){
-    std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
+    std::unique_ptr<FunctionAST> FunctionExpr = Functions.at(i)->clone();
     std::string function_name;
     if (FunctionExpr->Proto->Name == Name){
     // Constructor
@@ -1609,6 +1615,7 @@ Function *PrototypeAST::codegen() {
 }
 
 Function *FunctionAST::codegen() {
+  codegenStructTemplates();
   auto &P = *Proto;
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
   FunctionProtos[Proto->getName()] = Proto->clone();
@@ -1702,7 +1709,7 @@ Function *FunctionAST::codegen() {
   CpointDebugInfo.emitLocation(Body.at(i).get());
   }
   }
-  codegenStructTemplates();
+  //codegenStructTemplates();
   Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
   for (int i = 0; i < Body.size(); i++){

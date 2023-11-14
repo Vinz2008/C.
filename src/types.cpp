@@ -255,6 +255,9 @@ Constant* get_default_constant(Cpoint_Type type){
     if (type.is_ptr){
         return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
     }
+    if (type.type == void_type){
+        return nullptr;
+    }
     if (type.type == double_type){
         return ConstantFP::get(*TheContext, APFloat(0.0));
     }

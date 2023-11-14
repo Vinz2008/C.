@@ -1,10 +1,11 @@
 import @std/print.cpoint
-include @std/tuple.cpoint
+import @std/pair.cpoint
 
 func main() double {
     var a : double = 2
     if a == 2 {
         printi(argc)
     }
-    var t : struct tuple~int~ 
+    var t : struct pair~int~ 
+    printi(t.get_first())
 }

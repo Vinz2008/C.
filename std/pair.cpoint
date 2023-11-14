@@ -1,0 +1,8 @@
+// add a function
+struct pair~T~ {
+    var first : T
+    var second : T
+    func get_first() T {
+        self.first
+    }
+}

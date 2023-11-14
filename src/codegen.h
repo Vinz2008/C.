@@ -107,7 +107,7 @@ public:
 };
 
 std::string module_function_mangling(std::string module_name, std::string function_name);
-void codegenTemplates();
+//void codegenTemplates();
 //void codegenStructTemplates();
 //void generateTests();
 std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type);
