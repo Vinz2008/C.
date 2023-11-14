@@ -1,4 +1,5 @@
-#include <map>
+//#include <map>
+#include <unordered_map>
 #include <iostream>
 #include <utility>
 #include <cstdarg>
@@ -25,21 +26,22 @@ extern std::string strPosArray;
 extern std::string OpStringMultiChar;
 extern int posArrayNb;
 extern std::unique_ptr<Compiler_context> Comp_context;
-extern std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
-extern std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
-extern std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
+extern std::unordered_map<std::string, std::unique_ptr<NamedValue>> NamedValues;
+extern std::unordered_map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
+extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 //extern bool std_mode;
 //extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types;
 extern std::vector</*std::string*/ Cpoint_Type> typeDefTable;
-extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
-extern std::map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
+
+extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
+extern std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
-extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
 extern std::unique_ptr<Preprocessor::Context> context;
 

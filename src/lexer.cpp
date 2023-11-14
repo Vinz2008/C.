@@ -1,5 +1,5 @@
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <fstream>
 #include "lexer.h"
 #include "preprocessor.h"
@@ -12,7 +12,7 @@ string IdentifierStr;
 double NumVal;
 string strStatic;
 int charStatic;
-extern std::map<std::string, int> BinopPrecedence;
+extern std::unordered_map<std::string, int> BinopPrecedence;
 string strPosArray;
 int posArrayNb;
 string OpStringMultiChar;

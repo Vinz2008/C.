@@ -7,15 +7,15 @@
 #include "ast.h"
 #include "log.h"
 #include "lexer.h"
-#include <map>
+#include <unordered_map>
 
 using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<IRBuilder<>> Builder;
-extern std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
-extern std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
-extern std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
+extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+extern std::unordered_map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
+extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 //extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
 std::vector</*std::string*/ Cpoint_Type> typeDefTable;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;

@@ -2,7 +2,7 @@
 #include "types.h"
 #include "ast.h"
 #include <memory>
-#include <map>
+#include <unordered_map>
 
 void InitializeModule(std::string filename);
 

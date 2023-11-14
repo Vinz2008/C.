@@ -1,6 +1,6 @@
 #include <iostream>
 #include <fstream>
-#include <map>
+#include <unordered_map>
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
@@ -74,13 +74,13 @@ bool silent_mode = false;
 bool errors_found = false;
 int error_count = 0;
 
-std::map<std::string, int> BinopPrecedence;
+std::unordered_map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<Module> TheModule;
 
 std::string first_filename = "";
 
 extern int CurTok;
-extern std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 //std::unique_ptr<llvm::raw_fd_ostream> file_out_ostream;
 llvm::raw_ostream* file_out_ostream;
 ifstream file_in;

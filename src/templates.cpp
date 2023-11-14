@@ -7,7 +7,7 @@
 
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
-extern std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
+extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
 bool is_in_struct_templates_codegen = false;
 

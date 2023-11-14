@@ -13,7 +13,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/IR/InlineAsm.h"
 #include <iostream>
-#include <map>
+#include <unordered_map>
 #include <stack>
 #include <cstdarg>
 #include "ast.h"
@@ -31,19 +31,19 @@ using namespace llvm;
 std::unique_ptr<LLVMContext> TheContext;
 std::unique_ptr<Module> TheModule;
 std::unique_ptr<IRBuilder<>> Builder;
-std::map<std::string, std::unique_ptr<NamedValue>> NamedValues;
-std::map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
-std::map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
-std::map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
-std::map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
-std::map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
+std::unordered_map<std::string, std::unique_ptr<NamedValue>> NamedValues;
+std::unordered_map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
+std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+std::unordered_map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
+std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
 
-std::map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
+std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 
-std::map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
+std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 std::vector<std::string> modulesNamesContext;
 
-std::map<std::string, Function*> GeneratedFunctions;
+std::unordered_map<std::string, Function*> GeneratedFunctions;
 
 std::stack<BasicBlock*> blocksForBreak; // TODO : put this in Compiler_Context
 
@@ -59,11 +59,11 @@ std::vector<std::unique_ptr<ExternToGenerate>> externFunctionsToGenerate;
 
 extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
-std::map<std::string, Value*> StringsGenerated;
+std::unordered_map<std::string, Value*> StringsGenerated;
 
 bool is_in_extern = false;
 
-extern std::map<std::string, int> BinopPrecedence;
+extern std::unordered_map<std::string, int> BinopPrecedence;
 extern std::unique_ptr<DIBuilder> DBuilder;
 extern struct DebugInfo CpointDebugInfo;
 
