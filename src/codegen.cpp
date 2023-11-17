@@ -2339,10 +2339,6 @@ Value *ForExprAST::codegen(){
       convert_to_type(get_cpoint_type_from_llvm(StartVal->getType()), Alloca->getAllocatedType(), StartVal);
   }
   Builder->CreateStore(StartVal, Alloca);
-
-  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
-  Builder->CreateBr(LoopBB);
-  Builder->SetInsertPoint(LoopBB);
   AllocaInst *OldVal;
   if (NamedValues[VarName] == nullptr){
     OldVal = nullptr;
@@ -2350,8 +2346,24 @@ Value *ForExprAST::codegen(){
     OldVal = NamedValues[VarName]->alloca_inst;
   }
   NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(double_type));
-  BasicBlock *AfterBB =
-      BasicBlock::Create(*TheContext, "afterloop", TheFunction);
+
+  BasicBlock* CondBB = BasicBlock::Create(*TheContext, "loop_for_cond", TheFunction);
+  Builder->CreateBr(CondBB);
+  Builder->SetInsertPoint(CondBB);
+  
+  Value *EndCond = End->codegen();
+  if (!EndCond)
+    return nullptr;
+
+  EndCond = Builder->CreateFCmpONE(
+      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");
+  BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
+  BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "afterloop", TheFunction);
+  Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
+
+  //Builder->CreateBr(LoopBB);
+  Builder->SetInsertPoint(LoopBB);
+  // BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "afterloop", TheFunction);
   blocksForBreak.push(AfterBB);
   /*PHINode *Variable = Builder->CreatePHI(Type::getDoubleTy(*TheContext), 2, VarName);
   Variable->addIncoming(StartVal, PreheaderBB);
@@ -2375,24 +2387,26 @@ Value *ForExprAST::codegen(){
   }
 
   // Compute the end condition.
-  Value *EndCond = End->codegen();
+  /*Value *EndCond = End->codegen();
   if (!EndCond)
-    return nullptr;
+    return nullptr;*/
 
   Value *CurVar =
       Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, VarName.c_str());
   Value *NextVar = Builder->CreateFAdd(CurVar, StepVal, "nextvar_for");
   Builder->CreateStore(NextVar, Alloca);
 
+  Builder->CreateBr(CondBB);
+
   // Convert condition to a bool by comparing non-equal to 0.0.
-  EndCond = Builder->CreateFCmpONE(
-      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");
+  /*EndCond = Builder->CreateFCmpONE(
+      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");*/
 
   // Create the "after loop" block and insert it.
   //BasicBlock *LoopEndBB = Builder->GetInsertBlock();
 
   // Insert the conditional branch into the end of LoopEndBB.
-  Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
+  //Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
 
   // Any new code will be inserted in AfterBB.
   Builder->SetInsertPoint(AfterBB);
