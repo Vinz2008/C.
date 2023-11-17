@@ -525,6 +525,7 @@ if_reflection:
       }
       return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
     }
+    // TODO : modify this code to replace the NamedValues by the functions which abstracts this
     auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
     int pos = -1;
@@ -1374,6 +1375,24 @@ Value* AddrExprAST::codegen(){
     
     return Builder->CreateGEP(type_llvm, get_var_allocation(arrayMember->ArrayName), indexes);
   //return Builder->CreateLoad(PointerType::get(val->getType(), 0), val, "addr_load");
+  } else if (dynamic_cast<StructMemberExprAST*>(Expr.get())){
+    std::unique_ptr<StructMemberExprAST> structMember = get_Expr_from_ExprAST<StructMemberExprAST>(std::move(Expr));
+    auto members = StructDeclarations[NamedValues[structMember->StructName]->type.struct_name]->members;
+    int pos = -1;
+    for (int i = 0; i < members.size(); i++){
+      if (members.at(i).first == structMember->MemberName){
+        pos = i;
+        break;
+      }
+    }
+    AllocaInst* Alloca = NamedValues[structMember->StructName]->alloca_inst;
+    Cpoint_Type cpoint_type = *get_variable_type(structMember->StructName);
+    if (cpoint_type.is_ptr){
+      cpoint_type.is_ptr = false;
+    }
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+    return Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});
   }
   return LogErrorV(this->loc, "Trying to use addr with an expression which it is not implemented for");
 }

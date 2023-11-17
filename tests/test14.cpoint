@@ -15,7 +15,10 @@ func main(){
 
 
     var fd2 = file::open("test_read.txt")
+    printstr(file::get_line(fd2))
     for i = 0, i < 2, 1.0 {
+        // printd(i)
         // printstr(file::get_line(fd2))
     }
+    file::close(fd2)
 }

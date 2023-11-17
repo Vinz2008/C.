@@ -118,5 +118,6 @@
         "platform.h": "c",
         "gc.h": "c"
     },
-    "C_Cpp.default.compilerPath": "/usr/bin/clang"
+    "C_Cpp.default.compilerPath": "/usr/bin/clang",
+    "C_Cpp.default.compileCommands": "build/tomlplusplus/builddir/compile_commands.json"
 }

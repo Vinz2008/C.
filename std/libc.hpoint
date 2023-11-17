@@ -22,7 +22,7 @@ extern putchar(c : int) int;
 extern exit(code : int) void;
 extern open(path : i8 ptr, flag : int ...) int;
 extern close(fd : int) int;
-extern read(fd : int, buf : void ptr, size : int) int;
+extern read(fd : int, buf : void ptr, size : i64) i64;
 extern malloc(size : int) void ptr;
 extern strdup(s : i8 ptr) i8 ptr;
 extern strcpy(dest : i8 ptr, src : i8 ptr) i8 ptr;
