@@ -747,14 +747,15 @@ public:
 
 class ForExprAST : public ExprAST {
   std::string VarName;
+  Cpoint_Type VarType;
   std::unique_ptr<ExprAST> Start, End, Step;
   std::vector<std::unique_ptr<ExprAST>> Body;
 
 public:
-  ForExprAST(const std::string &VarName, std::unique_ptr<ExprAST> Start,
+  ForExprAST(const std::string &VarName, Cpoint_Type VarType, std::unique_ptr<ExprAST> Start,
              std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step,
              std::vector<std::unique_ptr<ExprAST>> Body)
-    : VarName(VarName), Start(std::move(Start)), End(std::move(End)),
+    : VarName(VarName), VarType(VarType), Start(std::move(Start)), End(std::move(End)),
       Step(std::move(Step)), Body(std::move(Body)) {}
 
   Value *codegen() override;

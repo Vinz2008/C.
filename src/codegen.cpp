@@ -2330,7 +2330,10 @@ Value* WhileExprAST::codegen(){
 
 Value *ForExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, Cpoint_Type(double_type, false));
+  //Cpoint_Type forVarType = Cpoint_Type(int_type);
+  //Cpoint_Type forVarType = Cpoint_Type(double_type);
+  
+  AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, VarType);
   CpointDebugInfo.emitLocation(this);
   Value *StartVal = Start->codegen();
   if (!StartVal)
@@ -2345,7 +2348,7 @@ Value *ForExprAST::codegen(){
   } else {
     OldVal = NamedValues[VarName]->alloca_inst;
   }
-  NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, Cpoint_Type(double_type));
+  NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, VarType);
 
   BasicBlock* CondBB = BasicBlock::Create(*TheContext, "loop_for_cond", TheFunction);
   Builder->CreateBr(CondBB);
@@ -2354,7 +2357,6 @@ Value *ForExprAST::codegen(){
   Value *EndCond = End->codegen();
   if (!EndCond)
     return nullptr;
-
   EndCond = Builder->CreateFCmpONE(
       EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
@@ -2383,7 +2385,15 @@ Value *ForExprAST::codegen(){
       return nullptr;
   } else {
     // If not specified, use 1.0.
+    if (is_decimal_number_type(VarType)){
     StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
+    } else {
+        StepVal = ConstantInt::get(*TheContext, APInt(get_type_number_of_bits(VarType), (uint64_t)1));
+    }
+    //StepVal = ConstantInt::get(*TheContext, APInt(32, (uint64_t)1));
+  }
+  if (StepVal->getType() != get_type_llvm(VarType)){
+    convert_to_type(get_cpoint_type_from_llvm(StepVal->getType()), get_type_llvm(VarType), StepVal);
   }
 
   // Compute the end condition.
@@ -2393,7 +2403,13 @@ Value *ForExprAST::codegen(){
 
   Value *CurVar =
       Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, VarName.c_str());
-  Value *NextVar = Builder->CreateFAdd(CurVar, StepVal, "nextvar_for");
+  //Value *NextVar = Builder->CreateAdd(CurVar, StepVal, "nextvar_for"); // will need to make it into a function to have int add and fadd used depending of type
+  Value* NextVar;
+  if (is_decimal_number_type(VarType)){
+    NextVar = Builder->CreateFAdd(CurVar, StepVal, "nextvar_for");
+  } else {
+    NextVar = Builder->CreateAdd(CurVar, StepVal, "nextvar_for");
+  }
   Builder->CreateStore(NextVar, Alloca);
 
   Builder->CreateBr(CondBB);
@@ -2416,7 +2432,7 @@ Value *ForExprAST::codegen(){
 
   // Restore the unshadowed variable.
   if (OldVal)
-    NamedValues[VarName] = std::make_unique<NamedValue>(OldVal, Cpoint_Type(double_type));
+    NamedValues[VarName] = std::make_unique<NamedValue>(OldVal, VarType);
   else
     NamedValues.erase(VarName);
 

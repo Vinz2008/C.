@@ -215,7 +215,7 @@ std::unique_ptr<ExprAST> IfExprAST::clone(){
 }
 
 std::unique_ptr<ExprAST> ForExprAST::clone(){
-    return std::make_unique<ForExprAST>(VarName, Start->clone(), End->clone(), Step->clone(), clone_vector<ExprAST>(Body));
+    return std::make_unique<ForExprAST>(VarName, VarType, Start->clone(), End->clone(), Step->clone(), clone_vector<ExprAST>(Body));
 }
 
 std::unique_ptr<ExprAST> WhileExprAST::clone(){
@@ -1711,7 +1711,10 @@ std::unique_ptr<ExprAST> ParseForExpr() {
 
   std::string IdName = IdentifierStr;
   getNextToken();  // eat identifier.
-
+  Cpoint_Type varType = Cpoint_Type(double_type);
+  if (CurTok == ':'){
+    varType = ParseTypeDeclaration();
+  }
   if (CurTok != '=')
     return LogError("expected '=' after for");
   getNextToken();  // eat '='.
@@ -1751,7 +1754,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   }
   getNextToken();
 
-  return std::make_unique<ForExprAST>(IdName, std::move(Start),
+  return std::make_unique<ForExprAST>(IdName, varType, std::move(Start),
                                        std::move(End), std::move(Step),
                                        std::move(Body));
 }

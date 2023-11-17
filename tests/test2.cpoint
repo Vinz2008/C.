@@ -1,7 +1,7 @@
 import @std/print.cpoint
 func test(x) void {
-  for i = 1, i <= x, 1.0 {
-     printd(i)
+  for i : int = 1, i <= x, 1.0 {
+     printi(i)
   }
 }
 func main(){

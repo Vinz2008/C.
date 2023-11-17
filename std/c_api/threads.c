@@ -7,10 +7,15 @@
 #endif
 #include "gc.h"
 
+
 pthread_t* c_create_threads(void* (threadFunc)(void*)){
+#ifndef NO_STD
     pthread_t* thread = GC_malloc(sizeof(pthread_t));
     pthread_create(thread, NULL, threadFunc, NULL);
     return thread;
+#else 
+    return NULL;
+#endif
 }
 
 void c_thread_spawn(void* (threadFunc)(void*)){

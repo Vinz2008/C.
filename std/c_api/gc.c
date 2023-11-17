@@ -64,10 +64,6 @@ void set_pointer_int(int* ptr, int value){
     printf("*ptr : %d\n", *ptr);
 }
 
-size_t size_of_int(){
-    return sizeof(int);
-}
-
 char* gc_strdup(char* s){
     char* s2 = gc_malloc(strlen(s)+1);
     if (s2){
