@@ -641,7 +641,7 @@ int main(int argc, char **argv){
     std_static_path.append("libstd.a");
     if (Comp_context->std_mode && link_files_mode){
       if (rebuild_std){
-      if (build_std(std_path, TargetTriple, verbose_std_build, use_native_target) == -1){
+      if (build_std(std_path, TargetTriple, verbose_std_build, use_native_target, Comp_context->gc_mode) == -1){
         fprintf(stderr, "Could not build std at path : %s\n", std_path.c_str());
         exit(1);
       }

@@ -163,7 +163,8 @@ install: all
 
 
 run:
-	./$(OUTPUTBIN) -std ./std tests/test2.cpoint -no-gc
+	./$(OUTPUTBIN) -std ./std tests/test2.cpoint
+#	./$(OUTPUTBIN) -std ./std tests/test2.cpoint -no-gc
 
 clean: clean-build
 	make -C std/c_api clean

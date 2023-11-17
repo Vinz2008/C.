@@ -85,6 +85,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make declarations private with private keyword (it will just be passed by the lexer) or even blocks (pass private blocks in the same way as mod blocks in imports)
 - [x] Only generate the externs when functions are called
 - [ ] Make import work on struct templates (copy the functions instead of generating externs) (see test21.cpoint)
+- [x] Make no_gc work directly with the cpoint compiler without cpoint-build (then make "make run" have -no-gc in the Makefile)
 
 ## Benchmarks compared to other languages
 

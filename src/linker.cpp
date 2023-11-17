@@ -20,7 +20,7 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 #endif
 
 
-int build_std(string path, string target_triplet, bool verbose_std_build, bool use_native_target){
+int build_std(string path, string target_triplet, bool verbose_std_build, bool use_native_target, bool is_gc){
     string cmd_clean = "make -C " + path + " clean";
     if (Comp_context->debug_mode){
     cout << "cmd clean : " << cmd_clean << endl;
@@ -33,6 +33,9 @@ int build_std(string path, string target_triplet, bool verbose_std_build, bool u
     string cmd = "";
     if (!use_native_target){
         cmd += "TARGET=" + target_triplet;   
+    }
+    if (!is_gc){
+        cmd += "NO_GC=TRUE ";
     }
     cmd += " make -C " + path;
     if (debug_info_mode){
