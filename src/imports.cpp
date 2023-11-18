@@ -236,8 +236,46 @@ void interpret_extern(std::string line, int& pos_line);
 
 int nb_of_opened_braces_struct;
 
+std::string interpret_struct_generics(std::string line, int& pos, int nb_line, int& pos_line){
+    std::string declar = "";
+    for (int i = pos; i < line.size(); i++){
+        if (line.at(i) != '{'){
+        declar += line.at(i);
+        }
+    }
+    /*if (pos_line != 0 && pos_line != nb_line){
+        out_file << "\n";
+    }*/
+    declar += "{\n";
+    pos_line++;
+    modifier_for_line_count++;
+    int in_func_nb_of_opened_braces = 1;
+    while (1){
+        Log::Imports_Info() << "declar in body func generic : " << declar << "\n";
+        if (!std::getline(imported_file, line)){
+            break;
+        }
+        pos_line++;
+        declar += line + "\n";
+        if (line.find('{') != std::string::npos){
+            in_func_nb_of_opened_braces++;
+        }
+        if (line.find('}') != std::string::npos){
+            in_func_nb_of_opened_braces--;
+            if (in_func_nb_of_opened_braces == 0){
+                break;
+            }
+        }
+    }
+    return declar;
+}
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
+    if (line.find('~') != std::string::npos){
+        //return interpret_struct_generics(line, pos, nb_line, pos_line);
+        out_file << "struct " << interpret_struct_generics(line, pos, nb_line, pos_line);
+        return;
+    }
     std::string struct_declar = "";
     //bool in_function = false;
     nb_of_opened_braces_struct = 0;

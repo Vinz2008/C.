@@ -7,5 +7,6 @@ func main() double {
         printi(argc)
     }
     var t : struct pair~int~ 
+    t.first = 32
     printi(t.get_first())
 }

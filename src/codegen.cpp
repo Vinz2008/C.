@@ -2090,7 +2090,13 @@ Value* RedeclarationExprAST::codegen(){
       Log::Info() << "IS_STRUCT" << "\n";
       is_struct = true;
     } else {
-        return LogErrorV(this->loc, "The variable %s in redeclaration which is used with a member %s is neither a struct or an union", VariableName.c_str(), member.c_str());
+        // Verify for generic mangling
+        Log::Info() << "get_variable_type(VariableName)->struct_name : " << get_variable_type(VariableName)->struct_name << "\n";
+        if (get_variable_type(VariableName)->is_struct_template && StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]){
+            is_struct = true;
+        } else {
+            return LogErrorV(this->loc, "The variable %s in redeclaration which is used with a member %s is neither a struct or an union", VariableName.c_str(), member.c_str());
+        }
     }
   }
   }
@@ -2115,7 +2121,13 @@ Value* RedeclarationExprAST::codegen(){
     NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
   } else if (is_struct){
     Log::Info() << "StructName : " << VariableName << "\n";
-    auto members = StructDeclarations[get_variable_type(VariableName)->struct_name]->members;
+    std::vector<std::pair<std::string, Cpoint_Type>> members;
+    if (get_variable_type(VariableName)->is_struct_template){
+        Log::Info() << "get_struct_template_name : " << get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed) << "\n";
+        members = StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]->members;
+    } else {
+        members = StructDeclarations[get_variable_type(VariableName)->struct_name]->members;
+    }
     int pos_struct = -1;
     Log::Info() << "members.size() : " << members.size() << "\n";
     for (int i = 0; i < members.size(); i++){
