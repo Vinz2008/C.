@@ -1,4 +1,6 @@
 include libm.hpoint
+import expect.cpoint
+import print.cpoint
 
 mod math {
     func cos(arg : double) double {
@@ -97,9 +99,19 @@ mod math {
 }
 
 test "sin" {
-	sin(2)
+	math::sin(1)
 }
 
 test "cos" {
-	cos(4)
+	math::cos(2)
+}
+
+test "log" {
+    #expect(math::log(1) == 0)
+}
+
+test "sqrt" {
+    #expect(math::sqrt(4) == 2)
+    #expect(math::sqrt(16) == 4)
+    #expect(math::sqrt(4000000) == 2000)
 }

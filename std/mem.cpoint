@@ -7,14 +7,14 @@ mod mem {
     func memcpy(dst_ptr : void ptr, src_ptr : void ptr, size : i64) void ptr {
         var dst : i8 ptr =  dst_ptr
         var src : i8 ptr = src_ptr
-        for i = 0, i < size, 1.0 {
+        for i : int = 0, i < size, 1.0 {
             dst[i] = src[i]
         }
         dst_ptr
     }
     func memset(buf_ptr : void ptr, value : int, size : i64) void ptr{
         var buf : i8 ptr = buf_ptr
-        for i = 0, i < size, 1.0 {
+        for i : int = 0, i < size, 1.0 {
             buf[i] = value
         }
         buf_ptr
@@ -22,7 +22,7 @@ mod mem {
     func memcmp(a_ptr : void ptr, b_ptr : void ptr, size : i64) int {
         var a : i8 ptr = a_ptr
         var b : i8 ptr = b_ptr
-        for i = 0, i < size, 1.0 {
+        for i : int = 0, i < size, 1.0 {
             if a[i] < b[i] {
                 return -1
             } else if b[i] < a[i] {
