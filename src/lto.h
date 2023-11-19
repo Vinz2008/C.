@@ -1,0 +1,1 @@
+void writeBitcodeLTO(std::string filename, bool is_thin);

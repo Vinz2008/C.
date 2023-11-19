@@ -36,6 +36,7 @@
 #include "c_translator.h"
 #include "templates.h"
 #include "tests.h"
+#include "lto.h"
 
 using namespace std;
 using namespace llvm;
@@ -574,6 +575,9 @@ int main(int argc, char **argv){
     if (debug_info_mode){
     DBuilder->finalize();
     }
+#if ENABLE_LTO
+    writeBitcodeLTO("out-lto.bc", false);
+#endif
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
