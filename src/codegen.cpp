@@ -1130,6 +1130,15 @@ Value *BinaryExprAST::codegen() {
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
     convert_to_type(get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
   }
+  // and operator only work with ints and bools returned from operators are for now doubles, TODO)
+  if (Op == "&&"){
+    if (is_decimal_number_type(get_cpoint_type_from_llvm(L->getType()))){
+        convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(int_type)), L);
+    }
+    if (is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+        convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(int_type)), R);
+    }
+  }
   // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
   if (Op == "=="){
     return operators::LLVMCreateCmp(L, R);
@@ -2205,7 +2214,7 @@ Value* RedeclarationExprAST::codegen(){
     }
     Builder->CreateStore(ValDeclared, ptr);
     if (is_var_local(VariableName)){
-        NamedValues[VariableName] = std::make_unique<NamedValue>(dyn_cast<AllocaInst>(arrayPtr), cpoint_type);
+        //NamedValues[VariableName] = std::make_unique<NamedValue>(dyn_cast<AllocaInst>(arrayPtr), cpoint_type);
     }
   } else {
   Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
@@ -2217,6 +2226,7 @@ Value* RedeclarationExprAST::codegen(){
     return LogErrorV(this->loc, "Assigning to a variable a void value");
   }
   Builder->CreateStore(ValDeclared, Alloca);
+  // TODO : remove all the NamedValues redeclaration
   NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
   }
   }

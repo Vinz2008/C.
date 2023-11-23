@@ -490,7 +490,11 @@ std::string from_cpoint_type_to_printf_format(Cpoint_Type type){
         format = "%c";
         // TODO activate this or not ?
     }*/ else if (is_signed(type) || is_unsigned(type)){
-        format = "%d";
+        if (type.type == i8_type){
+            format = "%c";
+        } else {
+            format = "%d";
+        }
     } else if (is_decimal_number_type(type)) {
         format = "%f";
     } else {

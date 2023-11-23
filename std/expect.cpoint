@@ -3,20 +3,20 @@ import panic.cpoint
 extern printf(format : i8 ptr ...) int;
 extern exit(i : int) void;
 
-func expect(expression : double){
+func expect(expression : double) void {
     if expression == false {
         panic("assertion failed\n")
     }
 }
 
-func expectx(expression : double, filename : i8 ptr, function : i8 ptr){
+func expectx(expression : double, filename : i8 ptr, function : i8 ptr) void {
     if expression == false {
         printf("assertion failed in the %s function in %s\n", function, filename)
         exit(1)
     }
 }
 
-func expectxplusexpr(expression : double, filename : i8 ptr, function : i8 ptr, expr_str : i8 ptr){
+func expectxplusexpr(expression : double, filename : i8 ptr, function : i8 ptr, expr_str : i8 ptr) void {
     if expression == false {
         printf("assertion %s failed in the %s function in %s\n", expr_str, function, filename)
         exit(1)
