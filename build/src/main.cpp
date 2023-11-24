@@ -587,6 +587,7 @@ int main(int argc, char** argv){
     std::string cross_compile_linker_args = (std::string)config["cross-compile"]["linker_arguments"].value_or("");
     std::string sysroot_cross = (std::string)config["cross-compile"]["sysroot"].value_or("");   
     is_gc = config["build"]["gc"].value_or(true);
+    bool is_strip_mode = config["build"]["strip"].value_or(false);
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
@@ -641,9 +642,9 @@ int main(int argc, char** argv){
         linker_args += c_libraries_linker_args;
         if (src_folder_exists){
         if (type == "exe"){
-        linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc);
+            linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc, is_strip_mode);
         } else if (type == "library"){
-        linkLibrary(PathList, outfilename, target, linker_args, sysroot);
+            linkLibrary(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "dynlib"){
             linkDynamicLibrary(PathList, outfilename, target, linker_args, sysroot);
         }

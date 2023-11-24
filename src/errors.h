@@ -21,7 +21,7 @@ struct Source_location {
 std::ostream& operator<<(std::ostream& os, struct Source_location Loc);
 bool operator!=(Source_location loc1, Source_location loc2);
 
-class Compiler_context{
+class Compiler_context {
 public:
     std::string filename;
     struct Source_location lexloc;
@@ -34,8 +34,9 @@ public:
     bool test_mode;
     bool compile_time_sizeof;
     bool c_translator;
-    Compiler_context(const std::string &filename, int line_nb, int col_nb, const std::string &line, bool std_mode = true, bool gc_mode = true, bool debug_mode = false, bool is_release_mode = false, bool test_mode = false, bool compile_time_sizeof = false, bool c_translator = false) 
-                    : filename(filename), lexloc({line_nb, col_nb}), line(line), curloc({line_nb, col_nb}), std_mode(std_mode), gc_mode(gc_mode), debug_mode(debug_mode), is_release_mode(is_release_mode), test_mode(test_mode), c_translator(c_translator) {}
+    bool strip_mode;
+    Compiler_context(const std::string &filename, int line_nb, int col_nb, const std::string &line, bool std_mode = true, bool gc_mode = true, bool debug_mode = false, bool is_release_mode = false, bool test_mode = false, bool compile_time_sizeof = false, bool c_translator = false, bool strip_mode = false) 
+                    : filename(filename), lexloc({line_nb, col_nb}), line(line), curloc({line_nb, col_nb}), std_mode(std_mode), gc_mode(gc_mode), debug_mode(debug_mode), is_release_mode(is_release_mode), test_mode(test_mode), c_translator(c_translator), strip_mode(strip_mode) {}
 };
 
 void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...);

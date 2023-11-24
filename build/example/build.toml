@@ -15,6 +15,7 @@ arguments = ""
 outfile = "a.out"
 libraries = ["pthread", "gtk"]
 gc = true
+strip = false
 
 [custom]
 scripts = ["make -C c"]

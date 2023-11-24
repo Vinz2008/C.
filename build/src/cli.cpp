@@ -77,7 +77,7 @@ void compileFile(std::string target, std::string arguments, std::string path, st
     runCommand(cmd);
 }
 
-void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc){
+void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc, bool is_strip_mode){
     if  (outfilename == ""){
         outfilename = "a.out";
     }
@@ -115,6 +115,10 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     writeLastBuildToml(DEFAULT_STD_PATH, target, is_gc);
     std::cout << "exe link cmd : " << cmd << std::endl;
     runCommand(cmd);
+    if (is_strip_mode){
+        std::string cmd_strip = "llvm-strip " + outfilename;
+        runCommand(cmd_strip);
+    }
 }
 
 void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot){

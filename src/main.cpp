@@ -421,6 +421,8 @@ int main(int argc, char **argv){
         } else if (arg.compare("-run-test") == 0){
           run_mode = true;
           Comp_context->test_mode = true;
+        } else if (arg.compare("-strip") == 0){
+          Comp_context->strip_mode = true;
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
@@ -698,12 +700,20 @@ int main(int argc, char **argv){
       Log::Print() << _("Linked the executable") << "\n";
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
     }
+    if (Comp_context->strip_mode){
+        if (!link_files_mode){
+            fprintf(stderr, "Can't strip without linking so it is ignored\n");
+            exit(1);
+        }
+        std::string cmd = "llvm-strip " + exe_filename;
+        runCommand(cmd);
+    }
     if (run_mode){
       if (!link_files_mode){
         fprintf(stderr, "Can't run without linking so it is ignored\n");
         exit(1);
       }
-      char actualpath [PATH_MAX+1];
+      char actualpath[PATH_MAX+1];
       realpath(exe_filename.c_str(), actualpath);
       Log::Print() << "run executable at " << actualpath << "\n";
       runCommand(actualpath);

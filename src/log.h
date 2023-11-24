@@ -75,6 +75,7 @@ namespace Log {
     };
     struct Info {
         Info() {
+            // TODO : add here and warnings : if (!silent_mode)
             if (Comp_context->debug_mode){
             std::cout << "[INFO] ";
             }

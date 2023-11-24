@@ -10,11 +10,9 @@
 
 **-target-triplet** : select the target triplet to select the target to compile to
 
-**-verbose-std-build** : build the std verbosely. It is advised to activate this if the std doesn't build
+**-verbose-std-build** : make the build of the standard library verbose. It is advised to activate this if the std doesn't build
 
 **-no-delete-import-file** : make the compiler not delete the temporary source file which where the includes and the imports are replaced
-
-**-verbose-std-build** : make the build of the standard library verbose
 
 **-no-gc** : make the compiler not add the functions for garbage collection
 
@@ -30,6 +28,26 @@
 
 **-d** : activate debug mode to see debug logs
 
+**-o** : select the output file name
+
+**-g** : enable debuginfos
+
+**-silent** : make the compiler silent
+
+**-build-mode** : select the build mode (release or debug)
+
 **-fPIC** : make the compiler produce position-independent code
 
 **-compile-time-sizeof** : the compiler gets the size of types at compile time and not at runtime
+
+**-test** : enable tests
+
+**-run-test** : run tests
+
+**-strip**
+
+**-c-translator** : 
+
+**-use-native-target** : 
+
+**-run** : 
