@@ -88,8 +88,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Only generate the externs when functions are called
 - [x] Make import work on struct templates (copy the functions instead of generating externs) (see test21.cpoint)
 - [x] Make no_gc work directly with the cpoint compiler without cpoint-build (then make "make run" have -no-gc in the Makefile)
-- [ ] Make bools returned by operators and in for loops,etc i1s and not doubles
+- [x] Make bools returned by operators and in for loops,etc i1s and not doubles
 - [x] Add stripping mode to the compiler and the build system
+- [ ] rerun benchmarks using hyperfine
 
 ## Benchmarks compared to other languages
 

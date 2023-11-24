@@ -1018,7 +1018,7 @@ Value* MatchExprAST::codegen(){
             return LogErrorV(this->loc, "Couldn't find the member of this enum in match case");
         }
         Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos)));
-        cmp = Builder->CreateFCmpONE(cmp, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
+        //cmp = Builder->CreateFCmpONE(cmp, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
         BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then_match", TheFunction);
         ElseBB = BasicBlock::Create(*TheContext, "else_match");
         Builder->CreateCondBr(cmp, ThenBB, ElseBB);
@@ -1181,13 +1181,15 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateGreaterThan(L, R);
   case '^':
     L = Builder->CreateXor(L, R, "xortmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
   case '&':
     //return operators::LLVMCreateLogicalOr(L, R);
     return operators::LLVMCreateAnd(L, R);
   case '|':
     L = Builder->CreateOr(L, R, "ortmp");
-    return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
 #if ARRAY_MEMBER_OPERATOR_IMPL
   case '[':
     // TODO get from rhs and lhs with getelementptr the array member
@@ -1843,13 +1845,17 @@ Value *IfExprAST::codegen() {
   if (!CondV)
     return nullptr;
 
-  if (CondV->getType() == get_type_llvm(Cpoint_Type(bool_type))){
+  /*if (CondV->getType() == get_type_llvm(Cpoint_Type(bool_type))){
     Log::Info() << "Got bool i1 to if" << "\n";
     convert_to_type(Cpoint_Type(bool_type), get_type_llvm(Cpoint_Type(double_type)), CondV);
+  }*/
+  if (CondV->getType() != get_type_llvm(Cpoint_Type(bool_type))){
+    // TODO : create default comparisons : if is pointer, compare to null, if number compare to 1, etc
+    Log::Info() << "Got bool i1 to if" << "\n";
+    convert_to_type(get_cpoint_type_from_llvm(CondV->getType()), get_type_llvm(Cpoint_Type(bool_type)), CondV);
   }
   // Convert condition to a bool by comparing non-equal to 0.0.
-  CondV = Builder->CreateFCmpONE(
-      CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
+  //CondV = Builder->CreateFCmpONE(CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
@@ -2304,9 +2310,10 @@ Value* LoopExprAST::codegen(){
     Builder->SetInsertPoint(CmpLoop);
     Value* PosVal = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
     Value* isLoopFinishedVal = Builder->CreateFCmpOLT(PosVal, SizeArrayVal,"cmptmp_loop_in");  // if is less than
-    Value* isLoopFinishedValFP = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
-    Value* isLoopFinishedBoolVal = Builder->CreateFCmpONE(isLoopFinishedValFP, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
-    Builder->CreateCondBr(isLoopFinishedBoolVal, InLoop, AfterLoop);
+    //Value* isLoopFinishedValFP = Builder->CreateUIToFP(isLoopFinishedVal, Type::getDoubleTy(*TheContext), "booltmp_loop_in");
+    //Value* isLoopFinishedBoolVal = Builder->CreateFCmpONE(isLoopFinishedValFP, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_loop_in");
+    //Builder->CreateCondBr(isLoopFinishedBoolVal, InLoop, AfterLoop);
+    Builder->CreateCondBr(isLoopFinishedVal, InLoop, AfterLoop);
     
     Builder->SetInsertPoint(InLoop);
     // initalize here the temp variable to have the value of the array
@@ -2344,8 +2351,7 @@ Value* WhileExprAST::codegen(){
   Value *CondV = Cond->codegen();
   if (!CondV)
     return nullptr;
-  CondV = Builder->CreateFCmpONE(
-    CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_while");
+  //CondV = Builder->CreateFCmpONE(CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_while");
   BasicBlock *AfterBB =
       BasicBlock::Create(*TheContext, "afterloop_while", TheFunction);
 
@@ -2398,8 +2404,7 @@ Value *ForExprAST::codegen(){
   Value *EndCond = End->codegen();
   if (!EndCond)
     return nullptr;
-  EndCond = Builder->CreateFCmpONE(
-      EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");
+  //EndCond = Builder->CreateFCmpONE(EndCond, ConstantFP::get(*TheContext, APFloat(0.0)), "loopcond_for");
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
   BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "afterloop", TheFunction);
   Builder->CreateCondBr(EndCond, LoopBB, AfterBB);

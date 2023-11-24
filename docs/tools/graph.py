@@ -7,8 +7,9 @@ import sys
 
 is_saving = False
 
-if sys.argv[1] == "--save":
-    is_saving = True
+if len(sys.argv) > 1:
+    if sys.argv[1] == "--save":
+        is_saving = True
 
 df = pd.read_csv("benchmarks.csv")
 

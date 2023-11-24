@@ -6,8 +6,8 @@ The benchmark are run on a sytem with a ryzen 5 5600g, 32go of ram and running M
 
 Finding the 50th Fibonacci number using a recursive function
 
-C. : 137.688s  
-C (gcc 13.1.1) : 146.497s  
+C. : 136.970s  
+C (gcc 13.2.1) : 145.179s  
 Rust release (rustc 1.73.0) : 73.856s  
 Rust debug (rustc 1.73.0) : 237.043s  
 Nim 2.0.0 release :  40.671s  
@@ -26,7 +26,7 @@ Nodejs v20.9.0 : 332.740s
 
 Finding the factors of 2,000,000,000
 
-C. : 6.292s  
+C. : 2.772s  
 C (gcc 13.2.1) : 3.213s 
 Rust release (rustc 1.73.0) : 2.726s 
 Rust debug (rustc 1.73.0) : 9.742s  

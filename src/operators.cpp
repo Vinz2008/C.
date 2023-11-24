@@ -61,7 +61,8 @@ Value* LLVMCreateCmp(Value* L, Value* R){
     } else {
       L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
     }
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
@@ -70,7 +71,8 @@ Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
     } else {
         L = Builder->CreateFCmpUNE(L, R, "notequalfcmptmp");
     }
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateGreaterThan(Value* L, Value* R){
@@ -79,7 +81,8 @@ Value* LLVMCreateGreaterThan(Value* L, Value* R){
     } else {
       L = Builder->CreateFCmpOGT(L, R, "cmptmp");
     }
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
@@ -88,7 +91,8 @@ Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
     } else {
         L = Builder->CreateFCmpOGE(L, R, "cmptmp");
     }
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateSmallerThan(Value* L, Value* R){
@@ -98,7 +102,8 @@ Value* LLVMCreateSmallerThan(Value* L, Value* R){
       L = Builder->CreateFCmpOLT(L, R, "cmptmp");
     }
     // Convert bool 0/1 to double 0.0 or 1.0
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R){
@@ -107,17 +112,20 @@ Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R){
     } else {
         L = Builder->CreateFCmpOLE(L, R, "cmptmp");
     }
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateLogicalOr(Value* L, Value* R){
     L = Builder->CreateOr(L, R, "logicalortmp");
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateLogicalAnd(Value* L, Value* R){
     L = Builder->CreateAnd(L, R, "logicalandtmp");
-    return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
+    return L;
+    //return Builder->CreateUIToFP(L, get_type_llvm(Cpoint_Type(double_type)), "booltmp");
 }
 
 Value* LLVMCreateAnd(Value* L, Value* R){
