@@ -1,7 +1,8 @@
 import @std/print.cpoint
+import @std/thread.cpoint
 include @std/libc.hpoint
 
-extern printptr(x);
+extern printptr(x : void ptr);
 
 extern pthread_create(thread : void ptr, attr : void ptr, start_routine : func (void ptr) void ptr, arg : void ptr) i32;
 
@@ -10,6 +11,7 @@ extern pthread_detach(thread : void ptr);
 extern pthread_join(thread : pthread_t, retval : void ptr);
 
 func print_test(arg : void ptr) void ptr {
+    printptr(arg)
     printstr("test thread")
     null
 }
@@ -17,18 +19,20 @@ func print_test(arg : void ptr) void ptr {
 func create_thread(a : func (void ptr) void ptr){ // add there a function argument to create a thread
     var thread : pthread_t
     var arg : int = 3
-    printd(3)
+    // printd(3)
     printptr(addr thread)
-    pthread_create(addr thread, null, print_test, addr arg)
-    printd(2)
+    printptr(addr arg)
+    pthread_create(addr thread, null, a, addr arg)
+    // printd(2)
     pthread_join(thread, null)
 }
 
 func main(){
   printi(argc)
-  create_thread(print_test)
+  // create_thread(print_test)
   var thread : pthread_t
   var arg : int = 0
-  pthread_create(addr thread, 0, print_test, addr arg) // for now crash
+  // pthread_create(addr thread, 0, print_test, addr arg) // for now crash
+  thread::spawn(print_test)
   return 0
 }

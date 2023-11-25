@@ -1,7 +1,0 @@
-mod thread {
-
-func create(){
-    0
-}
-
-}

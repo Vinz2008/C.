@@ -1,5 +1,5 @@
 import @std/print.cpoint
-extern printptr(x);
+extern printptr(x : void ptr);
 func test() void {
   var x : double = 1
   var i : int = 1

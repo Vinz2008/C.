@@ -1,0 +1,21 @@
+include libc.hpoint
+import print.cpoint
+
+extern pthread_create(thread : void ptr, attr : void ptr, start_routine : func (void ptr) void ptr, arg : void ptr) i32;
+// extern pthread_join(thread : pthread_t, retval : void ptr);
+extern pthread_join(thread : i64, retval : void ptr);
+
+extern printptr(x : void ptr);
+
+mod thread {
+
+func spawn(a : func (void ptr) void ptr) void {
+    var thread : pthread_t
+    var arg = 2
+    // printptr(addr thread)
+    // printptr(addr arg)
+    pthread_create(addr thread, null, a, null)
+    pthread_join(thread, null)
+}
+
+}

@@ -1346,12 +1346,14 @@ Value* AddrExprAST::codegen(){
         if (!A){
             return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
         }
-        return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VariableExpr->getName().c_str());
+        return A;
+        //return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VariableExpr->getName().c_str());
     } else {
         GlobalVariable* G = GlobalVariables[VariableExpr->getName()]->globalVar;
         if (!G)
             return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
-        return Builder->CreateLoad(PointerType::get(G->getType(), G->getAddressSpace()), G, VariableExpr->getName().c_str());
+        //return Builder->CreateLoad(PointerType::get(G->getType(), G->getAddressSpace()), G, VariableExpr->getName().c_str());
+        return G;
     }
   } else if (dynamic_cast<ArrayMemberExprAST*>(Expr.get())){
     std::unique_ptr<ArrayMemberExprAST> arrayMember = get_Expr_from_ExprAST<ArrayMemberExprAST>(std::move(Expr));

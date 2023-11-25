@@ -90,6 +90,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Make bools returned by operators and in for loops,etc i1s and not doubles
 - [x] Add stripping mode to the compiler and the build system
 - [ ] rerun benchmarks using hyperfine
+- [ ] Implement closures (lambdas) (use llvm trampoline : [useful link](https://www.reddit.com/r/ProgrammingLanguages/comments/mm9j4k/comment/gtshg44/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button))
+- [ ] Make multithreaded cpoint-build
 
 ## Benchmarks compared to other languages
 
