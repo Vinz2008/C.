@@ -238,6 +238,9 @@ std::unique_ptr<ExprAST> MatchExprAST::clone(){
     return std::make_unique<MatchExprAST>(matchVar, clone_vector<matchCase>(matchCases));
 }
 
+std::unique_ptr<ExprAST> ClosureAST::clone(){
+    return std::make_unique<ClosureAST>(clone_vector<ExprAST>(Body));
+}
 
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
     std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
@@ -631,6 +634,9 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseBreakExpr();
   case tok_match:
     return ParseMatch();
+  case tok_func:
+    return ParseClosure();
+
   }
 }
 
@@ -1639,6 +1645,35 @@ std::unique_ptr<ExprAST> ParseMatch(){
     return std::make_unique<MatchExprAST>(matchVar, std::move(matchCases));
 }
 
+std::unique_ptr<ExprAST> ParseClosure(){
+    std::vector<std::unique_ptr<ExprAST>> Body; 
+    getNextToken();
+    if (CurTok != '('){
+        return LogError("Missing '(' in closure");
+    }
+    getNextToken();
+    // TODO : add args
+    if (CurTok != ')'){
+        return LogError("Missing '(' in closure");
+    }
+    getNextToken();
+    // TODO : add captured vars between ||
+    // ex : test_func(func()|a|{
+    //    <content>
+    //})
+    // TODO : add return type
+    if (CurTok != '{'){
+        return LogError("Missing '{' in closure");
+    }
+    getNextToken();
+    auto ret = ParseBodyExpressions(Body, false);
+    if (!ret){
+        return nullptr;
+    }
+    getNextToken();
+    return std::make_unique<ClosureAST>(std::move(Body));
+}
+
 std::unique_ptr<ExprAST> ParseLoopExpr(){
   getNextToken();  // eat the loop.
   std::vector<std::unique_ptr<ExprAST>> Body;
@@ -1672,6 +1707,7 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
         return nullptr;
     }
     getNextToken();
+
     return std::make_unique<LoopExprAST>(VarName, std::move(Array), std::move(Body));
   }
 }

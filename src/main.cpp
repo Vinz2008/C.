@@ -573,6 +573,7 @@ int main(int argc, char **argv){
     codegenTemplates();
     //codegenStructTemplates();
     generateTests();
+    generateClosures();
     //generateExterns();
     if (debug_info_mode){
     DBuilder->finalize();

@@ -1,0 +1,18 @@
+import @std/print.cpoint
+
+func print_func(a : void ptr) void ptr {
+    printstr("hello world")
+    null
+}
+
+func test_func(f : func (void ptr) void ptr) void {
+    
+}
+
+func main() int {
+    test_func(print_func)
+    test_func(func(){
+        printstr("hello world")
+    })
+    0
+}

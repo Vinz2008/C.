@@ -56,6 +56,8 @@ std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have
 
 std::vector<std::unique_ptr<ExternToGenerate>> externFunctionsToGenerate;
 
+std::vector<std::unique_ptr<FunctionAST>> closuresToGenerate;
+
 
 extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
@@ -78,6 +80,7 @@ extern bool is_in_struct_templates_codegen;
 
 extern std::string TargetTriple;
 
+int closure_number = 0;
 //extern bool test_mode;
 //extern bool std_mode;
 //extern bool gc_mode;
@@ -1059,6 +1062,16 @@ Value* MatchExprAST::codegen(){
     return Constant::getNullValue(get_type_llvm(double_type));
 }
 
+Value* ClosureAST::codegen(){
+    std::vector<std::pair<std::string, Cpoint_Type>> Args;
+    std::string closure_name = "closure" + std::to_string(closure_number);
+    auto Proto = std::make_unique<PrototypeAST>(this->loc, closure_name, Args, Cpoint_Type(void_type));
+    auto functionAST = std::make_unique<FunctionAST>(Proto->clone(), std::move(Body));
+    closuresToGenerate.push_back(std::move(functionAST));
+    return Proto->codegen();
+    // return nullptr;
+}
+
 #if ARRAY_MEMBER_OPERATOR_IMPL
 Value* getArrayMember(Value* array, Value* index){
     Log::Info() << "ARRAY MEMBER CODEGEN getArrayMember" << "\n";
@@ -1605,6 +1618,14 @@ void TestAST::codegen(){
         }
     }
 }*/
+
+void generateClosures(){
+    if (!closuresToGenerate.empty()){
+        for (int i = 0; i < closuresToGenerate.size(); i++){
+            closuresToGenerate.at(i)->codegen();
+        }
+    }
+}
 
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.

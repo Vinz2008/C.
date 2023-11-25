@@ -512,6 +512,19 @@ public:
     std::string generate_c() override { return ""; }
 };
 
+class ClosureAST : public ExprAST {
+    std::vector<std::unique_ptr<ExprAST>> Body;
+public:
+    ClosureAST(std::vector<std::unique_ptr<ExprAST>> Body) : Body(std::move(Body)) {}
+    Value *codegen() override;
+    std::unique_ptr<ExprAST> clone();
+    std::string to_string() override {
+        // TODO
+        return "";
+    }
+    std::string generate_c() override { return ""; }
+};
+
 /// PrototypeAST - This class represents the "prototype" for a function,
 /// which captures its name, and its argument names (thus implicitly the number
 /// of arguments the function takes).
@@ -850,6 +863,7 @@ std::unique_ptr<TestAST> ParseTest();
 std::unique_ptr<UnionDeclarAST> ParseUnion();
 std::unique_ptr<EnumDeclarAST> ParseEnum();
 std::unique_ptr<ExprAST> ParseMacroCall();
+std::unique_ptr<ExprAST> ParseClosure();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

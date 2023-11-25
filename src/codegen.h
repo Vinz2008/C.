@@ -112,5 +112,6 @@ std::string module_function_mangling(std::string module_name, std::string functi
 //void generateTests();
 std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type);
 void generateExterns();
+void generateClosures();
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
