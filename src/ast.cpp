@@ -239,7 +239,7 @@ std::unique_ptr<ExprAST> MatchExprAST::clone(){
 }
 
 std::unique_ptr<ExprAST> ClosureAST::clone(){
-    return std::make_unique<ClosureAST>(clone_vector<ExprAST>(Body));
+    return std::make_unique<ClosureAST>(clone_vector<ExprAST>(Body), ArgNames, return_type,captured_vars);
 }
 
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
@@ -854,6 +854,40 @@ std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>
   return std::make_unique<EmptyExprAST>();
 }
 
+std::unique_ptr<ExprAST> ParseFunctionArgsTyped(std::vector<std::pair<std::string, Cpoint_Type>>& ArgNames, bool& is_variable_number_args){
+    if (CurTok != ')'){
+    int arg_nb = 0;
+    while (1){
+      if (CurTok == tok_format){
+      Log::Info() << "Found Variable number of args" << "\n";
+      is_variable_number_args = true;
+      getNextToken();
+      break;
+      } else {
+      if (CurTok == ')'){
+        break;
+      }
+      if (arg_nb > 0){
+        if (CurTok != ','){
+          Log::Info() << "CurTok : " << CurTok << "\n";
+          return LogError("Expected ')' or ',' in argument list");
+        }
+        getNextToken();
+      }
+      std::string ArgName = IdentifierStr;
+      getNextToken();
+      Cpoint_Type arg_type = Cpoint_Type(double_type);
+      if (CurTok == ':'){
+        arg_type = ParseTypeDeclaration();
+      }
+      arg_nb++;
+      ArgNames.push_back(std::make_pair(ArgName, arg_type));
+      }
+    }
+  }
+  return std::make_unique<EmptyExprAST>();
+}
+
 std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body){
     bool return_found = false;
     while (CurTok != '}'){
@@ -952,7 +986,11 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   } else {
   getNextToken();
-  if (CurTok != ')'){
+  auto ret = ParseFunctionArgsTyped(ArgNames, is_variable_number_args);
+  if (!ret){
+    return nullptr;
+  }
+  /*if (CurTok != ')'){
     int arg_nb = 0;
     while (1){
       if (CurTok == tok_format){
@@ -981,7 +1019,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       ArgNames.push_back(std::make_pair(ArgName, arg_type));
       }
     }
-  }
+  }*/
 
   }
 
@@ -1646,32 +1684,60 @@ std::unique_ptr<ExprAST> ParseMatch(){
 }
 
 std::unique_ptr<ExprAST> ParseClosure(){
+    std::unique_ptr<ExprAST> ret;
     std::vector<std::unique_ptr<ExprAST>> Body; 
     getNextToken();
     if (CurTok != '('){
         return LogError("Missing '(' in closure");
     }
     getNextToken();
-    // TODO : add args
-    if (CurTok != ')'){
-        return LogError("Missing '(' in closure");
+    std::vector<std::pair<std::string, Cpoint_Type>> ArgNames;
+    bool is_variable_number_args = false;
+    ret = ParseFunctionArgsTyped(ArgNames, is_variable_number_args);
+    if (!ret){
+        return nullptr;
     }
+    /*if (CurTok != ')'){
+        return LogError("Missing '(' in closure");
+    }*/
     getNextToken();
     // TODO : add captured vars between ||
     // ex : test_func(func()|a|{
     //    <content>
     //})
-    // TODO : add return type
+    std::vector<std::string> captured_vars;
+    if (CurTok == '|'){
+        getNextToken();
+        while (1){
+            captured_vars.push_back(IdentifierStr);
+            getNextToken();
+            if (CurTok == '|'){
+                break;
+            }
+            if (CurTok != ','){
+                return LogError("Expected '|' or ',' in captured vars list in closure");
+            }
+        }
+        getNextToken();
+        /*if (CurTok != '|'){
+            return LogError("missing '|' in closure");
+        }*/
+    }
+    
+    Cpoint_Type return_type = Cpoint_Type(double_type);
+    if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class){
+        return_type = ParseTypeDeclaration(false);
+    }
     if (CurTok != '{'){
         return LogError("Missing '{' in closure");
     }
     getNextToken();
-    auto ret = ParseBodyExpressions(Body, false);
+    ret = ParseBodyExpressions(Body, false);
     if (!ret){
         return nullptr;
     }
     getNextToken();
-    return std::make_unique<ClosureAST>(std::move(Body));
+    return std::make_unique<ClosureAST>(std::move(Body), ArgNames, return_type, captured_vars);
 }
 
 std::unique_ptr<ExprAST> ParseLoopExpr(){

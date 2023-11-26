@@ -10,9 +10,14 @@ func test_func(f : func (void ptr) void ptr) void {
 }
 
 func main() int {
+    var capture_var = 2
     test_func(print_func)
-    test_func(func(){
+    test_func(func(a : void ptr) void {
         printstr("hello world")
+    })
+    test_func(func(a : void ptr) |capture_var| void ptr {
+        printstr("hello world 2")
+        null
     })
     0
 }

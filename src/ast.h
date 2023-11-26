@@ -514,8 +514,11 @@ public:
 
 class ClosureAST : public ExprAST {
     std::vector<std::unique_ptr<ExprAST>> Body;
+    std::vector<std::pair<std::string, Cpoint_Type>> ArgNames;
+    Cpoint_Type return_type;
+    std::vector<std::string> captured_vars;
 public:
-    ClosureAST(std::vector<std::unique_ptr<ExprAST>> Body) : Body(std::move(Body)) {}
+    ClosureAST(std::vector<std::unique_ptr<ExprAST>> Body, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, Cpoint_Type return_type, std::vector<std::string> captured_vars) : Body(std::move(Body)), ArgNames(ArgNames), return_type(return_type), captured_vars(captured_vars) {}
     Value *codegen() override;
     std::unique_ptr<ExprAST> clone();
     std::string to_string() override {
