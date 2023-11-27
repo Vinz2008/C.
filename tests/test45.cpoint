@@ -17,6 +17,7 @@ func main() int {
     })
     test_func(func(a : void ptr) |capture_var| void ptr {
         printstr("hello world 2")
+        printd(closure.capture_var)
         null
     })
     0

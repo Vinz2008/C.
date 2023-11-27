@@ -539,8 +539,14 @@ if_reflection:
         break;
       }
     }
-    Cpoint_Type member_type = members.at(pos).second;
     Log::Info() << "Pos for GEP struct member " << pos << "\n";
+    for (int i = 0; i < members.size(); i++){
+        Log::Info() << "members.at(" << i << ") : " << members.at(i).first << "\n";
+    }
+    if (pos == -1){
+        return LogErrorV(this->loc, "Unknown member %s in struct member", MemberName.c_str());
+    }
+    Cpoint_Type member_type = members.at(pos).second;
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
     Cpoint_Type cpoint_type = NamedValues[StructName]->type;
@@ -1062,9 +1068,30 @@ Value* MatchExprAST::codegen(){
     return Constant::getNullValue(get_type_llvm(double_type));
 }
 
-Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars){
-    Function *TheFunction = Builder->GetInsertBlock()->getParent();
+StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_vars){
     std::vector<Type*> structElements;
+    for (int i = 0; i < captured_vars.size(); i++){
+        Cpoint_Type* temp_type = get_variable_type(captured_vars.at(i));
+        if (!temp_type){
+            LogErrorV(emptyLoc, "Variable captured by closure doesn't exist");
+            return nullptr;
+        }
+        structElements.push_back(get_type_llvm(*temp_type));
+    }
+    auto structType = StructType::get(*TheContext, structElements);
+    structType->setName("closure_struct" + std::to_string(closure_number)); // TODO : remove this ?
+    std::vector<std::string> functions;
+    std::vector<std::pair<std::string,Cpoint_Type>> captured_vars_with_type;
+    for (int i = 0; i < captured_vars.size(); i++){
+        captured_vars_with_type.push_back(std::make_pair(captured_vars.at(i), *get_variable_type(captured_vars.at(i))));
+    }
+    StructDeclarations["closure_struct" + std::to_string(closure_number)] = std::make_unique<StructDeclaration>(dyn_cast<Type>(structType), captured_vars_with_type, functions);
+    return structType;
+}
+
+Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars, StructType* structType){
+    Function *TheFunction = Builder->GetInsertBlock()->getParent();
+    /*std::vector<Type*> structElements;
     for (int i = 0; i < captured_vars.size(); i++){
         Cpoint_Type* temp_type = get_variable_type(captured_vars.at(i));
         if (!temp_type){
@@ -1072,8 +1099,8 @@ Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars){
         }
         structElements.push_back(get_type_llvm(*temp_type));
     }
-    auto structType = StructType::get(*TheContext, structElements);
-    structType->setName("closure_struct" + std::to_string(closure_number)); // TODO : remove this ?
+    auto structType = StructType::get(*TheContext, structElements);*/
+    // structType->setName("closure_struct" + std::to_string(closure_number)); // TODO : remove this ?
     IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
     auto structAlloca = TmpB.CreateAlloca(structType, 0, "struct_closure");
@@ -1087,6 +1114,7 @@ Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars){
         Value* varValue = Builder->CreateLoad(get_type_llvm(*get_variable_type(captured_vars.at(i))), get_var_allocation(captured_vars.at(i)));
         Builder->CreateStore(varValue, ptr);
     }
+
     return structAlloca;
     //return Builder->CreateLoad(structAlloca->getType(), structAlloca);
 }
@@ -1095,11 +1123,20 @@ Value* ClosureAST::codegen(){
     std::string closure_name = "closure" + std::to_string(closure_number);
     closure_number++;
     auto Proto = std::make_unique<PrototypeAST>(this->loc, closure_name, ArgNames, return_type);
+    StructType* structType = nullptr;
+    if (!captured_vars.empty()){
+        structType = getClosureCapturedVarsStructType(captured_vars);
+        if (!structType){
+            return nullptr;
+        }
+        Proto->Args.insert(Proto->Args.begin(), std::make_pair("closure", get_cpoint_type_from_llvm(structType)));
+        
+    }
     auto functionAST = std::make_unique<FunctionAST>(Proto->clone(), std::move(Body));
     closuresToGenerate.push_back(std::move(functionAST));
     auto f = Proto->codegen();
     if (!captured_vars.empty()){
-        Value* closureArgs = getClosureCapturedVarsStruct(captured_vars);
+        Value* closureArgs = getClosureCapturedVarsStruct(captured_vars, structType);
         Function *TheFunction = Builder->GetInsertBlock()->getParent();
         auto trampAlloca = CreateEntryBlockAlloca(TheFunction, "tramp", Cpoint_Type(i8_type, false, 0, true, 72));
         trampAlloca->setAlignment(Align::Constant<16>()); // Is it needed ?
