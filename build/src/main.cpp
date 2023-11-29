@@ -221,6 +221,18 @@ void buildSubprojects(toml::v3::table& config){
     }
 }
 
+bool shouldCompileFile(std::string file){
+    fs::path path{file};
+    path.replace_extension("o");
+    if (!fs::exists(path)){
+        return true;
+    }
+    std::string object_file = path.string();
+    auto file_timestamp = fs::last_write_time((fs::path)(file)).time_since_epoch();
+    auto object_file_timestamp = fs::last_write_time((fs::path)(object_file)).time_since_epoch();
+    return (file_timestamp.count() > object_file_timestamp.count());
+}
+
 std::vector<std::string> buildFileEachThreadPathList;
 
 void buildFileEachThread(int index, std::string target, std::string sysroot, std::string arguments){
@@ -261,8 +273,10 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
         buildFolderMultiThreaded(src_folder, config, type, target, sysroot, is_gc, thread_number, localPathList, arguments);
     } else {
     for (auto const& path : localPathList){
-        std::cout << path << ' ';
-        compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
+        if (shouldCompileFile(path)){
+            std::cout << path << ' ';
+            compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
+        }
     }
     }
     std::cout << std::endl;
