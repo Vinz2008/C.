@@ -95,6 +95,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - Maybe in closure automatically generate the struct member code for the variables to use them transparently (if you need var a, you just put "a")
 - [x] Make multithreaded cpoint-build
 - [ ] Work on from-c translator
+- [ ] Cache object files in cpoint-build (compare timestamps of source files and object files to see if the file is needed to be compiled)
 
 ## Benchmarks compared to other languages
 
