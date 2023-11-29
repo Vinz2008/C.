@@ -9,11 +9,12 @@
 #include <iostream>
 #include <fstream>
 #include <filesystem>
+#include <thread>
 
 namespace fs = std::filesystem;
 
 void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot);
-void buildFolder(std::string src_folder, toml::v3::table& config,std::string_view type, std::string target, std::string sysroot, bool is_gc);
+void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number);
 
 enum mode {
     BUILD_MODE = -1,
@@ -171,13 +172,14 @@ void addDependency(std::string dependency_name, toml::v3::table& config){
     }
 }
 
-void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc){
+void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number){
     auto subfolders = config["subfolders"]["folders"];
     if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config, type, target, sysroot, is_gc](auto&& sub){
+        int subfolder_number = arr->size();
+        arr->for_each([&config, type, target, sysroot, is_gc, subfolder_number,thread_number](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
                 std::cout << "sub : " << sub << std::endl;
-                buildFolder((std::string)sub, config, type, target, sysroot, is_gc);
+                buildFolder((std::string)sub, config, type, target, sysroot, is_gc, (int)lround(thread_number/subfolder_number));
             }
         });
     }
@@ -219,7 +221,32 @@ void buildSubprojects(toml::v3::table& config){
     }
 }
 
-void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc){
+std::vector<std::string> buildFileEachThreadPathList;
+
+void buildFileEachThread(int index, std::string target, std::string sysroot, std::string arguments){
+    std::string path = buildFileEachThreadPathList.at(index);
+    std::cout << path << ' ';
+    compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
+}
+
+void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number, std::vector<std::string> localPathList, std::string arguments){
+    std::cout << "Multi threaded with " << thread_number << " threads" << std::endl;
+    std::vector<std::thread> threads;
+    buildFileEachThreadPathList = localPathList;
+    for (int i = 0; i < localPathList.size(); i+=thread_number){
+    for (int j = i; j < i+thread_number; j++){
+        if (j < localPathList.size()){
+        threads.push_back(std::thread(buildFileEachThread, j, target, sysroot, arguments));
+        }
+    }
+    }
+    for(auto& thread : threads){
+        thread.join();
+    }
+}
+
+void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number){
+    std::cout << "buildFolder threads " << thread_number  << std::endl;
     std::string_view arguments_view = config["build"]["arguments"].value_or("");
     std::string arguments = (std::string) arguments_view;
     if (type == "dynlib"){
@@ -227,12 +254,16 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
     }
     std::vector<std::string> localPathList = getFilenamesWithExtension(".cpoint", src_folder);
     PathList.insert(PathList.end(), localPathList.begin(), localPathList.end());
+    if (!is_gc){
+        arguments += " -no-gc ";
+    }
+    if (thread_number > 1){
+        buildFolderMultiThreaded(src_folder, config, type, target, sysroot, is_gc, thread_number, localPathList, arguments);
+    } else {
     for (auto const& path : localPathList){
         std::cout << path << ' ';
-        if (!is_gc){
-            arguments += " -no-gc ";
-        }
         compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
+    }
     }
     std::cout << std::endl;
 }
@@ -464,11 +495,17 @@ int main(int argc, char** argv){
     std::string project_name_to_create = "";
     std::string install_local_project_path = "";
     bool is_gc = true;
+    int thread_number = 1;
     for (int i = 0; i < argc; i++){
     std::string arg = argv[i];
     if (arg == "-f"){
         i++;
         filename_config = argv[i];
+    } else if (arg.rfind("-j", 0) == 0){
+        thread_number = std::stoi(arg.substr(2, arg.length() - 2));
+
+        //i++;
+        //thread_number = std::stoi((std::string)argv[i]);
     } else if (arg == "build"){
         modeBuild = BUILD_MODE;
     } else if (arg == "clean"){
@@ -629,9 +666,9 @@ int main(int argc, char** argv){
         }
         std::string c_libraries_linker_args = get_libraries_linker_args(config);
         runPrebuildCommands(config);
-        buildSubfolders(config, type, target, sysroot, is_gc);
+        buildSubfolders(config, type, target, sysroot, is_gc, thread_number);
         if (src_folder_exists){
-        buildFolder(src_folder, config, type, target, sysroot, is_gc);
+        buildFolder(src_folder, config, type, target, sysroot, is_gc, thread_number);
         }
         buildSubprojects(config);
         runCustomScripts(config);
