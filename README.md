@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 750 KB stripped, ≈23.2MB not stripped
+- compiler less than 750 KB stripped, ≈23.4MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -94,6 +94,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Make closure captured vars usable in the closure (have a "is closure" flag for when doing the codegen of a closure) needing to use a struct named "closure" (if you need var a, you put "closure.a")
 - Maybe in closure automatically generate the struct member code for the variables to use them transparently (if you need var a, you just put "a")
 - [x] Make multithreaded cpoint-build
+- [ ] Work on from-c translator
 
 ## Benchmarks compared to other languages
 
