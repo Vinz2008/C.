@@ -96,6 +96,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Make multithreaded cpoint-build
 - [ ] Work on from-c translator
 - [x] Cache object files in cpoint-build (compare timestamps of source files and object files to see if the file is needed to be compiled)
+- [ ] Add synthax for input and outputs of variables in inline assembly like in Rust (https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html, https://doc.rust-lang.org/nightly/reference/inline-assembly.html)
+- [ ] Generate unreachables with unreachable (unreachable macro ?)
 
 ## Benchmarks compared to other languages
 

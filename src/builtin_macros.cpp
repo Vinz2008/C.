@@ -86,8 +86,8 @@ std::unique_ptr<StringExprAST> generate_concat_macro(std::vector<std::unique_ptr
     return std::make_unique<StringExprAST>(concatenated_str);
 }
 
-std::unique_ptr<ExprAST> generate_asm_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
-    if (ArgsMacro.size() != 1){
+std::unique_ptr<ExprAST> generate_asm_macro(/*std::vector<std::unique_ptr<ExprAST>>& ArgsMacro*/ std::unique_ptr<ArgsInlineAsm> ArgsMacro){
+    /*if (ArgsMacro.size() != 1){
         return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "asm", 1, ArgsMacro.size());
     }
     StringExprAST* str = nullptr;
@@ -95,9 +95,11 @@ std::unique_ptr<ExprAST> generate_asm_macro(std::vector<std::unique_ptr<ExprAST>
         str = dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get());
     } else {
         return LogError("Wrong type of args for %s macro function call : expected a string", "asm");
-    }
-    std::string assembly_code = str->str;
-    return std::make_unique<AsmExprAST>(assembly_code);
+    }*/
+    //std::string assembly_code = str->str;
+    /*std::string assembly_code = ArgsMacro->assembly_code->str;
+    return std::make_unique<AsmExprAST>(assembly_code);*/
+    return std::make_unique<AsmExprAST>(std::move(ArgsMacro));
 }
 
 std::unique_ptr<ExprAST> generate_todo_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){

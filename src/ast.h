@@ -179,20 +179,41 @@ public:
     std::string generate_c() override { return ""; }
 };
 
-class AsmExprAST : public ExprAST {
-    std::string assembly_code;
+class ArgInlineAsm {
 public:
-    AsmExprAST(const std::string& assembly_code) : assembly_code(assembly_code) {}
+    std::unique_ptr<ExprAST> ArgExpr;
+    enum ArgType {
+        output,
+        input
+    } argType;
+    ArgInlineAsm(std::unique_ptr<ExprAST> ArgExpr, enum ArgType argType) : ArgExpr(std::move(ArgExpr)), argType(argType) {}
+    std::unique_ptr<ArgInlineAsm> clone(){
+        return std::make_unique<ArgInlineAsm>(ArgExpr->clone(), argType);
+    }
+};
+
+class ArgsInlineAsm {
+public:
+    std::unique_ptr<StringExprAST> assembly_code;
+    std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs;
+    ArgsInlineAsm(std::unique_ptr<StringExprAST> assembly_code, std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs) : assembly_code(std::move(assembly_code)), InputOutputArgs(std::move(InputOutputArgs)) {}
+    std::unique_ptr<ArgsInlineAsm> clone();
+};
+
+class AsmExprAST : public ExprAST {
+    //std::string assembly_code;
+    std::unique_ptr<ArgsInlineAsm> Args;
+public:
+    AsmExprAST(std::unique_ptr<ArgsInlineAsm> Args) : Args(std::move(Args)) {}
     Value* codegen() override;
     std::unique_ptr<ExprAST> clone() override {
-        return std::make_unique<AsmExprAST>(assembly_code);
+        return std::make_unique<AsmExprAST>(Args->clone());
     }
     std::string to_string() override {
-        return "#asm(\"" + assembly_code + "\")";
+        return "#asm(\"" + Args->assembly_code->str + "\")";
     }
     std::string generate_c() override { return ""; }
 };
-
 class VariableExprAST : public ExprAST {
 public:
   std::string Name;

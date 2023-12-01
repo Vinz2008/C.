@@ -1209,8 +1209,57 @@ Value* getArrayMember(Value* array, Value* index){
 #endif
 
 Value* AsmExprAST::codegen(){
-    auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(Cpoint_Type(void_type)), false), (StringRef)assembly_code, (StringRef)"~{dirflag},~{fpsr},~{flags}", true, false, InlineAsm::AD_ATT);
-    return Builder->CreateCall(inlineAsm);
+    bool contains_out = false;
+    bool contains_in = false;
+    auto asm_type = Cpoint_Type(void_type);
+    Value* in_value_loaded = nullptr;
+    Value* out_var_allocation = nullptr;
+    std::vector<Value*> AsmArgs;
+    for (int i = 0; i < Args->InputOutputArgs.size(); i++){
+        if (dynamic_cast<VariableExprAST*>(Args->InputOutputArgs.at(i)->ArgExpr.get())){
+            auto expr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Args->InputOutputArgs.at(i)->ArgExpr));
+            if (!expr){
+                return LogErrorV(this->loc, "Error in expression of asm macro");
+            }
+            if (Args->InputOutputArgs.at(i)->argType == ArgInlineAsm::ArgType::output){
+                contains_out = true;
+                asm_type = expr->type;
+                out_var_allocation = get_var_allocation(expr->Name);
+            } else if (Args->InputOutputArgs.at(i)->argType == ArgInlineAsm::ArgType::input){
+                contains_in = true;
+                in_value_loaded = Builder->CreateLoad(get_type_llvm(expr->type), get_var_allocation(expr->Name));
+            }
+        } else {
+            return LogErrorV(this->loc, "Unknown expression for \"in\" in asm macro");
+        }
+    }
+    std::string assembly_code = Args->assembly_code->str;
+    std::string generated_assembly_code = "";
+    for (int i = 0; i < assembly_code.size(); i++){
+        if (assembly_code.at(i) == '{' && assembly_code.at(i+1) && '}'){
+            if (contains_out){
+                generated_assembly_code += "${0:q}";
+            }
+            i++;
+        } else {
+            generated_assembly_code += assembly_code.at(i);
+        }
+    }
+    std::string constraints = ""; 
+    if (contains_out){
+        constraints += "=&r,";
+    } else if (contains_in){
+        constraints += "r,";
+        AsmArgs.push_back(in_value_loaded);
+    }
+    constraints += "~{dirflag},~{fpsr},~{flags},~{memory}";
+    auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(asm_type), false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
+    if (contains_out){
+        auto asmCalled = Builder->CreateCall(inlineAsm, AsmArgs); 
+        return Builder->CreateStore(asmCalled, out_var_allocation);
+    } else {
+        return Builder->CreateCall(inlineAsm, AsmArgs);
+    }
 }
 
 Value *BinaryExprAST::codegen() {
