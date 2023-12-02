@@ -1,0 +1,13 @@
+[project]
+name = "std"
+type = "library"
+src_folder = "."
+
+[build]
+arguments = "-with-gc -no-std"
+outfile = "libstd-build.a"
+
+[custom]
+prebuild_commands = ["make -C c_api"]
+clean_commands = ["make -C c_api clean"]
+linkablefiles = ["./c_api/*.o"]

@@ -128,7 +128,7 @@ void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std
     std::string cmd = "llvm-ar rcs " + outfilename + " ";
     for (int i = 0; i < PathList.size(); i++){
         fs::path path_fs{ PathList.at(i) };
-        std::string out_path = path_fs.replace_extension(".o").string();
+        std::string out_path = (path_fs.extension() == ".a") ? path_fs.string() : path_fs.replace_extension(".o").string();
         cmd += out_path + " ";
     }
     std::cout << "lib link cmd : " << cmd << std::endl;

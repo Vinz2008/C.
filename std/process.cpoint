@@ -1,0 +1,15 @@
+extern system(cmd : i8 ptr) int;
+extern exit(status : int) void;
+extern abort() void;
+
+mod process {
+    func create(cmd : i8 ptr) int {
+        system(cmd)
+    }
+    func abort() void {
+        abort()
+    }
+    func exit(status : int) void {
+        exit(status)
+    }
+}

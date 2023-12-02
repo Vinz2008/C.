@@ -1421,6 +1421,9 @@ Value *CallExprAST::codegen() {
     if (Callee == "print"){
         return PrintMacroCodegen(std::move(Args));
     }
+    if (Callee == "unreachable"){
+        return Builder->CreateUnreachable();
+    }
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;
   if (is_function_template){
@@ -2406,8 +2409,8 @@ Value* InfiniteLoopCodegen(std::vector<std::unique_ptr<ExprAST>>& Body, Function
     BasicBlock* loopBB = BasicBlock::Create(*TheContext, "loop_infinite", TheFunction);
     Builder->CreateBr(loopBB);
     Builder->SetInsertPoint(loopBB);
-    BasicBlock* afterBB = BasicBlock::Create(*TheContext, "after_loop_infinite", TheFunction);
-    blocksForBreak.push(afterBB);
+    //BasicBlock* afterBB = BasicBlock::Create(*TheContext, "after_loop_infinite", TheFunction);
+    //blocksForBreak.push(afterBB);
     for (int i = 0; i < Body.size(); i++){
       if (!Body.at(i)->codegen())
         return nullptr;

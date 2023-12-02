@@ -1,7 +1,0 @@
-extern system(cmd : i8 ptr) int;
-
-mod subprocess {
-    func create(cmd : i8 ptr) int {
-        system(cmd)
-    }
-}

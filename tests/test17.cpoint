@@ -4,4 +4,6 @@ func main(){
     loop {
         printd(2)
     }
+    #unreachable()
+    printd(2)
 }

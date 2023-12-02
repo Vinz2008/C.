@@ -440,6 +440,7 @@ void cleanObjectFilesFolder(std::string folder){
     std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", folder);
     for (auto const& path : PathList){
         fs::path path_fs{ path };
+        
         std::string object_path = path_fs.replace_extension(".o").string();
         std::cout << object_path << ' ';
         remove(object_path.c_str());

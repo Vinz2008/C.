@@ -732,6 +732,8 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return generate_print_macro(ArgsMacro, false);
     } else if (function_name == "println"){
         return generate_print_macro(ArgsMacro, true);
+    } else if (function_name == "unreachable"){
+        return generate_unreachable_macro();
     }
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
@@ -1793,6 +1795,7 @@ std::unique_ptr<ExprAST> ParseLoopExpr(){
     if (!ret){
         return nullptr;
     }
+    getNextToken();
     return std::make_unique<LoopExprAST>("", nullptr, std::move(Body), true);
   } else {
     Log::Info() << "Loop In Expr" << "\n";

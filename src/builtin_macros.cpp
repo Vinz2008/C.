@@ -139,3 +139,9 @@ std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAS
 
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_print", std::move(Args), Cpoint_Type());
 }
+
+std::unique_ptr<ExprAST> generate_unreachable_macro(){
+    // call internal function
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_unreachable", std::move(Args), Cpoint_Type());
+}
