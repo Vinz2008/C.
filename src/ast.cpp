@@ -734,6 +734,8 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return generate_print_macro(ArgsMacro, true);
     } else if (function_name == "unreachable"){
         return generate_unreachable_macro();
+    } else if (function_name == "assume"){
+        return generate_assume_macro(ArgsMacro);
     }
     }
     return LogError("unknown function macro called : %s", function_name.c_str());

@@ -163,3 +163,11 @@ std::unique_ptr<ExprAST> generate_unreachable_macro(){
     std::vector<std::unique_ptr<ExprAST>> Args;
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_unreachable", std::move(Args), Cpoint_Type());
 }
+
+std::unique_ptr<ExprAST> generate_assume_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
+    if (ArgsMacro.size() != 1){
+        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "assume", 1, ArgsMacro.size());
+    }
+    std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
+    return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_assume", std::move(Args), Cpoint_Type());
+}

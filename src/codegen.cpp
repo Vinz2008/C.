@@ -1462,6 +1462,9 @@ Value *CallExprAST::codegen() {
     if (Callee == "unreachable"){
         return Builder->CreateUnreachable();
     }
+    if (Callee == "assume"){
+        return Builder->CreateAssumption(Args.at(0)->codegen());
+    }
   }
   bool is_function_template = TemplateProtos[Callee] != nullptr;
   if (is_function_template){
