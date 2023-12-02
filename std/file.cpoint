@@ -66,6 +66,26 @@ func get_line(fd : int) i8 ptr {
     line
 }
 
+// TODO : fix this
+func get_file_size(fd : int) i64 {
+    var buf : struct stat
+    var ret = fstat(fd, addr buf)
+    if ret == -1 {
+        #panic("getting file size failed")
+    }
+    buf.st_size
+}
+
+func read_to_string(fd : int) i8 {
+    var size  = file::get_file_size(fd)
+    var buf = gc_malloc(sizeof i8 * (size+1))
+    var ret = read(fd, buf, size)
+    while ret != 0 {
+        ret = read(fd, buf, size)
+    }
+    buf
+}
+
 func canonicalize(path : i8 ptr) i8 ptr {
     var canonicalized_path : i8 ptr = gc_malloc(4096 * sizeof i8)
     realpath(path, canonicalized_path)

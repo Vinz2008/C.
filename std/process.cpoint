@@ -1,15 +1,32 @@
+import panic.cpoint
+
 extern system(cmd : i8 ptr) int;
 extern exit(status : int) void;
 extern abort() void;
+extern getpid() i32;
+extern fork() i32;
+extern execvp(file : i8 ptr, argv : i8 ptr ptr)
 
 mod process {
     func create(cmd : i8 ptr) int {
         system(cmd)
+    }
+    func _create_alternative(cmd : i8 ptr, args : i8 ptr ptr) int {
+        // replace create by this function
+        var pid : int = fork()
+        match pid {
+            -1 => #panic("creating process failed in fork"),
+            0 => execvp(args[0], args),
+            _ => {}
+        }
     }
     func abort() void {
         abort()
     }
     func exit(status : int) void {
         exit(status)
+    }
+    func get_id() int {
+        getpid()
     }
 }

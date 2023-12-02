@@ -58,9 +58,8 @@ public:
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".
 class NumberExprAST : public ExprAST {
-  double Val;
-
 public:
+  double Val;
   NumberExprAST(double Val) : Val(Val) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
@@ -317,8 +316,11 @@ public:
     Value* codegen() override;
     std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
-        // TODO
-        return "";
+        std::string struct_members_str = "";
+        for (int i = 0; i < StructMembers.size(); i++){
+            struct_members_str += StructMembers.at(i)->to_string();
+        }
+        return struct_name + " { " + struct_members_str + " }";
     }
     std::string generate_c() override { return ""; }
 };
@@ -372,10 +374,9 @@ public:
 };
 
 class UnaryExprAST : public ExprAST {
+public:
   char Opcode;
   std::unique_ptr<ExprAST> Operand;
-
-public:
   UnaryExprAST(char Opcode, std::unique_ptr<ExprAST> Operand)
     : Opcode(Opcode), Operand(std::move(Operand)) {}
 
@@ -820,8 +821,11 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone();
   std::string to_string() override {
-    // TODO
-    return "";
+    std::string while_body = "";
+    for (int i = 0; i < Body.size(); i++){
+        while_body += Body.at(i)->to_string() + "\n";
+    }
+    return "while" + Cond->to_string() + " {\n" + while_body + "}";
   }
   std::string generate_c() override { return ""; }
 };

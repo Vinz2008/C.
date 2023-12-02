@@ -2,6 +2,8 @@
 #include <memory>
 #include <ctime>
 
+void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
+
 extern std::string filename;
 
 std::unique_ptr<StringExprAST> get_filename_tok(){
@@ -18,6 +20,12 @@ std::unique_ptr<StringExprAST> stringify_macro(std::unique_ptr<ExprAST> expr){
 }
 
 std::unique_ptr<ExprAST> generate_expect(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
+    std::vector<std::pair<std::string, Cpoint_Type>> args_expect;
+    args_expect.push_back(std::make_pair("expression", Cpoint_Type(double_type)));
+    args_expect.push_back(std::make_pair("filename", Cpoint_Type(i8_type, true)));
+    args_expect.push_back(std::make_pair("function", Cpoint_Type(i8_type, true)));
+    args_expect.push_back(std::make_pair("expr_str", Cpoint_Type(i8_type, true)));
+    add_manually_extern("expectxplusexpr", Cpoint_Type(void_type), std::move(args_expect), 0, 30, false, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args;
     std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
     if (ArgsMacro.size() != 1){
@@ -31,6 +39,11 @@ std::unique_ptr<ExprAST> generate_expect(std::vector<std::unique_ptr<ExprAST>>& 
 }
 
 std::unique_ptr<ExprAST> generate_panic(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
+    std::vector<std::pair<std::string, Cpoint_Type>> args_panic;
+    args_panic.push_back(std::make_pair("string", Cpoint_Type(i8_type, true)));
+    args_panic.push_back(std::make_pair("filename", Cpoint_Type(i8_type, true)));
+    args_panic.push_back(std::make_pair("function", Cpoint_Type(i8_type, true)));
+    add_manually_extern("panicx", Cpoint_Type(void_type), std::move(args_panic), 0, 30, false, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args;
     std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
     if (ArgsMacro.size() != 1){
@@ -126,8 +139,13 @@ std::unique_ptr<ExprAST> generate_dbg_macro(std::vector<std::unique_ptr<ExprAST>
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_dbg", std::move(Args), Cpoint_Type());
 }
 
+void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
+
 std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro, bool is_println){
     // call internal function
+    std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
+    args_printf.push_back(std::make_pair("format", Cpoint_Type(i8_type, true)));
+    add_manually_extern("printf", Cpoint_Type(int_type), std::move(args_printf), 0, 30, true, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
     if (is_println){
         if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){

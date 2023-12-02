@@ -1,5 +1,3 @@
-import expect.cpoint
-
 mod ascii {
     func to_upper(c : i8) i8 {
         c & 223

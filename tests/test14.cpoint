@@ -3,19 +3,21 @@ import @std/file.cpoint
 
 func main(){
     var fd : int = file::open("test_io.txt")
-    printstr("fd : ")
-    printi(fd)
+    #println("fd : {}", fd)
     var out : int = file::write(fd, "test hello world\n")
-    printstr("write output")
-    printi(out)
+    #println("write output : {}", out)
     file::close(fd)
     var path = file::canonicalize("../tests")
     printstr(path)
     file::symlink("test14.cpoint", "symlinked_test14.cpoint.temp")
-
-
+    var fd_size = file::open("test14.cpoint")
+    var size = file::get_file_size(fd_size)
+    #println("size of file : {}", size)
+    file::close(fd_size)
+    // var content = file::read_to_string(fd)
+    // #println("file content : {}", content)
     var fd2 = file::open("test_read.txt")
-    printstr(file::get_line(fd2))
+    // printstr(file::get_line(fd2))
     for i = 0, i < 2, 1.0 {
         // printd(i)
         // printstr(file::get_line(fd2))

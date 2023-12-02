@@ -45,6 +45,36 @@ extern getenv(var_name : i8 ptr) i8 ptr;
 extern setenv(var_name : i8 ptr, value : i8 ptr, overwrite : int) int;
 extern unsetenv(var_name : i8 ptr) int;
 
+extern lseek(fd : int, offset : int, whence : int) int; 
+
+?[define SEEK_SET 0]
+?[define SEEK_CUR 1]
+?[define SEEK_END 2]
+
+struct timespec {
+    var tv_sec : i64
+    var tv_nsec : i64
+}
+
+struct stat {
+    var st_dev : i64
+    var st_ino : i64
+    var st_nlink : i64
+    var st_mode : i32
+    var st_uid : i32
+    var __pad0 : i32
+    var st_gid : i32
+    var st_rdev : i64
+    var st_size : i64
+    var st_blksize : i64
+    var st_blocks : i64
+    var st_atim : struct timespec
+    var st_mtim : struct timespec
+    var st_ctim : struct timespec
+    var __glibc_reserved[3] : i64
+}
+
+extern fstat(fd : int, buf : struct stat ptr) i32;
 
 // opaque type
 struct DIR {

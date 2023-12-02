@@ -1,5 +1,4 @@
 import panic.cpoint
-import expect.cpoint
 
 extern malloc(size : int) void ptr;
 extern free(pointer : void ptr) void;

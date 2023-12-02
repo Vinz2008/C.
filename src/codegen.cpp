@@ -929,15 +929,53 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
         } else {
             BasicBlock* thenBB = BasicBlock::Create(*TheContext, "then_match_const", TheFunction);
             Builder->SetInsertPoint(thenBB);
-            auto val = matchCaseTemp->expr->clone()->codegen();
+            auto valExpr = matchCaseTemp->expr->clone(); 
+            Value* val = nullptr;
+            if (dynamic_cast<NumberExprAST*>(valExpr.get())){
+                val = valExpr->codegen();
+            } else if (dynamic_cast<UnaryExprAST*>(valExpr.get())){
+                Log::Info() << "TEST UNARY" << "\n";
+                auto unExpr = get_Expr_from_ExprAST<UnaryExprAST>(std::move(valExpr));
+                if (unExpr->Opcode == '-'){
+                    if (dynamic_cast<NumberExprAST*>(unExpr->Operand.get())){
+                        auto exprFromUnary = get_Expr_from_ExprAST<NumberExprAST>(std::move(unExpr->Operand));
+                        exprFromUnary->Val = -exprFromUnary->Val;
+                        Log::Info() << "exprFromUnary->Val : " << exprFromUnary->Val << "\n";
+                        //unExpr->Operand = std::move(exprFromUnary);
+                        //val = exprFromUnary->codegen();
+                        //val = ConstantFP::get(*TheContext, APFloat(exprFromUnary->Val));
+                        val = ConstantInt::get(*TheContext, APInt(32, (uint64_t)exprFromUnary->Val));
+                        if (!val){
+                            return LogErrorV(emptyLoc, "In the match value, couldn't generate the value after the '-'");
+                        }
+                    } else {
+                        return LogErrorV(emptyLoc, "In the match value, there is no constant number after the '-'");
+                    }
+                } else {
+                    return LogErrorV(emptyLoc, "In the match value, using an unary opertor that is not '-'");
+                    //val = unExpr->codegen();
+                }
+            } else {
+                val = valExpr->codegen();
+                //return LogErrorV(emptyLoc, "Expression not supported in match case value");
+            }
+            Log::Info() << "match val : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
             if (val->getType() != get_type_llvm(int_type)){
                 convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(int_type), val);
             }
+            Log::Info() << "match val after converting : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
             for (int j = 0; j < matchCaseTemp->Body.size(); j++){
                 matchCaseTemp->Body.at(j)->codegen();
             }
             Builder->CreateBr(AfterBB);
-            switch_inst->addCase(dyn_cast<ConstantInt>(val), thenBB);
+            ConstantInt* constint_val = nullptr;
+            Log::Info() << "value id : " << val->getValueID() << "\n";
+            if (dyn_cast<ConstantInt>(val)){
+                constint_val = dyn_cast<ConstantInt>(val);
+            } else {
+                //return LogErrorV(emptyLoc, "The match value is not a constant int");
+            }
+            switch_inst->addCase(constint_val, thenBB);
         }
     }
     if (is_bool && !found_underscore){

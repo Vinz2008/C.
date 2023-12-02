@@ -1,5 +1,4 @@
 include libm.hpoint
-import expect.cpoint
 import print.cpoint
 
 mod math {

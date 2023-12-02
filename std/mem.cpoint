@@ -1,4 +1,3 @@
-import expect.cpoint
 import print.cpoint
 
 extern strcpy(dest : i8 ptr, src : i8 ptr) i8 ptr;

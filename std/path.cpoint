@@ -1,6 +1,5 @@
 include capi.hpoint
 include libc.hpoint
-import expect.cpoint
 import print.cpoint
 
 extern gc_strdup(s : i8 ptr) i8 ptr;
