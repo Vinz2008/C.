@@ -71,7 +71,7 @@ public:
     }
     return std::to_string(Val);
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class StringExprAST : public ExprAST {
@@ -226,7 +226,7 @@ public:
   std::string to_string() override {
     return Name;
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class StructMemberExprAST : public ExprAST {
@@ -370,7 +370,7 @@ public:
   std::string to_string() override {
     return LHS->to_string() + " " + Op + " " + RHS->to_string();  
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class UnaryExprAST : public ExprAST {
@@ -441,7 +441,7 @@ public:
     // TODO maybe add the template type to the string expression (add a bool in this class to identify if a type is passed in the template)
     return function_name + template_type + args;
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class VarExprAST : public ExprAST {
@@ -805,12 +805,7 @@ public:
     }
     return "for " + VarName + " = " + Start->to_string() + ", " + End->to_string() + ", " + Step->to_string() + "{\n" + for_body + "}";
   }
-	std::string generate_c() override { 
-    std::string for_content = "for (";
-		for_content += "){\n";
-		for_content += "}\n";
-		return for_content; 
-  }
+	std::string generate_c() override;
 };
 
 class WhileExprAST : public ExprAST {

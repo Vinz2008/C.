@@ -22,7 +22,7 @@ namespace c_translator {
         std::string function_str;
         function_str += return_type.to_c_type_str() + " " + function_name + "(";
         for (int i = 0; i < args.size(); i++){
-            function_str += args.at(i).to_c_type_str() + " arg" + std::to_string(i);
+            function_str += args.at(i).second.to_c_type_str() + " " + args.at(i).first;
             if (i != args.size()-1){
                 function_str += ", ";
             }
@@ -34,7 +34,7 @@ namespace c_translator {
             function_str += "{\n";
             if (!body.empty()){
             for (int i = 0; i < body.size(); i++){
-                function_str += body.at(i)->generate_c();
+                function_str += body.at(i)->generate_c() + ";\n";
             }
             }
             function_str += "}\n";
@@ -127,10 +127,10 @@ void types_used(int nb, ...){
 c_translator::Function* FunctionAST::c_codegen(){
     std::string function_name = Proto->getName();
     C_Type return_type = C_Type(Proto->cpoint_type);
-    std::vector<C_Type> args;
+    std::vector<std::pair<std::string, C_Type>> args;
     for (int i = 0; i < Proto->Args.size(); i++){
         C_Type type_temp = C_Type(Proto->Args.at(i).second);
-        args.push_back(type_temp);
+        args.push_back(std::make_pair(Proto->Args.at(i).first, type_temp));
         TYPES_USED(&type_temp);
     }
     if (function_name == "main"){
@@ -150,10 +150,10 @@ c_translator::Function* FunctionAST::c_codegen(){
 
 c_translator::Function* PrototypeAST::c_codegen(){
     C_Type return_type = C_Type(cpoint_type);
-    std::vector<C_Type> args;
+    std::vector<std::pair<std::string, C_Type>> args;
     for (int i = 0; i < Args.size(); i++){
         C_Type type_temp = C_Type(Args.at(i).second);
-        args.push_back(type_temp);
+        args.push_back(std::make_pair(Args.at(i).first, type_temp));
         TYPES_USED(&type_temp);
     }
     TYPES_USED(&return_type);
@@ -163,3 +163,49 @@ c_translator::Function* PrototypeAST::c_codegen(){
 }
 
 
+std::string ForExprAST::generate_c() {
+    std::string for_content = "for (";
+    for_content += C_Type(VarType).to_c_type_str() + " " + VarName + " = " + Start->generate_c() +"; ";
+    for_content += End->generate_c() + "; ";
+    for_content += VarName + " = " + VarName + "+" + Step->generate_c();
+	for_content += "){\n";
+    for (int i = 0; i < Body.size(); i++){
+        for_content += Body.at(i)->generate_c() + ";\n";
+    }
+    for_content += "}\n";
+	return for_content; 
+}
+
+std::string NumberExprAST::generate_c(){
+    std::string number_content = "";
+    if (trunc(Val) == Val){
+        number_content = std::to_string((long)Val);
+    } else {
+        number_content = std::to_string(Val);
+    }
+    std::replace(number_content.begin(), number_content.end(), ',', '.');
+    return number_content;
+}
+
+std::string CallExprAST::generate_c(){
+    std::string callexpr_content = "";
+    callexpr_content += Callee + "(";
+    for (int i = 0; i < Args.size(); i++){
+        if (i != 0){
+            callexpr_content += ",";
+        }
+        callexpr_content += Args.at(i)->generate_c();
+    }
+    callexpr_content += ")";
+    return callexpr_content;
+}
+
+std::string VariableExprAST::generate_c(){
+    return Name;
+}
+
+std::string BinaryExprAST::generate_c(){
+    std::string binary_expr_content;
+    binary_expr_content += LHS->generate_c() + Op + RHS->generate_c();
+    return binary_expr_content;
+}

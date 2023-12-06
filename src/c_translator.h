@@ -72,7 +72,7 @@ namespace c_translator {
     class Function {
     public:
         C_Type return_type;
-        std::vector<C_Type> args;
+        std::vector<std::pair<std::string, C_Type>> args;
         std::string function_name;
         bool is_extern;
         //std::vector<std::unique_ptr<Expr>> body; 
@@ -85,7 +85,7 @@ namespace c_translator {
             }
             return std::make_unique<Function>(return_type, function_name, args, std::move(bodyCloned), is_extern);
         }*/
-        Function(C_Type return_type, std::string function_name, std::vector<C_Type> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern) {}
+        Function(C_Type return_type, std::string function_name, std::vector<std::pair<std::string, C_Type>> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern) {}
     };
     class Context {
     public:
