@@ -205,7 +205,69 @@ std::string VariableExprAST::generate_c(){
 }
 
 std::string BinaryExprAST::generate_c(){
-    std::string binary_expr_content;
+    std::string binary_expr_content = "";
     binary_expr_content += LHS->generate_c() + Op + RHS->generate_c();
     return binary_expr_content;
+}
+
+std::string UnaryExprAST::generate_c(){
+    std::string unary_expr_content = "";
+    unary_expr_content += Opcode + Operand->generate_c();
+    return unary_expr_content;
+}
+
+std::string VarExprAST::generate_c(){
+    std::string var_expr_content = "";
+    var_expr_content += C_Type(cpoint_type).to_c_type_str() + " " + VarNames.at(0).first + " = " + VarNames.at(0).second->generate_c();
+    return var_expr_content;
+}
+
+std::string CastExprAST::generate_c(){
+    std::string cast_expr_content = "";
+    cast_expr_content += "(" + C_Type(type).to_c_type_str() + ")" + ValToCast->generate_c();
+    return cast_expr_content;
+}
+
+std::string NullExprAST::generate_c(){
+    c_translator_context->headers_to_add.push_back("stddef.h"); // is also defined in stdlib.h : https://en.cppreference.com/w/c/types/NULL
+    return "NULL";
+}
+
+std::string ReturnAST::generate_c(){
+    std::string return_content = "";
+    return_content += "return " + returned_expr->generate_c();
+    return return_content;
+}
+
+std::string BreakExprAST::generate_c(){
+    return "break";
+}
+
+std::string GotoExprAST::generate_c(){
+    return "goto " + label_name;
+}
+
+std::string LabelExprAST::generate_c(){
+    return label_name + ":";
+}
+
+std::string LoopExprAST::generate_c(){
+    std::string loop_expr_content = "";
+    // TODO : implement when it is not an infinite loop
+    if (is_infinite_loop){
+        loop_expr_content += "while (1){\n";
+        for (int i = 0; i < Body.size(); i++){
+            loop_expr_content += Body.at(i)->generate_c() + ";\n";
+        }
+        loop_expr_content += "}";
+    }
+    return loop_expr_content;
+}
+
+std::string StringExprAST::generate_c(){
+    return "\"" + str + "\"";
+}
+
+std::string CharExprAST::generate_c(){
+    return (std::string)"'" + (char)c + (std::string)"'";
 }

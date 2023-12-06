@@ -85,7 +85,7 @@ public:
   std::string to_string() override {
     return "\"" + str + "\"";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class CharExprAST : public ExprAST {
@@ -99,7 +99,7 @@ public:
   std::string to_string() override {
     return "\'" + std::string(1, (char)c) + "\'";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class BoolExprAST : public ExprAST {
@@ -387,7 +387,7 @@ public:
   std::string to_string() override {
     return Opcode + Operand->to_string();
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class CallExprAST : public ExprAST {
@@ -460,7 +460,7 @@ public:
   std::string to_string() override {
     return "var " +  VarNames.at(0).first + ": " + create_pretty_name_for_type(cpoint_type) + " = " + VarNames.at(0).second->to_string(); 
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class RedeclarationExprAST : public ExprAST {
@@ -492,7 +492,7 @@ public:
     std::string to_string() override {
       return "cast " + create_pretty_name_for_type(type) + " " + ValToCast->to_string();
     }
-    std::string generate_c() override { return ""; }
+    std::string generate_c() override;
 };
 
 class NullExprAST : public ExprAST {
@@ -505,7 +505,7 @@ public:
     std::string to_string() override {
         return "null";
     }
-    std::string generate_c() override { return ""; }
+    std::string generate_c() override;
 };
 
 class matchCase {
@@ -739,7 +739,7 @@ public:
   std::string to_string() override {
     return "return " + returned_expr->to_string();
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class BreakExprAST : public ExprAST {
@@ -752,7 +752,7 @@ public:
   std::string to_string() override {
     return "break";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class GotoExprAST : public ExprAST {
@@ -766,7 +766,7 @@ public:
   std::string to_string() override {
     return "goto " + label_name;
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class LabelExprAST : public ExprAST {
@@ -780,7 +780,7 @@ public:
   std::string to_string() override {
     return label_name + ":";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class ForExprAST : public ExprAST {
@@ -845,7 +845,7 @@ public:
     }
     return "loop " +  loop_expr + "{\n" + loop_body + "}";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 std::unique_ptr<ExprAST> ParseExpression();
