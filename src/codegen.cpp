@@ -1815,6 +1815,7 @@ Function *PrototypeAST::codegen() {
     //}
   }
   FunctionType *FT;
+  bool has_sret = false;
   //FunctionType *FT = FunctionType::get(Type::getDoubleTy(*TheContext), Doubles, false);
   if (Name == "main"){
   std::vector<Type*> args_type_main;
@@ -1822,6 +1823,12 @@ Function *PrototypeAST::codegen() {
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
   FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(int_type)), args_type_main, false);
   } else {
+  if (cpoint_type.is_struct){
+    // replace this by if (should_return_struct_with_ptr())
+    if (false){
+        has_sret = true;
+    }
+  }
   FT = FunctionType::get(get_type_llvm(cpoint_type), type_args, is_variable_number_args);
   }
 
@@ -1837,6 +1844,9 @@ Function *PrototypeAST::codegen() {
   unsigned Idx = 0;
   for (auto &Arg : F->args()){
     //if (Args[Idx++].first != "..."){
+    if (has_sret && Idx == 0){
+    Arg.addAttr(Attribute::StructRet);
+    }
     Arg.setName(Args[Idx++].first);
     //}
   }

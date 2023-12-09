@@ -73,6 +73,8 @@ const char* get_type_string_from_type_libclang(CXType type){
             }
             clang_disposeString(clangstr_type_spelling);
             return type_spelling;
+        case CXType_Enum:
+            return "enum <insert name>";
         case CXType_LongDouble:
         case CXType_Double:
         default:

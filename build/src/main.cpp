@@ -28,6 +28,7 @@ enum mode {
     INSTALL_MODE = -9,
     INSTALL_PATH_MODE = -10,
     INIT_MODE = -11,
+    HELP_MODE = -12,
 };
 
 std::string filename_config = "build.toml";
@@ -502,6 +503,27 @@ void cleanFiles(toml::v3::table& config, std::string src_folder, std::string typ
     }
 }
 
+void printHelp(){
+    std::cout << "Usage : cpoint-build [options] [command]" << std::endl;
+    std::cout << "Options : " << std::endl;
+    std::cout << "    -f : Select the toml config file for the project" << std::endl;
+    std::cout << "    -j : Select the number of threads to use (use it like in Make, ex : \"-j8\")" << std::endl;
+    std::cout << "    -h : Print this page (You wan also use --help)" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Commands : " << std::endl;
+    std::cout << "    build : Build the project in the folder" << std::endl;
+    std::cout << "    clean : Clean the project" << std::endl;
+    std::cout << "    info : Print infos of the project" << std::endl;
+    std::cout << "    download/update : Update dependencies" << std::endl;
+    std::cout << "    add : Add a dependency to the project" << std::endl;
+    std::cout << "    new : Create a new project in a new folder" << std::endl;
+    std::cout << "    open-page : Open the website of the project" << std::endl;
+    std::cout << "    init : Init a project in the folder" << std::endl;
+    std::cout << "    cross-compile : Cross-compile the project" << std::endl;
+    std::cout << "    install : Install the binary" << std::endl;
+    std::cout << "    install_path : Print the path where binaries are installed" << std::endl;
+}
+
 int main(int argc, char** argv){
     enum mode modeBuild = BUILD_MODE;
     std::string src_folder = "src/";
@@ -536,6 +558,10 @@ int main(int argc, char** argv){
     } else if (arg == "new"){
         modeBuild = NEW_PROJECT_MODE;
         i++;
+        if (i >= argc){
+            std::cout << "Missing folder argument when creating a project" << std::endl;
+            exit(1);
+        }
         project_name_to_create = argv[i];
     } else if (arg == "open-page"){
         modeBuild = OPEN_PAGE_MODE;
@@ -557,6 +583,8 @@ int main(int argc, char** argv){
         }
     } else if (arg == "install_path"){
         modeBuild = INSTALL_PATH_MODE;
+    } else if (arg == "-h" || arg == "--help"){
+        modeBuild = HELP_MODE;
     }
     }
     if (modeBuild == INSTALL_PATH_MODE){
@@ -570,6 +598,10 @@ int main(int argc, char** argv){
     }
     if (modeBuild == INIT_MODE){
         initProject("exe", "./");
+        return 0;
+    }
+    if (modeBuild == HELP_MODE){
+        printHelp();
         return 0;
     }
     if (modeBuild == INSTALL_MODE){

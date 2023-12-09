@@ -787,6 +787,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
         return default_type;
     }
     getNextToken();
+    if (CurTok != ')'){
     while (1){
         if (CurTok != tok_identifier){
             LogError("Missing Identifier for args in function type");
@@ -804,6 +805,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
             return default_type;
         }
         getNextToken();
+    }
     }
     Cpoint_Type return_type_temp = ParseTypeDeclaration(false);
     return_type = new Cpoint_Type(return_type_temp);

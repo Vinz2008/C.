@@ -4,7 +4,7 @@
 
 **-std** : select the path where is the std which will be builded
 
-**-no-std** : say to the compiler to not link to the std. It is the equivalent of -freestanding in gcc
+**-no-std** : make the compiler to not link to the std. It is the equivalent of -freestanding in gcc
 
 **-c** : create an object file instead of an executable
 
@@ -18,7 +18,7 @@
 
 **-with-gc** : activate the garbage collector explicitally (it is by default activated)
 
-**-no-imports** : desactivate imports in the compiler
+**-no-imports** : deactivate imports in the compiler
 
 **-rebuild-gc** : force rebuilding the garbage collector source code
 
@@ -38,7 +38,7 @@
 
 **-fPIC** : make the compiler produce position-independent code
 
-**-compile-time-sizeof** : the compiler gets the size of types at compile time and not at runtime
+**-compile-time-sizeof** : the compiler gets the size of types at compile time and not at "runtime" (it is technically replaced by numbers at compile time by in llvm, but it is made independently of the target)
 
 **-test** : enable tests
 
