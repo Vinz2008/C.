@@ -110,6 +110,8 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
 
 string TargetTriple;
 
+Triple TripleLLVM;
+
 void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
   add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false, false, "");
@@ -564,7 +566,7 @@ int main(int argc, char **argv){
     TargetTriple = sys::getDefaultTargetTriple();
     }
     std::string os_name = get_os(TargetTriple);
-
+    TripleLLVM = Triple(TargetTriple);
     Log::Info() << "os from target triplet : " << os_name << "\n";
     setup_preprocessor(TargetTriple);
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";

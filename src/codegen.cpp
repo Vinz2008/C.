@@ -1406,6 +1406,7 @@ Value *BinaryExprAST::codegen() {
 
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
+  Function* TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "function called " << Callee << "\n";
   std::string internal_func_prefix = "cpoint_internal_";
   bool is_internal = false;
@@ -1446,7 +1447,6 @@ Value *CallExprAST::codegen() {
       return StringExprAST(filename_without_temp).codegen();
     }
     if (Callee == "get_function_name"){
-      Function *TheFunction = Builder->GetInsertBlock()->getParent();
       return StringExprAST((std::string)TheFunction->getName()).codegen();
     }
     if (Callee == "dbg"){
@@ -1483,18 +1483,42 @@ Value *CallExprAST::codegen() {
   if (FunctionProtos[Callee] == nullptr){
     return LogErrorV(this->loc, "Incorrect Function %s", Callee.c_str());
   }
+  bool has_sret = FunctionProtos[Callee]->cpoint_type.is_struct && !FunctionProtos[Callee]->cpoint_type.is_ptr && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
     if (!(Args.size() >= CalleeF->arg_size())){
       return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
     }
+  } else if (has_sret){
+    if (CalleeF->arg_size() != Args.size()+1)
+        return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
   } else {
     // If argument mismatch error.
   if (CalleeF->arg_size() != Args.size())
     return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
   }
+  Log::Info() << "has_sret : " << has_sret << "\n";
+  AllocaInst* SretArgAlloca;
+  if (has_sret){
+    SretArgAlloca = CreateEntryBlockAlloca(TheFunction, FunctionProtos[Callee]->cpoint_type.struct_name, FunctionProtos[Callee]->cpoint_type);
+    int idx = 0;
+    for (auto& Arg : CalleeF->args()){
+        if (idx == 0){
+        Log::Info() << "Adding sret attr in callexpr" << "\n";
+        Arg.addAttr(Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
+        //Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(SretArgAlloca->getAllocatedType()));
+        }
+        idx++;
+    }
+  }
   std::vector<Value *> ArgsV;
+  bool has_added_sret = false;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    if (has_sret && !has_added_sret){
+        ArgsV.push_back(SretArgAlloca);
+        i--;
+        has_added_sret = true;
+    } else {
     Value* temp_val = Args[i]->codegen();
     if (!temp_val){
       return nullptr;
@@ -1509,6 +1533,11 @@ Value *CallExprAST::codegen() {
     ArgsV.push_back(temp_val);
     if (!ArgsV.back())
       return nullptr;
+    }
+  }
+  if (has_sret){
+    Builder->CreateCall(CalleeF, ArgsV, "sret_call");
+    return Builder->CreateLoad(SretArgAlloca->getAllocatedType(), SretArgAlloca);
   }
   std::string NameCallTmp = "calltmp";
   if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
@@ -1530,7 +1559,7 @@ Value* AddrExprAST::codegen(){
     std::unique_ptr<VariableExprAST> VariableExpr;
     Expr.release();
     VariableExpr.reset(VariableExprPtr);*/
-
+    Log::Info() << "Addr Variable : " << VariableExpr->getName() << "\n";
     if (is_var_local(VariableExpr->getName())){
         AllocaInst *A = NamedValues[VariableExpr->getName()]->alloca_inst;
         if (!A){
@@ -1805,6 +1834,22 @@ void generateClosures(){
     }
 }
 
+extern Triple TripleLLVM;
+
+bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
+    int max_size = 64;
+    if (TripleLLVM.isArch32Bit()){
+        max_size = 32;
+    } else if (TripleLLVM.isArch64Bit()){
+        max_size = 64;
+    }
+    int size_struct = find_struct_type_size(cpoint_type);
+    if (size_struct > max_size){
+        return true;
+    }
+    return false;
+}
+
 Function *PrototypeAST::codegen() {
   // Make the function type:  double(double,double) etc.
   //std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
@@ -1823,13 +1868,17 @@ Function *PrototypeAST::codegen() {
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
   FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(int_type)), args_type_main, false);
   } else {
-  if (cpoint_type.is_struct){
+  if (cpoint_type.is_struct && !cpoint_type.is_ptr && !cpoint_type.is_array){
     // replace this by if (should_return_struct_with_ptr())
-    if (false){
+    if (should_return_struct_with_ptr(cpoint_type)){
         has_sret = true;
+        Cpoint_Type sret_arg_type = cpoint_type;
+        sret_arg_type.is_ptr = true;
+        type_args.insert(type_args.begin(), get_type_llvm(sret_arg_type));
     }
   }
-  FT = FunctionType::get(get_type_llvm(cpoint_type), type_args, is_variable_number_args);
+  Cpoint_Type return_type = (has_sret) ? Cpoint_Type(void_type) : cpoint_type;
+  FT = FunctionType::get(get_type_llvm(return_type), type_args, is_variable_number_args);
   }
 
   if (is_in_extern){
@@ -1842,12 +1891,17 @@ Function *PrototypeAST::codegen() {
 
   // Set names for all arguments.
   unsigned Idx = 0;
+  bool has_added_sret = false;
   for (auto &Arg : F->args()){
     //if (Args[Idx++].first != "..."){
-    if (has_sret && Idx == 0){
-    Arg.addAttr(Attribute::StructRet);
-    }
+    if (has_sret && Idx == 0 && !has_added_sret){
+    Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(get_type_llvm(cpoint_type)));
+    Arg.setName("sret_arg");
+    Idx = 0;
+    has_added_sret = true;
+    } else {
     Arg.setName(Args[Idx++].first);
+    }
     //}
   }
   FunctionProtos[this->getName()] = this->clone();
@@ -1932,10 +1986,20 @@ Function *FunctionAST::codegen() {
       i++;
     }
   } else {
+  bool has_sret = false;
+  if (should_return_struct_with_ptr(P.cpoint_type)){
+    has_sret = true;
+  }
   int i = 0;
   unsigned ArgIdx = 0;
   for (auto &Arg : TheFunction->args()){
-    Cpoint_Type cpoint_type_arg = P.Args.at(i).second;
+    Cpoint_Type cpoint_type_arg;
+    if (has_sret){
+        cpoint_type_arg = get_cpoint_type_from_llvm(Arg.getType());
+        i--;
+    } else {
+        cpoint_type_arg = P.Args.at(i).second;
+    }
     Log::Info() << "cpoint_type_arg : " << cpoint_type_arg << "\n";
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
     debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
@@ -1958,6 +2022,22 @@ Function *FunctionAST::codegen() {
   }
   
   //if (RetVal) {
+    Log::Info() << "before sret P.cpoint_type : " << P.cpoint_type << "\n";
+    Log::Info() << "before sret RetVal->getType()->isStructTy() : " << RetVal->getType()->isStructTy() << "\n";
+    if  (P.cpoint_type.is_struct && !P.cpoint_type.is_ptr && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
+        Log::Info() << "sret storing in return" << "\n";
+        /*auto intrisicId = Intrinsic::memcpy;
+        Function* memcpyF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
+        std::vector<Value*> ArgsV;
+        ArgsV.push_back(VariableExprAST(emptyLoc, "sret_arg", *get_variable_type("sret_arg")).codegen());
+        ArgsV.push_back(RetVal);
+        ArgsV.push_back(SizeofExprAST(P.cpoint_type, false, "").codegen());
+        ArgsV.push_back(BoolExprAST(false).codegen());
+        Builder->CreateCall(memcpyF, ArgsV, "sret_memcpy");*/
+        Builder->CreateStore(RetVal, get_var_allocation("sret_arg"), false);
+        Builder->CreateRetVoid();
+        goto after_ret;
+    }
     if (/*RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) ||*/ TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
         // void is represented by nullptr
         RetVal = nullptr;
@@ -1986,6 +2066,7 @@ before_ret:
     } else {
     Builder->CreateRetVoid();
     }
+after_ret:
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
     verifyFunction(*TheFunction);

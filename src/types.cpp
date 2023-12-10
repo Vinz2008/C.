@@ -3,6 +3,7 @@
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
+#include "llvm/TargetParser/Triple.h"
 #include "codegen.h"
 #include "ast.h"
 #include "log.h"
@@ -234,6 +235,31 @@ int get_type_number_of_bits(Cpoint_Type type){
     default:
         return -1;
     }
+}
+
+extern llvm::Triple TripleLLVM;
+
+int find_struct_type_size(Cpoint_Type cpoint_type){
+    int size = 0;
+    Log::Info() << "find_struct_type_size cpoint_type : " << cpoint_type << "\n";
+    Log::Info() << "find_struct_type_size cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
+    Log::Info() << "find_struct_type_size cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
+    if (!cpoint_type.is_struct){
+        return 0;
+    }
+    for (int i = 0; i < StructDeclarations[cpoint_type.struct_name]->members.size(); i++){
+       Cpoint_Type member_type = StructDeclarations[cpoint_type.struct_name]->members.at(i).second;
+        if (member_type.is_struct){
+            size += find_struct_type_size(cpoint_type);
+        } else if (member_type.is_ptr){
+            size += (TripleLLVM.isArch64Bit()) ? 64 : 32;
+        } else if (member_type.is_array){
+            size += member_type.nb_element * get_type_number_of_bits(member_type);
+        } else {
+            size += get_type_number_of_bits(cpoint_type);
+        } 
+    }
+    return size;
 }
 
 bool is_unsigned(Cpoint_Type cpoint_type){
