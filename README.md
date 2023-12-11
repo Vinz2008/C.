@@ -102,7 +102,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add help flag (-h) to cpoint and cpoint-build
 - [ ] Implement a eprintln equivalent (writing to stderr)
 - [ ] Work on adding the sret attribute when needed to follow the x86 abi calling convention
-- [ ] Add folder selection in cpoint-build (like in make -C)
+- [x] Add folder selection in cpoint-build (like in make -C)
+- [ ] Add running test in cpoint-build
 
 ## Benchmarks compared to other languages
 

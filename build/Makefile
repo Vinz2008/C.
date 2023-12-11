@@ -36,4 +36,4 @@ clean: clean-build
 
 
 run:
-	cd example && ../$(OUTPUTBIN)
+	../$(OUTPUTBIN) -C example/

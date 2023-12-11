@@ -543,6 +543,24 @@ int main(int argc, char** argv){
 
         //i++;
         //thread_number = std::stoi((std::string)argv[i]);
+    } else if (arg == "-C"){
+        int pos_arg = i;
+        char** argv_new = new char*[argc-2];
+        int pos_argv = 0;
+        for (int i = 0; i < argc; i++){
+            if (i != pos_arg && i != pos_arg+1){
+                argv_new[pos_argv] = argv[i];
+                pos_argv++;
+            }
+        }
+        /*for (int i = 0; i < argc-2; i++){
+            std::cout << "argv_new[" << i << "] : " << std::string(argv_new[i]) << std::endl;
+        }
+        std::cout << "argv[pos_arg+1] : " << std::string(argv[pos_arg+1]) << std::endl;*/
+        fs::current_path(argv[pos_arg+1]);
+        int returned_val = main(argc-2, argv_new);
+        delete[] argv_new;
+        return returned_val;
     } else if (arg == "build"){
         modeBuild = BUILD_MODE;
     } else if (arg == "clean"){
