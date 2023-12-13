@@ -6,6 +6,7 @@ func test(x) void {
      printd(i)
   }
 }
+
 func main() void {
   test(10) 
   test_c_function()

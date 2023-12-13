@@ -1,3 +1,7 @@
 func test2(){
-    0
+    4
+}
+
+test "test for cpoint-build"  {
+    #expect(test2() == 4)
 }

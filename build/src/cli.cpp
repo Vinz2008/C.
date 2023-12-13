@@ -65,10 +65,13 @@ void rebuildSTD(std::string target, std::string path, bool is_gc){
     std::cout << runCommand(cmd_start + "make -C " + path)->buffer << std::endl;
 }
 
-void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot){
+void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot, std::string out_path){
     std::string cmd = "cpoint -c " + arguments + " " + path + " ";
     fs::path path_fs{ path };
-    std::string out_path = path_fs.replace_extension(".o").string();
+    //std::string out_path = path_fs.replace_extension(".o").string();
+    if (out_path == ""){
+        out_path = path_fs.replace_extension(".o").string();
+    }
     cmd += "-o " + out_path;
     if (target != ""){
         cmd += " -target-triplet " + target + " ";

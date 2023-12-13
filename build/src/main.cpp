@@ -4,6 +4,7 @@
 #include "dependencies.h"
 #include "project_creator.h"
 #include "install.h"
+#include "tests.h"
 #include <toml++/toml.h>
 #include <algorithm>
 #include <iostream>
@@ -29,6 +30,7 @@ enum mode {
     INSTALL_PATH_MODE = -10,
     INIT_MODE = -11,
     HELP_MODE = -12,
+    TEST_MODE = -13,
 };
 
 std::string filename_config = "build.toml";
@@ -89,9 +91,9 @@ void addDependencyToTempLinkableFiles(std::string dependency){
     DependencyPathList.push_back(lib_path);
 }
 
-void addDependenciesToLinkableFiles(){
+void addDependenciesToLinkableFiles(std::vector<std::string>& PathListPassed){
     for (int i = 0; i < DependencyPathList.size(); i++){
-        PathList.push_back(DependencyPathList.at(i));
+        PathListPassed.push_back(DependencyPathList.at(i));
     }
 }
 
@@ -565,6 +567,8 @@ int main(int argc, char** argv){
         modeBuild = BUILD_MODE;
     } else if (arg == "clean"){
         modeBuild = CLEAN_MODE;
+    } else if (arg == "test"){
+        modeBuild = TEST_MODE;
     } else if (arg == "info"){
         modeBuild = INFO_MODE;
     } else if (arg == "download" || arg == "update"){
@@ -739,7 +743,7 @@ int main(int argc, char** argv){
         runCustomScripts(config);
         addCustomLinkableFiles(config);
         if (modeBuild != CROSS_COMPILE_MODE){
-            addDependenciesToLinkableFiles();
+            addDependenciesToLinkableFiles(PathList);
         }
         linker_args += c_libraries_linker_args;
         if (src_folder_exists){
@@ -751,5 +755,11 @@ int main(int argc, char** argv){
             linkDynamicLibrary(PathList, outfilename, target, linker_args, sysroot);
         }
         }
+    } else if (modeBuild == TEST_MODE){
+        runPrebuildCommands(config);
+        // TODO : add also subfolders
+        runPrebuildCommands(config);
+        std::vector<std::string> TestPathList = getFilenamesWithExtension(".cpoint", src_folder);
+        buildTests(TestPathList);
     }
 }
