@@ -1,7 +1,6 @@
-
-#include <iostream>
 #include <filesystem>
 #include "cli.h"
+#include "log.h"
 
 namespace fs = std::filesystem;
 
@@ -10,7 +9,7 @@ void updateGitRepo(std::string folder){
     cmd += folder;
     cmd += " pull";
     auto returnGit = runCommand(cmd);
-    std::cout << folder << " : " << returnGit->buffer << std::endl;
+    Log() << folder << " : " << returnGit->buffer << "\n";
 }
 
 void cloneGit(std::string url, std::string username, std::string repo_name, std::string folder){
@@ -27,9 +26,9 @@ void cloneGit(std::string url, std::string username, std::string repo_name, std:
     cmd += (url + username + '/' + repo_name);
     cmd += " ";
     cmd += folder;
-    std::cout << "git cmd : " << cmd << std::endl;
+    Log() << "git cmd : " << cmd << "\n";
     auto returnGit = runCommand(cmd);
-    std::cout << "out : " << returnGit->buffer << std::endl;
+    Log() << "out : " << returnGit->buffer << "\n";
 }
 
 void cloneGithub(std::string username, std::string repo_name, std::string folder){

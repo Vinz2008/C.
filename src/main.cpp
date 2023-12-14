@@ -70,6 +70,8 @@ bool debug_info_mode = false;
 //bool test_mode = false;
 bool silent_mode = false;
 
+bool link_files_mode = true;
+
 //bool is_release_mode = false;
 
 bool errors_found = false;
@@ -362,7 +364,6 @@ int main(int argc, char **argv){
     bool output_temp_found = false;
     string target_triplet_found;
     bool target_triplet_found_bool = false;
-    bool link_files_mode = true;
     bool verbose_std_build = false;
     bool remove_temp_file = true;
     bool import_mode = true;

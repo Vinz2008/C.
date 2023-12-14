@@ -29,15 +29,17 @@ int download_package_github(std::string username, std::string reponame){
     return 0;
 }
 
+extern bool link_files_mode;
 
 int build_package(std::string path){
+    if (!link_files_mode){
+        return 0;
+    }
     Log::Build_Info() << "Building package at " << path << "\n";
 
     std::string cmd_build = "cd " + path + " && ";
     cmd_build += "cpoint-build build";
 
-    std::string cmd = "make -C ";
-    cmd.append(path);
     auto out = runCommand(cmd_build);
     std::cout << out->buffer << std::endl;
     return 0;

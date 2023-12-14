@@ -2,6 +2,7 @@
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <iostream>
 #include "cli.h"
 
 namespace fs = std::filesystem;
@@ -26,17 +27,18 @@ bool file_contains_test(std::string path){
     return false;
 }
 
-void buildTest(std::vector<std::string>& PathList, int pos){
+void buildTest(std::vector<std::string>& PathList, int pos, std::vector<std::string>& LinkPathList){
     std::vector<std::string> linkTestPathList;
     std::string object_file_main = fs::path(PathList.at(pos)).replace_extension(".test.o").string();
     std::string exe_name = fs::path(PathList.at(pos)).replace_extension(".test").string();
     compileFile("", "-test", PathList.at(pos), "", object_file_main);
     linkTestPathList.push_back(object_file_main);
     for (int i = 0; i < PathList.size(); i++){
-        if (i != pos){
+        if (i != pos && PathList.at(i).find("main.cpoint") == std::string::npos){
             linkTestPathList.push_back(PathList.at(i));
         }
     }
+    linkTestPathList.insert(linkTestPathList.end(), LinkPathList.begin(), LinkPathList.end());
     // TODO : find these from the config by passing it through args
     bool is_gc = true;
     bool is_strip_mode = false;
@@ -49,19 +51,24 @@ void buildTestObjectFiles(std::vector<std::string>& PathList){
     }
 }
 
-void buildTests(std::vector<std::string> PathList){
+void buildTests(std::vector<std::string> PathList, std::vector<std::string> LinkPathList){
     buildTestObjectFiles(PathList);
     for (int i = 0; i < PathList.size(); i++){
         if (file_contains_test(PathList.at(i))){
-            buildTest(PathList, i);
+            buildTest(PathList, i, LinkPathList);
         }
     }
+}
+
+void runTest(std::string path){
+    std::string exe_name = fs::path(path).replace_extension(".test").string();
+    std::cout << runCommand(exe_name)->buffer << std::endl;
 }
 
 void runTests(std::vector<std::string> PathList){
     for (int i = 0; i < PathList.size(); i++){
         if (file_contains_test(PathList.at(i))){
-            buildTest(PathList, i);
+            runTest(PathList.at(i));
         }
     }
 }

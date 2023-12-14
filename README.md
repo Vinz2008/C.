@@ -99,11 +99,11 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add synthax for input and outputs of variables in inline assembly like in Rust (https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html, https://doc.rust-lang.org/nightly/reference/inline-assembly.html)
 - [x] Generate unreachables with unreachable (unreachable macro ?)
 - [ ] Add "-backend" flag to select the backend (for also adding a libgccjit flag)
-- [ ] Add help flag (-h) to cpoint and cpoint-build
+- [x] Add help flag (-h) to cpoint and cpoint-build
 - [ ] Implement a eprintln equivalent (writing to stderr)
 - [ ] Work on adding the sret attribute when needed to follow the x86 abi calling convention
 - [x] Add folder selection in cpoint-build (like in make -C)
-- [ ] Add running test in cpoint-build
+- [x] Add running test in cpoint-build
 
 ## Benchmarks compared to other languages
 

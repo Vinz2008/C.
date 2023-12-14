@@ -112,7 +112,7 @@ int getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::s
                 Path_temp = path_repo;
                 build_package(Path_temp);
             } else {
-            import_error("couldn't find after @ a normal import\n");
+                import_error("couldn't find after @ a normal import\n");
             }
         }
         Log::Imports_Info() << "Path_temp : " << Path_temp << "\n";

@@ -5,6 +5,7 @@
 #include "project_creator.h"
 #include "install.h"
 #include "tests.h"
+#include "log.h"
 #include <toml++/toml.h>
 #include <algorithm>
 #include <iostream>
@@ -43,6 +44,10 @@ std::vector<std::string> LibrariesList;
 bool is_cross_compiling = false;
 
 bool src_folder_exists = true;
+
+bool silent_mode = false;
+
+
 
 // keep it in this file to not have multiple file with the tomlplusplus header included
 bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc){
@@ -311,7 +316,7 @@ void runCustomScripts(toml::v3::table& config){
                 std::string target_cross_compiler = config["cross-compile"]["target"].value_or("");
                 cmd = "TARGET=" + target_cross_compiler + " " + (std::string)script;
                 }
-                std::cout << "script : " << cmd << std::endl;
+                Log() << "script : " << cmd << "\n";
                 std::unique_ptr<ProgramReturn> returnScript = runCommand(cmd);
                 std::cout << returnScript->buffer << std::endl;
             }
@@ -319,12 +324,12 @@ void runCustomScripts(toml::v3::table& config){
     }
 }
 
-void addCustomLinkableFiles(toml::v3::table& config){
+void addCustomLinkableFiles(toml::v3::table& config, std::vector<std::string>& LinkPathList = PathList){
     auto linkableFiles = config["custom"]["linkablefiles"];
     if (toml::array* arr = linkableFiles.as_array()){
-        arr->for_each([](auto&& file){
+        arr->for_each([&LinkPathList](auto&& file){
             if constexpr (toml::is_string<decltype(file)>){
-                PathList.push_back((std::string) file);
+                LinkPathList.push_back((std::string) file);
             }
         });
     }
@@ -417,9 +422,9 @@ void runPrebuildCommands(toml::v3::table& config){
                 std::string target_cross_compiler = config["cross-compile"]["target"].value_or("");
                 cmd = "TARGET=" + target_cross_compiler + " " + (std::string)cmd;
                 }
-                std::cout << "cmd : " << cmd << std::endl;
+                Log() << "cmd : " << cmd << "\n";
                 std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
-                std::cout << returnCmd->buffer << std::endl;
+                Log() << returnCmd->buffer << "\n";
             }
         });
     }
@@ -545,12 +550,14 @@ int main(int argc, char** argv){
 
         //i++;
         //thread_number = std::stoi((std::string)argv[i]);
+    } else if (arg == "--silent"){
+        silent_mode = true;
     } else if (arg == "-C"){
         int pos_arg = i;
-        char** argv_new = new char*[argc-2];
+        char** argv_new = new char*[argc-2+1];
         int pos_argv = 0;
         for (int i = 0; i < argc; i++){
-            if (i != pos_arg && i != pos_arg+1){
+            if (i != pos_arg && i != pos_arg){
                 argv_new[pos_argv] = argv[i];
                 pos_argv++;
             }
@@ -758,8 +765,13 @@ int main(int argc, char** argv){
     } else if (modeBuild == TEST_MODE){
         runPrebuildCommands(config);
         // TODO : add also subfolders
-        runPrebuildCommands(config);
+        std::vector<std::string> LinkPathList;
+        downloadDependencies(config);
+        buildDependencies(config);
+        addCustomLinkableFiles(config, LinkPathList);
+        addDependenciesToLinkableFiles(LinkPathList);
         std::vector<std::string> TestPathList = getFilenamesWithExtension(".cpoint", src_folder);
-        buildTests(TestPathList);
+        buildTests(TestPathList, LinkPathList);
+        runTests(TestPathList);
     }
 }

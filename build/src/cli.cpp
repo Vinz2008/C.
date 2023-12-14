@@ -1,5 +1,5 @@
 #include "cli.h"
-#include <iostream>
+#include "log.h"
 #include <memory>
 #include <array>
 #include <vector>
@@ -62,7 +62,7 @@ void rebuildSTD(std::string target, std::string path, bool is_gc){
     if (!is_gc){
         cmd_start += "NO_GC=TRUE ";
     }
-    std::cout << runCommand(cmd_start + "make -C " + path)->buffer << std::endl;
+    Log() << runCommand(cmd_start + "make -C " + path)->buffer << "\n";
 }
 
 void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot, std::string out_path){
@@ -76,7 +76,7 @@ void compileFile(std::string target, std::string arguments, std::string path, st
     if (target != ""){
         cmd += " -target-triplet " + target + " ";
     }
-    std::cout << "cmd : " << cmd << std::endl;
+    Log() << "cmd : " << cmd << "\n";
     runCommand(cmd);
 }
 
@@ -116,7 +116,7 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
         //writeLastBuildToml(path, target, is_gc);
     }
     writeLastBuildToml(DEFAULT_STD_PATH, target, is_gc);
-    std::cout << "exe link cmd : " << cmd << std::endl;
+    Log() << "exe link cmd : " << cmd << "\n";
     runCommand(cmd);
     if (is_strip_mode){
         std::string cmd_strip = "llvm-strip " + outfilename;
