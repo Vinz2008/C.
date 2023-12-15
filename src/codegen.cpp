@@ -1194,7 +1194,113 @@ Value* ClosureAST::codegen(){
     return f;
 }
 
+#if EQUAL_OPERATOR_IMPL
+
+Value* equalOperator(std::unique_ptr<ExprAST> rvalue, std::unique_ptr<ExprAST> lvalue){
+    if (dynamic_cast<BinaryExprAST*>(rvalue.get())){
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(rvalue));
+        if (BinExpr->Op.at(0) == '['){
+
+        } else if (BinExpr->Op.at(0) == '.'){
+            
+        } else {
+            return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
+        }
+    }
+    return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
+}
+
+#endif
+
 #if ARRAY_MEMBER_OPERATOR_IMPL
+Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
+    Value* IndexV = index->codegen();
+    if (!IndexV){
+        return LogErrorV(emptyLoc, "error in array index");
+    }
+    if (dynamic_cast<VariableExprAST*>(array.get())){
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(array));
+        std::string ArrayName = VariableExpr->Name;
+        if (!get_variable_type(ArrayName)){
+            return LogErrorV(emptyLoc, "Tried to get a member of an array that doesn't exist : %s", ArrayName.c_str());
+        }
+        Cpoint_Type cpoint_type = *get_variable_type(ArrayName);
+        Cpoint_Type cpoint_type_not_modified = cpoint_type;
+        Value* firstIndex = IndexV;
+        bool is_constant = false;
+        if (dyn_cast<Constant>(IndexV) && cpoint_type.nb_element > 0){
+            is_constant = true;
+            Constant* indexConst = dyn_cast<Constant>(IndexV);
+            if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, emptyLoc)){
+            return nullptr;
+            }
+        }
+  
+        //index = Builder->CreateFPToUI(index, Type::getInt64Ty(*TheContext), "cast_gep_index");
+        if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){
+            convert_to_type(get_cpoint_type_from_llvm(IndexV->getType()), get_type_llvm(Cpoint_Type(i64_type)), IndexV);
+        }
+  
+        if (!is_llvm_type_number(IndexV->getType())){
+            return LogErrorV(emptyLoc, "index for array is not a number\n");
+        }
+  
+        Value* allocated_value;
+        allocated_value = get_var_allocation(ArrayName);
+        /*AllocaInst* Alloca;
+        if (NamedValues[ArrayName]){
+        Alloca = NamedValues[ArrayName]->alloca_inst;
+        allocated_value = Alloca;
+        } else {
+            allocated_value = GlobalVariables[ArrayName]->globalVar;
+        }*/
+        auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+        std::vector<Value*> indexes = { zero, IndexV};
+        Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
+        // TODO : WHY SOME TYPES HAVE NB_PTR > 0 BUT IS_PTR FALSE ? IT IS NOT SUPPOSED TO BE POSSIBLE, BUT WE STILL NEED THIS CHECK FOR NOW. FIX IT!!
+        if (cpoint_type.nb_ptr > 0 && !cpoint_type.is_ptr){
+            cpoint_type.is_ptr = true;
+        }
+        if (cpoint_type.is_ptr && !cpoint_type.is_array){
+            Log::Info() << "array for array member is ptr" << "\n";
+            if (cpoint_type.nb_ptr > 1){
+            cpoint_type.nb_ptr--;
+            } else {
+            cpoint_type.is_ptr = false;
+            cpoint_type.nb_ptr = 0;
+            cpoint_type.nb_element = 0;
+            }
+            Log::Info() << "Cpoint_type for array member which is ptr : " << cpoint_type << "\n";
+            IndexV = Builder->CreateSExt(IndexV, Type::getInt64Ty(*TheContext)); // try to use a i64 for index
+            indexes = {IndexV};
+        }
+
+        Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
+        if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
+            if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
+            return nullptr;
+            }
+        }
+        Cpoint_Type member_type = cpoint_type;
+        member_type.is_array = false;
+        member_type.nb_element = 0;
+  
+        Type* type_llvm = get_type_llvm(cpoint_type);
+
+        Value* array_or_ptr = allocated_value;
+        // To make argv[0] work
+        if (/*cpoint_type_not_modified.is_ptr &&*/ cpoint_type_not_modified.nb_ptr > 1){
+        array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
+        }
+        Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
+        Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
+        return value;
+    }
+    return LogErrorV(emptyLoc, "Trying to use the array member operator with an expression which it is not implemented for");
+}
+
+
+#if 0
 Value* getArrayMember(Value* array, Value* index){
     Log::Info() << "ARRAY MEMBER CODEGEN getArrayMember" << "\n";
     if (!index){
@@ -1244,6 +1350,7 @@ Value* getArrayMember(Value* array, Value* index){
     Value* value = Builder->CreateLoad(member_type_llvm, ptr, ArrayName);
     return value;
 }
+#endif
 #endif
 
 Value* AsmExprAST::codegen(){
@@ -1301,6 +1408,13 @@ Value* AsmExprAST::codegen(){
 }
 
 Value *BinaryExprAST::codegen() {
+
+#if ARRAY_MEMBER_OPERATOR_IMPL
+  if (Op.at(0) == '['){
+    return getArrayMember(std::move(LHS), std::move(RHS));
+  }
+#endif
+  
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
@@ -1374,7 +1488,8 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateOr(L, R, "ortmp");
     return L;
     //return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
-#if ARRAY_MEMBER_OPERATOR_IMPL
+//#if ARRAY_MEMBER_OPERATOR_IMPL
+#if 0
   case '[':
     // TODO get from rhs and lhs with getelementptr the array member
     Log::Info() << "L " << (std::string)L->getName() << " type : " << get_cpoint_type_from_llvm(L->getType()) << "\n";
