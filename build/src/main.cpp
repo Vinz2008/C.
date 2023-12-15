@@ -466,6 +466,8 @@ void cleanFilesFolderExtension(std::string folder, std::string extension){
 
 void cleanFilesFolder(std::string folder){
     cleanFilesFolderExtension(folder, ".ll");
+    cleanFilesFolderExtension(folder, ".test.o");
+    cleanFilesFolderExtension(folder, ".test");
     cleanObjectFilesFolder(folder);
 }
 
@@ -554,10 +556,10 @@ int main(int argc, char** argv){
         silent_mode = true;
     } else if (arg == "-C"){
         int pos_arg = i;
-        char** argv_new = new char*[argc-2+1];
+        char** argv_new = new char*[argc-2];
         int pos_argv = 0;
         for (int i = 0; i < argc; i++){
-            if (i != pos_arg && i != pos_arg){
+            if (i != pos_arg && i != pos_arg + 1){
                 argv_new[pos_argv] = argv[i];
                 pos_argv++;
             }

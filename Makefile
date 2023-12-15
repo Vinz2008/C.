@@ -182,8 +182,9 @@ test:
 #	make -C tests run
 
 std-test:
-	make -C std test
-	make -C std run-test
+#	make -C std test
+#	make -C std run-test
+	./build/cpoint-build -C std test
 
 all-tests: test std-test
 

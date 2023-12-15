@@ -105,6 +105,7 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
         }
         cmd += out_path + " ";
     }
+    cmd.append(" -lm ");
     cmd += " " DEFAULT_STD_PATH "/libstd.a";
     if (is_gc){
         cmd += " " DEFAULT_STD_PATH "/../bdwgc_prefix/lib/libgc.a";
