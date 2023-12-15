@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 750 KB stripped, ≈24.2MB not stripped
+- compiler less than 790 KB stripped, ≈24.6MB not stripped
 - classes support
 - goto support
 - automatic casting
