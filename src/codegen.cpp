@@ -1196,16 +1196,84 @@ Value* ClosureAST::codegen(){
 
 #if EQUAL_OPERATOR_IMPL
 
-Value* equalOperator(std::unique_ptr<ExprAST> rvalue, std::unique_ptr<ExprAST> lvalue){
-    if (dynamic_cast<BinaryExprAST*>(rvalue.get())){
-        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(rvalue));
+Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
+    Value* ValDeclared = rvalue->codegen();
+    if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
         if (BinExpr->Op.at(0) == '['){
-
+            if (!dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
+                return LogErrorV(emptyLoc, "In an equal operator, Another expression than a variable name is used ");
+            }
+            std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
+            Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
+            Cpoint_Type member_type = cpoint_type;
+            Log::Info() << "member type : " << member_type << "\n";
+            if (member_type.is_ptr && !member_type.is_array){
+                Log::Info() << "is member" << "\n";
+                member_type.is_ptr = false;
+                member_type.nb_ptr = 0;
+                member_type.nb_element = 0;
+            } else {
+                member_type.is_array = false;
+                member_type.nb_element = 0;
+            }
+            if (ValDeclared->getType()->isArrayTy()){
+                AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
+                Builder->CreateStore(ValDeclared, Alloca);
+                NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+                return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+            }
+            //Log::Info() << "Pos for GEP : " << pos_array << "\n";
+            Log::Info() << "ArrayName : " << VarExpr->Name << "\n";
+            auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+            auto index = std::move(BinExpr->RHS);
+            if (!index){
+                return LogErrorV(emptyLoc, "couldn't find index for array %s", VarExpr->Name.c_str());
+            }
+            auto indexVal = index->codegen();
+            if (indexVal->getType() != get_type_llvm(int_type)){
+                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(int_type), indexVal) ;
+            }
+            //indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
+            auto arrayPtr = get_var_allocation(VarExpr->Name);
+            Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
+            std::vector<Value*> indexes = { zero, indexVal};
+            if (cpoint_type.is_ptr && !cpoint_type.is_array){
+                Log::Info() << "array for array member is ptr" << "\n";
+                cpoint_type.is_ptr = false;
+                indexes = {indexVal};
+            }
+            Type* llvm_type = get_type_llvm(cpoint_type);
+            Log::Info() << "Get LLVM TYPE" << "\n";
+            auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array");
+            Log::Info() << "Create GEP" << "\n";
+            if (ValDeclared->getType() != get_type_llvm(member_type)){
+            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
+            }
+            Builder->CreateStore(ValDeclared, ptr);
         } else if (BinExpr->Op.at(0) == '.'){
-            
+
         } else {
             return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
         }
+    } else if (dynamic_cast<VariableExprAST*>(lvalue.get())){
+        std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(lvalue));
+        bool is_global = false;
+        if (GlobalVariables[VarExpr->Name] != nullptr){
+            is_global = true;
+        }
+        Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
+        if (is_global){
+            Builder->CreateStore(ValDeclared, GlobalVariables[VarExpr->Name]->globalVar);
+        } else {
+        AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
+        if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
+            return LogErrorV(emptyLoc, "Assigning to a variable a void value");
+        }
+        Builder->CreateStore(ValDeclared, Alloca);
+        // TODO : remove all the NamedValues redeclaration
+        NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+  }
     }
     return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
 }
@@ -1414,6 +1482,12 @@ Value *BinaryExprAST::codegen() {
     return getArrayMember(std::move(LHS), std::move(RHS));
   }
 #endif
+
+#if EQUAL_OPERATOR_IMPL
+    if (Op.at(0) == '='){
+        return equalOperator(std::move(LHS), std::move(RHS));
+    }
+#endif
   
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
@@ -1496,6 +1570,7 @@ Value *BinaryExprAST::codegen() {
     Log::Info() << "R " << (std::string)R->getName() << " type : " << get_cpoint_type_from_llvm(R->getType()) << "\n";
     return getArrayMember(L, R);
 #endif
+#if EQUAL_OPERATOR_IMPL == 0
   case '=': {
     VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
     if (!LHSE)
@@ -1509,6 +1584,7 @@ Value *BinaryExprAST::codegen() {
     Builder->CreateStore(Val, Variable);
     return Val;
   } break;
+#endif
   default:
     //return LogErrorV(this->loc, "invalid binary operator");
     break;

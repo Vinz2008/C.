@@ -375,6 +375,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     member = IdentifierStr;
     getNextToken();
   }
+#if EQUAL_OPERATOR_IMPL == 0
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
     Log::Info() << "RedeclarationExpr Parsing" << "\n";
@@ -391,6 +392,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member, std::move(indexAST));
   }
+#endif
   if (StructDeclarations[IdName] != nullptr && CurTok == '{'){
     std::string struct_name = IdName;
     std::vector<std::unique_ptr<ExprAST>> StructMembers;
