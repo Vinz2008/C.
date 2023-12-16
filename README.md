@@ -12,6 +12,9 @@ A programming language compiler written in C++ which is definitely not finished.
 - classes support
 - goto support
 - automatic casting
+- generics
+- rust-like pattern matching 
+- gc and manual memory management
 
 ## Cloning the git repo
 

@@ -1200,6 +1200,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
     Log::Info() << "EQUAL OP " << lvalue->to_string() << " = " << rvalue->to_string() << "\n";
     Value* ValDeclared = rvalue->codegen();
     if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
+        Log::Info() << "Equal op bin lvalue" << "\n";
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
         if (BinExpr->Op.at(0) == '['){
             if (!dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
@@ -1254,7 +1255,54 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             Builder->CreateStore(ValDeclared, ptr);
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else if (BinExpr->Op.at(0) == '.'){
-            return LogErrorV(emptyLoc, "TODO");
+            if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
+                std::unique_ptr<VariableExprAST> structVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
+                std::string VariableName = structVar->Name;
+                if (!dynamic_cast<VariableExprAST*>(BinExpr->RHS.get())){
+                    return LogErrorV(emptyLoc, "Struct member is not an identifier");
+                }
+                std::unique_ptr<VariableExprAST> memberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->RHS));
+                std::string member = memberExpr->Name;
+                Log::Info() << "StructName : " << VariableName << "\n";
+                std::vector<std::pair<std::string, Cpoint_Type>> members;
+                if (get_variable_type(VariableName)->is_struct_template){
+                    Log::Info() << "get_struct_template_name : " << get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed) << "\n";
+                    members = StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]->members;
+                } else {
+                    members = StructDeclarations[get_variable_type(VariableName)->struct_name]->members;
+                }
+                int pos_struct = -1;
+                Log::Info() << "members.size() : " << members.size() << "\n";
+                for (int i = 0; i < members.size(); i++){
+                if (members.at(i).first == member){
+                    pos_struct = i;
+                    break;
+                }
+                }
+                Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
+                auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+                auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
+                auto structPtr = /*NamedValues[VariableName]->alloca_inst*/ get_var_allocation(VariableName);
+                Cpoint_Type cpoint_type = *get_variable_type(VariableName);
+                // TODO : should we use the cpoint_type in the NamedValue reassigning because it is changed here ?
+                if (cpoint_type.is_ptr){
+                cpoint_type.is_ptr = false;
+                }
+                auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
+                if (ValDeclared->getType() != get_type_llvm(members.at(pos_struct).second)){
+                    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_struct).second), ValDeclared);
+                }
+                Builder->CreateStore(ValDeclared, ptr);
+                // TODO : verify if this code is needed and remove it in all the code if not
+                if (is_var_local(VariableName)){
+                    NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
+                } else {
+                    GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
+                }
+                return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+            } else {
+                return LogErrorV(emptyLoc, "Using in an struct member something that is not a struct");
+            }
         } else {
             return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
         }
@@ -1351,6 +1399,54 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
     
     }
     return LogErrorV(emptyLoc, "Trying to use the struct member operator with an expression which it is not implemented for");
+}
+#endif
+
+#if CALL_STRUCT_MEMBER_IMPL
+Value* StructMemberCallExprAST::codegen(){
+    if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
+        std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->LHS));
+        std::string StructName = structNameExpr->Name;
+        if (!dynamic_cast<VariableExprAST*>(StructMember->RHS.get())){
+            return LogErrorV(emptyLoc, "Expected an identifier when calling a member of a struct");
+        }
+        std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
+        std::string MemberName = structMemberExpr->Name;
+        if (StructName == "reflection"){
+            return refletionInstruction(MemberName, std::move(Args));
+        }
+        bool found_function = false;
+        std::string struct_type_name = NamedValues[StructName]->type.struct_name;
+        Log::Info() << "StructName call struct function : " << struct_type_name << "\n";
+        if (NamedValues[StructName]->type.is_struct_template){
+            struct_type_name = get_struct_template_name(struct_type_name, *NamedValues[StructName]->type.struct_template_type_passed);
+            Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
+        }
+        auto functions =  StructDeclarations[struct_type_name]->functions;
+        for (int i = 0; i < functions.size(); i++){
+        Log::Info() << "functions.at(i) : " << functions.at(i) << "\n";
+        if (functions.at(i) == MemberName){
+            //is_function_call = true;
+            found_function = true;
+            Log::Info() << "Is function Call" << "\n";
+        }
+        }
+        if (!found_function){
+            return LogErrorV(this->loc, "Unknown struct function member called : %s\n", MemberName.c_str());
+        }
+        std::vector<llvm::Value*> CallArgs;
+        CallArgs.push_back(NamedValues[StructName]->alloca_inst);
+        for (int i = 0; i < Args.size(); i++){
+            CallArgs.push_back(Args.at(i)->codegen());
+        }
+        Function *F = getFunction(struct_function_mangling(struct_type_name, MemberName));
+        if (!F){
+            Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName) << "\n";
+            return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
+        }
+        return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
+    }
+    return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
 #endif
 

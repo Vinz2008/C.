@@ -95,6 +95,13 @@ std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
     return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, clone_vector<ExprAST>(Args));
 }
 
+
+#if CALL_STRUCT_MEMBER_IMPL
+std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
+    return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
+}
+#endif
+
 std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
     return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, clone_vector<ExprAST>(Args));
 }
@@ -369,12 +376,14 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     is_array = true;
   }
 #endif
+#if STRUCT_MEMBER_OPERATOR_IMPL == 0
   if (CurTok == '.'){
     Log::Info() << "Struct member found" << "\n";
     getNextToken();
     member = IdentifierStr;
     getNextToken();
   }
+#endif
 #if EQUAL_OPERATOR_IMPL == 0
   if (CurTok == '='){
     Log::Info() << "IdName " << IdName << "\n";
@@ -510,8 +519,24 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     //if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
     //Log::Info() << "CurTok before if : " << CurTok << "\n";
     //if (CurTok != tok_op_multi_char){
-    if (TokPrec < ExprPrec)
+    if (TokPrec < ExprPrec){
+#if CALL_STRUCT_MEMBER_IMPL
+        Log::Info() << "CurTok CALL_STRUCT_MEMBER_IMPL : " << CurTok << "\n";
+        if (CurTok == ')'){
+            // TODO : calling struct member
+            Log::Info() << "Struct Members" << "\n";
+            std::vector<std::unique_ptr<ExprAST>> Args;
+            getNextToken();
+            auto ret = ParseFunctionArgs(Args);
+            if (!ret){
+                return nullptr;
+            }
+            getNextToken();
+            return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
+        }
+#endif
       return LHS;
+    }
     //}
     //}
 
@@ -541,7 +566,15 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     // the pending operator take RHS as its LHS.
     int NextPrec = -1;
     if (CurTok != tok_op_multi_char){
+#if EQUAL_OPERATOR_IMPL
+    if (BinOp == "." && CurTok == '='){
+        NextPrec = 100;
+    } else {
+        NextPrec = GetTokPrecedence();
+    }
+#else
     NextPrec = GetTokPrecedence();
+#endif
     } else {
       NextPrec = getTokPrecedenceMultiChar(OpStringMultiChar);
     }
@@ -560,6 +593,22 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 #endif
     // Merge LHS/RHS.
     LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
+/*#if CALL_STRUCT_MEMBER_IMPL
+    if (CurTok == '('){
+        // TODO : calling struct member
+        Log::Info() << "Struct Members" << "\n";
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        getNextToken();
+        auto ret = ParseFunctionArgs(Args);
+        if (!ret){
+            return nullptr;
+        }
+        getNextToken();
+        return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
+    }
+#endif*/
+
+
 #if 0
 #if STRUCT_MEMBER_OPERATOR_IMPL == 0
     LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));

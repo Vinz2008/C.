@@ -30,6 +30,9 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 
 class StructDeclarAST;
 
+template <class T>
+std::unique_ptr<T> get_Expr_from_ExprAST(std::unique_ptr<ExprAST> E);
+
 //std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
 
 class ExprAST {
@@ -389,6 +392,21 @@ public:
   }
   std::string generate_c() override;
 };
+
+#if CALL_STRUCT_MEMBER_IMPL
+
+struct StructMemberCallExprAST : public ExprAST {
+    std::unique_ptr<BinaryExprAST> StructMember;
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    StructMemberCallExprAST(std::unique_ptr<BinaryExprAST> StructMember, std::vector<std::unique_ptr<ExprAST>> Args) : StructMember(std::move(StructMember)), Args(std::move(Args)) {}
+    std::string to_string() override {
+        return StructMember->LHS->to_string() + "." + StructMember->RHS->to_string();
+    }
+  std::string generate_c() override { return ""; }
+  std::unique_ptr<ExprAST> clone() override;
+  Value *codegen() override;
+};
+#endif
 
 class CallExprAST : public ExprAST {
   std::string Callee;

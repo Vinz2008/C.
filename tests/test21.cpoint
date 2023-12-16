@@ -8,5 +8,6 @@ func main() double {
     }
     var t : struct pair~int~ 
     t.first = 32
-    printi(t.get_first())
+    printi(t.get_first(a))
+    0
 }
