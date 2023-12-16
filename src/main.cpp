@@ -548,6 +548,11 @@ int main(int argc, char **argv){
     BinopPrecedence["["] = 35;
 #endif
 
+#if STRUCT_MEMBER_OPERATOR_IMPL
+    BinopPrecedence["."] = 35;
+#endif
+
+
 
 
     /*BinopPrecedence["^"] = 5;

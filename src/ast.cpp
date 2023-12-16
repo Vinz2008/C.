@@ -559,6 +559,8 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     }
 #endif
     // Merge LHS/RHS.
+    LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
+#if 0
 #if STRUCT_MEMBER_OPERATOR_IMPL == 0
     LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
 #else
@@ -570,6 +572,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     } else {
         LHS = std::move(tempLHS);
     }
+#endif
 #endif
   }
 }

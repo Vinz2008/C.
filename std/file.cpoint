@@ -77,7 +77,7 @@ func get_file_size(fd : int) i64 {
 }
 
 func read_to_string(fd : int) i8 {
-    var size  = file::get_file_size(fd)
+    var size = file::get_file_size(fd)
     var buf = gc_malloc(sizeof i8 * (size+1))
     var ret = read(fd, buf, size)
     while ret != 0 {

@@ -1197,6 +1197,7 @@ Value* ClosureAST::codegen(){
 #if EQUAL_OPERATOR_IMPL
 
 Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
+    Log::Info() << "EQUAL OP " << lvalue->to_string() << " = " << rvalue->to_string() << "\n";
     Value* ValDeclared = rvalue->codegen();
     if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
@@ -1251,12 +1252,14 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
             }
             Builder->CreateStore(ValDeclared, ptr);
+            return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else if (BinExpr->Op.at(0) == '.'){
-
+            return LogErrorV(emptyLoc, "TODO");
         } else {
             return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
         }
     } else if (dynamic_cast<VariableExprAST*>(lvalue.get())){
+        Log::Info() << "equal operator lvalue variable" << "\n";
         std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(lvalue));
         bool is_global = false;
         if (GlobalVariables[VarExpr->Name] != nullptr){
@@ -1270,14 +1273,85 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
             return LogErrorV(emptyLoc, "Assigning to a variable a void value");
         }
+        if (ValDeclared->getType() != get_type_llvm(cpoint_type)){
+            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(cpoint_type), ValDeclared);
+        }
         Builder->CreateStore(ValDeclared, Alloca);
         // TODO : remove all the NamedValues redeclaration
         NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-  }
+        }
+        return Constant::getNullValue(Type::getDoubleTy(*TheContext));
     }
     return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
 }
 
+#endif
+
+#if STRUCT_MEMBER_OPERATOR_IMPL
+
+// TODO : add a function for struct member calls
+Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+    if (dynamic_cast<VariableExprAST*>(struct_expr.get())){
+        AllocaInst* Alloca = nullptr;
+        std::unique_ptr<VariableExprAST> structVarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(struct_expr));
+        std::string StructName = structVarExpr->Name;
+        auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(std::move(member));
+        if (!varExprMember){
+            return LogErrorV(emptyLoc, "expected an identifier for a struct member");
+        }
+        std::string MemberName = varExprMember->Name;
+        if (NamedValues[StructName] == nullptr){
+            return LogErrorV(emptyLoc, "Can't find struct that is used for a member");
+        }
+        Alloca = NamedValues[StructName]->alloca_inst;
+        Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
+        if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
+            return LogErrorV(emptyLoc, "Using a member of variable even though it is not a struct");
+        }
+        Log::Info() << "StructName : " << StructName << "\n";
+        Log::Info() << "StructName len : " << StructName.length() << "\n";
+        if (NamedValues[StructName] == nullptr){
+            Log::Info() << "NamedValues[StructName] nullptr" << "\n";
+        }
+        //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
+        Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
+        Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
+    
+
+        auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
+        Log::Info() << "members.size() : " << members.size() << "\n";
+        int pos = -1;
+        for (int i = 0; i < members.size(); i++){
+        Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
+            if (members.at(i).first == MemberName){
+                pos = i;
+                break;
+            }
+        }
+        Log::Info() << "Pos for GEP struct member " << pos << "\n";
+        for (int i = 0; i < members.size(); i++){
+            Log::Info() << "members.at(" << i << ") : " << members.at(i).first << "\n";
+        }
+        if (pos == -1){
+            return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
+        }
+        Cpoint_Type member_type = members.at(pos).second;
+        auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+        auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+        Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+        //Value* tempval = Builder->CreateLoad(get_type_llvm(cpoint_type), Alloca, StructName);
+        if (cpoint_type.is_ptr){
+            cpoint_type.is_ptr = false;
+        }
+        Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
+    
+        Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Alloca, { zero, index});
+        Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
+        return value;
+    
+    }
+    return LogErrorV(emptyLoc, "Trying to use the struct member operator with an expression which it is not implemented for");
+}
 #endif
 
 #if ARRAY_MEMBER_OPERATOR_IMPL
@@ -1484,11 +1558,16 @@ Value *BinaryExprAST::codegen() {
 #endif
 
 #if EQUAL_OPERATOR_IMPL
-    if (Op.at(0) == '='){
+    if (Op.at(0) == '=' && Op.size() == 1){
         return equalOperator(std::move(LHS), std::move(RHS));
     }
 #endif
-  
+
+#if STRUCT_MEMBER_OPERATOR_IMPL
+    if (Op.at(0) == '.'){
+        return getStructMember(std::move(LHS), std::move(RHS));
+    }
+#endif
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
