@@ -13,6 +13,7 @@ func test(x){
     i = i + 1
     printd(i)
     }
+    0
 }
 
 func main(){

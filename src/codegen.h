@@ -116,3 +116,4 @@ void generateClosures();
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 bool should_return_struct_with_ptr(Cpoint_Type cpoint_type);
+Cpoint_Type* get_variable_type(std::string name);

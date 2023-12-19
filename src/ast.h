@@ -116,7 +116,7 @@ public:
   std::string to_string() override {
     return val ? "true" : "false";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class AddrExprAST : public ExprAST {
@@ -132,7 +132,7 @@ public:
   std::string to_string() override {
     return "addr " + /*((Expr) ?*/ Expr->to_string() /*: Ident)*/;
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class DerefExprAST : public ExprAST {
@@ -146,7 +146,7 @@ public:
     std::string to_string() override {
         return "deref " + Expr->to_string();
     }
-    std::string generate_c() override { return ""; }
+    std::string generate_c() override;
 };
 
 // TODO : fix sizeof not being printed in assertions with expect (to_string() return "" ?)
@@ -163,7 +163,7 @@ public:
   std::string to_string() override {
     return "sizeof " + Name != "" ? Name : create_pretty_name_for_type(type);
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class TypeidExprAST : public ExprAST {
@@ -214,7 +214,7 @@ public:
     std::string to_string() override {
         return "#asm(\"" + Args->assembly_code->str + "\")";
     }
-    std::string generate_c() override { return ""; }
+    std::string generate_c() override;
 };
 class VariableExprAST : public ExprAST {
 public:
@@ -495,7 +495,7 @@ public:
     std::string member_expr  = member != "" ? "." + member : "";
     return VariableName + member_expr + " = " + Val->to_string();
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class CastExprAST : public ExprAST {
@@ -740,7 +740,7 @@ public:
     }
     return "if " + Cond->to_string() + "{\n" + body_then + "} else {\n" + body_else + "}";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class ReturnAST : public ExprAST {
@@ -840,7 +840,7 @@ public:
     }
     return "while" + Cond->to_string() + " {\n" + while_body + "}";
   }
-  std::string generate_c() override { return ""; }
+  std::string generate_c() override;
 };
 
 class LoopExprAST : public ExprAST {

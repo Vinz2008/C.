@@ -3,9 +3,12 @@
 #include <cstdarg>
 #include <iostream>
 #include "ast.h"
+#include "codegen.h"
 //#include "log.h"
 
 std::unique_ptr<c_translator::Context> c_translator_context;
+
+std::string generate_body_c(std::vector<std::unique_ptr<ExprAST>>& body);
 
 #define NUMARGS(...)  (sizeof((C_Type*[]){__VA_ARGS__})/sizeof(C_Type*))
 #define TYPES_USED(...) (types_used(NUMARGS(__VA_ARGS__), __VA_ARGS__))
@@ -33,8 +36,13 @@ namespace c_translator {
         } else {
             function_str += "{\n";
             if (!body.empty()){
+            //function_str += generate_body_c(body);
             for (int i = 0; i < body.size(); i++){
-                function_str += body.at(i)->generate_c() + ";\n";
+                std::string temp = body.at(i)->generate_c() + ";\n";
+                if (i == body.size()-1 && temp.find("return") == std::string::npos && return_type.type != void_type){
+                    temp = "return " + temp;
+                }
+                function_str += temp;
             }
             }
             function_str += "}\n";
@@ -64,6 +72,9 @@ namespace c_translator {
 
 std::string C_Type::to_c_type_str(){
     std::string s = "";
+    if (is_struct){
+        return "struct " + struct_name;
+    }
     switch (type){
     case c_translator::double_type:
         s += "double";
@@ -112,6 +123,14 @@ void types_used(int nb, ...){
 
     }
     va_end(args);
+}
+
+std::string generate_body_c(std::vector<std::unique_ptr<ExprAST>>& body){
+    std::string body_content = "";
+    for (int i = 0; i < body.size(); i++){
+        body_content += body.at(i)->generate_c() + ";\n";
+    }
+    return body_content;
 }
 
 
@@ -169,9 +188,10 @@ std::string ForExprAST::generate_c() {
     for_content += End->generate_c() + "; ";
     for_content += VarName + " = " + VarName + "+" + Step->generate_c();
 	for_content += "){\n";
-    for (int i = 0; i < Body.size(); i++){
+    for_content += generate_body_c(Body);
+    /*for (int i = 0; i < Body.size(); i++){
         for_content += Body.at(i)->generate_c() + ";\n";
-    }
+    }*/
     for_content += "}\n";
 	return for_content; 
 }
@@ -256,9 +276,10 @@ std::string LoopExprAST::generate_c(){
     // TODO : implement when it is not an infinite loop
     if (is_infinite_loop){
         loop_expr_content += "while (1){\n";
-        for (int i = 0; i < Body.size(); i++){
+        loop_expr_content += generate_body_c(Body);
+        /*for (int i = 0; i < Body.size(); i++){
             loop_expr_content += Body.at(i)->generate_c() + ";\n";
-        }
+        }*/
         loop_expr_content += "}";
     }
     return loop_expr_content;
@@ -270,4 +291,62 @@ std::string StringExprAST::generate_c(){
 
 std::string CharExprAST::generate_c(){
     return (std::string)"'" + (char)c + (std::string)"'";
+}
+
+std::string RedeclarationExprAST::generate_c(){
+    return VariableName + " = " + Val->generate_c();
+}
+
+std::string IfExprAST::generate_c(){
+    std::string body_if = "";
+    body_if += generate_body_c(Then);
+    /*for (int i = 0; i < Then.size(); i++){
+        body_if += Then.at(i)->generate_c() + ";\n";
+    }*/
+    std::string body_else = "";
+    body_else += generate_body_c(Else);
+    /*for (int i = 0; i < Else.size(); i++){
+        body_else += Else.at(i)->generate_c() + ";\n";
+    }*/
+    return "if (" + Cond->generate_c() + "){\n" + body_if + "} else {\n" + body_else + "}\n";
+}
+
+std::string WhileExprAST::generate_c(){
+    // TODO : create a function for loops generating a body
+    std::string body_while = "";
+    body_while += generate_body_c(Body);
+    /*for (int i = 0; i < Body.size(); i++){
+        body_while += Body.at(i)->generate_c() + ";\n";
+    }*/
+    return "while (" + Cond->generate_c() + "){\n" + body_while + "}";
+}
+
+std::string BoolExprAST::generate_c(){
+    if (val){
+        return "true";
+    }
+    return "false";
+}
+
+std::string AddrExprAST::generate_c(){
+    return "&" + Expr->generate_c();
+}
+
+std::string DerefExprAST::generate_c(){
+    return "*" + Expr->generate_c();
+}
+
+std::string SizeofExprAST::generate_c(){
+    if (is_variable){
+        return "sizeof(" + Name + ")";
+    } else {
+        C_Type sizeof_type = C_Type(type);
+        TYPES_USED(&sizeof_type);
+        return "sizeof(" + sizeof_type.to_c_type_str() + ")";
+    }
+}
+
+std::string AsmExprAST::generate_c(){
+    // TODO : add input-output vars/regs
+    return "asm(\"" + Args->assembly_code->str + "\")";
 }

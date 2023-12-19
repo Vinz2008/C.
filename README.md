@@ -107,6 +107,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Work on adding the sret attribute when needed to follow the x86 abi calling convention
 - [x] Add folder selection in cpoint-build (like in make -C)
 - [x] Add running test in cpoint-build
+- [ ] Run automatically clang and create a out.o file for the c translator
 
 ## Benchmarks compared to other languages
 

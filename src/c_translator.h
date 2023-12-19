@@ -24,8 +24,10 @@ public:
     int type;
     bool is_ptr;
     int nb_ptr;
+    bool is_struct;
+    std::string struct_name;
     std::string to_c_type_str();
-    C_Type(int type, bool is_ptr) : type(type), is_ptr(is_ptr) {}
+    C_Type(int type, bool is_ptr, bool is_struct, std::string struct_name) : type(type), is_ptr(is_ptr), is_struct(is_struct), struct_name(struct_name) {}
     C_Type(Cpoint_Type cpoint_type){
         enum c_translator::c_types c_type = c_translator::int_type;
         switch (cpoint_type.type){
@@ -58,6 +60,8 @@ public:
         type = c_type;
         is_ptr = cpoint_type.is_ptr;
         nb_ptr = cpoint_type.nb_ptr;
+        is_struct = cpoint_type.is_struct;
+        struct_name = struct_name;
     } 
 };
 
@@ -87,6 +91,10 @@ namespace c_translator {
         }*/
         Function(C_Type return_type, std::string function_name, std::vector<std::pair<std::string, C_Type>> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern) {}
     };
+    class Struct {
+    public:
+        Struct(){}
+    }
     class Context {
     public:
         Context(){}
