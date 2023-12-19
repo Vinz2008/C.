@@ -15,7 +15,8 @@ namespace c_translator {
         char_type = -5,
         short_type = -6,
         long_type = -7,
-        bool_type = -8
+        bool_type = -8,
+        long_long_type = -9,
     };
 }
 
@@ -54,7 +55,7 @@ public:
                 c_type = c_translator::short_type;
                 break;
             case i64_type:
-                c_type = c_translator::long_type;
+                c_type = c_translator::long_long_type;
                 break;
         }
         type = c_type;
@@ -79,6 +80,7 @@ namespace c_translator {
         std::vector<std::pair<std::string, C_Type>> args;
         std::string function_name;
         bool is_extern;
+        bool is_variadic;
         //std::vector<std::unique_ptr<Expr>> body; 
         std::vector<std::unique_ptr<ExprAST>> body; 
         std::string generate_c();
@@ -89,12 +91,12 @@ namespace c_translator {
             }
             return std::make_unique<Function>(return_type, function_name, args, std::move(bodyCloned), is_extern);
         }*/
-        Function(C_Type return_type, std::string function_name, std::vector<std::pair<std::string, C_Type>> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern) {}
+        Function(C_Type return_type, std::string function_name, std::vector<std::pair<std::string, C_Type>> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false, bool is_variadic = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern), is_variadic(is_variadic) {}
     };
     class Struct {
     public:
         Struct(){}
-    }
+    };
     class Context {
     public:
         Context(){}

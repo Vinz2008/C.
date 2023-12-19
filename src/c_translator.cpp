@@ -30,6 +30,9 @@ namespace c_translator {
                 function_str += ", ";
             }
         }
+        if (is_variadic){
+            function_str += ", ...";
+        }
         function_str += ")";
         if (is_extern){
             function_str += ";";
@@ -54,7 +57,7 @@ namespace c_translator {
             for (int i = 0; i < body.size(); i++){
                 bodyCloned.push_back(body.at(i)->clone());
             }
-            return std::make_unique<Function>(return_type, function_name, args, std::move(bodyCloned), is_extern);
+            return std::make_unique<Function>(return_type, function_name, args, std::move(bodyCloned), is_extern, is_variadic);
     }
     void Context::write_output_code(std::ofstream& stream){
         for (int i = 0; i < headers_to_add.size(); i++){
@@ -97,7 +100,11 @@ std::string C_Type::to_c_type_str(){
     case c_translator::bool_type:
         s += "bool";
         break;
+    case c_translator::long_long_type:
+        s += "long long";
+        break;
     default:
+        s += "double";
         break;
     }
     if (is_ptr){
@@ -162,7 +169,7 @@ c_translator::Function* FunctionAST::c_codegen(){
         body.push_back(std::move(Body.at(i)));
     }
     }
-    auto functionTemp = new c_translator::Function(return_type, function_name, args, std::move(body), false);
+    auto functionTemp = new c_translator::Function(return_type, function_name, args, std::move(body), false, Proto->is_variable_number_args);
     c_translator_context->Functions.push_back(/*std::make_unique<c_translator::Function>(*functionTemp)*/ functionTemp->clone());
     return functionTemp;
 }
@@ -176,7 +183,7 @@ c_translator::Function* PrototypeAST::c_codegen(){
         TYPES_USED(&type_temp);
     }
     TYPES_USED(&return_type);
-    auto functionTemp = new c_translator::Function(return_type, Name, args, {}, true);
+    auto functionTemp = new c_translator::Function(return_type, Name, args, {}, true, is_variable_number_args);
     c_translator_context->Functions.push_back(/*std::make_unique<c_translator::Function>(*functionTemp)*/ functionTemp->clone());
     return functionTemp;
 }
@@ -286,7 +293,15 @@ std::string LoopExprAST::generate_c(){
 }
 
 std::string StringExprAST::generate_c(){
-    return "\"" + str + "\"";
+    std::string str_replaced = "";
+    for (int i = 0; i < str.size(); i++){
+        if (str.at(i) == '\n'){
+            str_replaced += "\\n";
+        } else {
+            str_replaced += str.at(i);
+        }
+    }
+    return "\"" + str_replaced + "\"";
 }
 
 std::string CharExprAST::generate_c(){
