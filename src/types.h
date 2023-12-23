@@ -89,3 +89,4 @@ llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);
 int from_val_to_int(llvm::Value* val);
 std::string from_cpoint_type_to_printf_format(Cpoint_Type type);
 int find_struct_type_size(Cpoint_Type cpoint_type);
+bool is_just_struct(Cpoint_Type type);

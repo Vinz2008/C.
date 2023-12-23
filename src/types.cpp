@@ -296,6 +296,11 @@ bool is_decimal_number_type(Cpoint_Type type){
     return type.type == double_type || type.type == float_type;
 }
 
+// is a struct, but not a ptr and not an array
+bool is_just_struct(Cpoint_Type type){
+    return type.is_struct && !type.is_ptr && !type.is_array;
+}
+
 Constant* get_default_constant(Cpoint_Type type){
     if (type.is_ptr){
         return ConstantPointerNull::get(PointerType::get(*TheContext, 0));

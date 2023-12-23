@@ -25,6 +25,7 @@
 #include "checking.h"
 #include "templates.h"
 #include "config.h"
+#include "abi.h"
 
 using namespace llvm;
 
@@ -92,7 +93,7 @@ Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
-bool should_pass_struct_byval(Cpoint_Type cpoint_type);
+//bool should_pass_struct_byval(Cpoint_Type cpoint_type);
 
 std::string struct_function_mangling(std::string struct_name, std::string name){
   std::string mangled_name = struct_name + "__" + name;
@@ -235,8 +236,7 @@ std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cp
     return struct_name + "____" + create_mangled_name_from_type(type);
 }
 
-// TODO : move this in builtin_macros.cpp
-Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
+/*Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     if (!dynamic_cast<VariableExprAST*>(va.get())){
         return LogErrorV(emptyLoc, "Not implemented internal function to get address of va list with amd64 systemv abi for non variables");
     }
@@ -244,7 +244,7 @@ Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     auto varVa = dynamic_cast<VariableExprAST*>(va.get());
     auto vaCodegened = va->codegen();
     return Builder->CreateGEP(vaCodegened->getType(), get_var_allocation(varVa->Name), {zero, zero}, "gep_for_va");
-}
+}*/
 
 Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
     std::vector<std::unique_ptr<ExprAST>> PrintfArgs;
@@ -1851,7 +1851,7 @@ Value *CallExprAST::codegen() {
   if (FunctionProtos[Callee] == nullptr){
     return LogErrorV(this->loc, "Incorrect Function %s", Callee.c_str());
   }
-  bool has_sret = FunctionProtos[Callee]->cpoint_type.is_struct && !FunctionProtos[Callee]->cpoint_type.is_ptr && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
+  bool has_sret = /*FunctionProtos[Callee]->cpoint_type.is_struct && !FunctionProtos[Callee]->cpoint_type.is_ptr*/ is_just_struct(FunctionProtos[Callee]->cpoint_type) && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
   bool has_byval = false;
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
@@ -1874,8 +1874,9 @@ Value *CallExprAST::codegen() {
     for (auto& Arg : CalleeF->args()){
         if (idx == 0){
         Log::Info() << "Adding sret attr in callexpr" << "\n";
-        Arg.addAttr(Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
-        Arg.addAttr(Attribute::getWithAlignment(*TheContext, Align(8)));
+        /*Arg.addAttr(Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
+        Arg.addAttr(Attribute::getWithAlignment(*TheContext, Align(8)));*/
+        addArgSretAttribute(Arg, SretArgAlloca->getAllocatedType());
         //Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(SretArgAlloca->getAllocatedType()));
         } else {
             break;
@@ -1896,7 +1897,7 @@ Value *CallExprAST::codegen() {
     if (i < FunctionProtos[Callee]->Args.size()){
         arg_type = FunctionProtos[Callee]->Args.at(i).second;
     }
-    if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
+    if (/*arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
     } else {
         temp_val = Args[i]->codegen();
@@ -1919,7 +1920,7 @@ Value *CallExprAST::codegen() {
   std::vector<int> pos_byval;
   for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
     Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
-    if (arg_type.is_struct && !arg_type.is_ptr && should_pass_struct_byval(arg_type)){
+    if (/*arg_type.is_struct && !arg_type.is_ptr*/ should_pass_struct_byval(arg_type) && should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
     }
@@ -2058,7 +2059,7 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         }
         sizeof_type = NamedValues[Name]->type;
     }
-    if (sizeof_type.is_struct && !sizeof_type.is_ptr){
+    if (/*sizeof_type.is_struct && !sizeof_type.is_ptr*/ should_pass_struct_byval(sizeof_type)){
         /*int struct_size = 0;
         for (int i = 0; i < StructDeclarations[sizeof_type.struct_name]->members.size(); i++){
             StructDeclarations[sizeof_type.struct_name]->members.at(i).second
@@ -2112,7 +2113,7 @@ Value* SizeofExprAST::codegen(){
     if (!A){
         return LogErrorV(this->loc, "Sizeof Unknown variable name %s", Name.c_str());
     }
-    if (NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr){
+    if (/*NamedValues[Name]->type.is_struct && !NamedValues[Name]->type.is_ptr*/ is_just_struct(NamedValues[Name]->type)){
     Value* size =  getSizeOfStruct(A);
     //size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
     return size;
@@ -2235,7 +2236,7 @@ void generateClosures(){
     }
 }
 
-extern Triple TripleLLVM;
+/*extern Triple TripleLLVM;
 
 bool should_pass_struct_byval(Cpoint_Type cpoint_type){
     return should_return_struct_with_ptr(cpoint_type);
@@ -2253,14 +2254,14 @@ bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
         return true;
     }
     return false;
-}
+}*/
 
 Function *PrototypeAST::codegen() {
   std::vector<Type *> type_args;
   for (int i = 0; i < Args.size(); i++){
     Cpoint_Type arg_type = Args.at(i).second;
-    // TODO : replace these ifs types by a is struct function in cpoint_type
-    if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
+    //if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
+    if (is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         arg_type.is_ptr = true;
     }
     type_args.push_back(get_type_llvm(arg_type));
@@ -2274,7 +2275,7 @@ Function *PrototypeAST::codegen() {
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
   FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(int_type)), args_type_main, false);
   } else {
-  if (cpoint_type.is_struct && !cpoint_type.is_ptr && !cpoint_type.is_array){
+  if (is_just_struct(cpoint_type) /*cpoint_type.is_struct && !cpoint_type.is_ptr && !cpoint_type.is_array*/){
     // replace this by if (should_return_struct_with_ptr())
     if (should_return_struct_with_ptr(cpoint_type)){
         has_sret = true;
@@ -2301,11 +2302,14 @@ Function *PrototypeAST::codegen() {
   for (auto &Arg : F->args()){
     //if (Args[Idx++].first != "..."){
     if (has_sret && Idx == 0 && !has_added_sret){
-    Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(get_type_llvm(cpoint_type)).addAlignmentAttr(8));
+    //Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(get_type_llvm(cpoint_type)).addAlignmentAttr(8));
+    /*Arg.addAttr(Attribute::getWithStructRetType(*TheContext, get_type_llvm(cpoint_type)));
+    Arg.addAttr(Attribute::getWithAlignment(Align(8)));*/
+    addArgSretAttribute(Arg, get_type_llvm(cpoint_type));
     Arg.setName("sret_arg");
     Idx = 0;
     has_added_sret = true;
-    } else if (Args.at(Idx).second.is_struct && !Args.at(Idx).second.is_ptr && !Args.at(Idx).second.is_array && should_pass_struct_byval(Args.at(Idx).second)){
+    } else if (/*Args.at(Idx).second.is_struct && !Args.at(Idx).second.is_ptr && !Args.at(Idx).second.is_array*/ is_just_struct(Args.at(Idx).second) && should_pass_struct_byval(Args.at(Idx).second)){
         Log::Info() << "should_pass_struct_byval arg " << Args.at(Idx).first << " : " << Args.at(Idx).second << "\n";
         Cpoint_Type arg_type = get_cpoint_type_from_llvm(/*Arg.getType()*/ get_type_llvm(Args.at(Idx).second));
         Cpoint_Type by_val_ptr_type = arg_type;
@@ -2403,7 +2407,7 @@ Function *FunctionAST::codegen() {
     }
   } else {
   bool has_sret = false;
-  if (P.cpoint_type.is_struct && should_return_struct_with_ptr(P.cpoint_type)){
+  if (/*P.cpoint_type.is_struct*/ is_just_struct(P.cpoint_type) && should_return_struct_with_ptr(P.cpoint_type)){
     has_sret = true;
   }
 
@@ -2415,7 +2419,7 @@ Function *FunctionAST::codegen() {
     if (has_sret){
         cpoint_type_arg = get_cpoint_type_from_llvm(Arg.getType());
         i--;
-    } else if (P.Args.at(i).second.is_struct && !P.Args.at(i).second.is_ptr && should_pass_struct_byval(P.Args.at(i).second)){
+    } else if (is_just_struct(P.Args.at(i).second) /*P.Args.at(i).second.is_struct && !P.Args.at(i).second.is_ptr*/ && should_pass_struct_byval(P.Args.at(i).second)){
         has_by_val = true;
         cpoint_type_arg = P.Args.at(i).second;
     } else {
@@ -2450,7 +2454,7 @@ Function *FunctionAST::codegen() {
   //if (RetVal) {
     Log::Info() << "before sret P.cpoint_type : " << P.cpoint_type << "\n";
     Log::Info() << "before sret RetVal->getType()->isStructTy() : " << RetVal->getType()->isStructTy() << "\n";
-    if  (P.cpoint_type.is_struct && !P.cpoint_type.is_ptr && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
+    if  (/*P.cpoint_type.is_struct && !P.cpoint_type.is_ptr*/ is_just_struct(P.cpoint_type) && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
         Log::Info() << "sret storing in return" << "\n";
         /*auto intrisicId = Intrinsic::memcpy;
         Function* memcpyF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
@@ -3372,7 +3376,7 @@ Value *VarExprAST::codegen() {
     Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type, struct_type_temp, struct_declaration_name_temp);
     Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
-    if (cpoint_type.is_struct && !cpoint_type.is_ptr){
+    if (/*cpoint_type.is_struct && !cpoint_type.is_ptr*/ is_just_struct(cpoint_type)){
       if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
       std::vector<Value *> ArgsV;
       
