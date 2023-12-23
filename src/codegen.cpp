@@ -92,6 +92,8 @@ Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
+bool should_pass_struct_byval(Cpoint_Type cpoint_type);
+
 std::string struct_function_mangling(std::string struct_name, std::string name){
   std::string mangled_name = struct_name + "__" + name;
   return mangled_name;
@@ -480,7 +482,7 @@ Value* StructMemberExprAST::codegen() {
     Alloca = NamedValues[StructName]->alloca_inst;
     Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
     if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
-      return LogErrorV(this->loc, "Using a member of variable even though it is not a struct");
+      return LogErrorV(this->loc, "Using a member of variable %s even though it is not a struct", StructName.c_str());
     }
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
@@ -1850,6 +1852,7 @@ Value *CallExprAST::codegen() {
     return LogErrorV(this->loc, "Incorrect Function %s", Callee.c_str());
   }
   bool has_sret = FunctionProtos[Callee]->cpoint_type.is_struct && !FunctionProtos[Callee]->cpoint_type.is_ptr && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
+  bool has_byval = false;
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
     if (!(Args.size() >= CalleeF->arg_size())){
@@ -1866,13 +1869,16 @@ Value *CallExprAST::codegen() {
   Log::Info() << "has_sret : " << has_sret << "\n";
   AllocaInst* SretArgAlloca;
   if (has_sret){
-    SretArgAlloca = CreateEntryBlockAlloca(TheFunction, FunctionProtos[Callee]->cpoint_type.struct_name, FunctionProtos[Callee]->cpoint_type);
+    SretArgAlloca = CreateEntryBlockAlloca(TheFunction, FunctionProtos[Callee]->cpoint_type.struct_name + "_sret", FunctionProtos[Callee]->cpoint_type);
     int idx = 0;
     for (auto& Arg : CalleeF->args()){
         if (idx == 0){
         Log::Info() << "Adding sret attr in callexpr" << "\n";
         Arg.addAttr(Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
+        Arg.addAttr(Attribute::getWithAlignment(*TheContext, Align(8)));
         //Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(SretArgAlloca->getAllocatedType()));
+        } else {
+            break;
         }
         idx++;
     }
@@ -1885,7 +1891,16 @@ Value *CallExprAST::codegen() {
         i--;
         has_added_sret = true;
     } else {
-    Value* temp_val = Args[i]->codegen();
+    Value* temp_val;
+    Cpoint_Type arg_type = Cpoint_Type(double_type);
+    if (i < FunctionProtos[Callee]->Args.size()){
+        arg_type = FunctionProtos[Callee]->Args.at(i).second;
+    }
+    if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
+        temp_val = AddrExprAST(Args[i]->clone()).codegen();
+    } else {
+        temp_val = Args[i]->codegen();
+    }
     if (!temp_val){
       return nullptr;
     }
@@ -1901,9 +1916,29 @@ Value *CallExprAST::codegen() {
       return nullptr;
     }
   }
+  std::vector<int> pos_byval;
+  for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
+    Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
+    if (arg_type.is_struct && !arg_type.is_ptr && should_pass_struct_byval(arg_type)){
+        has_byval = true;
+        pos_byval.push_back(i);
+    }
+  }
+  // TODO fix this so you can combine sret and byval
   if (has_sret){
-    Builder->CreateCall(CalleeF, ArgsV, "sret_call");
+    auto call = Builder->CreateCall(CalleeF, ArgsV);
+    call->addParamAttr(0, Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
+    call->addParamAttr(0, Attribute::getWithAlignment(*TheContext, Align(8)));
     return Builder->CreateLoad(SretArgAlloca->getAllocatedType(), SretArgAlloca);
+  }
+  if (has_byval){
+    auto call = Builder->CreateCall(CalleeF, ArgsV);
+    for (int i = 0; i < pos_byval.size(); i++){
+        Cpoint_Type cpoint_byval_type = FunctionProtos[Callee]->Args.at(pos_byval.at(i)).second;
+        call->addParamAttr(pos_byval.at(i), Attribute::getWithByValType(*TheContext, get_type_llvm(cpoint_byval_type)));
+        call->addParamAttr(pos_byval.at(i), Attribute::getWithAlignment(*TheContext, Align(8)));
+    }
+    return call;
   }
   std::string NameCallTmp = "calltmp";
   if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
@@ -2202,6 +2237,10 @@ void generateClosures(){
 
 extern Triple TripleLLVM;
 
+bool should_pass_struct_byval(Cpoint_Type cpoint_type){
+    return should_return_struct_with_ptr(cpoint_type);
+}
+
 bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
     int max_size = 64;
     if (TripleLLVM.isArch32Bit()){
@@ -2217,13 +2256,14 @@ bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
 }
 
 Function *PrototypeAST::codegen() {
-  // Make the function type:  double(double,double) etc.
-  //std::vector<Type *> Doubles(Args.size(), Type::getDoubleTy(*TheContext));
   std::vector<Type *> type_args;
   for (int i = 0; i < Args.size(); i++){
-    //if (Args.at(i).first != "..."){
-    type_args.push_back(get_type_llvm(Args.at(i).second));
-    //}
+    Cpoint_Type arg_type = Args.at(i).second;
+    // TODO : replace these ifs types by a is struct function in cpoint_type
+    if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
+        arg_type.is_ptr = true;
+    }
+    type_args.push_back(get_type_llvm(arg_type));
   }
   FunctionType *FT;
   bool has_sret = false;
@@ -2261,12 +2301,22 @@ Function *PrototypeAST::codegen() {
   for (auto &Arg : F->args()){
     //if (Args[Idx++].first != "..."){
     if (has_sret && Idx == 0 && !has_added_sret){
-    Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(get_type_llvm(cpoint_type)));
+    Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(get_type_llvm(cpoint_type)).addAlignmentAttr(8));
     Arg.setName("sret_arg");
     Idx = 0;
     has_added_sret = true;
+    } else if (Args.at(Idx).second.is_struct && !Args.at(Idx).second.is_ptr && !Args.at(Idx).second.is_array && should_pass_struct_byval(Args.at(Idx).second)){
+        Log::Info() << "should_pass_struct_byval arg " << Args.at(Idx).first << " : " << Args.at(Idx).second << "\n";
+        Cpoint_Type arg_type = get_cpoint_type_from_llvm(/*Arg.getType()*/ get_type_llvm(Args.at(Idx).second));
+        Cpoint_Type by_val_ptr_type = arg_type;
+        by_val_ptr_type.is_ptr = true;
+        by_val_ptr_type.nb_ptr++;
+        Arg.mutateType(get_type_llvm(by_val_ptr_type));
+        Arg.addAttr(Attribute::getWithByValType(*TheContext, get_type_llvm(arg_type)));
+        Arg.addAttr(Attribute::getWithAlignment(*TheContext, Align(8)));
+        Arg.setName(Args[Idx++].first);
     } else {
-    Arg.setName(Args[Idx++].first);
+        Arg.setName(Args[Idx++].first);
     }
     //}
   }
@@ -2353,23 +2403,33 @@ Function *FunctionAST::codegen() {
     }
   } else {
   bool has_sret = false;
-  if (should_return_struct_with_ptr(P.cpoint_type)){
+  if (P.cpoint_type.is_struct && should_return_struct_with_ptr(P.cpoint_type)){
     has_sret = true;
   }
+
   int i = 0;
   unsigned ArgIdx = 0;
   for (auto &Arg : TheFunction->args()){
     Cpoint_Type cpoint_type_arg;
+    bool has_by_val = false;
     if (has_sret){
         cpoint_type_arg = get_cpoint_type_from_llvm(Arg.getType());
         i--;
+    } else if (P.Args.at(i).second.is_struct && !P.Args.at(i).second.is_ptr && should_pass_struct_byval(P.Args.at(i).second)){
+        has_by_val = true;
+        cpoint_type_arg = P.Args.at(i).second;
     } else {
         cpoint_type_arg = P.Args.at(i).second;
     }
     Log::Info() << "cpoint_type_arg : " << cpoint_type_arg << "\n";
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
     debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
-    Builder->CreateStore(&Arg, Alloca);
+    if (has_by_val){
+        Builder->CreateMemCpy(Alloca, Alloca->getAlign(), &Arg, Arg.getParamAlign(), /*SizeofExprAST(get_cpoint_type_from_llvm(Alloca->getAllocatedType()), false, "").codegen()*/ find_struct_type_size(cpoint_type_arg)/8 * 2 /*IS A HACK : TODO find how to make it work, advice : look at clang generated ir*/);
+        //Builder->CreateStore(&Arg, Alloca);
+    } else {
+        Builder->CreateStore(&Arg, Alloca);
+    }
     Log::Info() << "added arg " << (std::string)Arg.getName() << " to NamedValues" << "\n";
     NamedValues[std::string(Arg.getName())] = std::make_unique<NamedValue>(Alloca, cpoint_type_arg);
     i++;
@@ -2401,6 +2461,8 @@ Function *FunctionAST::codegen() {
         ArgsV.push_back(BoolExprAST(false).codegen());
         Builder->CreateCall(memcpyF, ArgsV, "sret_memcpy");*/
         Builder->CreateStore(RetVal, get_var_allocation("sret_arg"), false);
+        //AllocaInst* sret_arg_allocation = dyn_cast<AllocaInst>(get_var_allocation("sret_arg"));
+        //Builder->CreateMemCpy(sret_arg_allocation, sret_arg_allocation->getAlign(), RetVal)
         Builder->CreateRetVoid();
         goto after_ret;
     }

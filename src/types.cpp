@@ -214,7 +214,6 @@ int get_type_number_of_bits(Cpoint_Type type){
     case i32_type:
     case u32_type:
         return 32;
-        break;
     case i8_type:
     case u8_type:
         return 8;
@@ -239,6 +238,24 @@ int get_type_number_of_bits(Cpoint_Type type){
 
 extern llvm::Triple TripleLLVM;
 
+int get_type_size(Cpoint_Type cpoint_type){
+    int size = 0;
+    if (cpoint_type.is_struct){
+        size += find_struct_type_size(cpoint_type);
+    } else if (cpoint_type.is_ptr){
+        size += (TripleLLVM.isArch64Bit()) ? 64 : 32;
+    } else if (cpoint_type.is_array){
+        Cpoint_Type member_array_type = cpoint_type;
+        member_array_type.is_array = false;
+        size += cpoint_type.nb_element * get_type_size(member_array_type);
+        Log::Info() << "find_struct_type_size array type " << cpoint_type << " : " << size << "\n";
+    } else {
+        size += get_type_number_of_bits(cpoint_type);
+        Log::Info() << "find_struct_type_size normal type " << cpoint_type << " : " << get_type_number_of_bits(cpoint_type) << "\n";
+    }
+    return size;
+}
+
 int find_struct_type_size(Cpoint_Type cpoint_type){
     int size = 0;
     Log::Info() << "find_struct_type_size cpoint_type : " << cpoint_type << "\n";
@@ -249,15 +266,17 @@ int find_struct_type_size(Cpoint_Type cpoint_type){
     }
     for (int i = 0; i < StructDeclarations[cpoint_type.struct_name]->members.size(); i++){
        Cpoint_Type member_type = StructDeclarations[cpoint_type.struct_name]->members.at(i).second;
-        if (member_type.is_struct){
-            size += find_struct_type_size(cpoint_type);
+        size += get_type_size(member_type);
+        /*if (member_type.is_struct){
+            size += find_struct_type_size(member_type);
         } else if (member_type.is_ptr){
             size += (TripleLLVM.isArch64Bit()) ? 64 : 32;
         } else if (member_type.is_array){
             size += member_type.nb_element * get_type_number_of_bits(member_type);
         } else {
-            size += get_type_number_of_bits(cpoint_type);
-        } 
+            size += get_type_number_of_bits(member_type);
+            Log::Info() << "find_struct_type_size normal type " << member_type << " : " << get_type_number_of_bits(cpoint_type) << "\n";
+        }*/
     }
     return size;
 }
