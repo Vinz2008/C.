@@ -110,6 +110,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Run automatically clang and create a out.o file for the c translator
 - [ ] Replace sret store instruction with llvm.memcpy
 - [x] Move everything about the abi (valist, sret, byval) in an abi.cpp file
+- [ ] Add attributes to functions (ex : noreturn)
 
 ## Benchmarks compared to other languages
 

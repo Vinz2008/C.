@@ -649,8 +649,10 @@ Value* ArrayMemberExprAST::codegen() {
   }
   
   //index = Builder->CreateFPToUI(index, Type::getInt64Ty(*TheContext), "cast_gep_index");
+  if (cpoint_type.is_array){
   if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
     convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
+  }
   }
   
   if (!is_llvm_type_number(index->getType())){
@@ -666,7 +668,7 @@ Value* ArrayMemberExprAST::codegen() {
   } else {
     allocated_value = GlobalVariables[ArrayName]->globalVar;
   }*/
-  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+  auto zero = ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   std::vector<Value*> indexes = { zero, index};
   Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
   // TODO : WHY SOME TYPES HAVE NB_PTR > 0 BUT IS_PTR FALSE ? IT IS NOT SUPPOSED TO BE POSSIBLE, BUT WE STILL NEED THIS CHECK FOR NOW. FIX IT!!
@@ -683,10 +685,27 @@ Value* ArrayMemberExprAST::codegen() {
       cpoint_type.nb_element = 0;
     }
     Log::Info() << "Cpoint_type for array member which is ptr : " << cpoint_type << "\n";
-    index = Builder->CreateSExt(index, Type::getInt64Ty(*TheContext)); // try to use a i64 for index
+    Type* index_type_llvm = Type::getInt64Ty(*TheContext);
+    Log::Info() << "pointer size : " << get_pointer_size() << "\n";
+    if (get_pointer_size() == 32){
+        zero = ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+        index_type_llvm = Type::getInt32Ty(*TheContext);
+    }
+    if (index->getType() != index_type_llvm){
+        convert_to_type(get_cpoint_type_from_llvm(index->getType()), index_type_llvm, index);
+    }
+    //index = Builder->CreateSExt(index, index_type_llvm); // try to use a i64 for index
     indexes = {index};
+  } /*else {
+    if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
+        convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
+    }
   }
-
+  if (!is_llvm_type_number(index->getType())){
+    return LogErrorV(this->loc, "index for array is not a number\n");
+  }*/
+  Log::Info() << "index type array member : " << get_cpoint_type_from_llvm(index->getType()) << "\n";
+  
   Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
   if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
     if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
@@ -1918,34 +1937,56 @@ Value *CallExprAST::codegen() {
     }
   }
   std::vector<int> pos_byval;
+  std::vector<int> pos_signext;
+  std::vector<int> pos_zeroext;
   for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
     Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
     if (/*arg_type.is_struct && !arg_type.is_ptr*/ should_pass_struct_byval(arg_type) && should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
     }
+    // TODO : are i8s (chars) only signextended on x86 ? (look at clang output) 
+    if (arg_type.type == i8_type && !arg_type.is_ptr && !arg_type.is_array){
+        pos_signext.push_back(i);
+    }
+    if (is_unsigned(arg_type)){
+        pos_zeroext.push_back(i);
+    }
   }
   // TODO fix this so you can combine sret and byval
+  std::string NameCallTmp = "calltmp";
+  if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || has_sret){
+    NameCallTmp = "";
+  }
+  auto call = Builder->CreateCall(CalleeF, ArgsV, NameCallTmp);
   if (has_sret){
-    auto call = Builder->CreateCall(CalleeF, ArgsV);
     call->addParamAttr(0, Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
     call->addParamAttr(0, Attribute::getWithAlignment(*TheContext, Align(8)));
     return Builder->CreateLoad(SretArgAlloca->getAllocatedType(), SretArgAlloca);
   }
   if (has_byval){
-    auto call = Builder->CreateCall(CalleeF, ArgsV);
     for (int i = 0; i < pos_byval.size(); i++){
         Cpoint_Type cpoint_byval_type = FunctionProtos[Callee]->Args.at(pos_byval.at(i)).second;
         call->addParamAttr(pos_byval.at(i), Attribute::getWithByValType(*TheContext, get_type_llvm(cpoint_byval_type)));
         call->addParamAttr(pos_byval.at(i), Attribute::getWithAlignment(*TheContext, Align(8)));
     }
-    return call;
   }
-  std::string NameCallTmp = "calltmp";
+  if (!pos_signext.empty()){
+  for (int i = 0; i < pos_signext.size(); i++){
+    call->addParamAttr(pos_signext.at(i), Attribute::SExt);
+  }
+  }
+  if (!pos_zeroext.empty()){
+  for (int i = 0; i < pos_zeroext.size(); i++){
+    call->addParamAttr(pos_zeroext.at(i), Attribute::ZExt);
+  }
+  }
+  /*std::string NameCallTmp = "calltmp";
   if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
     NameCallTmp = "";
-  }
-  return Builder->CreateCall(CalleeF, ArgsV, NameCallTmp);
+  }*/
+  return call;
+  //return Builder->CreateCall(CalleeF, ArgsV, NameCallTmp);
 }
 
 Value* AddrExprAST::codegen(){

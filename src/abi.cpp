@@ -1,9 +1,20 @@
 #include "abi.h"
 #include "codegen.h"
+#include "types.h"
 #include "llvm/TargetParser/Triple.h"
 
 extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::unique_ptr<LLVMContext> TheContext;
+extern Triple TripleLLVM;
+
+int get_pointer_size(){
+    if (TripleLLVM.isArch32Bit()){
+        return 32;
+    } else if (TripleLLVM.isArch64Bit()){
+        return 64;
+    }
+    return 64;
+}
 
 Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     if (!dynamic_cast<VariableExprAST*>(va.get())){
@@ -15,7 +26,6 @@ Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
     return Builder->CreateGEP(vaCodegened->getType(), get_var_allocation(varVa->Name), {zero, zero}, "gep_for_va");
 }
 
-extern Triple TripleLLVM;
 
 bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
     int max_size = 64;
