@@ -472,27 +472,27 @@ Value *VariableExprAST::codegen() {
 
 Value* StructMemberExprAST::codegen() {
     Log::Info() << "STRUCT MEMBER CODEGEN" << "\n";
-    AllocaInst* Alloca = nullptr;
+    //AllocaInst* Alloca = nullptr;
+    Value* Allocation = nullptr;
+    Cpoint_Type struct_type = Cpoint_Type();
     if (StructName == "reflection"){
         goto if_reflection;
     }
-    if (NamedValues[StructName] == nullptr){
+    if (/*NamedValues[StructName]*/ get_var_allocation(StructName) == nullptr){
         return LogErrorV(this->loc, "Can't find struct that is used for a member");
     }
-    Alloca = NamedValues[StructName]->alloca_inst;
+    //Alloca = NamedValues[StructName]->alloca_inst;
+    Allocation = get_var_allocation(StructName);
     Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
-    if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
+    if (!get_variable_type(StructName)->is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
       return LogErrorV(this->loc, "Using a member of variable %s even though it is not a struct", StructName.c_str());
     }
     Log::Info() << "StructName : " << StructName << "\n";
     Log::Info() << "StructName len : " << StructName.length() << "\n";
-    if (NamedValues[StructName] == nullptr){
-      Log::Info() << "NamedValues[StructName] nullptr" << "\n";
-    }
     //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
-    Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
-    Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
-
+    Log::Info() << "struct_declaration_name : " << get_variable_type(StructName)->struct_name << "\n";
+    Log::Info() << "struct_declaration_name length : " << get_variable_type(StructName)->struct_name.length() << "\n";
+    struct_type = *get_variable_type(StructName);
     //bool is_function_call = false;
 if_reflection:
     if (is_function_call){
@@ -500,10 +500,10 @@ if_reflection:
         return refletionInstruction(MemberName, std::move(Args));
       }
       bool found_function = false;
-      std::string struct_type_name = NamedValues[StructName]->type.struct_name;
+      std::string struct_type_name = struct_type.struct_name;
       Log::Info() << "StructName call struct function : " << struct_type_name << "\n";
-      if (NamedValues[StructName]->type.is_struct_template){
-        struct_type_name = get_struct_template_name(struct_type_name, *NamedValues[StructName]->type.struct_template_type_passed);
+      if (struct_type.is_struct_template){
+        struct_type_name = get_struct_template_name(struct_type_name, *struct_type.struct_template_type_passed);
         Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
       }
       auto functions =  StructDeclarations[struct_type_name]->functions;
@@ -519,7 +519,7 @@ if_reflection:
         return LogErrorV(this->loc, "Unknown struct function member called : %s\n", MemberName.c_str());
       }
       std::vector<llvm::Value*> CallArgs;
-      CallArgs.push_back(NamedValues[StructName]->alloca_inst);
+      CallArgs.push_back(get_var_allocation(StructName));
       for (int i = 0; i < Args.size(); i++){
         CallArgs.push_back(Args.at(i)->codegen());
       }
@@ -531,7 +531,7 @@ if_reflection:
       return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
     }
     // TODO : modify this code to replace the NamedValues by the functions which abstracts this
-    auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
+    auto members = StructDeclarations[struct_type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
     int pos = -1;
     for (int i = 0; i < members.size(); i++){
@@ -551,14 +551,14 @@ if_reflection:
     Cpoint_Type member_type = members.at(pos).second;
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
-    Cpoint_Type cpoint_type = NamedValues[StructName]->type;
+    Cpoint_Type cpoint_type = struct_type;
     //Value* tempval = Builder->CreateLoad(get_type_llvm(cpoint_type), Alloca, StructName);
     if (cpoint_type.is_ptr){
       cpoint_type.is_ptr = false;
     }
     Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
     
-    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Alloca, { zero, index});
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Allocation, { zero, index});
     Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
     return value;
 }
