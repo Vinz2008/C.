@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 790 KB stripped, ≈24.6MB not stripped
+- compiler less than 830KB stripped, ≈25.5MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -111,6 +111,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Replace sret store instruction with llvm.memcpy
 - [x] Move everything about the abi (valist, sret, byval) in an abi.cpp file
 - [ ] Add attributes to functions (ex : noreturn)
+- [ ] ENABLE CLANG-FORMAT
 
 ## Benchmarks compared to other languages
 

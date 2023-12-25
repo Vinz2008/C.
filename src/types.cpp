@@ -281,6 +281,31 @@ int find_struct_type_size(Cpoint_Type cpoint_type){
     return size;
 }
 
+bool is_just_type(Cpoint_Type type, int type_type){
+    return type.type == type_type && !type.is_ptr && !type.is_array && !type.is_struct;
+}
+
+int struct_get_number_type(Cpoint_Type cpoint_type, int type){
+    int found = 0;
+    for (int i = 0; i < StructDeclarations[cpoint_type.struct_name]->members.size(); i++){
+        Cpoint_Type member_type = StructDeclarations[cpoint_type.struct_name]->members.at(i).second;
+        if (is_just_type(member_type, type)){
+            found++;
+        }
+    }
+    return found;
+}
+
+bool is_struct_all_type(Cpoint_Type cpoint_type, int type){
+    return struct_get_number_type(cpoint_type, type) == StructDeclarations[cpoint_type.struct_name]->members.size();
+}
+
+// need to have the same type in every member from struct
+VectorType* vector_type_from_struct(Cpoint_Type cpoint_type){
+    Cpoint_Type member_type = StructDeclarations[cpoint_type.struct_name]->members.at(0).second;
+    return VectorType::get(get_type_llvm(member_type), StructDeclarations[cpoint_type.struct_name]->members.size(), false);
+}
+
 bool is_unsigned(Cpoint_Type cpoint_type){
     int type = cpoint_type.type;
     return type == u8_type || type == u16_type || type == u32_type || type == u64_type || type == u128_type;

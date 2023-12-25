@@ -402,9 +402,25 @@ struct StructMemberCallExprAST : public ExprAST {
     std::string to_string() override {
         return StructMember->LHS->to_string() + "." + StructMember->RHS->to_string();
     }
-  std::string generate_c() override { return ""; }
-  std::unique_ptr<ExprAST> clone() override;
-  Value *codegen() override;
+    std::string generate_c() override { return ""; }
+    std::unique_ptr<ExprAST> clone() override;
+    Value *codegen() override;
+};
+
+#endif
+
+#if CALL_IMPL
+struct NEWCallExprAST : public ExprAST {
+    std::unique_ptr<ExprAST> function_expr;
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    Cpoint_Type template_passed_type;
+    NEWCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type) : function_expr(std::move(function_expr)), Args(std::move(Args)), template_passed_type(template_passed_type) {}
+    std::string generate_c() override { return ""; }
+    std::string to_string() override {
+        return "";
+    }
+    std::unique_ptr<ExprAST> clone() override;
+    Value *codegen() override;
 };
 #endif
 

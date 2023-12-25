@@ -2,6 +2,7 @@
 #include <iostream>
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
+#include "llvm/IR/DerivedTypes.h"
 
 enum types {
     double_type = -1,
@@ -90,3 +91,6 @@ int from_val_to_int(llvm::Value* val);
 std::string from_cpoint_type_to_printf_format(Cpoint_Type type);
 int find_struct_type_size(Cpoint_Type cpoint_type);
 bool is_just_struct(Cpoint_Type type);
+int struct_get_number_type(Cpoint_Type cpoint_type, int type);
+bool is_struct_all_type(Cpoint_Type cpoint_type, int type);
+llvm::VectorType* vector_type_from_struct(Cpoint_Type cpoint_type);

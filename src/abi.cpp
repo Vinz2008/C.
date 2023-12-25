@@ -42,7 +42,25 @@ bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
 }
 
 bool should_pass_struct_byval(Cpoint_Type cpoint_type){
-    return should_return_struct_with_ptr(cpoint_type);
+    if (is_just_struct(cpoint_type) && is_struct_all_type(cpoint_type, float_type)){
+        int float_nb = struct_get_number_type(cpoint_type, float_type);
+        if (float_nb <= 2){
+            return false;
+        } else {
+            return true;
+        }
+    }
+    int max_size = 64;
+    if (TripleLLVM.isArch32Bit()){
+        max_size = 32;
+    } else if (TripleLLVM.isArch64Bit()){
+        max_size = 64;
+    }
+    int size_struct = find_struct_type_size(cpoint_type);
+    if (size_struct > max_size){
+        return true;
+    }
+    return false;
 }
 
 void addArgSretAttribute(Argument& Arg, Type* type){

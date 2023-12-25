@@ -112,37 +112,49 @@ Value* getTypeId(Value* valueLLVM){
 }
 
 
+Value* refletionInstrTypeId(std::vector<std::unique_ptr<ExprAST>> Args){
+    if (Args.size() > 1){
+        return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
+    }
+    return getTypeId(Args.at(0)->codegen());
+}
+
+Value* refletionInstrGetStructName(std::vector<std::unique_ptr<ExprAST>> Args){
+    if (Args.size() > 1){
+        return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
+    }
+    Value* val = Args.at(0)->codegen();
+    if (!val->getType()->isStructTy()){
+        return LogErrorV(emptyLoc, "argument is not a struct in getmembername");
+    }
+    auto structType = static_cast<StructType*>(val->getType());
+    std::string structName = (std::string)structType->getStructName();
+    Log::Info() << "get struct name : " << structName << "\n";
+    return Builder->CreateGlobalStringPtr(StringRef(structName.c_str()));
+}
+
+Value* refletionInstrGetMemberNb(std::vector<std::unique_ptr<ExprAST>> Args){
+    if (Args.size() > 1){
+        return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
+    }
+    Value* val = Args.at(0)->codegen();
+    if (!val->getType()->isStructTy()){
+        return LogErrorV(emptyLoc, "argument is not a struct in getmembername");
+    }
+    auto structType = static_cast<StructType*>(val->getType());
+    int nb_member = -1;
+    nb_member = structType->getNumElements();
+    Log::Info() << "getmembernbname : " << nb_member << "\n";
+    return ConstantFP::get(*TheContext, APFloat((double)nb_member));
+}
+
 Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr<ExprAST>> Args){
     if (instruction == "typeid"){
-        if (Args.size() > 1){
-            return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
-        }
-        return getTypeId(Args.at(0)->codegen());
+        return refletionInstrTypeId(std::move(Args));
     } else if (instruction == "getstructname"){
-        if (Args.size() > 1){
-            return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
-        }
-        Value* val = Args.at(0)->codegen();
-        if (!val->getType()->isStructTy()){
-            return LogErrorV(emptyLoc, "argument is not a struct in getmembername");
-        }
-        auto structType = static_cast<StructType*>(val->getType());
-        std::string structName = (std::string)structType->getStructName();
-        Log::Info() << "get struct name : " << structName << "\n";
-        return Builder->CreateGlobalStringPtr(StringRef(structName.c_str()));
+        return refletionInstrGetStructName(std::move(Args));
     } else if (instruction == "getmembernb"){
-        if (Args.size() > 1){
-            return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
-        }
-        Value* val = Args.at(0)->codegen();
-        if (!val->getType()->isStructTy()){
-            return LogErrorV(emptyLoc, "argument is not a struct in getmembername");
-        }
-        auto structType = static_cast<StructType*>(val->getType());
-        int nb_member = -1;
-        nb_member = structType->getNumElements();
-        Log::Info() << "getmembernbname : " << nb_member << "\n";
-        return ConstantFP::get(*TheContext, APFloat((double)nb_member));
+        return refletionInstrGetMemberNb(std::move(Args));
     }
     return LogErrorV(emptyLoc, "Unknown Reflection Instruction");
 }
@@ -236,15 +248,22 @@ std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cp
     return struct_name + "____" + create_mangled_name_from_type(type);
 }
 
-/*Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
-    if (!dynamic_cast<VariableExprAST*>(va.get())){
-        return LogErrorV(emptyLoc, "Not implemented internal function to get address of va list with amd64 systemv abi for non variables");
+
+bool isArgString(ExprAST* E){
+    if (dynamic_cast<StringExprAST*>(E)){
+        Log::Info() << "StringExpr in Print Macro codegen" << "\n";
+        return true;
+    } else if (dynamic_cast<VariableExprAST*>(E)){
+        Log::Info() << "Variable in Print Macro codegen" << "\n";
+        auto varTemp = dynamic_cast<VariableExprAST*>(E);
+        auto varTempCpointType = varTemp->type;
+        if (varTempCpointType.type == i8_type && varTempCpointType.is_ptr){
+            Log::Info() << "Variable in Print Macro codegen is string" << "\n";
+            return true;
+        }
     }
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto varVa = dynamic_cast<VariableExprAST*>(va.get());
-    auto vaCodegened = va->codegen();
-    return Builder->CreateGEP(vaCodegened->getType(), get_var_allocation(varVa->Name), {zero, zero}, "gep_for_va");
-}*/
+    return false;
+}
 
 Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
     std::vector<std::unique_ptr<ExprAST>> PrintfArgs;
@@ -258,7 +277,8 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
     for (int i = 0; i < print_format.size(); i++){
         if (print_format.at(i) == '{' && print_format.at(i+1) && '}'){
             bool is_string_found = false;
-            if (dynamic_cast<StringExprAST*>(Args.at(arg_nb).get())){
+            is_string_found = isArgString(Args.at(arg_nb).get());
+            /*if (dynamic_cast<StringExprAST*>(Args.at(arg_nb).get())){
                 Log::Info() << "StringExpr in Print Macro codegen" << "\n";
                 is_string_found = true;
             } else if (dynamic_cast<VariableExprAST*>(Args.at(arg_nb).get())){
@@ -269,7 +289,7 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
                     Log::Info() << "Variable in Print Macro codegen is string" << "\n";
                     is_string_found = true;
                 }
-            } 
+            }*/
             if (is_string_found){
                 generated_printf_format += "%s";
             } else {
@@ -301,9 +321,10 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
 Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     std::vector<std::unique_ptr<ExprAST>> Args;
     auto valueCopy = VarDbg->codegen();
-    std::string format = "%s"; // change format depending of type
+    std::string format = "%s";
     bool is_string_found = false;
-    if (dynamic_cast<StringExprAST*>(VarDbg.get())){
+    is_string_found = isArgString(VarDbg.get());
+    /*if (dynamic_cast<StringExprAST*>(VarDbg.get())){
         is_string_found = true;
     } else if (dynamic_cast<VariableExprAST*>(VarDbg.get())){
         Log::Info() << "Variable in Dbg Macro codegen" << "\n";
@@ -314,7 +335,7 @@ Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
             Log::Info() << "Variable in Dbg Macro codegen is string" << "\n";
             is_string_found = true;
         }
-    }
+    }*/
     auto valueCopyCpointType = get_cpoint_type_from_llvm(valueCopy->getType());
     Log::Info() << "valueCopyCpointType type : " << valueCopyCpointType.type << "\n";
     if (is_string_found){
@@ -328,23 +349,6 @@ Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     if (format == ""){
         return LogErrorV(emptyLoc, "Not Printable type in debug macro");
     }
-    /*if (valueCopyCpointType.is_ptr){
-        if (valueCopyCpointType.type == i8_type  || is_string_found){
-            format = "\"%s\"";
-        } else {
-            format = "%p";
-        }
-    } //else if (valueCopyCpointType.type == i8_type){
-        // format = "%c";
-        // TODO activate this or not ?
-    //} 
-    else if (is_signed(valueCopyCpointType) || is_unsigned(valueCopyCpointType)){
-        format = "%d";
-    } else if (is_decimal_number_type(valueCopyCpointType)) {
-        format = "%f";
-    } else {
-        return LogErrorV(emptyLoc, "Not Printable type in debug macro");
-    }*/
     Args.push_back(std::make_unique<StringExprAST>(VarDbg->to_string() + " = " + format + "\n"));
     Args.push_back(std::move(VarDbg));
     
@@ -449,20 +453,10 @@ Value *VariableExprAST::codegen() {
     return Builder->CreateLoad(get_type_llvm(type), GlobalVariables[Name]->globalVar, Name.c_str());
   }
   if (FunctionProtos[Name] != nullptr){
-    Log::Info() << "Using function pointer" << "\n";
-    std::vector<Type *> args;
-    for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){
-      args.push_back(get_type_llvm(FunctionProtos[Name]->Args.at(i).second));
-    }
-    //Type* return_type = get_type_llvm(FunctionProtos[Name]->cpoint_type);
-    Log::Info() << "Created Function return type" << "\n";
-    //FunctionType* functionType = FunctionType::get(return_type, args, FunctionProtos[Name]->is_variable_number_args);
-    Log::Info() << "Created Function type" << "\n";
     return GeneratedFunctions[Name];
-    //return Builder->CreateLoad(functionType, FunctionProtos[Name]->codegen(), Name.c_str());
   }
   if (NamedValues[Name] == nullptr) {
-  return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
+    return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
   }
   AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
@@ -475,26 +469,19 @@ Value* StructMemberExprAST::codegen() {
     //AllocaInst* Alloca = nullptr;
     Value* Allocation = nullptr;
     Cpoint_Type struct_type = Cpoint_Type();
-    if (StructName == "reflection"){
-        goto if_reflection;
+    if (StructName != "reflection"){
+        if (get_var_allocation(StructName) == nullptr){
+            return LogErrorV(this->loc, "Can't find struct that is used for a member");
+        }
+        Allocation = get_var_allocation(StructName);
+        Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
+        if (!get_variable_type(StructName)->is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
+        return LogErrorV(this->loc, "Using a member of variable %s even though it is not a struct", StructName.c_str());
+        }
+        Log::Info() << "StructName : " << StructName << "\n";
+        Log::Info() << "struct_declaration_name : " << get_variable_type(StructName)->struct_name << "\n";
+        struct_type = *get_variable_type(StructName);
     }
-    if (/*NamedValues[StructName]*/ get_var_allocation(StructName) == nullptr){
-        return LogErrorV(this->loc, "Can't find struct that is used for a member");
-    }
-    //Alloca = NamedValues[StructName]->alloca_inst;
-    Allocation = get_var_allocation(StructName);
-    Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
-    if (!get_variable_type(StructName)->is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
-      return LogErrorV(this->loc, "Using a member of variable %s even though it is not a struct", StructName.c_str());
-    }
-    Log::Info() << "StructName : " << StructName << "\n";
-    Log::Info() << "StructName len : " << StructName.length() << "\n";
-    //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
-    Log::Info() << "struct_declaration_name : " << get_variable_type(StructName)->struct_name << "\n";
-    Log::Info() << "struct_declaration_name length : " << get_variable_type(StructName)->struct_name.length() << "\n";
-    struct_type = *get_variable_type(StructName);
-    //bool is_function_call = false;
-if_reflection:
     if (is_function_call){
       if (StructName == "reflection"){
         return refletionInstruction(MemberName, std::move(Args));
@@ -1423,6 +1410,21 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
 }
 #endif
 
+#if CALL_IMPL
+Value* NEWCallExprAST::codegen(){
+    if (dynamic_cast<VariableExprAST*>(function_expr.get())){
+        std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
+        return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type)->codegen();
+    } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
+        if (BinExpr->Op == "."){
+            return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args))->codegen();
+        }
+    }
+    return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");
+}
+#endif
+
 #if CALL_STRUCT_MEMBER_IMPL
 Value* StructMemberCallExprAST::codegen(){
     if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
@@ -1918,6 +1920,9 @@ Value *CallExprAST::codegen() {
     }
     if (/*arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
+    } else if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
+        Value* loaded_vector = Builder->CreateLoad(vector_type_from_struct(FunctionProtos[Callee]->Args.at(i).second), AddrExprAST(Args[i]->clone()).codegen());
+        temp_val = loaded_vector;
     } else {
         temp_val = Args[i]->codegen();
     }
@@ -1939,9 +1944,10 @@ Value *CallExprAST::codegen() {
   std::vector<int> pos_byval;
   std::vector<int> pos_signext;
   std::vector<int> pos_zeroext;
+  //std::vector<int> pos_vector_two_float;
   for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
     Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
-    if (/*arg_type.is_struct && !arg_type.is_ptr*/ should_pass_struct_byval(arg_type) && should_pass_struct_byval(arg_type)){
+    if (/*arg_type.is_struct && !arg_type.is_ptr &&*/ should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
     }
@@ -1952,8 +1958,14 @@ Value *CallExprAST::codegen() {
     if (is_unsigned(arg_type)){
         pos_zeroext.push_back(i);
     }
+    /*if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2){
+        pos_vector_two_float.push_back(i);
+    }*/
   }
-  // TODO fix this so you can combine sret and byval
+  /*for (int i = 0; i < pos_vector_two_float.size(); i++){
+    Value* loaded_vector = Builder->CreateLoad(vector_type_from_struct(FunctionProtos[Callee]->Args.at(pos_vector_two_float.at(i)).second), ArgsV.at(pos_vector_two_float.at(i)));
+    std::replace(ArgsV.begin(), ArgsV.end(), ArgsV.at(pos_vector_two_float.at(i)), loaded_vector);
+  }*/
   std::string NameCallTmp = "calltmp";
   if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || has_sret){
     NameCallTmp = "";
@@ -2302,10 +2314,14 @@ Function *PrototypeAST::codegen() {
   for (int i = 0; i < Args.size(); i++){
     Cpoint_Type arg_type = Args.at(i).second;
     //if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
+    if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
+        type_args.push_back(vector_type_from_struct(arg_type));
+    } else {
     if (is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         arg_type.is_ptr = true;
     }
     type_args.push_back(get_type_llvm(arg_type));
+    }
   }
   FunctionType *FT;
   bool has_sret = false;

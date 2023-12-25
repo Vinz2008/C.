@@ -102,6 +102,12 @@ std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
 }
 #endif
 
+#if CALL_IMPL 
+std::unique_ptr<ExprAST> NEWCallExprAST::clone(){
+    return std::make_unique<NEWCallExprAST>(function_expr->clone(), clone_vector<ExprAST>(Args), template_passed_type);
+}
+#endif
+
 std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
     return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, clone_vector<ExprAST>(Args));
 }
@@ -520,7 +526,8 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     //Log::Info() << "CurTok before if : " << CurTok << "\n";
     //if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec){
-#if CALL_STRUCT_MEMBER_IMPL
+//#if CALL_STRUCT_MEMBER_IMPL
+#if CALL_IMPL
         Log::Info() << "CurTok CALL_STRUCT_MEMBER_IMPL : " << CurTok << "\n";
         if (CurTok == ')'){
             // TODO : calling struct member
@@ -531,8 +538,12 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
             if (!ret){
                 return nullptr;
             }
+            if (CurTok != ')'){
+                return LogError("Expected ) in call struct args");
+            }
             getNextToken();
-            return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
+            return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
+            //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
         }
 #endif
       return LHS;
