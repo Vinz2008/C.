@@ -5,6 +5,7 @@
 #include "preprocessor.h"
 #include "errors.h"
 #include "log.h"
+#include "config.h"
 
 using namespace std;
 
@@ -116,7 +117,20 @@ void handleEmptyLine(){
   }
 }
 
+int getCharLineStdin(){
+    int c = getchar();
+    if (c == EOF){
+        exit(0);
+    }
+    return c;
+}
+
 int getCharLine(){
+#if ENABLE_JIT
+  if (Comp_context->jit_mode){
+    return getCharLineStdin();
+  }
+#endif
   if (line == "<empty line>"){
     init_line();
     handlePreprocessor();

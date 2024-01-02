@@ -37,6 +37,7 @@
 #include "templates.h"
 #include "tests.h"
 #include "lto.h"
+#include "jit.h"
 
 using namespace std;
 using namespace llvm;
@@ -159,6 +160,46 @@ void print_help(){
     std::cout << "others : TODO" << std::endl;
 }
 
+
+// TODO : move this in operators.cpp ?
+void installPrecendenceOperators(){
+    // Install standard binary operators.
+    // 1 is lowest precedence.
+    BinopPrecedence["="] = 5;
+
+    BinopPrecedence["||"] = 10;
+    BinopPrecedence["&&"] = 11;
+    BinopPrecedence["|"] = 12;
+    BinopPrecedence["^"] = 13;
+    BinopPrecedence["&"] = 14;
+
+    BinopPrecedence["!="] = 15;
+    BinopPrecedence["=="] = 15;
+
+    BinopPrecedence["<"] = 16;
+    BinopPrecedence["<="] = 16;
+    BinopPrecedence[">"] = 16;
+    BinopPrecedence[">="] = 16;
+
+    BinopPrecedence["<<"] = 20;
+    BinopPrecedence[">>"] = 20;
+
+    BinopPrecedence["+"] = 25;
+    BinopPrecedence["-"] = 25;
+
+    BinopPrecedence["*"] = 30;
+    BinopPrecedence["%"] = 30;
+    BinopPrecedence["/"] = 30;
+
+#if ARRAY_MEMBER_OPERATOR_IMPL
+    BinopPrecedence["["] = 35;
+#endif
+
+#if STRUCT_MEMBER_OPERATOR_IMPL
+    BinopPrecedence["."] = 35;
+#endif
+}
+
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
     if (Comp_context->c_translator){
@@ -272,7 +313,7 @@ void HandleTest(){
   }
 }
 
-static void MainLoop() {
+void MainLoop(){
   while (1) {
     if (Comp_context->debug_mode){
     std::flush(file_log);
@@ -342,6 +383,16 @@ static void MainLoop() {
         HandleTest();
         break;
       }
+#if ENABLE_JIT
+    if (Comp_context->jit_mode){
+      if (CurTok != '\0'){
+        HandleTopLevelExpression();
+      } else {
+        getNextToken();
+        break;
+      }
+    }
+#endif
       Log::Info() << "CurTok : " << CurTok << "\n";
       Log::Info() << "identifier : " << IdentifierStr << "\n";
       LogError("TOP LEVEL EXPRESSION FORBIDDEN");
@@ -378,8 +429,14 @@ int main(int argc, char **argv){
     bool use_native_target = false;
     std::string linker_additional_flags = "";
     if (argc < 2){
+#if ENABLE_JIT
+        Comp_context->jit_mode = true;
+        launchJIT();
+        return 0;
+#else
         fprintf(stderr, "not enough arguments, expected at least 1, got %d\n", argc-1);
         exit(1);
+#endif
     }
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
@@ -516,9 +573,10 @@ int main(int argc, char **argv){
     
     c_translator::init_context();
     
+    installPrecendenceOperators();
     // Install standard binary operators.
     // 1 is lowest precedence.
-    BinopPrecedence["="] = 5;
+    /*BinopPrecedence["="] = 5;
 
     BinopPrecedence["||"] = 10;
     BinopPrecedence["&&"] = 11;
@@ -551,6 +609,7 @@ int main(int argc, char **argv){
 #if STRUCT_MEMBER_OPERATOR_IMPL
     BinopPrecedence["."] = 35;
 #endif
+    */
 
 
 

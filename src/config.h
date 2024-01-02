@@ -20,3 +20,4 @@
 #define CALL_IMPL 0
 
 #define ENABLE_LTO 0
+#define ENABLE_JIT 0

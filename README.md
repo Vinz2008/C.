@@ -112,6 +112,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Move everything about the abi (valist, sret, byval) in an abi.cpp file
 - [ ] Add attributes to functions (ex : noreturn)
 - [ ] ENABLE CLANG-FORMAT
+- [ ] Implement a format macro (like the format! macro in rust)
+- [ ] Add REPL
 
 ## Benchmarks compared to other languages
 
