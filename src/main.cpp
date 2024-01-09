@@ -389,8 +389,8 @@ void MainLoop(){
         HandleTopLevelExpression();
       } else {
         getNextToken();
-        break;
       }
+      break;
     }
 #endif
       Log::Info() << "CurTok : " << CurTok << "\n";
@@ -403,6 +403,14 @@ void MainLoop(){
   }
 }
 
+
+#if ENABLE_JIT
+int StartJIT(){
+    Comp_context->jit_mode = true;
+    launchJIT();
+    return 0;
+}
+#endif
 
 int main(int argc, char **argv){
     setlocale(LC_ALL, "");
@@ -430,14 +438,16 @@ int main(int argc, char **argv){
     std::string linker_additional_flags = "";
     if (argc < 2){
 #if ENABLE_JIT
-        Comp_context->jit_mode = true;
+        return StartJIT();
+        /*Comp_context->jit_mode = true;
         launchJIT();
-        return 0;
+        return 0;*/
 #else
         fprintf(stderr, "not enough arguments, expected at least 1, got %d\n", argc-1);
         exit(1);
 #endif
     }
+    bool filename_found = false;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
         if (arg.compare("-d") == 0){
@@ -519,9 +529,18 @@ int main(int argc, char **argv){
           linker_additional_flags += ' ';
           cout << "linker flag " << linker_additional_flags << endl; 
         } else {
+          filename_found = true;
           Log::Print() << _("filename : ") << arg << "\n";
           filename = arg;
         }
+    }
+    if (!filename_found){
+#if ENABLE_JIT
+        return StartJIT();
+#else
+        fprintf(stderr, "didn't find a filename in args\n");
+        exit(1);
+#endif
     }
     Log::Info() << "filename at end : " << filename << "\n";
     if (!filesystem::exists(filename)){

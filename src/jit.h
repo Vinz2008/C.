@@ -13,8 +13,11 @@
 #include "llvm/ExecutionEngine/SectionMemoryManager.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/LLVMContext.h"
+#include "llvm/IR/Module.h"
 #include <memory>
 #include <iostream>
+
+extern std::unique_ptr<llvm::Module> TheModule;
 
 namespace llvm {
 namespace orc {
@@ -79,6 +82,11 @@ public:
 
   Expected<JITEvaluatedSymbol> lookup(StringRef Name) {
     return ES->lookup({&MainJD}, Mangle(Name.str()));
+  }
+  // FOR DEBUG
+  void getLLVMIR(){
+    std::error_code ec;
+    TheModule->print(*new raw_fd_ostream("out-jit.ll", ec), nullptr);
   }
 };
 

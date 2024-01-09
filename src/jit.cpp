@@ -32,13 +32,14 @@ void launchJIT(){
         exit(1);
     }
     TheJIT = std::move(*JITResult);
+    initModuleJIT();
     MainLoop();
 }
 
 std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
   if (auto E = ParseExpression()) {
     // Make an anonymous proto.
-    auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "__anon_expr", std::vector<std::pair<std::string, Cpoint_Type>>(), Cpoint_Type(void_type));
+    auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "__anon_expr", std::vector<std::pair<std::string, Cpoint_Type>>(), Cpoint_Type(double_type));
     std::vector<std::unique_ptr<ExprAST>> Body;
     Body.push_back(std::move(E));
     return std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
@@ -49,12 +50,13 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
 
 void HandleTopLevelExpression(){
   // Evaluate a top-level expression into an anonymous function.
-  fprintf(stderr, "TOP LEVEL EXPRESSION");
+  fprintf(stderr, "TOP LEVEL EXPRESSION\n");
+  if (!TheModule || !TheContext){
+    initModuleJIT();
+  }
   if (auto FnAST = ParseTopLevelExpr()) {
     if (FnAST->codegen()) {
-        if (!TheModule || !TheContext){
-            initModuleJIT();
-        }
+        TheJIT->getLLVMIR();
         auto H = TheJIT->addModule(llvm::orc::ThreadSafeModule(std::move(TheModule), std::move(TheContext)));
         auto ExprSymbol = TheJIT->lookup("__anon_expr");
         assert(ExprSymbol && "Function not found");

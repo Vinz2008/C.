@@ -1534,11 +1534,12 @@ std::unique_ptr<ExprAST> ParseUnary() {
     return ParsePrimary();
 
   // If this is a unary operator, read it.
-  Log::Info() << "Is an unary operator " << CurTok << "\n";
+  Log::Info() << "Is an unary operator ? " << CurTok << "\n";
   int Opc = CurTok;
   getNextToken();
   if (auto Operand = ParseUnary())
     return std::make_unique<UnaryExprAST>(Opc, std::move(Operand));
+  Log::Info() << "Not an unary operator. Curtok : " << CurTok << "\n";
   return nullptr;
 }
 

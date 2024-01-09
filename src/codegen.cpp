@@ -161,9 +161,11 @@ Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr
 
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
+  if (!Comp_context->jit_mode){
   if (auto *F = TheModule->getFunction(Name)){
     Log::Info() << "TheModule->getFunction " << Name << "\n";
     return F;
+  }
   }
 
   // If not, check whether we can codegen the declaration from some existing
@@ -2510,7 +2512,9 @@ Function *FunctionAST::codegen() {
   
   //if (RetVal) {
     Log::Info() << "before sret P.cpoint_type : " << P.cpoint_type << "\n";
+    if (RetVal){
     Log::Info() << "before sret RetVal->getType()->isStructTy() : " << RetVal->getType()->isStructTy() << "\n";
+    }
     if  (/*P.cpoint_type.is_struct && !P.cpoint_type.is_ptr*/ is_just_struct(P.cpoint_type) && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
         Log::Info() << "sret storing in return" << "\n";
         /*auto intrisicId = Intrinsic::memcpy;
