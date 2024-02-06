@@ -16,6 +16,7 @@ outfile = "a.out"
 libraries = ["pthread", "gtk"]
 gc = true
 strip = false
+linker_path = "mold"
 
 [custom]
 scripts = ["make -C c"]

@@ -35,4 +35,4 @@ clean: clean-build
 
 
 run:
-	../$(OUTPUTBIN) -C example/
+	./$(OUTPUTBIN) -C example/

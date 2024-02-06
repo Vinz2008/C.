@@ -534,6 +534,14 @@ void printHelp(){
 }
 
 int main(int argc, char** argv){
+
+    std::vector<std::string> needed_exes = {"clang"};
+    for (int i = 0; i < needed_exes.size(); i++){
+        if (!doesExeExist(needed_exes.at(i))){
+            std::cout << "Couldn't find the " << needed_exes.at(i) << " exe" << std::endl;
+            exit(1);
+        }
+    }
     enum mode modeBuild = BUILD_MODE;
     std::string src_folder = "src/";
     std::string dependency_to_add = "";
@@ -703,6 +711,7 @@ int main(int argc, char** argv){
     std::string sysroot_cross = (std::string)config["cross-compile"]["sysroot"].value_or("");   
     is_gc = config["build"]["gc"].value_or(true);
     bool is_strip_mode = config["build"]["strip"].value_or(false);
+    std::string linker_path = (std::string)config["build"]["linker_path"].value_or("");
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
     }
@@ -733,6 +742,12 @@ int main(int argc, char** argv){
         std::string outfilename = (std::string) outfilename_view;
         std::string target = "";
         std::string sysroot = "";
+        if (linker_path != ""){
+            if (!doesExeExist(linker_path)){
+                std::cout << "linker specified in build.toml : " << linker_path << " doesn't exist" << "\n";
+                exit(1);
+            }
+        }
         if (modeBuild == CROSS_COMPILE_MODE){
         linker_args += cross_compile_linker_args;
         target = target_cross;
@@ -757,7 +772,7 @@ int main(int argc, char** argv){
         linker_args += c_libraries_linker_args;
         if (src_folder_exists){
         if (type == "exe"){
-            linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc, is_strip_mode);
+            linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc, is_strip_mode, linker_path);
         } else if (type == "library"){
             linkLibrary(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "dynlib"){

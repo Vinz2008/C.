@@ -42,7 +42,7 @@ void buildTest(std::vector<std::string>& PathList, int pos, std::vector<std::str
     // TODO : find these from the config by passing it through args
     bool is_gc = true;
     bool is_strip_mode = false;
-    linkFiles(linkTestPathList, exe_name, "", "", "", is_gc, is_strip_mode);
+    linkFiles(linkTestPathList, exe_name, "", "", "", is_gc, is_strip_mode, "");
 }
 
 void buildTestObjectFiles(std::vector<std::string>& PathList){

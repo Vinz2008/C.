@@ -44,6 +44,33 @@ void openWebPage(std::string url){
     runCommand(cmd);
 }
 
+
+std::vector<std::string> PATHS;
+
+bool doesExeExist(std::string filename){
+    if (PATHS.empty()){
+        char* PATH = getenv("PATH");
+        PATH = strdup(PATH);
+        char *path_string = strtok(PATH, ":");
+        while (path_string != NULL) {
+            PATHS.push_back(path_string);
+            path_string = strtok(NULL, ":");
+        }
+        free(PATH);
+    }
+    for (int i = 0; i < PATHS.size(); i++){
+        //std::cout << "PATH " << i << " " << PATHS.at(i) << "\n";
+    }
+    for (int i = 0; i < PATHS.size(); i++){
+        std::string exepath = PATHS.at(i) + "/" + filename;
+        //std::cout << "exepath " << exepath << "\n";
+        if (fs::exists(exepath)){
+            return true;
+        }
+    }
+    return false;
+}
+
 void buildProject(std::string path){
     runCommand("cd " + path + " && cpoint-build");
 }
@@ -80,7 +107,7 @@ void compileFile(std::string target, std::string arguments, std::string path, st
     runCommand(cmd);
 }
 
-void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc, bool is_strip_mode){
+void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc, bool is_strip_mode, std::string linker_path){
     if  (outfilename == ""){
         outfilename = "a.out";
     }
@@ -90,6 +117,9 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     }
     if (sysroot != ""){
         cmd.append(" --sysroot=" + sysroot + " ");
+    }
+    if (linker_path != ""){
+        cmd.append("-fuse-ld=" + linker_path + " ");
     }
     if (args != ""){
         cmd.append(" " + args + " ");
