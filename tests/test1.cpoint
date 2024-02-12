@@ -6,9 +6,9 @@ func main(){
   var i : int = 2
   var temp : int = 3
   var p : int ptr = addr i
-  p = temp
+  p = addr temp
   printi(i)
-  printi(deref p)
+  // printi(deref p)
   var s : i8 ptr = "hello world"
   var c : i8 = s[2]
   // printf("%c\n", c)

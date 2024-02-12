@@ -191,17 +191,12 @@ void installPrecendenceOperators(){
     BinopPrecedence["%"] = 30;
     BinopPrecedence["/"] = 30;
 
-#if ARRAY_MEMBER_OPERATOR_IMPL
     BinopPrecedence["["] = 35;
-#endif
 
-#if STRUCT_MEMBER_OPERATOR_IMPL
     BinopPrecedence["."] = 35;
-#endif
 
-#if CALL_IMPL
     BinopPrecedence["("] = 35;
-#endif
+
 }
 
 static void HandleDefinition() {

@@ -1414,7 +1414,9 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
 
 #if CALL_IMPL
 Value* NEWCallExprAST::codegen(){
+    Log::Info() << "NEWCallExprAST codegen" << "\n";
     if (dynamic_cast<VariableExprAST*>(function_expr.get())){
+        Log::Info() << "Args size" << Args.size() << "\n";
         std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
         return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type)->codegen();
     } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){

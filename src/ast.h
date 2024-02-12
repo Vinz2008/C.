@@ -409,7 +409,6 @@ struct StructMemberCallExprAST : public ExprAST {
 
 #endif
 
-#if CALL_IMPL
 struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> function_expr;
     std::vector<std::unique_ptr<ExprAST>> Args;
@@ -422,7 +421,6 @@ struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
 };
-#endif
 
 class CallExprAST : public ExprAST {
   std::string Callee;
