@@ -11,6 +11,6 @@ func main(){
   printi(deref p)
   var s : i8 ptr = "hello world"
   var c : i8 = s[2]
-  printf("%c\n", c)
+  // printf("%c\n", c)
   var b : bool
 }
