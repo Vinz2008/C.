@@ -27,6 +27,9 @@
 #include "config.h"
 #include "abi.h"
 
+#include <typeinfo>
+#include <cxxabi.h>
+
 using namespace llvm;
 
 std::unique_ptr<LLVMContext> TheContext;
@@ -466,6 +469,42 @@ Value *VariableExprAST::codegen() {
   return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
 }
 
+// TODO maybe use this function with va_arg internal functions
+// TODO maybe return a pair of Value and Cpoint_Type ?
+// return the ptr without loading 
+// member_type is for returning
+Value* StructMemberGEP(std::string MemberName, Value* Allocation, Cpoint_Type struct_type, Cpoint_Type& member_type){
+    auto members = StructDeclarations[struct_type.struct_name]->members;
+    Log::Info() << "members.size() : " << members.size() << "\n";
+    int pos = -1;
+    for (int i = 0; i < members.size(); i++){
+      Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
+      if (members.at(i).first == MemberName){
+        pos = i;
+        break;
+      }
+    }
+    Log::Info() << "Pos for GEP struct member " << pos << "\n";
+    for (int i = 0; i < members.size(); i++){
+        Log::Info() << "members.at(" << i << ") : " << members.at(i).first << "\n";
+    }
+    if (pos == -1){
+        return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
+    }
+    member_type = members.at(pos).second;
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+    Cpoint_Type cpoint_type = struct_type;
+    //Value* tempval = Builder->CreateLoad(get_type_llvm(cpoint_type), Alloca, StructName);
+    if (cpoint_type.is_ptr){
+      cpoint_type.is_ptr = false;
+    }
+    Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
+    
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Allocation, { zero, index});
+    return ptr;
+}
+
 Value* StructMemberExprAST::codegen() {
     Log::Info() << "STRUCT MEMBER CODEGEN" << "\n";
     //AllocaInst* Alloca = nullptr;
@@ -520,7 +559,7 @@ Value* StructMemberExprAST::codegen() {
       return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
     }
     // TODO : modify this code to replace the NamedValues by the functions which abstracts this
-    auto members = StructDeclarations[struct_type.struct_name]->members;
+    /*auto members = StructDeclarations[struct_type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
     int pos = -1;
     for (int i = 0; i < members.size(); i++){
@@ -547,7 +586,9 @@ Value* StructMemberExprAST::codegen() {
     }
     Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
     
-    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Allocation, { zero, index});
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Allocation, { zero, index});*/
+    Cpoint_Type member_type;
+    Value* ptr = StructMemberGEP(MemberName, Allocation, struct_type, member_type);
     Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
     return value;
 }
@@ -1478,11 +1519,14 @@ Value* StructMemberCallExprAST::codegen(){
 #endif
 
 #if ARRAY_MEMBER_OPERATOR_IMPL
+
+// TODO : refactor this code to be more efficient (for example a lot of the code from variableExprASt should be a function that is called after getting the struct member)
 Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
     Value* IndexV = index->codegen();
     if (!IndexV){
         return LogErrorV(emptyLoc, "error in array index");
     }
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     if (dynamic_cast<VariableExprAST*>(array.get())){
         std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(array));
         std::string ArrayName = VariableExpr->Name;
@@ -1510,8 +1554,7 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
             return LogErrorV(emptyLoc, "index for array is not a number\n");
         }
   
-        Value* allocated_value;
-        allocated_value = get_var_allocation(ArrayName);
+        Value* allocated_value = get_var_allocation(ArrayName);
         /*AllocaInst* Alloca;
         if (NamedValues[ArrayName]){
         Alloca = NamedValues[ArrayName]->alloca_inst;
@@ -1519,7 +1562,6 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         } else {
             allocated_value = GlobalVariables[ArrayName]->globalVar;
         }*/
-        auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
         std::vector<Value*> indexes = { zero, IndexV};
         Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
         // TODO : WHY SOME TYPES HAVE NB_PTR > 0 BUT IS_PTR FALSE ? IT IS NOT SUPPOSED TO BE POSSIBLE, BUT WE STILL NEED THIS CHECK FOR NOW. FIX IT!!
@@ -1560,8 +1602,31 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
         Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
         return value;
+    } else if (dynamic_cast<BinaryExprAST*>(array.get())){
+        
+        std::unique_ptr<BinaryExprAST> BinOp = get_Expr_from_ExprAST<BinaryExprAST>(std::move(array));
+        if (BinOp->Op != "."){
+            return LogErrorV(emptyLoc, "Indexing an array is only implemented for struct member binary operators expression\n");
+        }
+        exit(1);
+        // TODO : uncomment this, will need to modify the structMember operator to be able to return only the gep ptr for any expressions it support
+        /*std::string StructName =  BinOp->LHS;
+        Value* Allocation = get_var_allocation(StructMemberExpr->StructName);
+        Cpoint_Type struct_type = *get_variable_type(StructMemberExpr->StructName);
+        Cpoint_Type struct_member_type;
+        Value* ptr = StructMemberGEP(StructMemberExpr->MemberName, Allocation, struct_type, struct_member_type);
+        std::vector<Value*> indexes = { zero, IndexV};
+        Cpoint_Type array_member_type = struct_member_type;
+        array_member_type.is_array = false;
+        array_member_type.nb_element = 0;
+        Type* type_llvm = get_type_llvm(struct_member_type);
+        Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes);
+        // TODO : finish the load Name with the IndexV in string form
+        Value* value = Builder->CreateLoad(get_type_llvm(array_member_type), member_ptr, StructMemberExpr->StructName + "." + StructMemberExpr->MemberName + "[]");
+        return value;*/
+
     }
-    return LogErrorV(emptyLoc, "Trying to use the array member operator with an expression which it is not implemented for");
+    return LogErrorV(emptyLoc, "Trying to use the array member operator with an expression which it is not implemented for\n");
 }
 
 
