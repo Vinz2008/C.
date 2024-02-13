@@ -1880,7 +1880,7 @@ Value *CallExprAST::codegen() {
   bool has_byval = false;
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
-    if (!(Args.size() >= CalleeF->arg_size())){
+    if (Args.size() < CalleeF->arg_size()){
       return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
     }
   } else if (has_sret){

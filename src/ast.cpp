@@ -578,10 +578,9 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     }*/
     Log::Info() << "BinOP : " << BinOp << "\n";
     if (BinOp == "("){
-        // TODO : calling struct member
         Log::Info() << "CallExprAST FOUND" << "\n";
         std::vector<std::unique_ptr<ExprAST>> Args;
-        getNextToken();
+        //getNextToken();
         auto ret = ParseFunctionArgs(Args);
         if (!ret){
             return nullptr;
@@ -590,7 +589,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
         if (CurTok != ')'){
             return LogError("Expected ) in call args");
         }
-        getNextToken();
+        getNextToken(); // eat ')'
         return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
         //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
     }
@@ -977,13 +976,15 @@ before_gen_cpoint_type:
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
+  Log::Info() << "CurTok when parsing function args : " << CurTok << "\n";
   if (CurTok != ')') {
     while (1) {
-      if (auto Arg = ParseExpression())
+      if (auto Arg = ParseExpression()){
         Args.push_back(std::move(Arg));
-      else
+        Log::Info() << "adding arg" << "\n";
+      } else {
         return nullptr;
-
+      }
       if (CurTok == ')')
         break;
 
