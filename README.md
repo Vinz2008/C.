@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 830KB stripped, ≈26.9MB not stripped
+- compiler less than 860KB stripped, ≈27.5MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -92,7 +92,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Make no_gc work directly with the cpoint compiler without cpoint-build (then make "make run" have -no-gc in the Makefile)
 - [x] Make bools returned by operators and in for loops,etc i1s and not doubles
 - [x] Add stripping mode to the compiler and the build system
-- [ ] rerun benchmarks using hyperfine
+- [x] rerun benchmarks using hyperfine
 - [x] Implement closures (lambdas) (use llvm trampoline : [useful link](https://www.reddit.com/r/ProgrammingLanguages/comments/mm9j4k/comment/gtshg44/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button))
 - [x] Make closure captured vars usable in the closure (have a "is closure" flag for when doing the codegen of a closure) needing to use a struct named "closure" (if you need var a, you put "closure.a")
 - Maybe in closure automatically generate the struct member code for the variables to use them transparently (if you need var a, you just put "a")
