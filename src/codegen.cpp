@@ -1477,6 +1477,8 @@ Value* NEWCallExprAST::codegen(){
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
         if (BinExpr->Op == "."){
             return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args))->codegen();
+        } else {
+            return LogErrorV(emptyLoc, "Unknown operator before call () operator");
         }
     }
     return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");
@@ -1539,6 +1541,7 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
     if (!IndexV){
         return LogErrorV(emptyLoc, "error in array index");
     }
+    
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     if (dynamic_cast<VariableExprAST*>(array.get())){
         std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(array));
@@ -1619,7 +1622,13 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
         return value;
     } else if (dynamic_cast<BinaryExprAST*>(array.get())){
-        
+        if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){
+            convert_to_type(get_cpoint_type_from_llvm(IndexV->getType()), get_type_llvm(Cpoint_Type(i64_type)), IndexV);
+        }
+  
+        if (!is_llvm_type_number(IndexV->getType())){
+            return LogErrorV(emptyLoc, "index for array is not a number\n");
+        }
         std::unique_ptr<BinaryExprAST> BinOp = get_Expr_from_ExprAST<BinaryExprAST>(std::move(array));
         if (BinOp->Op != "."){
             return LogErrorV(emptyLoc, "Indexing an array is only implemented for struct member binary operators expression\n");
@@ -1632,13 +1641,16 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         Value* ptr = getStructMemberGEP(std::move(BinOp->LHS), std::move(BinOp->RHS), struct_member_type);
         //Value* ptr = StructMemberGEP(StructMemberExpr->MemberName, Allocation, struct_type, struct_member_type);
         std::vector<Value*> indexes = { zero, IndexV};
+        if (struct_member_type.is_ptr && !struct_member_type.is_array){
+            indexes = { IndexV };
+        }
         Cpoint_Type array_member_type = struct_member_type;
         array_member_type.is_array = false;
         array_member_type.nb_element = 0;
         Type* type_llvm = get_type_llvm(struct_member_type);
         Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes);
         // TODO : finish the load Name with the IndexV in string form
-        Value* value = Builder->CreateLoad(get_type_llvm(array_member_type), member_ptr, BinOp->LHS->to_string() + "." + BinOp->RHS->to_string() + "[]");
+        Value* value = Builder->CreateLoad(get_type_llvm(array_member_type), member_ptr, /*BinOp->LHS->to_string() + "." + BinOp->RHS->to_string() +*/ "[]");
         return value;
 
     }
