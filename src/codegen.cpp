@@ -16,6 +16,7 @@
 #include <unordered_map>
 #include <stack>
 #include <cstdarg>
+#include <fstream>
 #include "ast.h"
 #include "lexer.h"
 #include "types.h"
@@ -1388,8 +1389,9 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
 
 #if STRUCT_MEMBER_OPERATOR_IMPL
 
-// TODO : add a function for struct member calls
-Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+// only doing GEP, not loading
+// member_type is for returning
+Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& member_type){
     if (dynamic_cast<VariableExprAST*>(struct_expr.get())){
         AllocaInst* Alloca = nullptr;
         std::unique_ptr<VariableExprAST> structVarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(struct_expr));
@@ -1434,7 +1436,7 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
         if (pos == -1){
             return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
         }
-        Cpoint_Type member_type = members.at(pos).second;
+        member_type = members.at(pos).second;
         auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
         auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
         Cpoint_Type cpoint_type = NamedValues[StructName]->type;
@@ -1445,11 +1447,22 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
         Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
     
         Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Alloca, { zero, index});
-        Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
-        return value;
-    
+        return ptr;
     }
     return LogErrorV(emptyLoc, "Trying to use the struct member operator with an expression which it is not implemented for");
+}
+
+
+// TODO : add a function for struct member calls
+Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+    Cpoint_Type member_type;
+    Value* ptr = getStructMemberGEP(std::move(struct_expr), std::move(member), member_type);
+    if (!ptr){
+        return nullptr;
+    }
+    std::string StructName = ""; // TODO : get the StructName, maybe with the GetStructMemberGEP
+    Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
+    return value;
 }
 #endif
 
@@ -1555,6 +1568,9 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         }
   
         Value* allocated_value = get_var_allocation(ArrayName);
+        if (!allocated_value){
+            return LogErrorV(emptyLoc, "Trying to get the array member from an unknown variable");
+        }
         /*AllocaInst* Alloca;
         if (NamedValues[ArrayName]){
         Alloca = NamedValues[ArrayName]->alloca_inst;
@@ -1608,13 +1624,13 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         if (BinOp->Op != "."){
             return LogErrorV(emptyLoc, "Indexing an array is only implemented for struct member binary operators expression\n");
         }
-        exit(1);
         // TODO : uncomment this, will need to modify the structMember operator to be able to return only the gep ptr for any expressions it support
-        /*std::string StructName =  BinOp->LHS;
-        Value* Allocation = get_var_allocation(StructMemberExpr->StructName);
-        Cpoint_Type struct_type = *get_variable_type(StructMemberExpr->StructName);
+        //std::string StructName =  BinOp->LHS;
+        //Value* Allocation = get_var_allocation(StructMemberExpr->StructName);
+        //Cpoint_Type struct_type = *get_variable_type(StructMemberExpr->StructName);
         Cpoint_Type struct_member_type;
-        Value* ptr = StructMemberGEP(StructMemberExpr->MemberName, Allocation, struct_type, struct_member_type);
+        Value* ptr = getStructMemberGEP(std::move(BinOp->LHS), std::move(BinOp->RHS), struct_member_type);
+        //Value* ptr = StructMemberGEP(StructMemberExpr->MemberName, Allocation, struct_type, struct_member_type);
         std::vector<Value*> indexes = { zero, IndexV};
         Cpoint_Type array_member_type = struct_member_type;
         array_member_type.is_array = false;
@@ -1622,8 +1638,8 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
         Type* type_llvm = get_type_llvm(struct_member_type);
         Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes);
         // TODO : finish the load Name with the IndexV in string form
-        Value* value = Builder->CreateLoad(get_type_llvm(array_member_type), member_ptr, StructMemberExpr->StructName + "." + StructMemberExpr->MemberName + "[]");
-        return value;*/
+        Value* value = Builder->CreateLoad(get_type_llvm(array_member_type), member_ptr, BinOp->LHS->to_string() + "." + BinOp->RHS->to_string() + "[]");
+        return value;
 
     }
     return LogErrorV(emptyLoc, "Trying to use the array member operator with an expression which it is not implemented for\n");
@@ -2456,6 +2472,12 @@ Function *PrototypeAST::codegen() {
 }
 
 Function *FunctionAST::codegen() {
+  if (Proto->getName() == "main"){
+  std::ofstream out_debug_ast;
+  out_debug_ast.open("main_ast");
+  out_debug_ast << this->get_ast_string() << "\n";
+  out_debug_ast.close();
+  }
   codegenStructTemplates();
   auto &P = *Proto;
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
