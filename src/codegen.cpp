@@ -598,6 +598,8 @@ Value* StructMemberExprASTNew::codegen(){
     return nullptr;
 }
 
+
+// TODO : remove this
 Value* UnionMemberExprAST::codegen(){
   AllocaInst* Alloca = nullptr;
   if (NamedValues[UnionName] == nullptr){
@@ -1248,6 +1250,28 @@ Value* ClosureAST::codegen(){
 
 #if EQUAL_OPERATOR_IMPL
 
+
+Value* getUnionMember(std::string UnionName, std::string MemberName){
+    AllocaInst* Alloca = nullptr;
+    if (NamedValues[UnionName] == nullptr){
+        return LogErrorV(emptyLoc, "Can't find union that is used for a member");
+    }
+    Alloca = NamedValues[UnionName]->alloca_inst;
+    if (!NamedValues[UnionName]->type.is_union){
+        return LogErrorV(emptyLoc, "Using a member of variable even though it is not an union");
+    }
+    auto members = UnionDeclarations[NamedValues[UnionName]->type.union_name]->members;
+    int pos = -1;
+    for (int i = 0; i < members.size(); i++){
+    if (members.at(i).first == MemberName){
+      pos = i;
+      break;
+    }
+    }
+    Cpoint_Type member_type = members.at(pos).second;
+    return Builder->CreateLoad(get_type_llvm(member_type), Alloca, "load_union_member");
+}
+
 Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
     Log::Info() << "EQUAL OP " << lvalue->to_string() << " = " << rvalue->to_string() << "\n";
     Value* ValDeclared = rvalue->codegen();
@@ -1307,6 +1331,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             Builder->CreateStore(ValDeclared, ptr);
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else if (BinExpr->Op.at(0) == '.'){
+            // TODO : just use getStructMemberGEP
             if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
                 std::unique_ptr<VariableExprAST> structVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
                 std::string VariableName = structVar->Name;
@@ -1321,7 +1346,20 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                     Log::Info() << "get_struct_template_name : " << get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed) << "\n";
                     members = StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]->members;
                 } else {
-                    members = StructDeclarations[get_variable_type(VariableName)->struct_name]->members;
+                    // TODO : support enums
+                    Cpoint_Type* variable_type_temp = get_variable_type(VariableName);
+                    if (!variable_type_temp){
+                        return LogErrorV(emptyLoc, "Trying to get a struct member from a variable that doesn't exist");
+                    }
+                    if (StructDeclarations[variable_type_temp->struct_name]){
+                        members = StructDeclarations[variable_type_temp->struct_name]->members;
+                    } /*else if (EnumDeclarations[variable_type_temp->enum_name]){
+                        members = EnumDeclarations[variable_type_temp->enum_name]->EnumDeclar->EnumMembers;
+                    } else if (UnionDeclarations[variable_type_temp->union_name]){
+                        members 
+                    }*/ else {
+                        return LogErrorV(emptyLoc, "Trying to get a struct member from a struct type that doesn't exist");
+                    }
                 }
                 int pos_struct = -1;
                 Log::Info() << "members.size() : " << members.size() << "\n";
