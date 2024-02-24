@@ -516,6 +516,22 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 #endif
 }
 
+std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS){
+    Log::Info() << "CallExprAST FOUND" << "\n";
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    //getNextToken();
+    auto ret = ParseFunctionArgs(Args);
+    if (!ret){
+        return nullptr;
+    }
+    Log::Info() << "Args size after parsing : " << Args.size() << "\n";
+    if (CurTok != ')'){
+        return LogError("Expected ) in call args");
+    }
+    getNextToken(); // eat ')'
+    return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
+}
+
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
                                               std::unique_ptr<ExprAST> LHS) {
   Log::Info() << "PARSING BINOP" << "\n";
@@ -577,41 +593,34 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
       getNextToken();
     }*/
     Log::Info() << "BinOP : " << BinOp << "\n";
+    std::unique_ptr<ExprAST> RHS;
+    std::unique_ptr<ExprAST> FunctionCallExpr;
+    bool is_function_call = false;
     if (BinOp == "("){
-        Log::Info() << "CallExprAST FOUND" << "\n";
-        std::vector<std::unique_ptr<ExprAST>> Args;
-        //getNextToken();
-        auto ret = ParseFunctionArgs(Args);
-        if (!ret){
-            return nullptr;
-        }
-        Log::Info() << "Args size after parsing : " << Args.size() << "\n";
-        if (CurTok != ')'){
-            return LogError("Expected ) in call args");
-        }
-        getNextToken(); // eat ')'
-        return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
+        FunctionCallExpr = ParseFunctionCallOp(std::move(LHS));
+        is_function_call = true;
         //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
-    }
+    } else {
     // Parse the primary expression after the binary operator.
-    //auto RHS = ParsePrimary();
-    auto RHS = ParseUnary();
+    RHS = ParseUnary();
     if (!RHS)
       return nullptr;
-
+    }
     // If BinOp binds less tightly with RHS than the operator after RHS, let
     // the pending operator take RHS as its LHS.
     int NextPrec = -1;
     if (CurTok != tok_op_multi_char){
-#if EQUAL_OPERATOR_IMPL
-    if (BinOp == "." && CurTok == '='){
+    if (BinOp == "[" && CurTok == ']'){
+        Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
+        Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
+        // TODO add better verification for end ']'
+        getNextToken(); // pass ']'
+    }
+    if ((BinOp == "." && CurTok == '=') || (BinOp == "[" && CurTok == '=')){
         NextPrec = 100;
     } else {
         NextPrec = GetTokPrecedence();
     }
-#else
-    NextPrec = GetTokPrecedence();
-#endif
     } else {
       NextPrec = getTokPrecedenceMultiChar(OpStringMultiChar);
     }
@@ -620,46 +629,18 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
       if (!RHS)
         return nullptr;
     }
-#if ARRAY_MEMBER_OPERATOR_IMPL
-    if (BinOp == "["){
+    /*if (BinOp == "["){
         Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
         Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
         // TODO add better verification for end ']'
         getNextToken(); // pass ']'
-    }
-#endif
+    }*/
     // Merge LHS/RHS.
-    LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
-/*#if CALL_STRUCT_MEMBER_IMPL
-    if (CurTok == '('){
-        // TODO : calling struct member
-        Log::Info() << "Struct Members" << "\n";
-        std::vector<std::unique_ptr<ExprAST>> Args;
-        getNextToken();
-        auto ret = ParseFunctionArgs(Args);
-        if (!ret){
-            return nullptr;
-        }
-        getNextToken();
-        return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
-    }
-#endif*/
-
-
-#if 0
-#if STRUCT_MEMBER_OPERATOR_IMPL == 0
-    LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
-#else
-    auto tempLHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
-    if (tempLHS->Op == "."){
-        // look manually if next token is '(' and add the args if it is the case
-        std::vector<std::unique_ptr<ExprAST>> Args;
-        LHS = std::make_unique<StructMemberExprASTNew>(std::move(LHS), std::move(RHS), false, std::move(Args));
+    if (!is_function_call){
+        LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
     } else {
-        LHS = std::move(tempLHS);
+        LHS = std::move(FunctionCallExpr);
     }
-#endif
-#endif
   }
 }
 
@@ -988,8 +969,11 @@ std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>
       if (CurTok == ')')
         break;
 
-      if (CurTok != ',')
+      if (CurTok != ','){
+        Log::Info() << "CurTok : " << CurTok << "\n";
+        Log::Info() << "OpStringMultiChar : " << OpStringMultiChar << "\n";
         return LogError("Expected ')' or ',' in argument list");
+      }
       getNextToken();
     }
   }
