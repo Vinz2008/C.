@@ -1251,7 +1251,7 @@ Value* ClosureAST::codegen(){
 #if EQUAL_OPERATOR_IMPL
 
 
-Value* getUnionMember(std::string UnionName, std::string MemberName){
+/*Value* getUnionMember(std::string UnionName, std::string MemberName){
     AllocaInst* Alloca = nullptr;
     if (NamedValues[UnionName] == nullptr){
         return LogErrorV(emptyLoc, "Can't find union that is used for a member");
@@ -1270,6 +1270,13 @@ Value* getUnionMember(std::string UnionName, std::string MemberName){
     }
     Cpoint_Type member_type = members.at(pos).second;
     return Builder->CreateLoad(get_type_llvm(member_type), Alloca, "load_union_member");
+}*/
+
+void assignUnionMember(Value* union_ptr, Value* val, Cpoint_Type member_type){
+    if (val->getType() != get_type_llvm(member_type)){
+        convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(member_type), val);
+    }
+    Builder->CreateStore(val, union_ptr);
 }
 
 Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
@@ -1342,21 +1349,35 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 std::string member = memberExpr->Name;
                 Log::Info() << "StructName : " << VariableName << "\n";
                 std::vector<std::pair<std::string, Cpoint_Type>> members;
-                if (get_variable_type(VariableName)->is_struct_template){
+                Cpoint_Type* variable_type_temp = get_variable_type(VariableName);
+                if (!variable_type_temp){
+                    return LogErrorV(emptyLoc, "Trying to get a struct member from a variable that doesn't exist");
+                }
+                if (UnionDeclarations[variable_type_temp->union_name]){
+                    auto union_members = UnionDeclarations[NamedValues[VariableName]->type.union_name]->members;
+                    int pos_union = -1;
+                    for (int i = 0; i < union_members.size(); i++){
+                    if (union_members.at(i).first == member){
+                        pos_union = i;
+                        break;
+                    }
+                    }
+                    Value* unionPtr = get_var_allocation(VariableName);
+                    assignUnionMember(unionPtr, ValDeclared, union_members.at(pos_union).second);
+                    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+                }
+                if (variable_type_temp->is_struct_template){
                     Log::Info() << "get_struct_template_name : " << get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed) << "\n";
                     members = StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]->members;
                 } else {
                     // TODO : support enums
-                    Cpoint_Type* variable_type_temp = get_variable_type(VariableName);
-                    if (!variable_type_temp){
-                        return LogErrorV(emptyLoc, "Trying to get a struct member from a variable that doesn't exist");
-                    }
+                    
                     if (StructDeclarations[variable_type_temp->struct_name]){
                         members = StructDeclarations[variable_type_temp->struct_name]->members;
                     } /*else if (EnumDeclarations[variable_type_temp->enum_name]){
                         members = EnumDeclarations[variable_type_temp->enum_name]->EnumDeclar->EnumMembers;
                     } else if (UnionDeclarations[variable_type_temp->union_name]){
-                        members 
+                        members = UnionDeclarations[variable_type_temp->union_name]->members;
                     }*/ else {
                         return LogErrorV(emptyLoc, "Trying to get a struct member from a struct type that doesn't exist");
                     }
@@ -1429,6 +1450,8 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
 
 // only doing GEP, not loading
 // member_type is for returning
+// get struct, or union
+// TODO : maybe rename it to getObjectMember (it returns only the ptr without load so maybe calling it getObjectMemberPtr)
 Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& member_type){
     if (dynamic_cast<VariableExprAST*>(struct_expr.get())){
         AllocaInst* Alloca = nullptr;
@@ -1444,8 +1467,8 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
         Alloca = NamedValues[StructName]->alloca_inst;
         Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
-        if (!NamedValues[StructName]->type.is_struct ){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
-            return LogErrorV(emptyLoc, "Using a member of variable even though it is not a struct");
+        if (!NamedValues[StructName]->type.is_struct && !NamedValues[StructName]->type.is_union){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
+            return LogErrorV(emptyLoc, "Using a member of variable even though it is not a struct or an union");
         }
         Log::Info() << "StructName : " << StructName << "\n";
         Log::Info() << "StructName len : " << StructName.length() << "\n";
@@ -1456,7 +1479,22 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
         Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
     
-
+        if (NamedValues[StructName]->type.is_union){
+            auto members = UnionDeclarations[NamedValues[StructName]->type.union_name]->members;
+            int pos = -1;
+            for (int i = 0; i < members.size(); i++){
+            Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
+            if (members.at(i).first == MemberName){
+                pos = i;
+                break;
+            }
+            }
+            if (pos == -1){
+            return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
+            }
+            member_type = members.at(pos).second;
+            return Alloca;
+        } else {
         auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
         Log::Info() << "members.size() : " << members.size() << "\n";
         int pos = -1;
@@ -1468,9 +1506,9 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             }
         }
         Log::Info() << "Pos for GEP struct member " << pos << "\n";
-        for (int i = 0; i < members.size(); i++){
+        /*for (int i = 0; i < members.size(); i++){
             Log::Info() << "members.at(" << i << ") : " << members.at(i).first << "\n";
-        }
+        }*/
         if (pos == -1){
             return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
         }
@@ -1486,6 +1524,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
     
         Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Alloca, { zero, index});
         return ptr;
+        }
     }
     return LogErrorV(emptyLoc, "Trying to use the struct member operator with an expression which it is not implemented for");
 }

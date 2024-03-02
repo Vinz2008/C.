@@ -9,4 +9,5 @@ func main() void {
     var u : union un
     u.a = 2
     printd(u.a)
+    u.b = 2
 }
