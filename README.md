@@ -95,7 +95,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] rerun benchmarks using hyperfine
 - [x] Implement closures (lambdas) (use llvm trampoline : [useful link](https://www.reddit.com/r/ProgrammingLanguages/comments/mm9j4k/comment/gtshg44/?utm_source=share&utm_medium=web3x&utm_name=web3xcss&utm_term=1&utm_content=share_button))
 - [x] Make closure captured vars usable in the closure (have a "is closure" flag for when doing the codegen of a closure) needing to use a struct named "closure" (if you need var a, you put "closure.a")
-- Maybe in closure automatically generate the struct member code for the variables to use them transparently (if you need var a, you just put "a")
+- [ ] Maybe in closure automatically generate the struct member code for the variables to use them transparently (if you need var a, you just put "a")
 - [x] Make multithreaded cpoint-build
 - [ ] Work on from-c translator
 - [x] Cache object files in cpoint-build (compare timestamps of source files and object files to see if the file is needed to be compiled)

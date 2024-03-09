@@ -525,7 +525,11 @@ std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool 
         if (CurTok != '~'){
             return LogError("expected '~' not found");
         }
-        getNextToken();
+        getNextToken(); // passing ~
+        if (CurTok != '('){
+            return LogError("expected '(' not found");
+        }
+        getNextToken(); // passing '('
     }
     //getNextToken();
     auto ret = ParseFunctionArgs(Args);
@@ -590,6 +594,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
             is_template_call = true;
         }
         FunctionCallExpr = ParseFunctionCallOp(std::move(LHS), is_template_call);
+        Log::Info() << "token after FunctionCall : " << CurTok << "\n";
         is_function_call = true;
         //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
     } else {

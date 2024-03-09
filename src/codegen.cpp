@@ -2562,12 +2562,12 @@ Function *PrototypeAST::codegen() {
 }
 
 Function *FunctionAST::codegen() {
-  if (Proto->getName() == "main"){
+  /*if (Proto->getName() == "main"){
   std::ofstream out_debug_ast;
   out_debug_ast.open("main_ast.temp");
   out_debug_ast << this->get_ast_string() << "\n";
   out_debug_ast.close();
-  }
+  }*/
   codegenStructTemplates();
   auto &P = *Proto;
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
