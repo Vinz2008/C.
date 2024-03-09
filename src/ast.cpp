@@ -516,9 +516,17 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 #endif
 }
 
-std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS){
+std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){
     Log::Info() << "CallExprAST FOUND" << "\n";
     std::vector<std::unique_ptr<ExprAST>> Args;
+    Cpoint_Type template_passed_type;
+    if (is_template_call){
+        template_passed_type = ParseTypeDeclaration(false);
+        if (CurTok != '~'){
+            return LogError("expected '~' not found");
+        }
+        getNextToken();
+    }
     //getNextToken();
     auto ret = ParseFunctionArgs(Args);
     if (!ret){
@@ -529,7 +537,7 @@ std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS){
         return LogError("Expected ) in call args");
     }
     getNextToken(); // eat ')'
-    return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
+    return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), template_passed_type);
 }
 
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
@@ -553,26 +561,6 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     //Log::Info() << "CurTok before if : " << CurTok << "\n";
     //if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec){
-//#if CALL_STRUCT_MEMBER_IMPL
-#if CALL_IMPL
-        Log::Info() << "CurTok CALL_STRUCT_MEMBER_IMPL : " << CurTok << "\n";
-        /*if (CurTok == '('){
-            // TODO : calling struct member
-            Log::Info() << "CallExprAST FOUND" << "\n";
-            std::vector<std::unique_ptr<ExprAST>> Args;
-            getNextToken();
-            auto ret = ParseFunctionArgs(Args);
-            if (!ret){
-                return nullptr;
-            }
-            if (CurTok != ')'){
-                return LogError("Expected ) in call struct args");
-            }
-            getNextToken();
-            return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
-            //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
-        }*/
-#endif
       return LHS;
     }
     //}
@@ -596,8 +584,12 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     std::unique_ptr<ExprAST> RHS;
     std::unique_ptr<ExprAST> FunctionCallExpr;
     bool is_function_call = false;
-    if (BinOp == "("){
-        FunctionCallExpr = ParseFunctionCallOp(std::move(LHS));
+    if (BinOp == "(" || BinOp == "~"){
+        bool is_template_call = false;
+        if (BinOp == "~"){
+            is_template_call = true;
+        }
+        FunctionCallExpr = ParseFunctionCallOp(std::move(LHS), is_template_call);
         is_function_call = true;
         //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
     } else {

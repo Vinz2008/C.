@@ -196,6 +196,7 @@ void installPrecendenceOperators(){
     BinopPrecedence["."] = 35;
 
     BinopPrecedence["("] = 35;
+    BinopPrecedence["~"] = 35;
 
 }
 
