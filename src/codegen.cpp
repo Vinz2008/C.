@@ -27,6 +27,7 @@
 #include "templates.h"
 #include "config.h"
 #include "abi.h"
+#include "members.h"
 
 #include <typeinfo>
 #include <cxxabi.h>
@@ -1553,6 +1554,7 @@ Value* NEWCallExprAST::codegen(){
         return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type)->codegen();
     } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
+        Log::Info() << "Doing call on binaryExpr : " << BinExpr->Op << "\n";
         if (BinExpr->Op == "."){
             return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args))->codegen();
         } else {
@@ -1606,6 +1608,9 @@ Value* StructMemberCallExprAST::codegen(){
             return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
         }
         return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
+    } else if (dynamic_cast<NumberExprAST*>(StructMember->LHS.get())){
+        std::unique_ptr<NumberExprAST> NumberExpr = get_Expr_from_ExprAST<NumberExprAST>(std::move(StructMember->LHS));
+        return number_member_call(std::move(NumberExpr));
     }
     return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
