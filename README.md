@@ -114,7 +114,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] ENABLE CLANG-FORMAT
 - [ ] Implement a format macro (like the format! macro in rust)
 - [ ] Add REPL  
- -[ ] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
+- [ ] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
 
 ## Benchmarks compared to other languages
 
