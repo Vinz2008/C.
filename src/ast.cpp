@@ -602,7 +602,11 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
         //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
     } else {
     // Parse the primary expression after the binary operator.
-    RHS = ParseUnary();
+    if (BinOp == "["){
+        RHS = ParseExpression(); // need to be able to use expressions between []
+    } else {
+        RHS = ParseUnary();
+    }
     if (!RHS)
       return nullptr;
     }
