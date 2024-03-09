@@ -1547,11 +1547,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY CurTok : " << CurTok << "\n";
   // If the current token is not an operator, it must be a primary expr.
-#if CALL_IMPL
-  if (!isascii(CurTok) || /*CurTok == '(' ||*/ CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#')
-#else
   if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#')
-#endif    
     return ParsePrimary();
 
   // If this is a unary operator, read it.
