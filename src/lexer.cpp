@@ -126,8 +126,8 @@ int getCharLineStdin(){
 }
 
 int peekCharLine(){
-    if (line.size() <= pos+1){
-    return line[pos+1];
+    if (pos <= line.size()){
+        return line[pos];
     } else {
         return '\0';
     }
@@ -318,6 +318,8 @@ static int gettok() {
           NumStr += LastChar;
       }
       LastChar = getCharLine();
+      Log::Info() << "LastChar : " << LastChar << "\n";
+      Log::Info() << "peek : " << peekCharLine() << "\n";
     } while (isdigit(LastChar) || (LastChar == '.' && isdigit(peekCharLine())) || LastChar == '_');
     }
 after_number_lex_loop:
