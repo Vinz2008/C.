@@ -466,7 +466,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
 #endif
 
-  if (CurTok != '(' && CurTok != /*'<'*/ '~'){ // Simple variable ref.
+  //if (CurTok != '(' && CurTok != /*'<'*/ '~'){ // Simple variable ref.
 #if ARRAY_MEMBER_OPERATOR_IMPL == 0
     if (is_array){
       Log::Info() << "Array member returned" << "\n";
@@ -483,7 +483,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
     }
     return std::make_unique<VariableExprAST>(IdLoc, IdName, *type);
-  }
+  //}
   // Call.
   /*std::string*/ Cpoint_Type template_passed_type = /*""*/ Cpoint_Type(double_type);
   if (CurTok == '~'){
@@ -516,9 +516,38 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
 #endif
 }
 
+std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){
+    Log::Info() << "CallExprAST FOUND" << "\n";
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    Cpoint_Type template_passed_type;
+    if (is_template_call){
+        template_passed_type = ParseTypeDeclaration(false);
+        if (CurTok != '~'){
+            return LogError("expected '~' not found");
+        }
+        getNextToken(); // passing ~
+        if (CurTok != '('){
+            return LogError("expected '(' not found");
+        }
+        getNextToken(); // passing '('
+    }
+    //getNextToken();
+    auto ret = ParseFunctionArgs(Args);
+    if (!ret){
+        return nullptr;
+    }
+    Log::Info() << "Args size after parsing : " << Args.size() << "\n";
+    if (CurTok != ')'){
+        return LogError("Expected ) in call args");
+    }
+    getNextToken(); // eat ')'
+    return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), template_passed_type);
+}
+
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
                                               std::unique_ptr<ExprAST> LHS) {
   Log::Info() << "PARSING BINOP" << "\n";
+  Log::Info() << "ExprPrec : " << ExprPrec << "\n";
   // If this is a binop, find its precedence.
   while (true) {
     int TokPrec = 0;
@@ -536,26 +565,6 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     //Log::Info() << "CurTok before if : " << CurTok << "\n";
     //if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec){
-//#if CALL_STRUCT_MEMBER_IMPL
-#if CALL_IMPL
-        Log::Info() << "CurTok CALL_STRUCT_MEMBER_IMPL : " << CurTok << "\n";
-        if (CurTok == ')'){
-            // TODO : calling struct member
-            Log::Info() << "CallExprAST FOUND" << "\n";
-            std::vector<std::unique_ptr<ExprAST>> Args;
-            getNextToken();
-            auto ret = ParseFunctionArgs(Args);
-            if (!ret){
-                return nullptr;
-            }
-            if (CurTok != ')'){
-                return LogError("Expected ) in call struct args");
-            }
-            getNextToken();
-            return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), Cpoint_Type()); // TODO : add template parsing
-            //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
-        }
-#endif
       return LHS;
     }
     //}
@@ -576,26 +585,43 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
       getNextToken();
     }*/
     Log::Info() << "BinOP : " << BinOp << "\n";
-
+    std::unique_ptr<ExprAST> RHS;
+    std::unique_ptr<ExprAST> FunctionCallExpr;
+    bool is_function_call = false;
+    if (BinOp == "(" || BinOp == "~"){
+        bool is_template_call = false;
+        if (BinOp == "~"){
+            is_template_call = true;
+        }
+        FunctionCallExpr = ParseFunctionCallOp(std::move(LHS), is_template_call);
+        Log::Info() << "token after FunctionCall : " << CurTok << "\n";
+        is_function_call = true;
+        //return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
+    } else {
     // Parse the primary expression after the binary operator.
-    //auto RHS = ParsePrimary();
-    auto RHS = ParseUnary();
+    if (BinOp == "["){
+        RHS = ParseExpression(); // need to be able to use expressions between []
+    } else {
+        RHS = ParseUnary();
+    }
     if (!RHS)
       return nullptr;
-
+    }
     // If BinOp binds less tightly with RHS than the operator after RHS, let
     // the pending operator take RHS as its LHS.
     int NextPrec = -1;
     if (CurTok != tok_op_multi_char){
-#if EQUAL_OPERATOR_IMPL
-    if (BinOp == "." && CurTok == '='){
+    if (BinOp == "[" && CurTok == ']'){
+        Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
+        Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
+        // TODO add better verification for end ']'
+        getNextToken(); // pass ']'
+    }
+    if ((BinOp == "." && CurTok == '=') || (BinOp == "[" && CurTok == '=')){
         NextPrec = 100;
     } else {
         NextPrec = GetTokPrecedence();
     }
-#else
-    NextPrec = GetTokPrecedence();
-#endif
     } else {
       NextPrec = getTokPrecedenceMultiChar(OpStringMultiChar);
     }
@@ -604,46 +630,18 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
       if (!RHS)
         return nullptr;
     }
-#if ARRAY_MEMBER_OPERATOR_IMPL
-    if (BinOp == "["){
+    /*if (BinOp == "["){
         Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
         Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
         // TODO add better verification for end ']'
         getNextToken(); // pass ']'
-    }
-#endif
+    }*/
     // Merge LHS/RHS.
-    LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
-/*#if CALL_STRUCT_MEMBER_IMPL
-    if (CurTok == '('){
-        // TODO : calling struct member
-        Log::Info() << "Struct Members" << "\n";
-        std::vector<std::unique_ptr<ExprAST>> Args;
-        getNextToken();
-        auto ret = ParseFunctionArgs(Args);
-        if (!ret){
-            return nullptr;
-        }
-        getNextToken();
-        return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(std::move(LHS)), std::move(Args));
-    }
-#endif*/
-
-
-#if 0
-#if STRUCT_MEMBER_OPERATOR_IMPL == 0
-    LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
-#else
-    auto tempLHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
-    if (tempLHS->Op == "."){
-        // look manually if next token is '(' and add the args if it is the case
-        std::vector<std::unique_ptr<ExprAST>> Args;
-        LHS = std::make_unique<StructMemberExprASTNew>(std::move(LHS), std::move(RHS), false, std::move(Args));
+    if (!is_function_call){
+        LHS = std::make_unique<BinaryExprAST>(BinLoc, BinOp, std::move(LHS), std::move(RHS));
     } else {
-        LHS = std::move(tempLHS);
+        LHS = std::move(FunctionCallExpr);
     }
-#endif
-#endif
   }
 }
 
@@ -960,18 +958,23 @@ before_gen_cpoint_type:
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
+  Log::Info() << "CurTok when parsing function args : " << CurTok << "\n";
   if (CurTok != ')') {
     while (1) {
-      if (auto Arg = ParseExpression())
+      if (auto Arg = ParseExpression()){
         Args.push_back(std::move(Arg));
-      else
+        Log::Info() << "adding arg" << "\n";
+      } else {
         return nullptr;
-
+      }
       if (CurTok == ')')
         break;
 
-      if (CurTok != ',')
+      if (CurTok != ','){
+        Log::Info() << "CurTok : " << CurTok << "\n";
+        Log::Info() << "OpStringMultiChar : " << OpStringMultiChar << "\n";
         return LogError("Expected ')' or ',' in argument list");
+      }
       getNextToken();
     }
   }
@@ -1463,6 +1466,7 @@ std::unique_ptr<ExprAST> ParseAddrExpr(){
 }
 
 std::unique_ptr<ExprAST> ParseDerefExpr(){
+    Log::Info() << "parsing deref" << "\n";
     getNextToken();  // eat deref.
     std::unique_ptr<ExprAST> exprDeref = ParseExpression();
     if (!exprDeref){
@@ -1540,11 +1544,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY CurTok : " << CurTok << "\n";
   // If the current token is not an operator, it must be a primary expr.
-#if CALL_IMPL
-  if (!isascii(CurTok) || /*CurTok == '(' ||*/ CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#')
-#else
   if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#')
-#endif    
     return ParsePrimary();
 
   // If this is a unary operator, read it.

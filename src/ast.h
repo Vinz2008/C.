@@ -409,7 +409,6 @@ struct StructMemberCallExprAST : public ExprAST {
 
 #endif
 
-#if CALL_IMPL
 struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> function_expr;
     std::vector<std::unique_ptr<ExprAST>> Args;
@@ -422,7 +421,6 @@ struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
 };
-#endif
 
 class CallExprAST : public ExprAST {
   std::string Callee;
@@ -492,7 +490,11 @@ public:
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
-    return "var " +  VarNames.at(0).first + ": " + create_pretty_name_for_type(cpoint_type) + " = " + VarNames.at(0).second->to_string(); 
+    std::string var_expr =  "var " + VarNames.at(0).first + ": " + create_pretty_name_for_type(cpoint_type); 
+    if (VarNames.at(0).second){
+        var_expr += " = " + VarNames.at(0).second->to_string();
+    }
+    return var_expr;
   }
   std::string generate_c() override;
 };
@@ -627,6 +629,16 @@ public:
   Function *codegen();
   c_translator::Function* c_codegen();
   std::unique_ptr<FunctionAST> clone();
+  // for debug
+  // is a way to see the ast
+  // maybe have a real tree or json printing for ast later
+  std::string get_ast_string(){
+    std::string ret = "";
+    for (int i = 0; i < Body.size(); i++){
+        ret += Body.at(i)->to_string() + "\n";
+    }
+    return ret;
+  }
 };
 
 class StructDeclarAST {

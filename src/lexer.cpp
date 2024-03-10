@@ -125,6 +125,14 @@ int getCharLineStdin(){
     return c;
 }
 
+int peekCharLine(){
+    if (line.size() <= pos+1){
+    return line[pos+1];
+    } else {
+        return '\0';
+    }
+}
+
 int getCharLine(){
 #if ENABLE_JIT
   if (Comp_context->jit_mode){
@@ -304,14 +312,16 @@ static int gettok() {
         }
     }
     if (isdigit(LastChar) || LastChar == '.' || LastChar == '_'){
+    bool last_char_is_dot = false;
     do {
       if (LastChar != '_'){
           NumStr += LastChar;
       }
       LastChar = getCharLine();
-    } while (isdigit(LastChar) || LastChar == '.' || LastChar == '_');
+    } while (isdigit(LastChar) || (LastChar == '.' && isdigit(peekCharLine())) || LastChar == '_');
     }
 after_number_lex_loop:
+    Log::Info() << "NumStr : " << NumStr << "\n";
     NumVal = strtod(NumStr.c_str(), nullptr);
     Log::Info() << "NumVal : " << NumVal << "\n";
     return tok_number;
