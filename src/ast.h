@@ -232,29 +232,6 @@ public:
   std::string generate_c() override;
 };
 
-class StructMemberExprAST : public ExprAST {
-public:
-  std::string StructName;
-  std::string MemberName;
-  bool is_function_call;
-  std::vector<std::unique_ptr<ExprAST>> Args;
-  StructMemberExprAST(const std::string &StructName, const std::string &MemberName, bool is_function_call, std::vector<std::unique_ptr<ExprAST>> Args) : StructName(StructName), MemberName(MemberName), is_function_call(is_function_call), Args(std::move(Args)) {}
-  Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override;
-  std::string to_string() override {
-    std::string args = "";
-    if (is_function_call){
-        args += "(";
-        for (int i = 0; i < Args.size(); i++){
-            args += Args.at(i)-> to_string() + ",";
-        }
-        args += ")";
-    }
-    return StructName + "." + MemberName + args;
-  }
-  std::string generate_c() override { return ""; }
-};
-
 // TODO : remove this
 //#if STRUCT_MEMBER_OPERATOR_IMPL
 /*class StructMemberExprASTNew : public ExprAST {

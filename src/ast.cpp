@@ -91,9 +91,6 @@ std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v)
     return v_cloned;
 }
 
-std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
-    return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, clone_vector<ExprAST>(Args));
-}
 
 std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
     return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
