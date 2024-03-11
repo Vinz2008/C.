@@ -11,3 +11,8 @@ The compiler detects functions that are called "main" and automatically put its 
 ## Numbers
 
 By default, every number is a double.
+
+## Reserved names by compilers (for functions)
+
+- names containing names with more than one underscore after each others (ex : a___b)
+- functions starting with i32__

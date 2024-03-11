@@ -31,7 +31,8 @@ endif
 
 endif
 
-SRC := $(wildcard *.cpoint) $(wildcard */*.cpoint)
+#SRC := $(wildcard *.cpoint) $(wildcard */*.cpoint)
+SRC := $(wildcard *.cpoint)
 OBJECTS := $(patsubst %.cpoint, %.o, $(SRC))
 #TESTS_EXE := $(patsubst %.cpoint, %.test, $(SRC))
 TESTS_EXE := math.test path.test utils.test alloc.test mem.test ascii.test env.test
@@ -39,6 +40,8 @@ TEST_DEPENDENCIES = expect.cpoint print.cpoint panic.cpoint
 TEST_DEPENDENCIES_OBJ = $(patsubst %.cpoint, %.o, $(TEST_DEPENDENCIES))
 SRC_C := $(wildcard c_api/*.c)
 OBJECTS_C := $(patsubst c_api/%.c, c_api/%.o, $(SRC_C))
+SRC_CORE := $(wildcard core/*.cpoint)
+OBJECTS_CORE := $(patsubst core/%.cpoint, core/%.o, $(SRC_CORE))
 CPOINTFLAGS=-c -no-std -target-triplet $(TARGET)
 CPOINTFLAGS += -with-gc
 
@@ -60,8 +63,8 @@ debug: libstd.a
 set_test_flag:
 	$(eval CPOINTFLAGS += -test)
 
-libstd.a: $(OBJECTS) capi
-	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C)
+libstd.a: $(OBJECTS) capi core
+	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C) $(OBJECTS_CORE)
 
 capi:
 	+TARGET=$(TARGET) NO_GC=$(NO_GC) make $(MAKETARGET) -C c_api
@@ -86,4 +89,7 @@ run-test:
 	@for program in $(TESTS_EXE) ; do \
 		./$$program || exit 1 ; \
 	done
-	
+
+
+core:
+	+TARGET=$(TARGET) NO_GC=$(NO_GC) make $(MAKETARGET) -C core

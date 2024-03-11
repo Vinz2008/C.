@@ -1,4 +1,4 @@
 #include <memory>
 #include "ast.h"
 
-Value* number_member_call(std::unique_ptr<NumberExprAST> numberExpr);
+Value* not_struct_member_call(std::unique_ptr<ExprAST> Expr, std::string functionCall, std::vector<std::unique_ptr<ExprAST>> Args);

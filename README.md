@@ -32,8 +32,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 
 - [x] Generics support
 - [x] Importing structs with function members
-- [ ] Finish refactoring the code for operators to make it compatible with every types
-- [ ] Make redeclarations just the equal operator
+- [x] Finish refactoring the code for operators to make it compatible with every types
+- [x] Make redeclarations just the equal operator
 - [x] Fix array members and array member redeclaration bugs
 - [ ] Maybe verify and warn in the manual allocation module in the standard library if an address was already freed by verifying in a list
 - [ ] Add type checking in separate file and remove implicit cast and only have explicit casts with the "cast" keyword
@@ -43,7 +43,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add chained else if
 - [ ] Fix bug with type inference and struct pointers (for example in linked_list.cpoint "var tail = self.tail" that we needed to replace with "var tail : struct node_linked_list ptr = self.tail")
 - [ ] Add unions support in import
-- [ ] Add enum support in import
+- [x] Add enum support in import
 - [x] Add automatically when calling panic the file and line number to panic call
 - [x] Move functions from headers to cpp files to lower compile times
 - [x] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
@@ -115,6 +115,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Implement a format macro (like the format! macro in rust)
 - [ ] Add REPL  
 - [ ] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
+- [ ] Work on core library like in rust (make built-in types modules like i32 be imported by default)
+- [ ] Replace float and double with f32 and f64 ?
 
 ## Benchmarks compared to other languages
 

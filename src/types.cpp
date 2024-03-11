@@ -177,7 +177,7 @@ finding_type:
     if (llvm_type == Type::getDoubleTy(*TheContext)){
         type = double_type;
     } else if (llvm_type == Type::getInt32Ty(*TheContext)){
-        type = int_type;
+        type = i32_type;
     } else if (llvm_type == Type::getFloatTy(*TheContext)){
         type = float_type;
     } else if (llvm_type == Type::getInt8Ty(*TheContext)){

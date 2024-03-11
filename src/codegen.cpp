@@ -1365,6 +1365,23 @@ Value* NEWCallExprAST::codegen(){
 
 Value* StructMemberCallExprAST::codegen(){
     if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
+        std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(StructMember->LHS->clone());
+        std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(StructMember->RHS->clone());
+        std::string StructName = structNameExpr->Name;
+        std::string MemberName = structMemberExpr->Name;
+        if (StructName == "reflection"){
+            return refletionInstruction(MemberName, std::move(Args));
+        }
+    }
+    if (!StructMember->LHS->clone()->codegen()->getType()->isStructTy()){
+        // not struct member call
+        // will handle the special name mangling in this function
+        std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
+        std::string functionCall = structMemberExpr->Name;
+        return not_struct_member_call(std::move(StructMember->LHS), functionCall, std::move(Args));
+    }
+    // is struct
+    if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
         std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->LHS));
         std::string StructName = structNameExpr->Name;
         if (!dynamic_cast<VariableExprAST*>(StructMember->RHS.get())){
@@ -1372,9 +1389,9 @@ Value* StructMemberCallExprAST::codegen(){
         }
         std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
         std::string MemberName = structMemberExpr->Name;
-        if (StructName == "reflection"){
+        /*if (StructName == "reflection"){
             return refletionInstruction(MemberName, std::move(Args));
-        }
+        }*/
         bool found_function = false;
         std::string struct_type_name = NamedValues[StructName]->type.struct_name;
         Log::Info() << "StructName call struct function : " << struct_type_name << "\n";
@@ -1405,10 +1422,10 @@ Value* StructMemberCallExprAST::codegen(){
             return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
         }
         return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
-    } else if (dynamic_cast<NumberExprAST*>(StructMember->LHS.get())){
+    } /*else if (dynamic_cast<NumberExprAST*>(StructMember->LHS.get())){
         std::unique_ptr<NumberExprAST> NumberExpr = get_Expr_from_ExprAST<NumberExprAST>(std::move(StructMember->LHS));
         return number_member_call(std::move(NumberExpr));
-    }
+    }*/
     return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
 
