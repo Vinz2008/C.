@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 860KB stripped, ≈27.5MB not stripped
+- compiler less than 860KB stripped, ≈28MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -116,6 +116,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add REPL  
 - [ ] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
 - [ ] Work on core library like in rust (make built-in types modules like i32 be imported by default)
+- [ ] Add support in members block for built-in types like i32
 - [ ] Replace float and double with f32 and f64 ?
 
 ## Benchmarks compared to other languages
