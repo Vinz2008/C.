@@ -570,110 +570,6 @@ Value* ConstantStructExprAST::codegen(){
     return ConstantStruct::get(dyn_cast<StructType>(structType), structMembersVal);
 }
 
-
-// TODO : transform this into an operator to use it in situations like : "self.list[0]"
-Value* ArrayMemberExprAST::codegen() {
-  Log::Info() << "ARRAY MEMBER CODEGEN" << "\n";
-  if (!get_variable_type(ArrayName)){
-    return LogErrorV(this->loc, "Tried to get a member of an array that doesn't exist : %s", ArrayName.c_str());
-  }
-  //Cpoint_Type cpoint_type = NamedValues[ArrayName] ? NamedValues[ArrayName]->type : GlobalVariables[ArrayName]->type;
-  Cpoint_Type cpoint_type = *get_variable_type(ArrayName);
-  Cpoint_Type cpoint_type_not_modified = cpoint_type;
-  auto index = posAST->codegen();
-  if (!index){
-    return LogErrorV(this->loc, "error in array index");
-  }
-  Value* firstIndex = index;
-  bool is_constant = false;
-  if (dyn_cast<Constant>(index) && cpoint_type.nb_element > 0){
-    is_constant = true;
-    Constant* indexConst = dyn_cast<Constant>(index);
-    if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, this->loc)){
-      return nullptr;
-    }
-  }
-  
-  //index = Builder->CreateFPToUI(index, Type::getInt64Ty(*TheContext), "cast_gep_index");
-  if (cpoint_type.is_array){
-  if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
-    convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
-  }
-  }
-  
-  if (!is_llvm_type_number(index->getType())){
-    return LogErrorV(this->loc, "index for array is not a number\n");
-  }
-  
-  Value* allocated_value;
-  allocated_value = get_var_allocation(ArrayName);
-  /*AllocaInst* Alloca;
-  if (NamedValues[ArrayName]){
-  Alloca = NamedValues[ArrayName]->alloca_inst;
-  allocated_value = Alloca;
-  } else {
-    allocated_value = GlobalVariables[ArrayName]->globalVar;
-  }*/
-  auto zero = ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-  std::vector<Value*> indexes = { zero, index};
-  Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
-  // TODO : WHY SOME TYPES HAVE NB_PTR > 0 BUT IS_PTR FALSE ? IT IS NOT SUPPOSED TO BE POSSIBLE, BUT WE STILL NEED THIS CHECK FOR NOW. FIX IT!!
-  if (cpoint_type.nb_ptr > 0 && !cpoint_type.is_ptr){
-    cpoint_type.is_ptr = true;
-  }
-  if (cpoint_type.is_ptr && !cpoint_type.is_array){
-    Log::Info() << "array for array member is ptr" << "\n";
-    if (cpoint_type.nb_ptr > 1){
-      cpoint_type.nb_ptr--;
-    } else {
-      cpoint_type.is_ptr = false;
-      cpoint_type.nb_ptr = 0;
-      cpoint_type.nb_element = 0;
-    }
-    Log::Info() << "Cpoint_type for array member which is ptr : " << cpoint_type << "\n";
-    Type* index_type_llvm = Type::getInt64Ty(*TheContext);
-    Log::Info() << "pointer size : " << get_pointer_size() << "\n";
-    if (get_pointer_size() == 32){
-        zero = ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-        index_type_llvm = Type::getInt32Ty(*TheContext);
-    }
-    if (index->getType() != index_type_llvm){
-        convert_to_type(get_cpoint_type_from_llvm(index->getType()), index_type_llvm, index);
-    }
-    //index = Builder->CreateSExt(index, index_type_llvm); // try to use a i64 for index
-    indexes = {index};
-  } /*else {
-    if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
-        convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
-    }
-  }
-  if (!is_llvm_type_number(index->getType())){
-    return LogErrorV(this->loc, "index for array is not a number\n");
-  }*/
-  Log::Info() << "index type array member : " << get_cpoint_type_from_llvm(index->getType()) << "\n";
-  
-  Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
-  if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
-    if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
-      return nullptr;
-    }
-  }
-  Cpoint_Type member_type = cpoint_type;
-  member_type.is_array = false;
-  member_type.nb_element = 0;
-  
-  Type* type_llvm = get_type_llvm(cpoint_type);
-
-  Value* array_or_ptr = allocated_value;
-  // To make argv[0] work
-  if (/*cpoint_type_not_modified.is_ptr &&*/ cpoint_type_not_modified.nb_ptr > 1){
-  array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
-  }
-  Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
-  Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
-  return value;
-}
-
 Type* StructDeclarAST::codegen(){
   Log::Info() << "CODEGEN STRUCT DECLAR" << "\n";
   StructType* structType = StructType::create(*TheContext);
@@ -2128,18 +2024,8 @@ Value *CallExprAST::codegen() {
 }
 
 Value* AddrExprAST::codegen(){
-  /*if (Ident != ""){
-    AllocaInst *A = NamedValues[Ident]->alloca_inst;
-    if (!A)
-        return LogErrorV(this->loc, "Addr Unknown variable name %s", Ident.c_str());
-    return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, Ident.c_str());
-  }*/
   if (dynamic_cast<VariableExprAST*>(Expr.get())){
     std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Expr));
-    /*auto VariableExprPtr = static_cast<VariableExprAST*>(Expr.get());
-    std::unique_ptr<VariableExprAST> VariableExpr;
-    Expr.release();
-    VariableExpr.reset(VariableExprPtr);*/
     Log::Info() << "Addr Variable : " << VariableExpr->getName() << "\n";
     if (is_var_local(VariableExpr->getName())){
         AllocaInst *A = NamedValues[VariableExpr->getName()]->alloca_inst;
@@ -2147,47 +2033,12 @@ Value* AddrExprAST::codegen(){
             return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
         }
         return A;
-        //return Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VariableExpr->getName().c_str());
     } else {
         GlobalVariable* G = GlobalVariables[VariableExpr->getName()]->globalVar;
         if (!G)
             return LogErrorV(this->loc, "Addr Unknown variable name %s", VariableExpr->getName().c_str());
-        //return Builder->CreateLoad(PointerType::get(G->getType(), G->getAddressSpace()), G, VariableExpr->getName().c_str());
         return G;
     }
-  } else if (dynamic_cast<ArrayMemberExprAST*>(Expr.get())){ // TODO : remove ArrayMemberExprAST
-    std::unique_ptr<ArrayMemberExprAST> arrayMember = get_Expr_from_ExprAST<ArrayMemberExprAST>(std::move(Expr));
-    /*auto arrayMemberPtr = static_cast<ArrayMemberExprAST*>(Expr.get());
-    std::unique_ptr<ArrayMemberExprAST> arrayMember;
-    Expr.release();
-    arrayMember.reset(arrayMemberPtr);*/
-    //Cpoint_Type cpoint_type = NamedValues[arrayMemberPtr->ArrayName] ? NamedValues[arrayMemberPtr->ArrayName]->type : GlobalVariables[arrayMemberPtr->ArrayName]->type;
-    if (!get_variable_type(arrayMember->ArrayName)){
-        return LogErrorV(arrayMember->loc, "Tried to get a member of an array that doesn't exist : %s", arrayMember->ArrayName.c_str());
-    }
-    Cpoint_Type cpoint_type = *get_variable_type(arrayMember->ArrayName);
-    Type* type_llvm = get_type_llvm(cpoint_type);
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto index = arrayMember->posAST->clone()->codegen();
-    if (index->getType() != get_type_llvm(Cpoint_Type(i64_type))){
-    convert_to_type(get_cpoint_type_from_llvm(index->getType()), get_type_llvm(Cpoint_Type(i64_type)), index);
-    }
-    std::vector<Value*> indexes = { zero, index};
-    
-    if (cpoint_type.is_ptr && !cpoint_type.is_array){
-        if (cpoint_type.nb_ptr > 1){
-        cpoint_type.nb_ptr--;
-        } else {
-        cpoint_type.is_ptr = false;
-        cpoint_type.nb_ptr = 0;
-        cpoint_type.nb_element = 0;
-        }
-        index = Builder->CreateSExt(index, Type::getInt64Ty(*TheContext)); // try to use a i64 for index
-        indexes = {index};
-    }
-    
-    return Builder->CreateGEP(type_llvm, get_var_allocation(arrayMember->ArrayName), indexes);
-  //return Builder->CreateLoad(PointerType::get(val->getType(), 0), val, "addr_load");
   } else if (dynamic_cast<BinaryExprAST*>(Expr.get())){
     std::unique_ptr<BinaryExprAST> binOpMember = get_Expr_from_ExprAST<BinaryExprAST>(std::move(Expr));
     if (binOpMember->Op == "."){
@@ -2201,22 +2052,6 @@ Value* AddrExprAST::codegen(){
     } else {
         return LogErrorV(this->loc, "Unknown operator expression for addr");
     }
-    /*auto members = StructDeclarations[NamedValues[structMember->StructName]->type.struct_name]->members;
-    int pos = -1;
-    for (int i = 0; i < members.size(); i++){
-      if (members.at(i).first == structMember->MemberName){
-        pos = i;
-        break;
-      }
-    }
-    AllocaInst* Alloca = NamedValues[structMember->StructName]->alloca_inst;
-    Cpoint_Type cpoint_type = *get_variable_type(structMember->StructName);
-    if (cpoint_type.is_ptr){
-      cpoint_type.is_ptr = false;
-    }
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
-    return Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});*/
   }
   return LogErrorV(this->loc, "Trying to use addr with an expression which it is not implemented for");
 }

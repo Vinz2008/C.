@@ -322,22 +322,6 @@ public:
     std::string generate_c() override { return ""; }
 };
 
-
-class ArrayMemberExprAST : public ExprAST {
-public:
-  std::string ArrayName;
-  std::unique_ptr<ExprAST> posAST;
-  ArrayMemberExprAST(const std::string &ArrayName, std::unique_ptr<ExprAST> posAST) : ArrayName(ArrayName), posAST(std::move(posAST)) {}
-  Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override {
-    return std::make_unique<ArrayMemberExprAST>(ArrayName, posAST->clone());
-  }
-  std::string to_string() override {
-    return ArrayName + "[" + posAST->to_string() + "]";
-  }
-  std::string generate_c() override { return ""; }
-};
-
 class BinaryExprAST : public ExprAST {
 public:
   std::string Op;
