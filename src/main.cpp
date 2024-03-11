@@ -593,55 +593,6 @@ int main(int argc, char **argv){
     c_translator::init_context();
     
     installPrecendenceOperators();
-    // Install standard binary operators.
-    // 1 is lowest precedence.
-    /*BinopPrecedence["="] = 5;
-
-    BinopPrecedence["||"] = 10;
-    BinopPrecedence["&&"] = 11;
-    BinopPrecedence["|"] = 12;
-    BinopPrecedence["^"] = 13;
-    BinopPrecedence["&"] = 14;
-
-    BinopPrecedence["!="] = 15;
-    BinopPrecedence["=="] = 15;
-
-    BinopPrecedence["<"] = 16;
-    BinopPrecedence["<="] = 16;
-    BinopPrecedence[">"] = 16;
-    BinopPrecedence[">="] = 16;
-
-    BinopPrecedence["<<"] = 20;
-    BinopPrecedence[">>"] = 20;
-
-    BinopPrecedence["+"] = 25;
-    BinopPrecedence["-"] = 25;
-
-    BinopPrecedence["*"] = 30;
-    BinopPrecedence["%"] = 30;
-    BinopPrecedence["/"] = 30;
-
-#if ARRAY_MEMBER_OPERATOR_IMPL
-    BinopPrecedence["["] = 35;
-#endif
-
-#if STRUCT_MEMBER_OPERATOR_IMPL
-    BinopPrecedence["."] = 35;
-#endif
-    */
-
-
-
-
-    /*BinopPrecedence["^"] = 5;
-    BinopPrecedence["|"] = 7;
-    BinopPrecedence["<"] = 10;
-    BinopPrecedence[">"] = 10;
-    BinopPrecedence["="] = 10;
-    BinopPrecedence["+"] = 20;
-    BinopPrecedence["-"] = 20;
-    BinopPrecedence["%"] = 40;
-    BinopPrecedence["*"] = 40;*/  // highest.
 
     legacy::PassManager pass;
     if (target_triplet_found_bool){

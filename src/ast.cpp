@@ -95,22 +95,17 @@ std::unique_ptr<ExprAST> StructMemberExprAST::clone(){
     return std::make_unique<StructMemberExprAST>(StructName, MemberName, is_function_call, clone_vector<ExprAST>(Args));
 }
 
-
-#if CALL_STRUCT_MEMBER_IMPL
 std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
     return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
 }
-#endif
 
-#if CALL_IMPL 
 std::unique_ptr<ExprAST> NEWCallExprAST::clone(){
     return std::make_unique<NEWCallExprAST>(function_expr->clone(), clone_vector<ExprAST>(Args), template_passed_type);
 }
-#endif
 
-std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
+/*std::unique_ptr<ExprAST> StructMemberExprASTNew::clone(){
     return std::make_unique<StructMemberExprASTNew>(Struct->clone(), Member->clone(), is_function_call, clone_vector<ExprAST>(Args));
-}
+}*/
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
     return std::make_unique<ConstantArrayExprAST>(clone_vector<ExprAST>(ArrayMembers));
@@ -368,46 +363,6 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     IdName = module_mangled_function_name;
     Log::Info() << "Mangled call function name : " << IdName << "\n";
   }
-#if ARRAY_MEMBER_OPERATOR_IMPL == 0
-  if (CurTok == '['){
-    getNextToken();
-    indexAST = ParseExpression();
-    if (!indexAST){
-      return LogError("Couldn't find index for array %s", IdName.c_str()); 
-    }
-    if (CurTok != ']'){
-      return LogError("Missing ']'"); 
-    }
-    getNextToken();
-    is_array = true;
-  }
-#endif
-#if STRUCT_MEMBER_OPERATOR_IMPL == 0
-  if (CurTok == '.'){
-    Log::Info() << "Struct member found" << "\n";
-    getNextToken();
-    member = IdentifierStr;
-    getNextToken();
-  }
-#endif
-#if EQUAL_OPERATOR_IMPL == 0
-  if (CurTok == '='){
-    Log::Info() << "IdName " << IdName << "\n";
-    Log::Info() << "RedeclarationExpr Parsing" << "\n";
-    Log::Info() << "verify if " << IdName << "is in NamedValues : " << (int)(NamedValues[IdName] == nullptr) << "\n";
-    if (member != ""){
-    if (GlobalVariables[IdName] == nullptr && NamedValues[IdName] == nullptr && IdName != "self") {
-      return LogError("Couldn't find variable %s when redeclarating it", IdName.c_str());
-    }
-    }
-    getNextToken();
-    auto V = ParseExpression();
-    if (!V){
-      return nullptr;
-    }
-    return std::make_unique<RedeclarationExprAST>(IdName, std::move(V), member, std::move(indexAST));
-  }
-#endif
   if (StructDeclarations[IdName] != nullptr && CurTok == '{'){
     std::string struct_name = IdName;
     std::vector<std::unique_ptr<ExprAST>> StructMembers;
@@ -436,43 +391,8 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     }
     return std::make_unique<ConstantStructExprAST>(struct_name, std::move(StructMembers));
   }
-#if STRUCT_MEMBER_OPERATOR_IMPL == 0
-#if CALL_STRUCT_MEMBER_IMPL == 0
-  if (member != ""){
-    bool is_function_call_member = false;
-    std::vector<std::unique_ptr<ExprAST>> Args;
-    if (CurTok == '('){
-      Log::Info() << "call struct member function" << "\n";
-      is_function_call_member = true;
-      getNextToken();
-      auto ret = ParseFunctionArgs(Args);
-      if (!ret){
-        return nullptr;
-      }
-
-    // Eat the ')'.
-    getNextToken();
-    }
-#endif
-    Log::Info() << "Struct member returned" << "\n";
-    // make the struct members detection recursive : for example with a.b.c or in the linked list code
-    if (NamedValues[IdName] != nullptr && NamedValues[IdName]->type.is_enum){
-        // get Enum member (maybe not do it and replace with match)
-    }
-    if (!is_function_call_member && NamedValues[IdName] != nullptr && NamedValues[IdName]->type.is_union){
-        return std::make_unique<UnionMemberExprAST>(IdName, member);
-    }
-    return std::make_unique<StructMemberExprAST>(IdName, member, is_function_call_member, std::move(Args));
-  }
-#endif
 
   //if (CurTok != '(' && CurTok != /*'<'*/ '~'){ // Simple variable ref.
-#if ARRAY_MEMBER_OPERATOR_IMPL == 0
-    if (is_array){
-      Log::Info() << "Array member returned" << "\n";
-      return std::make_unique<ArrayMemberExprAST>(IdName, std::move(indexAST));
-    }
-#endif
     Log::Info() << "VariableExprAST" << "\n";
     std::unique_ptr<Cpoint_Type> type;
     if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
@@ -494,26 +414,9 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       return LogError("expected '~' not found");
     }
     getNextToken();
-  }
-#if CALL_IMPL == 0
-  if (CurTok != '('){
-    return LogError("missing '(' when calling function");
-  }
-  getNextToken();  // eat (
-  std::vector<std::unique_ptr<ExprAST>> Args;
-  auto ret = ParseFunctionArgs(Args);
-  if (!ret){
-    return nullptr;
-  }
-
-  // Eat the ')'.
-  getNextToken();
-
-  return std::make_unique<CallExprAST>(IdLoc, IdName, std::move(Args), template_passed_type);
-#else
+    }
     fprintf(stderr, "should use the binop implementation of callexpr\n");
     exit(1);
-#endif
 }
 
 std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){

@@ -595,9 +595,9 @@ Value* StructMemberExprAST::codegen() {
     return value;
 }
 
-Value* StructMemberExprASTNew::codegen(){
+/*Value* StructMemberExprASTNew::codegen(){
     return nullptr;
-}
+}*/
 
 
 // TODO : remove this
@@ -1249,9 +1249,6 @@ Value* ClosureAST::codegen(){
     return f;
 }
 
-#if EQUAL_OPERATOR_IMPL
-
-
 /*Value* getUnionMember(std::string UnionName, std::string MemberName){
     AllocaInst* Alloca = nullptr;
     if (NamedValues[UnionName] == nullptr){
@@ -1445,10 +1442,6 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
     return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
 }
 
-#endif
-
-#if STRUCT_MEMBER_OPERATOR_IMPL
-
 // only doing GEP, not loading
 // member_type is for returning
 // get struct, or union
@@ -1542,9 +1535,7 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
     Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
     return value;
 }
-#endif
 
-#if CALL_IMPL
 // TODO : rename OPCallExprAST
 Value* NEWCallExprAST::codegen(){
     Log::Info() << "NEWCallExprAST codegen" << "\n";
@@ -1563,9 +1554,7 @@ Value* NEWCallExprAST::codegen(){
     }
     return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");
 }
-#endif
 
-#if CALL_STRUCT_MEMBER_IMPL
 Value* StructMemberCallExprAST::codegen(){
     if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
         std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->LHS));
@@ -1614,9 +1603,6 @@ Value* StructMemberCallExprAST::codegen(){
     }
     return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
-#endif
-
-#if ARRAY_MEMBER_OPERATOR_IMPL
 
 // TODO : refactor this code to be more efficient (for example a lot of the code from variableExprASt should be a function that is called after getting the struct member)
 Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
@@ -1740,60 +1726,6 @@ Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> i
     return LogErrorV(emptyLoc, "Trying to use the array member operator with an expression which it is not implemented for\n");
 }
 
-
-#if 0
-Value* getArrayMember(Value* array, Value* index){
-    Log::Info() << "ARRAY MEMBER CODEGEN getArrayMember" << "\n";
-    if (!index){
-        return LogErrorV(emptyLoc, "error in array index");
-    }
-    std::string ArrayName = (std::string)array->getName();
-    auto type_llvm = array->getType();
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    Value* firstIndex = index;
-    bool is_constant = false;
-    // TODO : for now this verification is not compatible
-    /*if (dyn_cast<Constant>(index) && cpoint_type.nb_element > 0){
-        is_constant = true;
-        Constant* indexConst = dyn_cast<Constant>(index);
-        if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, this->loc)){
-            return nullptr;
-        }
-    }*/
-    Log::Info() << "Index " << (std::string)index->getName() << " type : " << get_cpoint_type_from_llvm(index->getType()) << "\n";
-    Log::Info() << "Array " << (std::string)array->getName() << " type : " << get_cpoint_type_from_llvm(array->getType()) << "\n";
-    if (index->getType() == get_type_llvm(Cpoint_Type(double_type))){
-    index = Builder->CreateFPToUI(index, Type::getInt32Ty(*TheContext), "cast_gep_index");
-    }
-    if (!array->getType()->isArrayTy() && !array->getType()->isPointerTy()){
-        return LogErrorV(emptyLoc, "array for array member is not an array\n");
-    }
-    /*if (array->getType()->isPointerTy()){
-        
-    }*/
-    if (!is_llvm_type_number(index->getType())){
-        return LogErrorV(emptyLoc, "index for array is not a number\n");
-    }
-
-    // TODO : same as above check
-    /*if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
-    if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
-      return nullptr;
-    }
-    }*/
-    
-    std::vector<Value*> indexes = { zero, index};
-    Log::Info() << "TEST" << "\n";
-    Log::Info() << "array type : " << get_cpoint_type_from_llvm(type_llvm) << "\n";
-    Value* ptr = Builder->CreateGEP(type_llvm, Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), array) /*array*/, indexes);
-    Log::Info() << "TEST 2" << "\n";
-    auto member_type_llvm = array->getType()->getArrayElementType();
-    Value* value = Builder->CreateLoad(member_type_llvm, ptr, ArrayName);
-    return value;
-}
-#endif
-#endif
-
 Value* AsmExprAST::codegen(){
     bool contains_out = false;
     bool contains_in = false;
@@ -1849,24 +1781,15 @@ Value* AsmExprAST::codegen(){
 }
 
 Value *BinaryExprAST::codegen() {
-
-#if ARRAY_MEMBER_OPERATOR_IMPL
   if (Op.at(0) == '['){
     return getArrayMember(std::move(LHS), std::move(RHS));
   }
-#endif
-
-#if EQUAL_OPERATOR_IMPL
-    if (Op.at(0) == '=' && Op.size() == 1){
-        return equalOperator(std::move(LHS), std::move(RHS));
-    }
-#endif
-
-#if STRUCT_MEMBER_OPERATOR_IMPL
-    if (Op.at(0) == '.'){
-        return getStructMember(std::move(LHS), std::move(RHS));
-    }
-#endif
+  if (Op.at(0) == '=' && Op.size() == 1){
+    return equalOperator(std::move(LHS), std::move(RHS));
+  }
+  if (Op.at(0) == '.'){
+    return getStructMember(std::move(LHS), std::move(RHS));
+  }
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
@@ -1940,30 +1863,8 @@ Value *BinaryExprAST::codegen() {
     L = Builder->CreateOr(L, R, "ortmp");
     return L;
     //return Builder->CreateUIToFP(L, Type::getDoubleTy(*TheContext), "booltmp");
-//#if ARRAY_MEMBER_OPERATOR_IMPL
-#if 0
-  case '[':
-    // TODO get from rhs and lhs with getelementptr the array member
-    Log::Info() << "L " << (std::string)L->getName() << " type : " << get_cpoint_type_from_llvm(L->getType()) << "\n";
-    Log::Info() << "R " << (std::string)R->getName() << " type : " << get_cpoint_type_from_llvm(R->getType()) << "\n";
-    return getArrayMember(L, R);
-#endif
-#if EQUAL_OPERATOR_IMPL == 0
-  case '=': {
-    VariableExprAST *LHSE = static_cast<VariableExprAST *>(LHS.get());
-    if (!LHSE)
-      return LogErrorV(this->loc, "destination of '=' must be a variable");
-    Value *Val = RHS->codegen();
-    if (!Val)
-      return nullptr;
-    Value *Variable = NamedValues[LHSE->getName()]->alloca_inst;
-    if (!Variable)
-      return LogErrorV(this->loc, "Unknown variable name");
-    Builder->CreateStore(Val, Variable);
-    return Val;
-  } break;
-#endif
   default:
+    // TODO : maybe reactivate this
     //return LogErrorV(this->loc, "invalid binary operator");
     break;
   }

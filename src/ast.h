@@ -255,8 +255,9 @@ public:
   std::string generate_c() override { return ""; }
 };
 
+// TODO : remove this
 //#if STRUCT_MEMBER_OPERATOR_IMPL
-class StructMemberExprASTNew : public ExprAST {
+/*class StructMemberExprASTNew : public ExprAST {
   std::unique_ptr<ExprAST> Struct;
   std::unique_ptr<ExprAST> Member;
   bool is_function_call;
@@ -279,6 +280,7 @@ public:
   std::string generate_c() override { return ""; }
 };
 //#endif
+*/
 
 class UnionMemberExprAST : public ExprAST {
 public:
@@ -393,8 +395,6 @@ public:
   std::string generate_c() override;
 };
 
-#if CALL_STRUCT_MEMBER_IMPL
-
 struct StructMemberCallExprAST : public ExprAST {
     std::unique_ptr<BinaryExprAST> StructMember;
     std::vector<std::unique_ptr<ExprAST>> Args;
@@ -406,8 +406,6 @@ struct StructMemberCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
 };
-
-#endif
 
 struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> function_expr;
