@@ -32,4 +32,4 @@ clean-objects:
 	rm -f ./*.o
 
 clean: clean-objects
-	rm -f ./*.a ./*.ll ./*.log ./*.temp ./*.test
+	rm -f ./*.a ./*.ll ./*.log ./*.temp ./*.test ./libcore.a

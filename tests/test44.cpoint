@@ -1,5 +1,7 @@
 import @std/utils.cpoint
+import @std/print.cpoint
 
 func main(){
     test_generic~int~()
+    printd(cpoint_internal_llvm_ctpop(cast i32 10))
 }

@@ -368,6 +368,7 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
   Callee = Callee.substr(5, Callee.size());
   Log::Info() << "llvm intrisic called " << Callee << "\n";
   llvm::Intrinsic::IndependentIntrinsics intrisicId = llvm::Intrinsic::not_intrinsic;
+  llvm::ArrayRef<llvm::Type *> Tys = std::nullopt;
   if (Callee == "va_start"){
     intrisicId = Intrinsic::vastart;
   } else if (Callee == "va_end"){
@@ -400,8 +401,17 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::trunc;
   } else if (Callee == "read_register"){
     intrisicId = Intrinsic::read_register;
-  } 
-  Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
+  } else if (Callee == "ctpop"){
+    intrisicId = Intrinsic::ctpop;
+    Type* arg_type = Args.at(0)->clone()->codegen()->getType();
+    //Type* arg_type = get_type_llvm(Cpoint_Type(i32_type));
+    if (arg_type->isFloatingPointTy()){
+        return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
+    }
+    Tys = ArrayRef<Type*>(arg_type);
+    // TODO : refactor this into a real template ?
+  }
+  Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId, Tys);
   std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     Value* temp_val = Args[i]->codegen();
@@ -694,18 +704,26 @@ Type* EnumDeclarAST::codegen(){
 }
 
 void MembersDeclarAST::codegen(){
-    if (StructDeclarations[members_for] == nullptr){
+    bool is_builtin_type = is_type(members_for);
+    if (StructDeclarations[members_for] == nullptr && !is_builtin_type){
         LogError("Members for a struct that doesn't exist");
         return;
     }
     for (int i = 0; i < Functions.size(); i++){
         std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
         std::string function_name = FunctionExpr->Proto->getName();
-        StructDeclarations[members_for]->functions.push_back(function_name);
-        std::string mangled_name_function = struct_function_mangling(members_for, function_name);
-        Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
-        self_pointer_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
-        FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
+        std::string mangled_name_function = "";
+        Cpoint_Type self_type;
+        if (!is_builtin_type){
+            StructDeclarations[members_for]->functions.push_back(function_name);
+            mangled_name_function = struct_function_mangling(members_for, function_name);
+            self_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
+        } else {
+            self_type = Cpoint_Type(get_type(members_for));
+            mangled_name_function = create_mangled_name_from_type(self_type) + "__" + function_name;;
+        }
+        //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
+        FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_type));
         FunctionExpr->Proto->Name = mangled_name_function;
         FunctionExpr->codegen();
     }

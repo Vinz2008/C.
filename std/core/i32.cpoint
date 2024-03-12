@@ -1,3 +1,7 @@
-func i32__a(){
+func i32__a() i32 {
     0
+}
+
+func i32__count_ones() i32 {
+    cpoint_internal_llvm_ctpop(cast i32 10)
 }

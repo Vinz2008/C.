@@ -63,7 +63,7 @@ debug: libstd.a
 set_test_flag:
 	$(eval CPOINTFLAGS += -test)
 
-libstd.a: $(OBJECTS) capi core
+libstd.a: $(OBJECTS) capi core_lib
 	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C) $(OBJECTS_CORE)
 
 capi:
@@ -77,6 +77,7 @@ clean-objects:
 
 clean: clean-objects
 	make -C c_api clean
+	make -C core clean
 	rm -f ./*.a ./*.ll ./*.log ./*.temp ./*.test
 
 
@@ -91,5 +92,5 @@ run-test:
 	done
 
 
-core:
+core_lib:
 	+TARGET=$(TARGET) NO_GC=$(NO_GC) make $(MAKETARGET) -C core

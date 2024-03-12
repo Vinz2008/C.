@@ -116,7 +116,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add REPL  
 - [ ] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
 - [ ] Work on core library like in rust (make built-in types modules like i32 be imported by default)
-- [ ] Add support in members block for built-in types like i32
+- [x] Add support in members block for built-in types like i32
+- [ ] Make members block work in imports 
 - [ ] Replace float and double with f32 and f64 ?
 
 ## Benchmarks compared to other languages
