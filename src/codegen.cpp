@@ -1373,7 +1373,8 @@ Value* StructMemberCallExprAST::codegen(){
             return refletionInstruction(MemberName, std::move(Args));
         }
     }
-    if (!StructMember->LHS->clone()->codegen()->getType()->isStructTy()){
+    Type* temp_type = StructMember->LHS->clone()->codegen()->getType();
+    if (!temp_type->isStructTy() && !temp_type->isPointerTy()){
         // not struct member call
         // will handle the special name mangling in this function
         std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));

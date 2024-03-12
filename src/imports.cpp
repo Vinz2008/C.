@@ -12,6 +12,7 @@
 #include "preprocessor.h"
 #include "config.h"
 #include "utils.h"
+#include "prelude.h"
 
 #ifdef _WIN32
 #include "windows.h"
@@ -72,7 +73,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     skip_spaces(line, pos);
 }
 
-int getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::string>& Paths){
+bool getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::string>& Paths){
     std::string Path = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || line.at(pos) == '-' || isdigit(line.at(pos)))){
         Path += line.at(pos);
@@ -545,7 +546,10 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
     file_code.open(file_path);
     out_file.open(out_path);
     int nb_imports = 0;
-
+    if (Comp_context->std_mode){ // TODO : add a way to include core with no-std (explicit folder ?)
+        include_prelude(std_path);
+        out_file << "\n";
+    }
     if (file_code.is_open()){
         //int pos_line = 0;
         while (std::getline(file_code, line)){

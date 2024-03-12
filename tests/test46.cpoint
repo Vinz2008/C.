@@ -1,6 +1,3 @@
-import @std/core/i32.cpoint
-
-
 func main(){
     var b = (cast i32 2).a()
     0
