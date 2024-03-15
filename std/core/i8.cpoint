@@ -1,12 +1,12 @@
-members for i32 {
-func get() i32 {
+members for i8 {
+func get() i8 {
     self
 }
-func count_ones() i32 {
+func count_ones() i8 {
     cpoint_internal_llvm_ctpop(self)
 }
 
-func bitreverse() i32 {
+func bitreverse() i8 {
     cpoint_internal_llvm_bitreverse(self)
 }
 
