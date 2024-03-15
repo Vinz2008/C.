@@ -1,7 +1,16 @@
-func i32__a() i32 {
-    0
+members for i32 {
+func get() i32 {
+    self
+}
+func count_ones() i32 {
+    cpoint_internal_llvm_ctpop(self)
 }
 
-func i32__count_ones() i32 {
-    cpoint_internal_llvm_ctpop(cast i32 10)
+func bitreverse() i32 {
+    cpoint_internal_llvm_bitreverse(self)
+}
+
+func is_positive() bool {
+    self > 0
+}
 }

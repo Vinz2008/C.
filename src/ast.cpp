@@ -1169,6 +1169,7 @@ std::unique_ptr<MembersDeclarAST> ParseMembers(){
     std::string members_name = "";
     std::string members_for = "";
     std::vector<std::unique_ptr<FunctionAST>> Functions;
+    std::vector<std::unique_ptr<PrototypeAST>> Externs;
     getNextToken(); // eat members
     if (CurTok == tok_identifier){
         members_name = IdentifierStr;
@@ -1183,23 +1184,45 @@ std::unique_ptr<MembersDeclarAST> ParseMembers(){
     if (CurTok != '{')
         return LogErrorMembers("Expected '{' in Struct");
     getNextToken();
-    while (CurTok == tok_func && CurTok != '}'){
-        auto funcAST = ParseDefinition();
-        FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
-        if (functionAST == nullptr){
-            return LogErrorMembers("Error in members declaration funcs");
+    while ((CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
+        if (CurTok == tok_func){
+            auto funcAST = ParseDefinition();
+            if (funcAST == nullptr){
+                return LogErrorMembers("Error in members declaration funcs");
+            }
+            /*FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
+            if (functionAST == nullptr){
+                return LogErrorMembers("Error in members declaration funcs");
+            }
+            std::unique_ptr<FunctionAST> declar;
+            funcAST.release();
+            declar.reset(functionAST);
+            if (declar == nullptr){
+                return nullptr;
+            }*/
+            //std::unique_ptr<FunctionAST> declar = get_Expr_from_ExprAST<FunctionAST>(std::move(funcAST));
+            // TODO : maybe just remove al these comments and just push the funcAST to the vector
+            std::unique_ptr<FunctionAST> declar = std::move(funcAST);
+            Functions.push_back(std::move(declar));
+        } else if (CurTok == tok_extern){
+            auto externAST = ParseExtern();
+            if (externAST == nullptr){
+                return LogErrorMembers("Error in members extern funcs");
+            }
+            Externs.push_back(std::move(externAST));
+        } else {
+            return LogErrorMembers("Unkown expression in members block");
         }
-        std::unique_ptr<FunctionAST> declar;
-        funcAST.release();
-        declar.reset(functionAST);
-        if (declar == nullptr){return nullptr;}
-        Functions.push_back(std::move(declar));
+        if (CurTok == ';'){
+            getNextToken();
+        }
     }
+    Log::Info() << "CurTok : " << CurTok << "\n";
     if (CurTok != '}'){
         return LogErrorMembers("Expected '}' in members");
     }
     getNextToken();  // eat '}'.
-    return std::make_unique<MembersDeclarAST>(members_name, members_for, std::move(Functions));
+    return std::make_unique<MembersDeclarAST>(members_name, members_for, std::move(Functions), std::move(Externs));
 }
 
 std::unique_ptr<UnionDeclarAST> ParseUnion(){

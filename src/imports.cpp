@@ -422,6 +422,36 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
     }
 }
 
+bool first_members_opened = false;
+int nb_of_opened_braces_members;
+
+void interpret_members(std::string line, int& pos, int nb_line, int& pos_line){
+    out_file << '\n' << line;
+    pos_line++;
+    if (!first_members_opened){
+        first_members_opened = true;
+    } else {
+        nb_of_opened_braces_members = 0;
+    }
+    while (std::getline(imported_file, line)){
+        pos_line++;
+        Log::Imports_Info() << line << "\n";
+        if (line.find('{') != std::string::npos){
+            Log::Imports_Info() << "line mod contains {" << "\n";
+            nb_of_opened_braces_members++;
+        }
+        if (line.find('}') != std::string::npos){
+            nb_of_opened_braces_members--;
+        }
+        Log::Imports_Info() << "nb_of_opened_braces : " << nb_of_opened_braces_members << "\n";
+        if (line == "}" && nb_of_opened_braces_members == -1){
+            Log::Imports_Info() << "close mod block" << "\n";
+            out_file << '\n' << line;
+            break;
+        }
+        find_patterns(line, nb_line, pos_line);
+    }
+}
 
 // find funcs, structs, etc
 void find_patterns(std::string line, int nb_line, int& pos_line){
@@ -447,6 +477,8 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
         interpret_extern(line, pos_line);
     } else if (IdentifierStr == "mod"){
         interpret_mod(line, pos, nb_line, pos_line);
+    } else if (IdentifierStr == "members"){
+        interpret_members(line, pos, nb_line, pos_line);
     } else if (IdentifierStr == "type"){
         interpret_type(line, pos_line);
     }

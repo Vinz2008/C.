@@ -503,6 +503,27 @@ public:
     std::string generate_c() override;
 };
 
+// JUNKY HACK TIME !!
+// will just return a Value* when being codegened
+// is used if a value* is needed to be passed as an AST node
+class LLVMASTValueWrapper : public ExprAST {
+public:
+    Value* val;
+    LLVMASTValueWrapper(Value* val) : val(val){}
+    Value* codegen() {
+        return val;
+    }
+    std::unique_ptr<ExprAST> clone(){
+        return std::make_unique<LLVMASTValueWrapper>(val);
+    }
+    std::string to_string() {
+
+    }
+    std::string generate_c(){
+        return ""; // How will we fucking use this with the c backend ?? No idea, will figure this out
+    }
+};
+
 class matchCase {
 public:
     std::unique_ptr<ExprAST> expr;
@@ -628,7 +649,8 @@ public:
     std::string members_name; // to add trait system like in rust ? TODO ?
     std::string members_for;
     std::vector<std::unique_ptr<FunctionAST>> Functions;
-    MembersDeclarAST(const std::string& members_name, const std::string& members_for, std::vector<std::unique_ptr<FunctionAST>> Functions) : members_name(members_name), members_for(members_for), Functions(std::move(Functions)) {}
+    std::vector<std::unique_ptr<PrototypeAST>> Externs;
+    MembersDeclarAST(const std::string& members_name, const std::string& members_for, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> Externs) : members_name(members_name), members_for(members_for), Functions(std::move(Functions)), Externs(std::move(Externs)) {}
     void codegen();
 };
 

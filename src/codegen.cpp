@@ -86,6 +86,8 @@ extern bool is_in_struct_templates_codegen;
 
 extern std::string TargetTriple;
 
+extern bool is_in_extern;
+
 int closure_number = 0;
 //extern bool test_mode;
 //extern bool std_mode;
@@ -401,6 +403,13 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::trunc;
   } else if (Callee == "read_register"){
     intrisicId = Intrinsic::read_register;
+  } else if (Callee == "bitreverse"){
+    intrisicId = Intrinsic::bitreverse;
+    Type* arg_type = Args.at(0)->clone()->codegen()->getType();
+    if (arg_type->isFloatingPointTy()){
+        return LogErrorV(emptyLoc, "Can't use the bitreverse intrisic on a floating point type arg"); 
+    }
+    Tys = ArrayRef<Type*>(arg_type);
   } else if (Callee == "ctpop"){
     intrisicId = Intrinsic::ctpop;
     Type* arg_type = Args.at(0)->clone()->codegen()->getType();
@@ -727,6 +736,26 @@ void MembersDeclarAST::codegen(){
         FunctionExpr->Proto->Name = mangled_name_function;
         FunctionExpr->codegen();
     }
+    is_in_extern = true;
+    for (int i = 0; i < Externs.size(); i++){
+        std::unique_ptr<PrototypeAST> Proto = std::move(Externs.at(i));
+        std::string function_name = Proto->getName();
+        std::string mangled_name_function = "";
+        Cpoint_Type self_type;
+        if (!is_builtin_type){
+            StructDeclarations[members_for]->functions.push_back(function_name);
+            mangled_name_function = struct_function_mangling(members_for, function_name);
+            self_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
+        } else {
+            self_type = Cpoint_Type(get_type(members_for));
+            mangled_name_function = create_mangled_name_from_type(self_type) + "__" + function_name;;
+        }
+        //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
+        Proto->Args.insert(Proto->Args.begin(), std::make_pair("self", self_type));
+        Proto->Name = mangled_name_function;
+        Proto->codegen();
+    }
+    is_in_extern = false;
 }
 
 
