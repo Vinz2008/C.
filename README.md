@@ -119,6 +119,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add support in members block for built-in types like i32
 - [x] Make members block work in imports 
 - [ ] Replace float and double with f32 and f64 ?
+- [ ] Rename list to vec or vector in std
 
 ## Benchmarks compared to other languages
 

@@ -1,37 +1,33 @@
 import print.cpoint
 
-struct listItem {
-    var list : void ptr
-}
-
 struct list {
     var list : int ptr
     var allocated_size : int
     var length : int
-    func list(){
-        var a = 2 // not working without that
+    func list() void {
         self.list = gc_malloc(sizeof int * 10)
+        if self.list == null {
+            #panic("Error when allocating the list")
+        }
         self.allocated_size = 10
         self.length = 0
     }
-    func append(data : int) {
-        var list : struct list ptr = self
-        if list.length == list.allocated_size {
-            list.allocated_size = list.allocated_size * 2
-            list.list = gc_realloc(list.list, list.allocated_size * sizeof int)
+    func append(data : int) void {
+        if self.length == self.allocated_size {
+            self.allocated_size = self.allocated_size * 2
+            self.list = gc_realloc(self.list, self.allocated_size * sizeof int)
         }
-        var l : int ptr = list.list
-        l[list.length] = data
-        list.length = list.length + 1
+        var l : int ptr = self.list
+        l[self.length] = data
+        self.length = self.length + 1
     }
     func at(pos : int) int {
         var list : int ptr = self.list
         printi(self.length)
         list[pos]
     }
-    func is_empty(){
-        var list : struct list ptr = self
-        list.length == 0
+    func is_empty() bool {
+        self.length == 0
     }
     func c_ptr() int ptr {
         self.list

@@ -1139,8 +1139,9 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         Log::Info() << "Equal op bin lvalue" << "\n";
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
         if (BinExpr->Op.at(0) == '['){
+            // TODO : make work using other things than variables
             if (!dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
-                return LogErrorV(emptyLoc, "In an equal operator, Another expression than a variable name is used ");
+                return LogErrorV(emptyLoc, "In an equal operator, another expression than a variable name is used ");
             }
             std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
             Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);

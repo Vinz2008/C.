@@ -3,9 +3,11 @@ include libc.hpoint
 func panic(string : i8 ptr) void {
     printf("PANIC : %s\n", string)
     exit(1)
+    #unreachable()
 }
 
 func panicx(string : i8 ptr, filename : i8 ptr, function : i8 ptr) void {
     printf("PANIC in the %s function of %s : %s\n", function, filename, string)
     exit(1)
+    #unreachable()
 }
