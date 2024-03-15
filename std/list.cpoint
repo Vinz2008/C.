@@ -1,5 +1,7 @@
 import print.cpoint
 
+extern gc_free(s : int ptr) void;
+
 struct list {
     var list : int ptr
     var allocated_size : int
@@ -31,5 +33,8 @@ struct list {
     }
     func c_ptr() int ptr {
         self.list
+    }
+    func destroy() void {
+        gc_free(self.list)
     }
 }
