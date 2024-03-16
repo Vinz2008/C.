@@ -490,7 +490,7 @@ public:
         return std::make_unique<LLVMASTValueWrapper>(val);
     }
     std::string to_string() {
-
+        return "";
     }
     std::string generate_c(){
         return ""; // How will we fucking use this with the c backend ?? No idea, will figure this out
@@ -539,6 +539,7 @@ public:
     std::string generate_c() override { return ""; }
 };
 
+// TODO : fix the reorder warning
 class PrototypeAST {
 public:
   bool IsOperator;

@@ -1778,7 +1778,7 @@ Value *CallExprAST::codegen() {
     return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
   }
   Log::Info() << "has_sret : " << has_sret << "\n";
-  AllocaInst* SretArgAlloca;
+  AllocaInst* SretArgAlloca = nullptr;
   if (has_sret){
     SretArgAlloca = CreateEntryBlockAlloca(TheFunction, FunctionProtos[Callee]->cpoint_type.struct_name + "_sret", FunctionProtos[Callee]->cpoint_type);
     int idx = 0;

@@ -312,7 +312,7 @@ static int gettok() {
         }
     }
     if (isdigit(LastChar) || LastChar == '.' || LastChar == '_'){
-    bool last_char_is_dot = false;
+    //bool last_char_is_dot = false;
     do {
       if (LastChar != '_'){
           NumStr += LastChar;

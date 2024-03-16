@@ -70,12 +70,11 @@ namespace c_translator {
     class Function {
     public:
         C_Type return_type;
-        std::vector<std::pair<std::string, C_Type>> args;
         std::string function_name;
+        std::vector<std::pair<std::string, C_Type>> args;
+        std::vector<std::unique_ptr<ExprAST>> body; 
         bool is_extern;
         bool is_variadic;
-        //std::vector<std::unique_ptr<Expr>> body; 
-        std::vector<std::unique_ptr<ExprAST>> body; 
         std::string generate_c();
         std::unique_ptr<Function> clone();
         Function(C_Type return_type, std::string function_name, std::vector<std::pair<std::string, C_Type>> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false, bool is_variadic = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern), is_variadic(is_variadic) {}

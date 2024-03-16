@@ -276,7 +276,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   getNextToken();  // eat identifier.
   std::string member = "";
   std::unique_ptr<ExprAST> indexAST = nullptr;
-  bool is_array = false;
+  //bool is_array = false;
   if (EnumDeclarations[IdName] != nullptr){
     Log::Info() << "enum_name : " << IdName << "\n";
     std::unique_ptr<ExprAST> Value = nullptr;
