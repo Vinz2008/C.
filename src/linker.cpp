@@ -87,7 +87,7 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     } else {
         cmd += " -lm ";
     }
-    if (doesExeExist("mold")){
+    if (doesExeExist("mold") && !Comp_context->lto_mode){
         cmd += " -fuse-ld=mold ";
     }
     cmd += linker_additional_flags;

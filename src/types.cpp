@@ -639,7 +639,6 @@ std::string create_mangled_name_from_type(Cpoint_Type type){
     if (type.is_array){
         name += "_array";
     }
-    //if (type)
     return name;   
 }
 

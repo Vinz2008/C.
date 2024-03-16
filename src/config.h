@@ -13,5 +13,4 @@
 #define DEFAULT_GC_PATH DEFAULT_PREFIX_LIB_PATH "/cpoint/bdwgc"
 #define DEFAULT_BUILD_INSTALL_PATH DEFAULT_PREFIX_LIB_PATH "/cpoint/build_install"
 
-#define ENABLE_LTO 0
 #define ENABLE_JIT 0

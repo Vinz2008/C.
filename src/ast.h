@@ -232,33 +232,6 @@ public:
   std::string generate_c() override;
 };
 
-// TODO : remove this
-//#if STRUCT_MEMBER_OPERATOR_IMPL
-/*class StructMemberExprASTNew : public ExprAST {
-  std::unique_ptr<ExprAST> Struct;
-  std::unique_ptr<ExprAST> Member;
-  bool is_function_call;
-  std::vector<std::unique_ptr<ExprAST>> Args;
-public:
-  StructMemberExprASTNew(std::unique_ptr<ExprAST> Struct, std::unique_ptr<ExprAST> Member, bool is_function_call, std::vector<std::unique_ptr<ExprAST>> Args) : Struct(std::move(Struct)), Member(std::move(Member)), is_function_call(is_function_call), Args(std::move(Args)) {}
-  Value *codegen() override;
-  std::unique_ptr<ExprAST> clone() override;
-  std::string to_string() override {
-    std::string args = "";
-    if (is_function_call){
-        args += "(";
-        for (int i = 0; i < Args.size(); i++){
-            args += Args.at(i)-> to_string() + ",";
-        }
-        args += ")";
-    }
-    return Struct->to_string() + "." + Member->to_string() + args;
-  }
-  std::string generate_c() override { return ""; }
-};
-//#endif
-*/
-
 class UnionMemberExprAST : public ExprAST {
 public:
   std::string UnionName;
@@ -566,9 +539,6 @@ public:
     std::string generate_c() override { return ""; }
 };
 
-/// PrototypeAST - This class represents the "prototype" for a function,
-/// which captures its name, and its argument names (thus implicitly the number
-/// of arguments the function takes).
 class PrototypeAST {
 public:
   bool IsOperator;

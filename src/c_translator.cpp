@@ -280,13 +280,12 @@ std::string LabelExprAST::generate_c(){
 
 std::string LoopExprAST::generate_c(){
     std::string loop_expr_content = "";
-    // TODO : implement when it is not an infinite loop
     if (is_infinite_loop){
         loop_expr_content += "while (1){\n";
         loop_expr_content += generate_body_c(Body);
-        /*for (int i = 0; i < Body.size(); i++){
+        for (int i = 0; i < Body.size(); i++){
             loop_expr_content += Body.at(i)->generate_c() + ";\n";
-        }*/
+        }
         loop_expr_content += "}";
     }
     return loop_expr_content;
@@ -315,14 +314,14 @@ std::string RedeclarationExprAST::generate_c(){
 std::string IfExprAST::generate_c(){
     std::string body_if = "";
     body_if += generate_body_c(Then);
-    /*for (int i = 0; i < Then.size(); i++){
+    for (int i = 0; i < Then.size(); i++){
         body_if += Then.at(i)->generate_c() + ";\n";
-    }*/
+    }
     std::string body_else = "";
     body_else += generate_body_c(Else);
-    /*for (int i = 0; i < Else.size(); i++){
+    for (int i = 0; i < Else.size(); i++){
         body_else += Else.at(i)->generate_c() + ";\n";
-    }*/
+    }
     return "if (" + Cond->generate_c() + "){\n" + body_if + "} else {\n" + body_else + "}\n";
 }
 
@@ -330,9 +329,9 @@ std::string WhileExprAST::generate_c(){
     // TODO : create a function for loops generating a body
     std::string body_while = "";
     body_while += generate_body_c(Body);
-    /*for (int i = 0; i < Body.size(); i++){
+    for (int i = 0; i < Body.size(); i++){
         body_while += Body.at(i)->generate_c() + ";\n";
-    }*/
+    }
     return "while (" + Cond->generate_c() + "){\n" + body_while + "}";
 }
 

@@ -15,6 +15,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - generics
 - rust-like pattern matching 
 - gc and manual memory management
+- extremely fast linking (mold used by default)
 
 ## Cloning the git repo
 
@@ -41,7 +42,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add a syntax to import every cpoint files in package
 - [ ] Add chained struct members
 - [x] Add chained else if
-- [ ] Fix bug with type inference and struct pointers (for example in linked_list.cpoint "var tail = self.tail" that we needed to replace with "var tail : struct node_linked_list ptr = self.tail")
 - [ ] Add unions support in import
 - [x] Add enum support in import
 - [x] Add automatically when calling panic the file and line number to panic call
@@ -74,7 +74,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add section selection for global variables
 - [x] Fix for loop (add verification at the start in special basic block) (after doing this, change '<' into '<=' in the fibonacci benchmark)
 - [ ] Make the compiler less "double focused" 
-    - [ ] make numbers that have no decimal part ints by default
+    - [x] make numbers that have no decimal part ints by default
     - [ ] use by default in for loop ints for the variable and then add the possibility to set the type manually
 - [x] Create a print/printfmt macro that will print vars/values .have using it be like #print("{} {}", a, 2), which will generate printfmt("%s %d", a, 2) by detecting types
 - [x] Create a println macro equivalent to #print but adding automatically a '\n' at the end of the line
@@ -114,8 +114,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] ENABLE CLANG-FORMAT
 - [ ] Implement a format macro (like the format! macro in rust)
 - [ ] Add REPL  
-- [ ] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
-- [ ] Work on core library like in rust (make built-in types modules like i32 be imported by default)
+- [x] Add mold linker support to cpoint-build (and the linker driver in the cpoint exe ?)
+- [x] Work on core library like in rust (make built-in types modules like i32 be imported by default)
 - [x] Add support in members block for built-in types like i32
 - [x] Make members block work in imports 
 - [ ] Replace float and double with f32 and f64 ?

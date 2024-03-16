@@ -1190,20 +1190,7 @@ std::unique_ptr<MembersDeclarAST> ParseMembers(){
             if (funcAST == nullptr){
                 return LogErrorMembers("Error in members declaration funcs");
             }
-            /*FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
-            if (functionAST == nullptr){
-                return LogErrorMembers("Error in members declaration funcs");
-            }
-            std::unique_ptr<FunctionAST> declar;
-            funcAST.release();
-            declar.reset(functionAST);
-            if (declar == nullptr){
-                return nullptr;
-            }*/
-            //std::unique_ptr<FunctionAST> declar = get_Expr_from_ExprAST<FunctionAST>(std::move(funcAST));
-            // TODO : maybe just remove al these comments and just push the funcAST to the vector
-            std::unique_ptr<FunctionAST> declar = std::move(funcAST);
-            Functions.push_back(std::move(declar));
+            Functions.push_back(std::move(funcAST));
         } else if (CurTok == tok_extern){
             auto externAST = ParseExtern();
             if (externAST == nullptr){
@@ -1753,10 +1740,6 @@ std::unique_ptr<ExprAST> ParseClosure(){
         return LogError("Missing '(' in closure");
     }*/
     getNextToken();
-    // TODO : add captured vars between ||
-    // ex : test_func(func()|a|{
-    //    <content>
-    //})
     std::vector<std::string> captured_vars;
     if (CurTok == '|'){
         getNextToken();
@@ -1855,9 +1838,6 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   return std::make_unique<WhileExprAST>(std::move(Cond), std::move(Body));
 }
 
-
-// TODO : add types in for variable 
-// ex : for i : i8 = 0, i < 10, 1.0
 std::unique_ptr<ExprAST> ParseForExpr() {
   getNextToken();  // eat the for.
 
@@ -1957,8 +1937,6 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     if (is_array){
         cpoint_type.is_array = is_array;
-        //cpoint_type.nb_element = from_val_to_constant_infer(index->clone()->codegen());
-        //cpoint_type.nb_element = dyn_cast<ConstantFP>(index->clone()->codegen())->getValue().convertToDouble();
         cpoint_type.nb_element = from_val_to_int(index->clone()->codegen());;
     }
     // Read the optional initializer.

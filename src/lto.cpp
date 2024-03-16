@@ -5,6 +5,7 @@
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Bitcode/BitcodeWriterPass.h"
+#include <fstream>
 
 
 #include "log.h"
@@ -44,5 +45,9 @@ void writeBitcodeLTO(std::string filename, bool is_thin){
         pass.run(*TheModule);
     }
     //pass->run(*TheModule);
-    // Log::Info() << "bitcode : " << str << "\n";
+    //Log::Info() << "bitcode : " << str << "\n";
+    std::ofstream outfile;
+    outfile.open(filename);
+    outfile << str;
+    outfile.close();
 }

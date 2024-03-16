@@ -453,11 +453,11 @@ Value* getSizeOfStruct(AllocaInst *A){
 
 Value *NumberExprAST::codegen() {
   // TODO : create an int if the number is not decimal
-  /*if (trunc(Val) == Val){
+  if (trunc(Val) == Val){
     return ConstantInt::get(*TheContext, APInt(32, (int)Val, true));
   } else {
     return ConstantFP::get(*TheContext, APFloat(Val));
-  }*/
+  }
   return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
@@ -3298,7 +3298,10 @@ Value *ForExprAST::codegen(){
 
 Value *UnaryExprAST::codegen() {
   if (Opcode == '-'){
-    return operators::LLVMCreateSub(ConstantFP::get(*TheContext, APFloat(0.0)), Operand->codegen());
+    auto LHS = std::make_unique<NumberExprAST>(0.0);
+    auto RHS = std::move(Operand);
+    return std::make_unique<BinaryExprAST>(this->loc, "-", std::move(LHS), std::move(RHS))->codegen();
+    //return operators::LLVMCreateSub(ConstantFP::get(*TheContext, APFloat(0.0)), Operand->codegen());
   }
   if (Opcode == '&'){
     return std::make_unique<AddrExprAST>(std::move(Operand))->codegen();
@@ -3410,8 +3413,9 @@ Value *VarExprAST::codegen() {
     //double indexD = -1;
     if (index != nullptr){
     indexVal = index->codegen();
-    auto constFP = dyn_cast<ConstantFP>(indexVal);
-    double indexD = constFP->getValueAPF().convertToDouble();
+    /*auto constFP = dyn_cast<ConstantFP>(indexVal);
+    double indexD = constFP->getValueAPF().convertToDouble();*/
+    int indexD = from_val_to_int(indexVal);
     Log::Info() << "index for varexpr array : " << indexD << "\n";
     cpoint_type.is_array = true;
     cpoint_type.nb_element = indexD;

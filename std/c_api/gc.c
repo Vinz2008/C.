@@ -3,24 +3,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-// TODO : have a preprocessor define to make no_gc work when the gc is used
-/*
-something like : 
-
-void gc_init(){
-#ifndef NO_STD
-    GC_INIT();
-#else
-    panicx("using the gc with no_gc mode set in the build.toml", __FILE__, __FUNCTION__)
-#endif
-}
-
-*/
-
-/*void gc_init(){
-    GC_INIT();
-}*/
-
 #define NO_GC_PANIC() panicx("using the gc with no_gc mode set in the build.toml", __FILE__, __FUNCTION__);
 
 extern void panicx(char* string, const char* filename, const char* function);

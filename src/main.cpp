@@ -523,6 +523,8 @@ int main(int argc, char **argv){
           Comp_context->test_mode = true;
         } else if (arg.compare("-strip") == 0){
           Comp_context->strip_mode = true;
+        } else if (arg.compare("-flto") == 0){
+          Comp_context->lto_mode = true;
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
@@ -645,9 +647,6 @@ int main(int argc, char **argv){
     if (debug_info_mode){
     DBuilder->finalize();
     }
-#if ENABLE_LTO
-    writeBitcodeLTO("out-lto.bc", false);
-#endif
     TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
@@ -659,14 +658,40 @@ int main(int argc, char **argv){
     if (Comp_context->c_translator){
         c_translator::generate_c_code("out.c");
     } else {
-
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
+    std::string Error;
+    auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
+    if (!Target) {
+        errs() << Error << "\n";
+        return 1;
+    }
+
+    auto CPU = "generic";
+    auto Features = "";
+    TargetOptions opt;
+    //llvm::Optional<llvm::Reloc::Model> RM;
+    std::optional<llvm::Reloc::Model> RM;
+    if (PICmode){
+      //RM = Optional<Reloc::Model>(Reloc::Model::PIC_);
+      RM = std::optional<Reloc::Model>(Reloc::Model::PIC_);
+    } else {
+      //RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
+      RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
+    }
+    auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+    TheModule->setDataLayout(TheTargetMachine->createDataLayout());
+    if (Comp_context->lto_mode){
+        writeBitcodeLTO(object_filename, false);
+    } else {
+    //InitializeAllTargetInfos();
+    //InitializeAllTargets();
+    //InitializeAllTargetMCs();
     InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
     TheModule->setTargetTriple(TargetTriple);
-    std::string Error;
+    /*std::string Error;
     auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
     if (!Target) {
         errs() << Error;
@@ -686,7 +711,7 @@ int main(int argc, char **argv){
       RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
     }
     auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
-    TheModule->setDataLayout(TheTargetMachine->createDataLayout());
+    TheModule->setDataLayout(TheTargetMachine->createDataLayout());*/
     std::error_code EC;
     raw_fd_ostream dest(llvm::StringRef(object_filename), EC, sys::fs::OF_None);
     if (EC) {
@@ -703,6 +728,8 @@ int main(int argc, char **argv){
     }
     pass.run(*TheModule);
     dest.flush();
+    delete TheTargetMachine; // call the TargetMachine destructor to not leak memory
+    }
     std::string gc_path = DEFAULT_GC_PATH;
     Log::Print() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;
@@ -765,8 +792,11 @@ int main(int argc, char **argv){
           vect_obj_files.push_back(package_archive_path);
         }
       }
-      Log::Print() << _("Linked the executable") << "\n";
+      if (Comp_context->lto_mode){
+        linker_additional_flags += " -flto ";
+      }
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
+      Log::Print() << _("Linked the executable") << "\n";
     }
     if (Comp_context->strip_mode){
         if (!link_files_mode){
@@ -787,7 +817,6 @@ int main(int argc, char **argv){
       runCommand(actualpath);
     }
 
-    delete TheTargetMachine; // call the TargetMachine destructor to not leak memory
     }
 after_linking:
     if (remove_temp_file /*&& !asm_mode*/){

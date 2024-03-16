@@ -17,7 +17,7 @@ func write(fd : int, buf : i8 ptr) int {
     cwritefile(fd, buf)
 }
 
-func close(fd : int){
+func close(fd : int) int {
     close(fd)
 }
 
