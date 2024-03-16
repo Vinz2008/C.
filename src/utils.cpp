@@ -4,6 +4,7 @@
 #include <functional>
 #include <sys/stat.h>
 #include <filesystem>
+#include <string.h>
 
 namespace fs = std::filesystem;
 
@@ -25,6 +26,32 @@ bool FolderExists(std::string foldername){
     } else {
         return false;
     }
+}
+
+std::vector<std::string> PATHS;
+
+bool doesExeExist(std::string filename){
+    if (PATHS.empty()){
+        char* PATH = getenv("PATH");
+        PATH = strdup(PATH);
+        char *path_string = strtok(PATH, ":");
+        while (path_string != NULL) {
+            PATHS.push_back(path_string);
+            path_string = strtok(NULL, ":");
+        }
+        free(PATH);
+    }
+    for (int i = 0; i < PATHS.size(); i++){
+        //std::cout << "PATH " << i << " " << PATHS.at(i) << "\n";
+    }
+    for (int i = 0; i < PATHS.size(); i++){
+        std::string exepath = PATHS.at(i) + "/" + filename;
+        //std::cout << "exepath " << exepath << "\n";
+        if (fs::exists(exepath)){
+            return true;
+        }
+    }
+    return false;
 }
 
 void listFiles(const std::string &path, std::function<void(const std::string &)> cb) {

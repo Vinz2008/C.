@@ -87,6 +87,9 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     } else {
         cmd += " -lm ";
     }
+    if (doesExeExist("mold")){
+        cmd += " -fuse-ld=mold ";
+    }
     cmd += linker_additional_flags;
     for (int i = 0; i < list_files.size(); i++){
         cmd += " " + list_files.at(i);
