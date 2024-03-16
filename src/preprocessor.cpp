@@ -8,7 +8,6 @@
 std::unique_ptr<Preprocessor::Context> context;
 std::string word;
 std::stringstream wordstrtream;
-//static std::string line;
 
 
 namespace Preprocessor {
@@ -55,7 +54,7 @@ namespace Preprocessor {
             }
         }
     }
-} // namespace name
+}
 
 
 
@@ -178,35 +177,7 @@ void preprocess_instruction(std::string line){
     Log::Preprocessor_Info() << "instruction : " << instruction << "\n";
     get_next_word(instruction, pos);
     if (word == "if"){
-#if 1
         preprocess_if(instruction, pos);
-#else
-        get_next_word(instruction, pos);
-        std::string l = word;
-        get_next_word(instruction, pos);
-        std::string op = word;
-        get_next_word(instruction, pos);
-        std::string r = word;
-        int pos = context->get_variable_pos(l);
-        if (pos == -1){
-            fprintf(stderr, "PREPROCESSOR : unknown variable %s\n", l.c_str());
-        } else {
-            if (op == "=="){
-            if (context->get_variable_value(l) == r){
-                Log::Preprocessor_Info() << "if true" << "\n";
-                //go_to_next_line();
-            } else {
-                Log::Preprocessor_Info() << "if false" << "\n";
-                while (!compare_line(get_line_returned(), "?[endif]")){
-                    Log::Preprocessor_Info() << "line passed " << get_line_returned() << "\n";
-                    go_to_next_line();
-                }
-            }
-            } else {
-                fprintf(stderr, "PREPROCESSOR : unknown operator");
-            }
-        }
-#endif
     } else if (word == "endif"){
         Log::Preprocessor_Info() << "endif" << "\n";
     } else if (word == "define"){

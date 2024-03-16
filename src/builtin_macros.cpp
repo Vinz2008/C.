@@ -99,19 +99,7 @@ std::unique_ptr<StringExprAST> generate_concat_macro(std::vector<std::unique_ptr
     return std::make_unique<StringExprAST>(concatenated_str);
 }
 
-std::unique_ptr<ExprAST> generate_asm_macro(/*std::vector<std::unique_ptr<ExprAST>>& ArgsMacro*/ std::unique_ptr<ArgsInlineAsm> ArgsMacro){
-    /*if (ArgsMacro.size() != 1){
-        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "asm", 1, ArgsMacro.size());
-    }
-    StringExprAST* str = nullptr;
-    if (dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get())){
-        str = dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get());
-    } else {
-        return LogError("Wrong type of args for %s macro function call : expected a string", "asm");
-    }*/
-    //std::string assembly_code = str->str;
-    /*std::string assembly_code = ArgsMacro->assembly_code->str;
-    return std::make_unique<AsmExprAST>(assembly_code);*/
+std::unique_ptr<ExprAST> generate_asm_macro(std::unique_ptr<ArgsInlineAsm> ArgsMacro){
     return std::make_unique<AsmExprAST>(std::move(ArgsMacro));
 }
 
@@ -124,8 +112,12 @@ std::unique_ptr<ExprAST> generate_todo_macro(std::vector<std::unique_ptr<ExprAST
     if (ArgsMacro.empty()){
         Args.push_back(std::make_unique<StringExprAST>(basic_message + "\n"));
     } else {
-        //Args.push_back(std::make_unique<StringExprAST>(basic_message + " : "));
-        return LogError("You can't use the todo macro with args for now"); // TODO
+        if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
+            return LogError("Expected a string arg in the todo macro");
+        }
+        std::unique_ptr<StringExprAST> arg_expr = get_Expr_from_ExprAST<StringExprAST>(std::move(Args.at(0)));
+        std::string custom_message = arg_expr->str;
+        Args.push_back(std::make_unique<StringExprAST>(basic_message + " : " + custom_message));
     }
     return std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(Args), Cpoint_Type());
 }

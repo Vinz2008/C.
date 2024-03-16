@@ -67,13 +67,6 @@ public:
 };
 
 namespace c_translator {
-    /*class Expr {
-    public:
-        Expr(){}
-        virtual ~Expr() = default;
-        virtual std::string generate_c() = 0;
-        virtual std::unique_ptr<Expr> clone() = 0;
-    };*/
     class Function {
     public:
         C_Type return_type;
@@ -84,13 +77,7 @@ namespace c_translator {
         //std::vector<std::unique_ptr<Expr>> body; 
         std::vector<std::unique_ptr<ExprAST>> body; 
         std::string generate_c();
-        std::unique_ptr<Function> clone(); /*{
-            std::vector<std::unique_ptr<ExprAST>> bodyCloned;
-            for (int i = 0; i < body.size(); i++){
-                //bodyCloned.push_back(body.at(i)->clone());
-            }
-            return std::make_unique<Function>(return_type, function_name, args, std::move(bodyCloned), is_extern);
-        }*/
+        std::unique_ptr<Function> clone();
         Function(C_Type return_type, std::string function_name, std::vector<std::pair<std::string, C_Type>> args, std::vector<std::unique_ptr<ExprAST>> body, bool is_extern = false, bool is_variadic = false) : return_type(return_type), function_name(function_name), args(args), body(std::move(body)), is_extern(is_extern), is_variadic(is_variadic) {}
     };
     class Struct {
@@ -104,9 +91,6 @@ namespace c_translator {
         std::vector<std::string> headers_to_add;
         void write_output_code(std::ofstream& stream);
     };
-    /*class ForExpr : Expr {
-        ForExpr()
-    }:*/
     void init_context();
     void generate_c_code(std::string filename);
 }

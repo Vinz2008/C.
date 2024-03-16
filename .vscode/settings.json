@@ -119,7 +119,8 @@
         "gc.h": "c",
         "string.h": "c",
         "struct_stat_time64_helper.h": "c",
-        "filesystem": "cpp"
+        "filesystem": "cpp",
+        "strstream": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang",
     "C_Cpp.default.compileCommands": "/home/vincent/C./build/tomlplusplus/builddir/compile_commands.json"

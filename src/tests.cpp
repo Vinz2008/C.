@@ -4,7 +4,7 @@ std::vector<std::unique_ptr<TestAST>> testASTNodes;
 extern std::string first_filename;
 
 void generateTests(){
-  if (!Comp_context->test_mode /*|| testASTNodes.empty()*/){
+  if (!Comp_context->test_mode){
     return;
   }
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
@@ -14,9 +14,6 @@ void generateTests(){
   std::vector<std::unique_ptr<ExprAST>> Body;
   if (/*std_mode &&*/ Comp_context->gc_mode){
     generate_gc_init(Body);
-    /*std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
-    auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type());
-    Body.push_back(std::move(E_gc_init));*/
   }
   Log::Info() << "testASTNodes size : " << testASTNodes.size() << "\n";
   std::unique_ptr<ExprAST> printfCall;

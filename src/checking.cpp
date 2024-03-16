@@ -42,10 +42,8 @@ Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoin
       convert_to_type(get_cpoint_type_from_llvm(nbElement->getType()), index->getType(), nbElement);
     }
     Value* CondV = operators::LLVMCreateGreaterOrEqualThan(index, nbElement);
-    //Value* CondV = ConstantFP::get(*TheContext, APFloat((double)0));
     if (!CondV)
       return nullptr;
-    //CondV = Builder->CreateFCmpONE(CondV, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
     Function *TheFunction = Builder->GetInsertBlock()->getParent();
     BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "bound_checking_then", TheFunction);
     BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "bound_checking_after", TheFunction);

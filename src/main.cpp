@@ -83,9 +83,9 @@ extern std::unique_ptr<Module> TheModule;
 
 std::string first_filename = "";
 
+// TODO : add this to Comp_Context
 extern int CurTok;
 extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
-//std::unique_ptr<llvm::raw_fd_ostream> file_out_ostream;
 llvm::raw_ostream* file_out_ostream;
 ifstream file_in;
 ofstream file_log;
@@ -205,9 +205,8 @@ static void HandleDefinition() {
     if (Comp_context->c_translator){
         FnAST->c_codegen();
     } else {
-	if (/*auto *FnIR =*/ FnAST->codegen()) {
+	if (FnAST->codegen()) {
     Log::Info() << "Parsed a function definition." << "\n";
-    //FnIR->print(*file_out_ostream);
     }
     }
   } else {
@@ -224,9 +223,8 @@ static void HandleExtern() {
     if (Comp_context->c_translator){
         ProtoAST->c_codegen();
     } else {
-    if (/*auto *FnIR =*/ ProtoAST->codegen()) {
+    if (ProtoAST->codegen()) {
       Log::Info() << "Read Extern" << "\n";
-      //FnIR->print(*file_out_ostream);
     }
     }
   } else {
@@ -261,9 +259,7 @@ static void HandleGlobalVariable(){
 
 static void HandleStruct() {
   if (auto structAST = ParseStruct()){
-    if (/*auto* structIR =*/ structAST->codegen()){
-      //ObjIR->print(*file_out_ostream);
-    }
+    structAST->codegen();
   } else {
     if (!is_template_parsing_struct){
         getNextToken();
@@ -350,7 +346,6 @@ void MainLoop(){
       HandleEnum();
       break;
     case tok_class:
-      //HandleClass();
       HandleStruct();
       break;
     case tok_var:
@@ -439,9 +434,6 @@ int main(int argc, char **argv){
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
-        /*Comp_context->jit_mode = true;
-        launchJIT();
-        return 0;*/
 #else
         fprintf(stderr, "not enough arguments, expected at least 1, got %d\n", argc-1);
         exit(1);
@@ -589,8 +581,6 @@ int main(int argc, char **argv){
     }
     file_out_ostream = new raw_fd_ostream(llvm::StringRef("out.ll"), ec);
     file_in.open(filename);
-    //file_out_ostream = std::make_unique<llvm::raw_fd_ostream>(llvm::StringRef(filename), &ec);
-    //file_out_ostream = raw_fd_ostream(llvm::StringRef(filename), &ec);
     
     c_translator::init_context();
     
@@ -671,13 +661,10 @@ int main(int argc, char **argv){
     auto CPU = "generic";
     auto Features = "";
     TargetOptions opt;
-    //llvm::Optional<llvm::Reloc::Model> RM;
     std::optional<llvm::Reloc::Model> RM;
     if (PICmode){
-      //RM = Optional<Reloc::Model>(Reloc::Model::PIC_);
       RM = std::optional<Reloc::Model>(Reloc::Model::PIC_);
     } else {
-      //RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
       RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
     }
     auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
@@ -685,33 +672,9 @@ int main(int argc, char **argv){
     if (Comp_context->lto_mode){
         writeBitcodeLTO(object_filename, false);
     } else {
-    //InitializeAllTargetInfos();
-    //InitializeAllTargets();
-    //InitializeAllTargetMCs();
     InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
     TheModule->setTargetTriple(TargetTriple);
-    /*std::string Error;
-    auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
-    if (!Target) {
-        errs() << Error;
-        return 1;
-    }
-
-    auto CPU = "generic";
-    auto Features = "";
-    TargetOptions opt;
-    //llvm::Optional<llvm::Reloc::Model> RM;
-    std::optional<llvm::Reloc::Model> RM;
-    if (PICmode){
-      //RM = Optional<Reloc::Model>(Reloc::Model::PIC_);
-      RM = std::optional<Reloc::Model>(Reloc::Model::PIC_);
-    } else {
-      //RM = Optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
-      RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
-    }
-    auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
-    TheModule->setDataLayout(TheTargetMachine->createDataLayout());*/
     std::error_code EC;
     raw_fd_ostream dest(llvm::StringRef(object_filename), EC, sys::fs::OF_None);
     if (EC) {

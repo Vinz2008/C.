@@ -17,9 +17,8 @@ extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 extern std::unordered_map<std::string, std::unique_ptr<UnionDeclaration>> UnionDeclarations;
 extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
-//extern std::map<std::string, std::unique_ptr<ClassDeclaration>> ClassDeclarations;
-std::vector</*std::string*/ Cpoint_Type> typeDefTable;
-extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
+std::vector<Cpoint_Type> typeDefTable;
+extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern Source_location emptyLoc;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
@@ -104,9 +103,6 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     }
 before_is_ptr:
     if (cpoint_type.is_ptr){
-        /*for (int i = 0; i < cpoint_type.nb_ptr; i++){
-        type = type->getPointerTo();
-        }*/
         type = PointerType::get(*TheContext, 0);
     }
     // code that should not be used except in var creation. The index is not found when doing the codegen
@@ -129,7 +125,6 @@ before_is_ptr:
         type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);*/
         type = PointerType::get(*TheContext, 0);
     }
-    //Log::Info() << "TEST after is function" << "\n";
     return type;   
 }
 
@@ -149,7 +144,6 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     bool is_function = false;
     std::string struct_name = "";
     int nb_element = 0;
-    //Type* not_ptr_type = llvm_type;
     if (llvm_type->isPointerTy()){
         is_ptr = true;
     }
@@ -267,16 +261,6 @@ int find_struct_type_size(Cpoint_Type cpoint_type){
     for (int i = 0; i < StructDeclarations[cpoint_type.struct_name]->members.size(); i++){
        Cpoint_Type member_type = StructDeclarations[cpoint_type.struct_name]->members.at(i).second;
         size += get_type_size(member_type);
-        /*if (member_type.is_struct){
-            size += find_struct_type_size(member_type);
-        } else if (member_type.is_ptr){
-            size += (TripleLLVM.isArch64Bit()) ? 64 : 32;
-        } else if (member_type.is_array){
-            size += member_type.nb_element * get_type_number_of_bits(member_type);
-        } else {
-            size += get_type_number_of_bits(member_type);
-            Log::Info() << "find_struct_type_size normal type " << member_type << " : " << get_type_number_of_bits(cpoint_type) << "\n";
-        }*/
     }
     return size;
 }

@@ -140,16 +140,6 @@ std::string generate_body_c(std::vector<std::unique_ptr<ExprAST>>& body){
     return body_content;
 }
 
-
-/*c_translator::Expr* from_cpoint_to_c_class(std::unique_ptr<ExprAST> expr){
-    if (dynamic_cast<ForExprAST*>(expr.get())){
-        ForExprAST* forTemp = expr.get();
-
-    } else {
-        Log::Warning() << "Not implemented Expression in C backend" << "\n";
-    }
-}*/
-
 c_translator::Function* FunctionAST::c_codegen(){
     std::string function_name = Proto->getName();
     C_Type return_type = C_Type(Proto->cpoint_type);
@@ -326,7 +316,6 @@ std::string IfExprAST::generate_c(){
 }
 
 std::string WhileExprAST::generate_c(){
-    // TODO : create a function for loops generating a body
     std::string body_while = "";
     body_while += generate_body_c(Body);
     for (int i = 0; i < Body.size(); i++){

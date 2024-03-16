@@ -328,17 +328,6 @@ after_number_lex_loop:
     Log::Info() << "NumVal : " << NumVal << "\n";
     return tok_number;
   }
-
-  // TODO : maybe move the detection of comments in the lexer ?
-  /*if (LastChar == '#') {
-    // Comment until end of line.
-    do
-      LastChar = getCharLine();
-    while (LastChar != EOF && LastChar != '\n' && LastChar != '\r');
-
-    if (LastChar != EOF)
-      return gettok();
-  }*/
   if (LastChar == '\"'){
     LastChar = getCharLine();
     strStatic = LastChar;

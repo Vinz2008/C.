@@ -507,24 +507,11 @@ void interpret_import(std::string line, int& pos_src){
     std::vector<std::string> Paths;
     skip_spaces(line, pos_src);
     bool is_special_path = getPath(line, pos_src, Paths);
-    /*if (Paths.size() == 1){
-        Path = Paths.at(0);
-    }*/
+
     for (int i = 0; i < Paths.size(); i++){
         Log::Imports_Info() << "Importing file " << Paths.at(i) << "\n";
         import_file(Paths.at(i), is_special_path);
     }
-    //import_file(Path, is_special_path);
-    /*int nb_line = get_nb_lines(imported_file, Path);
-    imported_file.open(Path);
-    if (imported_file.is_open()){
-        int pos_line = 0;
-        while (std::getline(imported_file, line)){
-            Log::Imports_Info() << line << "\n";
-            find_patterns(line, nb_line, pos_line);
-        }
-    }
-    imported_file.close();*/
 }
 
 void interpret_include(std::string line, int& pos_src){
