@@ -119,7 +119,10 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
         cmd.append(" --sysroot=" + sysroot + " ");
     }
     if (linker_path != ""){
-        cmd.append("-fuse-ld=" + linker_path + " ");
+        cmd.append(" -fuse-ld=" + linker_path + " ");
+    }
+    if (doesExeExist("mold")){
+        cmd.append(" -fuse-ld=mold ");
     }
     if (args != ""){
         cmd.append(" " + args + " ");
