@@ -290,7 +290,7 @@ public:
     //Value *codegen() override;
     std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
-        return EnumVarName + "::" + EnumMemberName + "(" + value->to_string() + ")";
+        return EnumVarName + "::" + EnumMemberName + "(" + ((value) ? value->to_string() : (std::string)"") + ")";
     }
     std::string generate_c() override { return ""; }
 };

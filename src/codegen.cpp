@@ -1254,7 +1254,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
 // TODO : maybe rename it to getObjectMember (it returns only the ptr without load so maybe calling it getObjectMemberPtr)
 Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& member_type){
     if (dynamic_cast<VariableExprAST*>(struct_expr.get())){
-        AllocaInst* Alloca = nullptr;
+        Value* Alloca = nullptr;
         std::unique_ptr<VariableExprAST> structVarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(struct_expr));
         std::string StructName = structVarExpr->Name;
         auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(std::move(member));
@@ -1262,12 +1262,13 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             return LogErrorV(emptyLoc, "expected an identifier for a struct member");
         }
         std::string MemberName = varExprMember->Name;
-        if (NamedValues[StructName] == nullptr){
+        if (!var_exists(StructName)){
             return LogErrorV(emptyLoc, "Can't find struct that is used for a member");
         }
-        Alloca = NamedValues[StructName]->alloca_inst;
-        Log::Info() << "struct type : " <<  NamedValues[StructName]->type << "\n";
-        if (!NamedValues[StructName]->type.is_struct && !NamedValues[StructName]->type.is_union){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
+        Alloca = get_var_allocation(StructName);
+        Cpoint_Type structType = *get_variable_type(StructName);
+        Log::Info() << "struct type : " <<  structType << "\n";
+        if (!structType.is_struct && !structType.is_union){ // TODO : verify if is is really  struct (it didn't work for example with the self of structs function members)
             return LogErrorV(emptyLoc, "Using a member of variable even though it is not a struct or an union");
         }
         Log::Info() << "StructName : " << StructName << "\n";
@@ -1276,11 +1277,11 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             Log::Info() << "NamedValues[StructName] nullptr" << "\n";
         }
         //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
-        Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->type.struct_name << "\n";
-        Log::Info() << "struct_declaration_name length : " << NamedValues[StructName]->type.struct_name.length() << "\n";
+        Log::Info() << "struct_declaration_name : " << structType.struct_name << "\n";
+        Log::Info() << "struct_declaration_name length : " << structType.struct_name.length() << "\n";
     
-        if (NamedValues[StructName]->type.is_union){
-            auto members = UnionDeclarations[NamedValues[StructName]->type.union_name]->members;
+        if (structType.is_union){
+            auto members = UnionDeclarations[structType.union_name]->members;
             int pos = -1;
             for (int i = 0; i < members.size(); i++){
             Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
@@ -1295,7 +1296,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             member_type = members.at(pos).second;
             return Alloca;
         } else {
-        auto members = StructDeclarations[NamedValues[StructName]->type.struct_name]->members;
+        auto members = StructDeclarations[structType.struct_name]->members;
         Log::Info() << "members.size() : " << members.size() << "\n";
         int pos = -1;
         for (int i = 0; i < members.size(); i++){
@@ -1312,13 +1313,12 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         member_type = members.at(pos).second;
         auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
         auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
-        Cpoint_Type cpoint_type = NamedValues[StructName]->type;
-        if (cpoint_type.is_ptr){
-            cpoint_type.is_ptr = false;
+        if (structType.is_ptr){
+            structType.is_ptr = false;
         }
-        Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
+        Log::Info() << "cpoint_type struct : " << structType << "\n";
     
-        Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, { zero, index});
+        Value* ptr = Builder->CreateGEP(get_type_llvm(structType), Alloca, { zero, index});
         return ptr;
         }
     }
@@ -2421,8 +2421,9 @@ GlobalVariable* GlobalVariableAST::codegen(){
   GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
   if (is_array){
     auto indexVal = index->codegen();
-    auto constFP = dyn_cast<ConstantFP>(indexVal);
-    double indexD = constFP->getValueAPF().convertToDouble();
+    /*auto constFP = dyn_cast<ConstantFP>(indexVal);
+    double indexD = constFP->getValueAPF().convertToDouble();*/
+    int indexD = from_val_to_int(indexVal);
     cpoint_type.is_array = true;
     cpoint_type.nb_element = indexD;
   }
