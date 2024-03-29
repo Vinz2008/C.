@@ -193,4 +193,4 @@ std-test:
 all-tests: test std-test
 
 onefetch:
-	onefetch --exclude bdwgc/* bdwgc_prefix/* build/tomlplusplus/*
+	onefetch --exclude bdwgc/* bdwgc_prefix/* tools/vscode/* tools/vim/*

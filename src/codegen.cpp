@@ -1093,6 +1093,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
     if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
         Log::Info() << "Equal op bin lvalue" << "\n";
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
+        Log::Info() << "op : " << BinExpr->Op << "\n";
         if (BinExpr->Op.at(0) == '['){
             // TODO : make work using other things than variables
             if (!dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
@@ -1591,6 +1592,10 @@ Value* AsmExprAST::codegen(){
     } else {
         return Builder->CreateCall(inlineAsm, AsmArgs);
     }
+}
+
+Value* SemicolonExprAST::codegen(){
+    return UndefValue::get(Type::getVoidTy(*TheContext));
 }
 
 Value *BinaryExprAST::codegen() {

@@ -512,6 +512,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return LogError("Unknown token %d when expecting an expression", CurTok);
   case '#':
     return ParseMacroCall();
+  case ';':
+    return ParseSemiColon();
   case tok_single_line_comment:
     HandleComment();
     return std::make_unique<CommentExprAST>();
@@ -661,6 +663,10 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
     }
     }
     return LogError("unknown function macro called : %s", function_name.c_str());
+}
+
+std::unique_ptr<ExprAST> ParseSemiColon(){
+    return std::make_unique<SemicolonExprAST>();
 }
 
 Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
@@ -1342,7 +1348,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY CurTok : " << CurTok << "\n";
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#')
+  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#' || CurTok == ';')
     return ParsePrimary();
 
   // If this is a unary operator, read it.
