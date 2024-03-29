@@ -3,8 +3,6 @@
 #include <thread>
 #include "files.h"
 #include "cli.h"
-#define  TOML_HEADER_ONLY 1
-#include <toml++/toml.h>
 #include <filesystem>
 
 namespace fs = std::filesystem;
@@ -72,4 +70,60 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
     }
     }
     std::cout << std::endl;
+}
+
+void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number){
+    auto subfolders = config["subfolders"]["folders"];
+    if (toml::array* arr = subfolders.as_array()){
+        int subfolder_number = arr->size();
+        arr->for_each([&config, type, target, sysroot, is_gc, subfolder_number,thread_number](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                std::cout << "sub : " << sub << std::endl;
+                buildFolder((std::string)sub, config, type, target, sysroot, is_gc, (int)lround(thread_number/subfolder_number));
+            }
+        });
+    }
+}
+
+bool isSubprojectGC(std::string path){
+    //std::cout << "project gc path : " << path + "/build.toml" << std::endl;
+    auto subproject_config = toml::parse_file(path + "/build.toml");
+    bool is_gc = subproject_config["build"]["gc"].value_or(true);
+    //std::cout << "project gc : " << is_gc << std::endl;
+    return is_gc;
+}
+
+void buildSubproject(std::string path){
+    runCommand("cd " + path + " && cpoint-build");
+}
+
+void buildSubprojects(toml::v3::table& config){
+    std::vector<std::string> no_gc_subprojects;
+    std::vector<std::string> gc_subprojects;
+    auto subfolders = config["subfolders"]["projects"];
+    if (toml::array* arr = subfolders.as_array()){
+        arr->for_each([&config, &gc_subprojects, &no_gc_subprojects](auto&& sub){
+            if constexpr (toml::is_string<decltype(sub)>){
+                //std::cout << "sub : " << sub << std::endl;
+                //buildSubproject((std::string)sub);
+                
+                if (isSubprojectGC((std::string)sub)){
+                    gc_subprojects.push_back((std::string)sub);
+                } else {
+                    no_gc_subprojects.push_back((std::string)sub);
+                }
+                //subprojects.push_back((std::string)sub);
+            }
+        });
+    }
+    for (int i = 0; i < no_gc_subprojects.size(); i++){
+        //std::cout << "building no gc subprojects" << std::endl;
+        std::cout << "sub : " << no_gc_subprojects.at(i) << std::endl;
+        buildSubproject(no_gc_subprojects.at(i));
+    }
+    for (int i = 0; i < gc_subprojects.size(); i++){
+        //std::cout << "building gc subprojects" << std::endl;
+        std::cout << "sub : " << gc_subprojects.at(i) << std::endl;
+        buildSubproject(gc_subprojects.at(i));
+    }
 }
