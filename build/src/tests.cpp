@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <iostream>
 #include "cli.h"
+#include "linker.h"
 
 namespace fs = std::filesystem;
 

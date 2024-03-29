@@ -7,6 +7,3 @@
 [submodule "tools/vim"]
 	path = tools/vim
 	url = https://github.com/Vinz2008/cpoint-vim
-[submodule "build/tomlplusplus"]
-	path = build/tomlplusplus
-	url = https://github.com/marzer/tomlplusplus.git

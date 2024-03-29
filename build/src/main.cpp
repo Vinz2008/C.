@@ -6,12 +6,15 @@
 #include "install.h"
 #include "tests.h"
 #include "log.h"
+#include "linker.h"
+#include "clean.h"
+#include "dependencies.h"
+#define  TOML_HEADER_ONLY 1
 #include <toml++/toml.h>
 #include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <filesystem>
-#include <thread>
 
 namespace fs = std::filesystem;
 
@@ -48,28 +51,6 @@ bool src_folder_exists = true;
 bool silent_mode = false;
 
 
-
-// keep it in this file to not have multiple file with the tomlplusplus header included
-bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc){
-    std::string last_build_toml_path = std_path + "/last_build.toml";
-    if (!fs::exists(fs::path(std_path + "/libstd.a"))){
-        return true;
-    }
-    if (fs::exists(fs::path(last_build_toml_path))){ 
-        auto last_build_toml = toml::parse_file(last_build_toml_path);
-        if (!last_build_toml["target"].is_value()){
-            return true;
-        }
-        std::string last_target = last_build_toml["target"].value_or("");
-        /*if (last_target == ""){
-            return true;
-        }*/
-        bool last_is_gc = last_build_toml["is_gc"].value_or(true);
-        return (last_target != target || last_is_gc != is_gc);
-    }
-    return true;
-}
-
 bool isSubprojectGC(std::string path){
     //std::cout << "project gc path : " << path + "/build.toml" << std::endl;
     auto subproject_config = toml::parse_file(path + "/build.toml");
@@ -88,14 +69,6 @@ void writeLastBuildToml(std::string std_path, std::string target, bool is_gc){
     //build_toml["is_gc"] = is_gc;
     //build_toml["target"] = target;
 }
-
-// TODO : maybe move some functions in other files/create new files
-
-void addDependencyToTempLinkableFiles(std::string dependency){
-    std::string lib_path = DEFAULT_PACKAGE_PATH "/" + dependency + "/lib.a";
-    DependencyPathList.push_back(lib_path);
-}
-
 void addDependenciesToLinkableFiles(std::vector<std::string>& PathListPassed){
     for (int i = 0; i < DependencyPathList.size(); i++){
         PathListPassed.push_back(DependencyPathList.at(i));
@@ -113,72 +86,6 @@ void addLibrariesToList(toml::v3::node_view<toml::v3::node>& libraries){
     }
 }
 
-// also add dependencies libraries
-void downloadSubDependencies(std::string username, std::string repo_name){
-    std::string root_build_toml_path = DEFAULT_PACKAGE_PATH "/" + repo_name + "/build.toml";
-    if (!fs::exists(fs::path(root_build_toml_path))){
-        return;
-    }
-    //std::cout << "DOWNLOAD SUB DEPENDENCIES" << std::endl;
-    auto dependency_config = toml::parse_file(root_build_toml_path);
-    auto github_dependencies = dependency_config["dependencies"]["github"];
-    auto libraries =  dependency_config["build"]["libraries"];
-    //addLibrariesToList(libraries);
-    if (toml::array* arr = libraries.as_array()){
-        arr->for_each([](auto&& dep){
-            if constexpr (toml::is_string<decltype(dep)>){
-                //std::cout << "add to LibrariesList : " << (std::string)dep << std::endl;
-                LibrariesList.push_back((std::string)dep);
-            }
-        });
-    }
-    if (toml::array* arr = github_dependencies.as_array()){
-        arr->for_each([](auto&& dep){
-            if constexpr (toml::is_string<decltype(dep)>){
-                std::string dependency = *dep;
-                std::string username = dependency.substr(0, dependency.find('/'));
-                std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
-                cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
-                downloadSubDependencies(username, repo_name);
-                addDependencyToTempLinkableFiles(repo_name);
-            }
-        });
-    }
-
-}
-
-void downloadDependencies(toml::v3::table config){
-    auto github_dependencies = config["dependencies"]["github"];
-    if (toml::array* arr = github_dependencies.as_array()){
-        arr->for_each([](auto&& dep){
-            if constexpr (toml::is_string<decltype(dep)>){
-            std::string dependency = *dep;
-            std::string username = dependency.substr(0, dependency.find('/'));
-            std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
-            cloneGithub(username, repo_name, DEFAULT_PACKAGE_PATH);
-            downloadSubDependencies(username, repo_name);
-            addDependencyToTempLinkableFiles(repo_name);
-            }
-        });
-    }
-}
-
-void addDependency(std::string dependency_name, toml::v3::table& config){
-    auto github_dependencies = config["dependencies"]["github"];
-    if (toml::array* arr = github_dependencies.as_array()){
-        arr->for_each([dependency_name](auto&& dep){
-            if constexpr (toml::is_string<decltype(dep)>){
-                std::cout << "add dependency : " << dependency_name << std::endl;
-                std::cout << "dep : " << dep << std::endl;
-            }
-        });
-        arr->insert(arr->end(), dependency_name);
-        //std::cout << config << std::endl; 
-        std::ofstream configFstream(filename_config);
-        configFstream << config;
-        configFstream.close();
-    }
-}
 
 void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number){
     auto subfolders = config["subfolders"]["folders"];
@@ -226,82 +133,6 @@ void buildSubprojects(toml::v3::table& config){
         //std::cout << "building gc subprojects" << std::endl;
         std::cout << "sub : " << gc_subprojects.at(i) << std::endl;
         buildSubproject(gc_subprojects.at(i));
-    }
-}
-
-bool shouldCompileFile(std::string file){
-    fs::path path{file};
-    path.replace_extension("o");
-    if (!fs::exists(path)){
-        return true;
-    }
-    std::string object_file = path.string();
-    auto file_timestamp = fs::last_write_time((fs::path)(file)).time_since_epoch();
-    auto object_file_timestamp = fs::last_write_time((fs::path)(object_file)).time_since_epoch();
-    return (file_timestamp.count() > object_file_timestamp.count());
-}
-
-std::vector<std::string> buildFileEachThreadPathList;
-
-void buildFileEachThread(int index, std::string target, std::string sysroot, std::string arguments){
-    std::string path = buildFileEachThreadPathList.at(index);
-    std::cout << path << ' ';
-    compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
-}
-
-void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number, std::vector<std::string> localPathList, std::string arguments){
-    std::cout << "Multi threaded with " << thread_number << " threads" << std::endl;
-    std::vector<std::thread> threads;
-    buildFileEachThreadPathList = localPathList;
-    for (int i = 0; i < localPathList.size(); i+=thread_number){
-    for (int j = i; j < i+thread_number; j++){
-        if (j < localPathList.size()){
-        threads.push_back(std::thread(buildFileEachThread, j, target, sysroot, arguments));
-        }
-    }
-    }
-    for(auto& thread : threads){
-        thread.join();
-    }
-}
-
-void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number){
-    std::cout << "buildFolder threads " << thread_number  << std::endl;
-    std::string_view arguments_view = config["build"]["arguments"].value_or("");
-    std::string arguments = (std::string) arguments_view;
-    if (type == "dynlib"){
-        arguments += " -fPIC ";
-    }
-    std::vector<std::string> localPathList = getFilenamesWithExtension(".cpoint", src_folder);
-    PathList.insert(PathList.end(), localPathList.begin(), localPathList.end());
-    if (!is_gc){
-        arguments += " -no-gc ";
-    }
-    if (thread_number > 1){
-        buildFolderMultiThreaded(src_folder, config, type, target, sysroot, is_gc, thread_number, localPathList, arguments);
-    } else {
-    for (auto const& path : localPathList){
-        if (shouldCompileFile(path)){
-            std::cout << path << ' ';
-            compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
-        }
-    }
-    }
-    std::cout << std::endl;
-}
-
-void buildDependencies(toml::v3::table& config){
-    auto github_dependencies = config["dependencies"]["github"];
-    if (toml::array* arr = github_dependencies.as_array()){
-        arr->for_each([](auto&& dep){
-            if constexpr (toml::is_string<decltype(dep)>){
-            std::string dependency = *dep;
-            std::string username = dependency.substr(0, dependency.find('/'));
-            std::string repo_name = dependency.substr(dependency.find('/')+1, dependency.size());
-            std::string repo_path = DEFAULT_PACKAGE_PATH "/" + repo_name;
-            buildDependency(repo_path);
-            }
-        });
     }
 }
 
@@ -427,88 +258,6 @@ void runPrebuildCommands(toml::v3::table& config){
                 Log() << returnCmd->buffer << "\n";
             }
         });
-    }
-}
-
-
-void runCustomCleanCommands(toml::v3::table& config){
-    auto commands = config["custom"]["clean_commands"];
-    if (toml::array* arr = commands.as_array()){
-        arr->for_each([](auto&& cmd){
-            if constexpr (toml::is_string<decltype(cmd)>){
-                std::cout << "cmd : " << cmd << std::endl;
-                std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
-                std::cout << returnCmd->buffer << std::endl;
-            }
-        });
-    }
-}
-
-void cleanObjectFilesFolder(std::string folder){
-    std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", folder);
-    for (auto const& path : PathList){
-        fs::path path_fs{ path };
-        
-        std::string object_path = path_fs.replace_extension(".o").string();
-        std::cout << object_path << ' ';
-        remove(object_path.c_str());
-    }
-    std::cout << std::endl;
-}
-
-void cleanFilesFolderExtension(std::string folder, std::string extension){
-    std::vector<std::string> PathList = getFilenamesWithExtension(extension, folder);
-    for (auto const& path : PathList){
-        std::string path_temp = path;
-        remove(path_temp.c_str());
-    }
-}
-
-void cleanFilesFolder(std::string folder){
-    cleanFilesFolderExtension(folder, ".ll");
-    cleanFilesFolderExtension(folder, ".test.o");
-    cleanFilesFolderExtension(folder, ".test");
-    cleanObjectFilesFolder(folder);
-}
-
-
-void cleanObjectFilesSubprojects(toml::v3::table& config){
-    auto subfolders = config["subfolders"]["projects"];
-    if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config](auto&& sub){
-            if constexpr (toml::is_string<decltype(sub)>){
-                std::cout << "sub : " << sub << std::endl;
-                cleanFilesFolder((std::string)sub);
-                runCommand("cd " + (std::string)sub + " && cpoint-build clean");
-                //cleanObjectFilesFolder((std::string)sub);
-            }
-        });
-    }
-}
-
-void cleanFiles(toml::v3::table& config, std::string src_folder, std::string type){
-    if (src_folder_exists){
-    cleanFilesFolder(src_folder);
-    //cleanObjectFilesFolder(src_folder);
-    }
-    auto subfolders = config["subfolders"]["folders"];
-    if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config](auto&& sub){
-            if constexpr (toml::is_string<decltype(sub)>){
-                cleanFilesFolder((std::string)sub);
-                //cleanObjectFilesFolder((std::string)sub);
-            }
-        });
-    }
-    cleanObjectFilesSubprojects(config);
-    runCustomCleanCommands(config);
-    std::cout << "type : " << type << std::endl;
-    if (type == "exe"){
-        std::string outfile = (std::string)config["build"]["outfile"].value_or("");
-        if (outfile == ""){
-            outfile = "a.out";
-        }
-        remove(outfile.c_str());
     }
 }
 
