@@ -4,6 +4,6 @@ extern set_pointer_int(pointer : int ptr, value : int) void;
 import @std/print.cpoint
 func main() void {
     var pointer : int ptr = gc_malloc(size_of_int())
-    printptr(pointer)
-    set_pointer_int(pointer, 3)
+    printptr(pointer);
+    *pointer = 3
 }

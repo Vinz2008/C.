@@ -73,7 +73,11 @@ void buildDependency(std::string path){
 }
 
 void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot, std::string out_path){
-    std::string cmd = "cpoint -c " + arguments + " " + path + " ";
+    std::string compiler = "cpoint";
+    if (fs::exists("../cpoint")){
+        compiler = "../cpoint";
+    }
+    std::string cmd = compiler + " -c " + arguments + " " + path + " ";
     fs::path path_fs{ path };
     if (out_path == ""){
         out_path = path_fs.replace_extension(".o").string();

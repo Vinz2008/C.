@@ -412,6 +412,9 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
   Log::Info() << "PARSING BINOP" << "\n";
   Log::Info() << "ExprPrec : " << ExprPrec << "\n";
   // If this is a binop, find its precedence.
+  if (dynamic_cast<SemicolonExprAST*>(LHS.get())){
+    return std::move(LHS);
+  }
   while (true) {
     int TokPrec = 0;
     if (CurTok != tok_op_multi_char){
@@ -666,6 +669,7 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
 }
 
 std::unique_ptr<ExprAST> ParseSemiColon(){
+    getNextToken();
     return std::make_unique<SemicolonExprAST>();
 }
 

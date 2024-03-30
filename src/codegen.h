@@ -100,3 +100,4 @@ Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 bool should_return_struct_with_ptr(Cpoint_Type cpoint_type);
 Cpoint_Type* get_variable_type(std::string name);
 Value* get_var_allocation(std::string name);
+Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& member_type);

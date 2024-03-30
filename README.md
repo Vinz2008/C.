@@ -121,6 +121,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Replace float and double with f32 and f64 ?
 - [ ] Rename list to vec or vector in std
 - [ ] Add a config file for default compiler flags, etc (and add a env var like CPOINTFLAGS ?)
+- [ ] Fix error messages (wrong location, wrong line, etc)
 
 ## Benchmarks compared to other languages
 

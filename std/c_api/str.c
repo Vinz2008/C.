@@ -24,13 +24,6 @@ double append_char(struct struct_str_c* str, char c){
     return 0;
 }
 
-void internal_append_char(char c, char* string, size_t size){
-    string[size+1] = c;
-}
-
-void internal_remove_char(char* string, size_t size){
-    string[size] = '\0';
-}
 
 double print_str(struct struct_str_c s){
     puts(s.ptr);

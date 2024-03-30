@@ -15,11 +15,10 @@ struct str {
 }
 
 mod String {
-func create(string : i8 ptr) struct str ptr {
-    var s : struct str ptr
-    var i : double = sizeof int
-    s = gc_malloc(i * 5)
+func create(string : i8 ptr) struct str {
+    var s : struct str
     s.pointer = gc_strdup(string)
+    #println("ptr when creating : {}", s.pointer)
     s.len = strlen(s.pointer)
     s.maxlength = s.len
     s.factor = 2
@@ -31,12 +30,12 @@ func appendChar(c : i8, string : struct str ptr){
         var newmaxlength = string.maxlength + string.factor
         string.pointer = gc_realloc(string.pointer, newmaxlength)
     }
-    internal_append_char(c, string.pointer, string.len)
+    string.pointer[string.len+1] = c
     string.len = string.len + 1
 }
 
 func removeChar(string : struct str ptr){
-    internal_remove_char(string.pointer, string.len)
+    string.pointer[string.len] = '\0'
     string.len = string.len - 1
 }
 
@@ -52,5 +51,6 @@ func destroyString(string : struct str ptr) void {
 }
 
 func printstring(string : struct str) void {
+    #println("ptr : {}", string.pointer)
     printstr(string.pointer)
 }

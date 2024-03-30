@@ -1096,11 +1096,31 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         Log::Info() << "op : " << BinExpr->Op << "\n";
         if (BinExpr->Op.at(0) == '['){
             // TODO : make work using other things than variables
-            if (!dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
+            Cpoint_Type cpoint_type;
+            Value* arrayPtr = nullptr;
+            if (dynamic_cast<BinaryExprAST*>(BinExpr->LHS.get())){
+                std::unique_ptr<BinaryExprAST> BinExprBeforeArrayIndex = get_Expr_from_ExprAST<BinaryExprAST>(BinExpr->LHS->clone());
+                if (BinExprBeforeArrayIndex->Op != "."){
+                    return LogErrorV(emptyLoc, "Not supported operator in array indexing in equal operator");
+                }
+                arrayPtr = getStructMemberGEP(std::move(BinExprBeforeArrayIndex->LHS), std::move(BinExprBeforeArrayIndex->RHS), cpoint_type);
+            } else if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
+                std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(BinExpr->LHS->clone());
+                arrayPtr = get_var_allocation(VarExpr->Name);
+                cpoint_type = *get_variable_type(VarExpr->Name);
+                Log::Info() << "ArrayName : " << VarExpr->Name << "\n";
+                if (ValDeclared->getType()->isArrayTy()){
+                    AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
+                    Builder->CreateStore(ValDeclared, Alloca);
+                    NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+                    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+                }
+            } else {
                 return LogErrorV(emptyLoc, "In an equal operator, another expression than a variable name is used ");
             }
-            std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
-            Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
+            /*std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
+            auto arrayPtr = get_var_allocation(VarExpr->Name);*/
+            //Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
             Cpoint_Type member_type = cpoint_type;
             Log::Info() << "member type : " << member_type << "\n";
             if (member_type.is_ptr && !member_type.is_array){
@@ -1112,24 +1132,16 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 member_type.is_array = false;
                 member_type.nb_element = 0;
             }
-            if (ValDeclared->getType()->isArrayTy()){
-                AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
-                Builder->CreateStore(ValDeclared, Alloca);
-                NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-                return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-            }
             //Log::Info() << "Pos for GEP : " << pos_array << "\n";
-            Log::Info() << "ArrayName : " << VarExpr->Name << "\n";
             auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
             auto index = std::move(BinExpr->RHS);
             if (!index){
-                return LogErrorV(emptyLoc, "couldn't find index for array %s", VarExpr->Name.c_str());
+                return LogErrorV(emptyLoc, "couldn't find index for array %s", BinExpr->LHS->to_string().c_str());
             }
             auto indexVal = index->codegen();
             if (indexVal->getType() != get_type_llvm(int_type)){
                 convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(int_type), indexVal) ;
             }
-            auto arrayPtr = get_var_allocation(VarExpr->Name);
             Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
             std::vector<Value*> indexes = { zero, indexVal};
             if (cpoint_type.is_ptr && !cpoint_type.is_array){
@@ -1244,8 +1256,24 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         // TODO : remove all the NamedValues redeclaration
         NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         }
+        // TODO : maybe replace all the null values returned to the lvalue
+        return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+    } else if (dynamic_cast<UnaryExprAST*>(lvalue.get()) || dynamic_cast<DerefExprAST*>(lvalue.get())){
+        Value* lval_llvm = nullptr;
+        if (dynamic_cast<UnaryExprAST*>(lvalue.get())){
+            std::unique_ptr<UnaryExprAST> UnaryExpr = get_Expr_from_ExprAST<UnaryExprAST>(std::move(lvalue));
+            if (UnaryExpr->Opcode != '*'){
+                return LogErrorV(emptyLoc, "The equal operator is not implemented for other Unary Operators as rvalue than deref");
+            }
+            lval_llvm = std::make_unique<AddrExprAST>(std::move(UnaryExpr->Operand))->codegen();
+        } else if (dynamic_cast<DerefExprAST*>(lvalue.get())) {
+            lval_llvm = lvalue->codegen();
+        }
+        Value* ptr = Builder->CreateLoad(lval_llvm->getType(), lval_llvm);
+        Builder->CreateStore(ValDeclared, ptr);
         return Constant::getNullValue(Type::getDoubleTy(*TheContext));
     }
+    Log::Info() << "Expr type : " << typeid(*lvalue.get()).name() << "\n";
     return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
 }
 
@@ -2303,8 +2331,9 @@ Function *FunctionAST::codegen() {
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
     debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
     if (has_by_val){
-        Builder->CreateMemCpy(Alloca, Alloca->getAlign(), &Arg, Arg.getParamAlign(), /*SizeofExprAST(get_cpoint_type_from_llvm(Alloca->getAllocatedType()), false, "").codegen()*/ find_struct_type_size(cpoint_type_arg)/8 * 2 /*IS A HACK : TODO find how to make it work, advice : look at clang generated ir*/);
-        //Builder->CreateStore(&Arg, Alloca);
+        // TODO ?
+        //Builder->CreateMemCpy(Alloca, Alloca->getAlign(), &Arg, Arg.getParamAlign(), /*SizeofExprAST(get_cpoint_type_from_llvm(Alloca->getAllocatedType()), false, "").codegen()*/ find_struct_type_size(cpoint_type_arg)/8 * 2 /*IS A HACK : TODO find how to make it work, advice : look at clang generated ir*/);
+        Builder->CreateStore(&Arg, Alloca);
     } else {
         Builder->CreateStore(&Arg, Alloca);
     }
