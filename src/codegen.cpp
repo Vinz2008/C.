@@ -90,8 +90,6 @@ extern bool is_in_extern;
 
 int closure_number = 0;
 
-// TODO : return at last line of function after if returns the iftmp and not the return value : fix this
-
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
@@ -448,7 +446,6 @@ Value* getSizeOfStruct(AllocaInst *A){
 }
 
 Value *NumberExprAST::codegen() {
-  // TODO : create an int if the number is not decimal
   if (trunc(Val) == Val){
     return ConstantInt::get(*TheContext, APInt(32, (int)Val, true));
   } else {
@@ -523,8 +520,7 @@ Value* StructMemberGEP(std::string MemberName, Value* Allocation, Cpoint_Type st
 }
 
 
-// TODO : remove this
-Value* UnionMemberExprAST::codegen(){
+/*Value* UnionMemberExprAST::codegen(){
   AllocaInst* Alloca = nullptr;
   if (NamedValues[UnionName] == nullptr){
     return LogErrorV(this->loc, "Can't find union that is used for a member");
@@ -543,7 +539,7 @@ Value* UnionMemberExprAST::codegen(){
   }
   Cpoint_Type member_type = members.at(pos).second;
   return Builder->CreateLoad(get_type_llvm(member_type), Alloca, "load_union_member");
-}
+}*/
 
 Value* ConstantArrayExprAST::codegen(){
   std::vector<Constant*> arrayMembersVal;
@@ -1160,8 +1156,8 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else if (BinExpr->Op.at(0) == '.'){
             // TODO : just use getStructMemberGEP
-            if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
-                std::unique_ptr<VariableExprAST> structVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
+            //if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
+                /*std::unique_ptr<VariableExprAST> structVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
                 std::string VariableName = structVar->Name;
                 if (!dynamic_cast<VariableExprAST*>(BinExpr->RHS.get())){
                     return LogErrorV(emptyLoc, "Struct member is not an identifier");
@@ -1210,27 +1206,31 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
                 auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
                 auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
-                auto structPtr = /*NamedValues[VariableName]->alloca_inst*/ get_var_allocation(VariableName);
+                auto structPtr = get_var_allocation(VariableName);
                 Cpoint_Type cpoint_type = *get_variable_type(VariableName);
                 // TODO : should we use the cpoint_type in the NamedValue reassigning because it is changed here ?
                 if (cpoint_type.is_ptr){
                 cpoint_type.is_ptr = false;
                 }
                 auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
-                if (ValDeclared->getType() != get_type_llvm(members.at(pos_struct).second)){
-                    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_struct).second), ValDeclared);
+                Cpoint_Type member_type = members.at(pos_struct).second;*/
+                Cpoint_Type member_type;
+                Value* ptr = getStructMemberGEP(std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type);
+                
+                if (ValDeclared->getType() != get_type_llvm(member_type)){
+                    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
                 }
                 Builder->CreateStore(ValDeclared, ptr);
                 // TODO : verify if this code is needed and remove it in all the code if not
-                if (is_var_local(VariableName)){
+                /*if (is_var_local(VariableName)){
                     NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
                 } else {
                     GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
-                }
+                }*/
                 return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-            } else {
+            /*} else {
                 return LogErrorV(emptyLoc, "Using in an struct member something that is not a struct");
-            }
+            }*/
         } else {
             return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
         }
@@ -1307,7 +1307,10 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
         //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
         Log::Info() << "struct_declaration_name : " << structType.struct_name << "\n";
-        Log::Info() << "struct_declaration_name length : " << structType.struct_name.length() << "\n";
+        if (structType.struct_template_type_passed){
+            Log::Info() << "struct_template_type_passed : " << *structType.struct_template_type_passed << "\n";
+        }
+        //Log::Info() << "struct_declaration_name length : " << structType.struct_name.length() << "\n";
     
         if (structType.is_union){
             auto members = UnionDeclarations[structType.union_name]->members;
@@ -1325,7 +1328,16 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             member_type = members.at(pos).second;
             return Alloca;
         } else {
-        auto members = StructDeclarations[structType.struct_name]->members;
+        /*if (!StructDeclarations[structType.struct_name]){
+            return LogErrorV(emptyLoc, "Can't find struct type : %s", structType.struct_name.c_str());
+        }*/
+        std::vector<std::pair<std::string, Cpoint_Type>> members;
+        if (structType.struct_template_type_passed){
+            Log::Info() << "is template" << "\n";
+            members = StructDeclarations[get_struct_template_name(structType.struct_name, *structType.struct_template_type_passed)]->members;
+        } else {
+            members = StructDeclarations[structType.struct_name]->members;
+        }
         Log::Info() << "members.size() : " << members.size() << "\n";
         int pos = -1;
         for (int i = 0; i < members.size(); i++){

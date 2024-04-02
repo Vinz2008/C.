@@ -232,7 +232,7 @@ public:
   std::string generate_c() override;
 };
 
-class UnionMemberExprAST : public ExprAST {
+/*class UnionMemberExprAST : public ExprAST {
 public:
   std::string UnionName;
   std::string MemberName;
@@ -245,7 +245,7 @@ public:
     return UnionName + "." + MemberName;
   }
   std::string generate_c() override { return ""; }
-};
+};*/
 
 class ConstantArrayExprAST : public ExprAST {
 public:
@@ -511,14 +511,28 @@ public:
 
 class MatchExprAST : public ExprAST {
 public:
+    // TODO : change from string to ExprAST
     std::string matchVar;
     std::vector<std::unique_ptr<matchCase>> matchCases;
     MatchExprAST(const std::string& matchVar, std::vector<std::unique_ptr<matchCase>> matchCases) : matchVar(matchVar), matchCases(std::move(matchCases)) {}
     Value *codegen() override;
     std::unique_ptr<ExprAST> clone();
     std::string to_string() override {
-        // TODO
-        return "";
+        std::string match_body = "match " + matchVar + "{\n";
+        for (int i = 0; i < matchCases.size(); i++){
+            match_body += "\t" + matchCases.at(i)->expr->to_string() + "=> ";
+            if (matchCases.at(i)->Body.size() == 1){
+                match_body += matchCases.at(i)->Body.at(0)->to_string() + ",\n";
+            } else {
+                match_body += "{\n";
+                for (int i = 0; i < matchCases.at(i)->Body.size(); i++){
+                    match_body += "\t\t" + matchCases.at(i)->Body.at(i)->to_string() + "\n";
+                }
+                match_body += "}\n";
+            }
+        }
+        match_body += "}";
+        return match_body;
     }
     std::string generate_c() override { return ""; }
 };
