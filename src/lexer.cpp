@@ -117,8 +117,18 @@ void handleEmptyLine(){
   }
 }
 
+// is last char from stdin \n
+bool is_last_char_next_line_jit = false;
+
 int getCharLineStdin(){
+    if (is_last_char_next_line_jit){
+        return '\0';
+    }
     int c = getchar();
+    Log::Info() << "getCharLineStdin : " << c << "\n";
+    if (c == '\n'){
+        is_last_char_next_line_jit = true;
+    }
     if (c == EOF){
         exit(0);
     }
@@ -136,7 +146,8 @@ int peekCharLine(){
 int getCharLine(){
 #if ENABLE_JIT
   if (Comp_context->jit_mode){
-    return getCharLineStdin();
+    char c = getCharLineStdin();
+    return c;
   }
 #endif
   if (line == "<empty line>"){
@@ -413,6 +424,7 @@ int GetTokPrecedence() {
   std::string op = "";
   op += CurTok;
   int TokPrec = BinopPrecedence[op];
+  Log::Info() << "BinopPrecedence[\"" << op << "\"] : " << BinopPrecedence[op] << "\n";
   if (TokPrec <= 0) return -1;
   return TokPrec;
 }

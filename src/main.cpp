@@ -528,6 +528,7 @@ int main(int argc, char **argv){
           filename = arg;
         }
     }
+    installPrecendenceOperators();
     if (!filename_found){
 #if ENABLE_JIT
         return StartJIT();
@@ -584,7 +585,6 @@ int main(int argc, char **argv){
     
     c_translator::init_context();
     
-    installPrecendenceOperators();
 
     legacy::PassManager pass;
     if (target_triplet_found_bool){

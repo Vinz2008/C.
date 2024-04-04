@@ -33,6 +33,7 @@ void launchJIT(){
     }
     TheJIT = std::move(*JITResult);
     initModuleJIT();
+    fprintf(stderr, "> ");
     MainLoop();
 }
 
@@ -48,6 +49,8 @@ std::unique_ptr<FunctionAST> ParseTopLevelExpr() {
 }
 
 
+extern bool is_last_char_next_line_jit;
+
 void HandleTopLevelExpression(){
   // Evaluate a top-level expression into an anonymous function.
   fprintf(stderr, "TOP LEVEL EXPRESSION\n");
@@ -60,13 +63,14 @@ void HandleTopLevelExpression(){
         auto H = TheJIT->addModule(llvm::orc::ThreadSafeModule(std::move(TheModule), std::move(TheContext)));
         auto ExprSymbol = TheJIT->lookup("__anon_expr");
         assert(ExprSymbol && "Function not found");
-        double (*FP)() = (double (*)())(intptr_t)ExprSymbol->getAddress();
+        double (*FP)() = (double (*)())(intptr_t)ExprSymbol->getAddress().getValue();
         //void (*FP)() = (void (*)())(intptr_t)ExprSymbol.getAddress();
         fprintf(stderr, "Evaluated to %f\n", FP());
         //FP();
     } else {
         fprintf(stderr, "Couldn't codegen top level expression");
     }
+    is_last_char_next_line_jit = false;
   } else {
     // Skip token for error recovery.
     getNextToken();
