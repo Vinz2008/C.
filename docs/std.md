@@ -36,7 +36,7 @@ Unless specified, declarations of the functions for gc_malloc (and gc_init but i
 
 ```
 extern gc_strdup(s : i8 ptr) i8 ptr;
-extern gc_free(s : int ptr) void;
+extern gc_free(s : void ptr) void;
 extern gc_realloc(s : int ptr, size : int) int ptr;
 
 func main(){

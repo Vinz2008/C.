@@ -487,7 +487,7 @@ Value *VariableExprAST::codegen() {
 // TODO maybe return a pair of Value and Cpoint_Type ?
 // return the ptr without loading 
 // member_type is for returning
-Value* StructMemberGEP(std::string MemberName, Value* Allocation, Cpoint_Type struct_type, Cpoint_Type& member_type){
+/*Value* StructMemberGEP(std::string MemberName, Value* Allocation, Cpoint_Type struct_type, Cpoint_Type& member_type){
     auto members = StructDeclarations[struct_type.struct_name]->members;
     Log::Info() << "members.size() : " << members.size() << "\n";
     int pos = -1;
@@ -515,9 +515,9 @@ Value* StructMemberGEP(std::string MemberName, Value* Allocation, Cpoint_Type st
     }
     Log::Info() << "cpoint_type struct : " << cpoint_type << "\n";
     
-    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*tempval*/ Allocation, { zero, index});
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), Allocation, { zero, index});
     return ptr;
-}
+}*/
 
 
 /*Value* UnionMemberExprAST::codegen(){
@@ -918,8 +918,8 @@ Value* MatchExprAST::codegen(){
     if (!enum_member_contain_type){
         tag = Builder->CreateLoad(get_type_llvm(int_type), NamedValues[matchVar]->alloca_inst, matchVar);
     } else {
-        tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr");
-        val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr");
+        tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr", true);
+        val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr", true);
         tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
     }
     BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
@@ -1031,7 +1031,7 @@ Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars, Stru
         Log::Info() << "Index GEP closure : " << i << "\n";
         Cpoint_Type captured_var_type = *get_variable_type(captured_vars.at(i));
         Log::Info() << "captured_var_type : " << captured_var_type << "\n";
-        auto ptr = Builder->CreateGEP(structType, structAlloca, {zero, index}, "get_struct");
+        auto ptr = Builder->CreateGEP(structType, structAlloca, {zero, index}, "get_struct", true);
         Value* varValue = Builder->CreateLoad(get_type_llvm(*get_variable_type(captured_vars.at(i))), get_var_allocation(captured_vars.at(i)));
         Builder->CreateStore(varValue, ptr);
     }
@@ -1135,8 +1135,8 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 return LogErrorV(emptyLoc, "couldn't find index for array %s", BinExpr->LHS->to_string().c_str());
             }
             auto indexVal = index->codegen();
-            if (indexVal->getType() != get_type_llvm(int_type)){
-                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(int_type), indexVal) ;
+            if (indexVal->getType() != get_type_llvm(i64_type)){
+                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(i64_type), indexVal) ;
             }
             Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
             std::vector<Value*> indexes = { zero, indexVal};
@@ -1147,7 +1147,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             }
             Type* llvm_type = get_type_llvm(cpoint_type);
             Log::Info() << "Get LLVM TYPE" << "\n";
-            auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array");
+            auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);
             Log::Info() << "Create GEP" << "\n";
             if (ValDeclared->getType() != get_type_llvm(member_type)){
             convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
@@ -1359,7 +1359,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
         Log::Info() << "cpoint_type struct : " << structType << "\n";
     
-        Value* ptr = Builder->CreateGEP(get_type_llvm(structType), Alloca, { zero, index});
+        Value* ptr = Builder->CreateGEP(get_type_llvm(structType), Alloca, { zero, index}, "", true);
         return ptr;
         }
     }
@@ -1534,7 +1534,7 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         if (/*cpoint_type_not_modified.is_ptr &&*/ cpoint_type_not_modified.nb_ptr > 1){
         array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
         }
-        Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes);
+        Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes, "", true);
         return ptr;
     } else if (dynamic_cast<BinaryExprAST*>(array.get())){
         if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){
@@ -1563,7 +1563,7 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         member_type.is_array = false;
         member_type.nb_element = 0;
         Type* type_llvm = get_type_llvm(struct_member_type);
-        Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes);
+        Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes, "", true);
         // TODO : finish the load Name with the IndexV in string form
         return member_ptr;
 
@@ -2666,8 +2666,8 @@ Value* RedeclarationExprAST::codegen(){
         NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         return Constant::getNullValue(Type::getDoubleTy(*TheContext));
     }
-    Value* ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct");
-    Value* value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct");
+    Value* ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct", true);
+    Value* value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct", true);
     Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
     NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
     if (enumCreation->value){
@@ -2781,7 +2781,7 @@ Value* RedeclarationExprAST::codegen(){
     if (cpoint_type.is_ptr){
       cpoint_type.is_ptr = false;
     }
-    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
+    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct", true);
     if (ValDeclared->getType() != get_type_llvm(members.at(pos_struct).second)){
         convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_struct).second), ValDeclared);
     }
@@ -2834,7 +2834,7 @@ Value* RedeclarationExprAST::codegen(){
     }
     Type* llvm_type = get_type_llvm(cpoint_type);
     Log::Info() << "Get LLVM TYPE" << "\n";
-    auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array");
+    auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);
     Log::Info() << "Create GEP" << "\n";
     if (ValDeclared->getType() != get_type_llvm(member_type)){
       convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
@@ -2922,7 +2922,7 @@ Value* LoopExprAST::codegen(){
     Value* PosValInner = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "load_pos_loop_in");
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     Value* index = Builder->CreateFPToUI(PosValInner, Type::getInt32Ty(*TheContext), "cast_gep_index");
-    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), /*TempValueArray*/ NamedValues[ArrayVar->getName()]->alloca_inst, { zero, index}, "gep_loop_in");
+    Value* ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), NamedValues[ArrayVar->getName()]->alloca_inst, { zero, index}, "gep_loop_in", true);
     Value* value = Builder->CreateLoad(get_type_llvm(tempValueArrayType), ptr, VarName);
     Builder->CreateStore(value /*ptr*/, TempValueArray);
     blocksForBreak.push(AfterLoop);
@@ -3150,8 +3150,8 @@ Value *VarExprAST::codegen() {
             NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
             goto after_storing;
         }
-        ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct");
-        value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct");
+        ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct", true);
+        value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct", true);
         Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
         NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         if (enumCreation->value){

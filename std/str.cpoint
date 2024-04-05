@@ -2,7 +2,7 @@ include libc.hpoint
 import print.cpoint
 
 extern gc_strdup(s : i8 ptr) i8 ptr;
-extern gc_free(s : int ptr) void;
+extern gc_free(s : void ptr) void;
 
 extern internal_append_char(c : i8, string : i8 ptr, size : int);
 extern internal_remove_char(string : i8 ptr, size : int);

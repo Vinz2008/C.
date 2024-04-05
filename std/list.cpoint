@@ -1,6 +1,6 @@
 import print.cpoint
 
-extern gc_free(s : int ptr) void;
+extern gc_free(s : void ptr) void;
 
 struct list {
     var list : int ptr
