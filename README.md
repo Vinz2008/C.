@@ -124,6 +124,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix error messages (wrong location, wrong line, etc)
 - [ ] Refactor JIT code
 - [ ] Remake benchmarks
+- [ ] Work on LTO
 
 ## Benchmarks compared to other languages
 

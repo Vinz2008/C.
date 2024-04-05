@@ -1,7 +1,7 @@
 ﻿languages,fibonacci,factors
-C.,136.970,2.772
-C,146.497,3.213
-Rust release,73.856,2.726
-Rust debug,237.043,9.742
-Swift,471.683,9.991
-PyPy,377.04,3.274
+C.,124.724,2.716
+C,143.587,3.177
+Rust release,73.132,2.712
+Rust debug,250.724,9.577
+Swift,463.312,7.837
+PyPy,403.425,3.251
