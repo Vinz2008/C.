@@ -426,6 +426,7 @@ int main(int argc, char **argv){
     bool asm_mode = false;
     bool run_mode = false;
     bool is_optimised = false;
+    int optimize_level = 0;
     bool explicit_with_gc = false; // add gc even with -no-std
     bool PICmode = false;
     // use native target even if -target is used. Needed for now in windows
@@ -461,7 +462,10 @@ int main(int argc, char **argv){
         } else if (arg.compare("-S") == 0){
           asm_mode = true;
         } else if (arg.compare("-O") == 0){
+          // TODO : change from -O 1 to -O1
           is_optimised = true;
+          i++;
+          optimize_level = std::stoi((std::string)argv[i]);
         } else if (arg.compare("-g") == 0){
           debug_info_mode = true;
         } else if (arg.compare("-h") == 0 || arg.compare("-help") == 0){
@@ -604,6 +608,8 @@ int main(int argc, char **argv){
     pass.add(createReassociatePass());
     pass.add(createGVNPass());
     pass.add(createCFGSimplificationPass());
+    pass.add(createFlattenCFGPass());
+    pass.add(createLoopUnrollPass(optimize_level));
     }
     if (debug_info_mode){
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
