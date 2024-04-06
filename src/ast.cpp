@@ -573,9 +573,44 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   }
 }
 
+
+std::unique_ptr<ExprAST> ParseInlineAsm(){
+    std::unique_ptr<StringExprAST> asm_code = get_Expr_from_ExprAST<StringExprAST>(ParseStrExpr());
+    if (!asm_code){
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs;
+    if (CurTok == ','){
+        getNextToken();
+        while (1) {
+            ArgInlineAsm::ArgType argType;
+            if (IdentifierStr == "in"){
+                argType = ArgInlineAsm::ArgType::input;
+            } else if (IdentifierStr == "out") {
+                argType = ArgInlineAsm::ArgType::output;
+            } else {
+                return LogError("Unknown type of arg for the asm macro");
+            }
+            getNextToken();
+            auto argExpr = ParseExpression();
+            InputOutputArgs.push_back(std::make_unique<ArgInlineAsm>(std::move(argExpr), argType));
+            if (CurTok == ')'){
+                break;
+            }
+            if (CurTok != ','){
+                return LogError("Expected ')' or ',' in argument list of the asm macro");
+            }
+            getNextToken();
+        }
+    }
+    getNextToken(); // eat ')'
+    std::unique_ptr<ArgsInlineAsm> argsInlineAsm = std::make_unique<ArgsInlineAsm>(std::move(asm_code), std::move(InputOutputArgs));
+    return generate_asm_macro(std::move(argsInlineAsm));
+}
+
 std::unique_ptr<ExprAST> ParseMacroCall(){
     std::vector<std::unique_ptr<ExprAST>> ArgsMacro;
-    std::unique_ptr<ArgsInlineAsm> argsInlineAsm;
+    //std::unique_ptr<ArgsInlineAsm> argsInlineAsm;
     Log::Info() << "Parsing macro call" << "\n";
     getNextToken();
     std::string function_name = IdentifierStr;
@@ -585,7 +620,8 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
     }
     getNextToken();
     if (function_name == "asm"){
-        std::unique_ptr<StringExprAST> asm_code = get_Expr_from_ExprAST<StringExprAST>(ParseStrExpr());
+        return ParseInlineAsm();
+        /*std::unique_ptr<StringExprAST> asm_code = get_Expr_from_ExprAST<StringExprAST>(ParseStrExpr());
         if (!asm_code){
             return nullptr;
         }
@@ -613,12 +649,9 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
                 getNextToken();
             }
         }
-        /*if (CurTok != ')'){
-            return LogError("Missing ')' in asm macro");
-        }*/
         getNextToken(); // eat ')'
         argsInlineAsm = std::make_unique<ArgsInlineAsm>(std::move(asm_code), std::move(InputOutputArgs));
-        return generate_asm_macro(std::move(argsInlineAsm));
+        return generate_asm_macro(std::move(argsInlineAsm));*/
     } else {
     auto ret = ParseFunctionArgs(ArgsMacro);
     if (!ret){

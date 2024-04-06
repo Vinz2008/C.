@@ -65,36 +65,36 @@ public:
                  this->EPCIU->getLazyCallThroughManager(),
                  [this] { return this->EPCIU->createIndirectStubsManager(); }),
         MainJD(this->ES->createBareJITDylib("<main>")) {
-    MainJD.addGenerator(
-        cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(
-            DL.getGlobalPrefix())));
+    MainJD.addGenerator(cantFail(DynamicLibrarySearchGenerator::GetForCurrentProcess(DL.getGlobalPrefix())));
   }
 
   ~CpointJIT() {
-    if (auto Err = ES->endSession())
+    if (auto Err = ES->endSession()){
       ES->reportError(std::move(Err));
-    if (auto Err = EPCIU->cleanup())
+    }
+    if (auto Err = EPCIU->cleanup()){
       ES->reportError(std::move(Err));
+    }
   }
 
   static Expected<std::unique_ptr<CpointJIT>> Create() {
     auto EPC = SelfExecutorProcessControl::Create();
-    if (!EPC)
+    if (!EPC){
       return EPC.takeError();
-
+    }
     auto ES = std::make_unique<ExecutionSession>(std::move(*EPC));
 
     auto EPCIU = EPCIndirectionUtils::Create(*ES);
-    if (!EPCIU)
+    if (!EPCIU){
       return EPCIU.takeError();
-    (*EPCIU)->createLazyCallThroughManager(
-        *ES, ExecutorAddr::fromPtr(&handleLazyCallThroughError));
+    }
+    (*EPCIU)->createLazyCallThroughManager(*ES, ExecutorAddr::fromPtr(&handleLazyCallThroughError));
     
-    if (auto Err = setUpInProcessLCTMReentryViaEPCIU(**EPCIU))
+    if (auto Err = setUpInProcessLCTMReentryViaEPCIU(**EPCIU)){
       return std::move(Err);
+    }
     
-    JITTargetMachineBuilder JTMB(
-        ES->getExecutorProcessControl().getTargetTriple());
+    JITTargetMachineBuilder JTMB(ES->getExecutorProcessControl().getTargetTriple());
 
     auto DL = JTMB.getDefaultDataLayoutForTarget();
     if (!DL)

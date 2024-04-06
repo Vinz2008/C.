@@ -10,6 +10,7 @@
 #include "clean.h"
 #include "dependencies.h"
 #include "build.h"
+#include "get_args.h"
 #define  TOML_HEADER_ONLY 1
 #include <toml++/toml.h>
 #include <algorithm>
@@ -18,9 +19,6 @@
 #include <filesystem>
 
 namespace fs = std::filesystem;
-
-//void buildSubfolders(toml::v3::table& config, std::string_view type, std::string target, std::string sysroot);
-void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number);
 
 enum mode {
     BUILD_MODE = -1,
@@ -59,8 +57,6 @@ void writeLastBuildToml(std::string std_path, std::string target, bool is_gc){
     LastBuildFstream << "target = \"" << target <<"\"\n";
     LastBuildFstream << "is_gc = " << ((is_gc) ? "true" : "false") << "\n"; 
     LastBuildFstream.close();
-    //build_toml["is_gc"] = is_gc;
-    //build_toml["target"] = target;
 }
 void addDependenciesToLinkableFiles(std::vector<std::string>& PathListPassed){
     for (int i = 0; i < DependencyPathList.size(); i++){
@@ -110,44 +106,6 @@ void addCustomLinkableFiles(toml::v3::table& config, std::vector<std::string>& L
     }
 }
 
-std::string get_pkg_config_linker_args(std::string library_name){
-    std::string cmd = "pkg-config --libs " + library_name;
-    auto cmd_out = runCommand(cmd);
-    return cmd_out->buffer;
-}
-
-std::string get_llvm_config_linker_args(){
-    std::string cmd = "llvm-config --ldflags --system-libs --libs core";
-    auto cmd_out = runCommand(cmd);
-    std::string ret = cmd_out->buffer;
-    std::replace(ret.begin(), ret.end(), '\n', ' ');
-    std::cout << "ret : " << ret << std::endl;
-    return ret;
-}
-
-std::string get_pkg_config_cflags_args(std::string library_name){
-    std::string cmd = "pkg-config --cflags " + library_name;
-    auto cmd_out = runCommand(cmd);
-    return cmd_out->buffer;
-}
-
-void handle_library_name(std::string library, std::string& linker_args){
-    if (library == "pthread"){
-        linker_args += "-lpthread ";
-    } else if (library == "gtk"){
-        linker_args += get_pkg_config_linker_args("gtk4");
-    } else if (library == "raylib" || library == "lua"){
-        linker_args += get_pkg_config_linker_args((std::string)library);
-    } else if (library == "llvm"){
-        linker_args += get_llvm_config_linker_args();
-    } else if (library == "clang"){
-        linker_args += "-lclang";
-    } else {
-        std::cout << "Warning : unknown library : " << library << std::endl;
-        linker_args += get_pkg_config_linker_args((std::string)library);
-    }
-}
-
 std::string get_libraries_linker_args(toml::v3::table&  config){
     std::string linker_args = "";
     auto libraries = config["build"]["libraries"];
@@ -156,28 +114,14 @@ std::string get_libraries_linker_args(toml::v3::table&  config){
         arr->for_each([&linker_args, &found_at_least_one](auto&& library){
             if constexpr (toml::is_string<decltype(library)>){
                 found_at_least_one = true;
-                /*if (library == "pthread"){
-                    linker_args += "-lpthread ";
-                } else if (library == "gtk"){
-                    linker_args += get_pkg_config_linker_args("gtk4");
-                } else if (library == "raylib" || library == "lua"){
-                    linker_args += get_pkg_config_linker_args((std::string)library);
-                } else if (library == "llvm"){
-                    linker_args += get_llvm_config_linker_args();
-                } else {
-                    std::cout << "Warning : unknown library : " << library << std::endl;
-                    linker_args += get_pkg_config_linker_args((std::string)library);
-                }*/
                 handle_library_name((std::string)library, linker_args);
             }
         });
     }
-    //std::cout << "LibrariesList.size() " << LibrariesList.size() << std::endl;
     if (!found_at_least_one && LibrariesList.size() == 0){
         return "";
     }
     for (int i = 0; i < LibrariesList.size(); i++){
-        //linker_args LibrariesList.at(i);
         std::cout << "adding lib " << LibrariesList.at(i) << std::endl;
         handle_library_name(LibrariesList.at(i), linker_args);
     }
@@ -250,9 +194,6 @@ int main(int argc, char** argv){
         filename_config = argv[i];
     } else if (arg.rfind("-j", 0) == 0){
         thread_number = std::stoi(arg.substr(2, arg.length() - 2));
-
-        //i++;
-        //thread_number = std::stoi((std::string)argv[i]);
     } else if (arg == "--silent"){
         silent_mode = true;
     } else if (arg == "-C"){
@@ -265,10 +206,6 @@ int main(int argc, char** argv){
                 pos_argv++;
             }
         }
-        /*for (int i = 0; i < argc-2; i++){
-            std::cout << "argv_new[" << i << "] : " << std::string(argv_new[i]) << std::endl;
-        }
-        std::cout << "argv[pos_arg+1] : " << std::string(argv[pos_arg+1]) << std::endl;*/
         fs::current_path(argv[pos_arg+1]);
         int returned_val = main(argc-2, argv_new);
         delete[] argv_new;
@@ -297,13 +234,11 @@ int main(int argc, char** argv){
         project_name_to_create = argv[i];
     } else if (arg == "open-page"){
         modeBuild = OPEN_PAGE_MODE;
-        //i++;
     } else if (arg == "init"){
         modeBuild = INIT_MODE;
     } else if (arg == "cross-compile"){
         modeBuild = CROSS_COMPILE_MODE;
         is_cross_compiling = true;
-        //i++;
     } else if (arg == "install"){
         modeBuild = INSTALL_MODE;
         i++;
@@ -372,8 +307,6 @@ int main(int argc, char** argv){
         if (toml::array* arr = subprojects.as_array()){
         arr->for_each([&config, repo_path, username, repo_name](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
-                //std::cout << "sub : " << sub << std::endl;
-                //buildSubproject((std::string)sub);
                 std::string sub_path = repo_path + "/" + (std::string)sub;
                 auto sub_config = toml::parse_file(sub_path + "/build.toml");
                 std::string sub_outfile = (std::string)sub_config["build"]["outfile"].value_or("");
