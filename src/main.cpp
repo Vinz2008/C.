@@ -749,9 +749,9 @@ int main(int argc, char **argv){
 
     if (opt_level == OptimizationLevel::O0){
         module_pm = pass_builder.buildO0DefaultPipeline(opt_level, Comp_context->lto_mode);
-    } /*else if (Comp_context->lto_mode){
-        module_pm = pass_builder.buildLTOPreLinkDefaultPipeline(opt_level); // TODO : maybe enable this ? but why is it needed ?
-    }*/ else {
+    } else if (Comp_context->lto_mode){
+        module_pm = pass_builder.buildLTOPreLinkDefaultPipeline(opt_level);
+    } else {
         module_pm = pass_builder.buildPerModuleDefaultPipeline(opt_level);
     }
     legacy::PassManager codegen_pass;
