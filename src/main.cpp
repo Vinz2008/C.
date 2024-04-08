@@ -465,12 +465,12 @@ int main(int argc, char **argv){
           link_files_mode = false;
         } else if (arg.compare("-S") == 0){
           asm_mode = true;
-        } else if (arg.compare("-O") == 0){
+        } /*else if (arg.compare("-O") == 0){
           // TODO : change from -O 1 to -O1
           is_optimised = true;
           i++;
           optimize_level = std::stoi((std::string)argv[i]);
-        } else if (arg.compare("-g") == 0){
+        }*/ else if (arg.compare("-g") == 0){
           debug_info_mode = true;
         } else if (arg.compare("-h") == 0 || arg.compare("-help") == 0){
             print_help();
@@ -525,6 +525,14 @@ int main(int argc, char **argv){
           Comp_context->strip_mode = true;
         } else if (arg.compare("-flto") == 0){
           Comp_context->lto_mode = true;
+        } else if (arg.compare(0, 2, "-O") == 0){
+          // TODO : change from -O 1 to -O1
+          size_t pos = arg.find("O");
+          std::string temp = arg.substr(pos+1, arg.size());
+          is_optimised = true;
+          i++;
+          cout << "linker flag " << linker_additional_flags << endl; 
+          optimize_level = std::stoi(temp);
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
