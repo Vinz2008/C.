@@ -18,6 +18,10 @@
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Scalar/GVN.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/StandardInstrumentations.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "config.h"
 #include "lexer.h"
 #include "ast.h"
@@ -590,7 +594,7 @@ int main(int argc, char **argv){
     c_translator::init_context();
     
 
-    legacy::PassManager pass;
+    //legacy::PassManager pass;
     if (target_triplet_found_bool){
     TargetTriple = target_triplet_found;
     } else {
@@ -603,13 +607,15 @@ int main(int argc, char **argv){
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
     InitializeModule(first_filename);
+
+
     if (is_optimised){
-    pass.add(createInstructionCombiningPass());
+    /*pass.add(createInstructionCombiningPass());
     pass.add(createReassociatePass());
     pass.add(createGVNPass());
     pass.add(createCFGSimplificationPass());
     pass.add(createFlattenCFGPass());
-    pass.add(createLoopUnrollPass(optimize_level));
+    pass.add(createLoopUnrollPass(optimize_level));*/
     }
     if (debug_info_mode){
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
@@ -643,7 +649,7 @@ int main(int argc, char **argv){
     if (debug_info_mode){
     DBuilder->finalize();
     }
-    TheModule->print(*file_out_ostream, nullptr);
+    //TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
     if (errors_found){
@@ -673,11 +679,11 @@ int main(int argc, char **argv){
     } else {
       RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
     }
-    auto TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+    TargetMachine* TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
-    if (Comp_context->lto_mode){
+    /*if (Comp_context->lto_mode){
         writeBitcodeLTO(object_filename, false);
-    } else {
+    } else {*/
     InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
     TheModule->setTargetTriple(TargetTriple);
@@ -691,14 +697,87 @@ int main(int argc, char **argv){
     if (asm_mode){
       FileType = CGFT_AssemblyFile;
     }
-    if (TheTargetMachine->addPassesToEmitFile(pass, dest, nullptr, FileType)) {
+
+    // this is stolen from zig
+    // maybe try to remove some parts to see what is necessary (TODO ?)
+    PipelineTuningOptions pipeline_opts;
+    pipeline_opts.LoopUnrolling = is_optimised;
+    pipeline_opts.SLPVectorization = is_optimised;
+    pipeline_opts.LoopVectorization = is_optimised;
+    pipeline_opts.LoopInterleaving = is_optimised;
+    pipeline_opts.MergeFunctions = is_optimised;
+    
+    PassInstrumentationCallbacks instr_callbacks;
+    StandardInstrumentations std_instrumentations(TheModule->getContext(), false);
+    std_instrumentations.registerCallbacks(instr_callbacks);
+
+    std::optional<PGOOptions> opt_pgo_options = {};
+
+    PassBuilder pass_builder(TheTargetMachine, pipeline_opts,
+                             opt_pgo_options, &instr_callbacks);
+    LoopAnalysisManager loop_am;
+    FunctionAnalysisManager function_am;
+    CGSCCAnalysisManager cgscc_am;
+    ModuleAnalysisManager module_am;
+
+    function_am.registerPass([&] {
+      return pass_builder.buildDefaultAAPipeline();
+    });
+
+    //Triple target_triple(TargetTriple);
+    auto tlii = std::make_unique<TargetLibraryInfoImpl>(TripleLLVM);
+    function_am.registerPass([&] { return TargetLibraryAnalysis(*tlii); });
+
+    pass_builder.registerModuleAnalyses(module_am);
+    pass_builder.registerCGSCCAnalyses(cgscc_am);
+    pass_builder.registerFunctionAnalyses(function_am);
+    pass_builder.registerLoopAnalyses(loop_am);
+    pass_builder.crossRegisterProxies(loop_am, function_am,
+                                      cgscc_am, module_am);
+
+    ModulePassManager module_pm;
+    OptimizationLevel opt_level;
+    if (optimize_level == 0){
+        opt_level = OptimizationLevel::O0;
+    } else if (optimize_level == 1) {
+        opt_level = OptimizationLevel::O1;
+    } else if (optimize_level == 2) {
+        opt_level = OptimizationLevel::O2;
+    } else if (optimize_level == 3) {
+        opt_level = OptimizationLevel::O3;
+    } // TODO add optimization for size (Os) and 0z ?
+
+    if (opt_level == OptimizationLevel::O0){
+        module_pm = pass_builder.buildO0DefaultPipeline(opt_level, Comp_context->lto_mode);
+    } /*else if (Comp_context->lto_mode){
+        module_pm = pass_builder.buildLTOPreLinkDefaultPipeline(opt_level); // TODO : maybe enable this ? but why is it needed ?
+    }*/ else {
+        module_pm = pass_builder.buildPerModuleDefaultPipeline(opt_level);
+    }
+    legacy::PassManager codegen_pass;
+    codegen_pass.add(createTargetTransformInfoWrapperPass(TheTargetMachine->getTargetIRAnalysis()));
+    
+    if (!Comp_context->lto_mode){
+    if (TheTargetMachine->addPassesToEmitFile(codegen_pass, dest, nullptr, FileType)) {
     errs() << _("TheTargetMachine can't emit a file of this type");
     return 1;
     }
-    pass.run(*TheModule);
+    }
+    
+    module_pm.run(*TheModule, module_am);
+
+    TheModule->print(*file_out_ostream, nullptr);
+
+    codegen_pass.run(*TheModule);
+
+
+    if (Comp_context->lto_mode){
+        writeBitcodeLTO(object_filename, false);
+    }
+
     dest.flush();
     delete TheTargetMachine; // call the TargetMachine destructor to not leak memory
-    }
+    //}
     std::string gc_path = DEFAULT_GC_PATH;
     Log::Print() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;

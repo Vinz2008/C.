@@ -3126,9 +3126,9 @@ Value *VarExprAST::codegen() {
         int pos_member = -1;
         
         for (int i = 0; i < EnumMembers.size(); i++){
-            Log::Info() << "EnumMembers.at(i)->contains_custom_index other : " << EnumMembers.at(i)->contains_custom_index << "\n";
+            //Log::Info() << "EnumMembers.at(i)->contains_custom_index other : " << EnumMembers.at(i)->contains_custom_index << "\n";
             if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
-                Log::Info() << "EnumMembers.at(i)->contains_custom_index : " << EnumMembers.at(i)->contains_custom_index << "\n";
+                //Log::Info() << "EnumMembers.at(i)->contains_custom_index : " << EnumMembers.at(i)->contains_custom_index << "\n";
                 if (EnumMembers.at(i)->contains_custom_index){
                     /*auto indexCodegened = EnumMembers.at(i)->Index->codegen();
                     if (!dyn_cast<Constant*>(indexCodegened)){
@@ -3225,9 +3225,9 @@ Value *VarExprAST::codegen() {
       struct_declaration_name_temp = struct_name;
     }
     Log::Info() << "VarName " << VarName << "\n";
-    Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
+    //Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type, struct_type_temp, struct_declaration_name_temp);
-    Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
+    //Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
     if (/*cpoint_type.is_struct && !cpoint_type.is_ptr*/ is_just_struct(cpoint_type)){
       if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
       std::vector<Value *> ArgsV;
