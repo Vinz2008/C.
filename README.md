@@ -72,14 +72,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Automatically make additional args in variadic functions i32s ? (for now it works without)
 - [x] Add hex notation (example 0x77)
 - [x] Add section selection for global variables
-- [x] Fix for loop (add verification at the start in special basic block) (after doing this, change '<' into '<=' in the fibonacci benchmark)
-- [ ] Make the compiler less "double focused" 
-    - [x] make numbers that have no decimal part ints by default
-    - [ ] use by default in for loop ints for the variable and then add the possibility to set the type manually
+- [ ] use by default in for loop ints for the variable and then add the possibility to set the type manually
 - [x] Create a print/printfmt macro that will print vars/values .have using it be like #print("{} {}", a, 2), which will generate printfmt("%s %d", a, 2) by detecting types
 - [x] Create a println macro equivalent to #print but adding automatically a '\n' at the end of the line
-- [x] Remove python from benchmark pictures (to see better the differences between the system programming languages)
-- [x] add a deref expression ? (ex : "var a : int = deref p")
 - [x] Make no_gc work (see gc.c)
 - [x] Add a little toml file in the std location to track if the latest build has the same options (no_gc, target, etc) as the current one to see if it is needed to rebuild the standard library
 - [x] Make no gc subprojects in cpoint-build be build first, then the gc ones or the other way to have the standard library rebuilt max 2 times
@@ -123,8 +118,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add a config file for default compiler flags, etc (and add a env var like CPOINTFLAGS ?)
 - [ ] Fix error messages (wrong location, wrong line, etc)
 - [ ] Refactor JIT code
-- [ ] Remake benchmarks
-- [ ] Work on LTO
+- [ ] Work on an arena allocator 
+- [x] Work on defer (to have memory management like in zig ?)
 
 ## Benchmarks compared to other languages
 

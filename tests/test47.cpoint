@@ -1,0 +1,16 @@
+import @std/print.cpoint
+import @std/alloc.cpoint
+
+extern gc_free(s : void ptr) void;
+
+func main() int {
+    var l = gc_malloc(10 * sizeof int)
+    defer gc_free(l)
+    l[0] = 2
+    printi(l[0])
+    var l2 = alloc::manual_alloc(12* sizeof int)
+    defer alloc::manual_dealloc(l2)
+    l2[0] = 3
+    printi(l2[0])
+    0
+}

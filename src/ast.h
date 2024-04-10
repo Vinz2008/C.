@@ -875,6 +875,22 @@ public:
   }
 };
 
+class DeferExprAST : public ExprAST {
+public:
+    std::unique_ptr<ExprAST> Expr;
+    DeferExprAST(std::unique_ptr<ExprAST> Expr) : Expr(std::move(Expr)){}
+    Value* codegen() override;
+    std::unique_ptr<ExprAST> clone(){
+        return std::make_unique<DeferExprAST>(Expr->clone());
+    }
+    std::string to_string() override {
+        return "defer " + Expr->to_string();
+    }
+    std::string generate_c() override {
+        return "";
+    }
+};
+
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
@@ -915,6 +931,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum();
 std::unique_ptr<ExprAST> ParseMacroCall();
 std::unique_ptr<ExprAST> ParseClosure();
 std::unique_ptr<ExprAST> ParseSemiColon();
+std::unique_ptr<ExprAST> ParseDefer();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

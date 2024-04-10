@@ -52,6 +52,7 @@ enum Token {
   tok_match = -40,
   tok_members = -41,
   tok_deref = -42,
+  tok_defer = -43,
 };
 
 int getNextToken();

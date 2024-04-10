@@ -568,6 +568,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseBreakExpr();
   case tok_match:
     return ParseMatch();
+  case tok_defer:
+    return ParseDefer();
   case tok_func:
     return ParseClosure();
   }
@@ -1648,6 +1650,12 @@ std::unique_ptr<ExprAST> ParseMatch(){
     }*/
     getNextToken();
     return std::make_unique<MatchExprAST>(matchVar, std::move(matchCases));
+}
+
+std::unique_ptr<ExprAST> ParseDefer(){
+    getNextToken();
+    std::unique_ptr<ExprAST> Expr = ParseExpression(); 
+    return std::make_unique<DeferExprAST>(std::move(Expr));
 }
 
 std::unique_ptr<ExprAST> ParseClosure(){

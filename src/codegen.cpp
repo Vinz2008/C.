@@ -32,6 +32,8 @@
 #include <typeinfo>
 #include <cxxabi.h>
 
+#include <queue>
+
 using namespace llvm;
 
 std::unique_ptr<LLVMContext> TheContext;
@@ -68,6 +70,9 @@ std::vector<std::unique_ptr<FunctionAST>> closuresToGenerate;
 extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
 std::unordered_map<std::string, Value*> StringsGenerated;
+
+std::queue<std::unique_ptr<ExprAST>> deferExprs;
+
 
 bool is_in_extern = false;
 
@@ -998,6 +1003,20 @@ Value* MatchExprAST::codegen(){
     Builder->SetInsertPoint(AfterMatch);
     return Constant::getNullValue(get_type_llvm(double_type));
 }
+
+Value* DeferExprAST::codegen(){
+    deferExprs.push(std::move(Expr));
+    return Constant::getNullValue(get_type_llvm(void_type)); // TODO : return void type when returning null values
+}
+
+void generateDeferExprs(){
+    while (!deferExprs.empty()){
+    auto expr = std::move(deferExprs.front());
+    expr->codegen();
+    deferExprs.pop();
+    } 
+}
+
 
 StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_vars){
     std::vector<Type*> structElements;
@@ -2365,6 +2384,8 @@ Function *FunctionAST::codegen() {
   for (int i = 0; i < Body.size(); i++){
     RetVal = Body.at(i)->codegen();
   }
+
+  generateDeferExprs();
   
   //if (RetVal) {
     Log::Info() << "before sret P.cpoint_type : " << P.cpoint_type << "\n";

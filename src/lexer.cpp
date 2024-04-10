@@ -285,6 +285,8 @@ static int gettok() {
       return tok_true;
     if (IdentifierStr == "false")
       return tok_false;
+    if (IdentifierStr == "defer")
+        return tok_defer;
     if (IdentifierStr == "import"){
       go_to_next_line();
       return getNextToken();
