@@ -14,6 +14,7 @@
 #include <vector>
 #include <utility>
 #include <cmath>
+#include <queue>
 
 using namespace llvm;
 
@@ -34,7 +35,6 @@ template <class T>
 std::unique_ptr<T> get_Expr_from_ExprAST(std::unique_ptr<ExprAST> E);
 
 //std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
-
 class ExprAST {
 public:
   ExprAST(Source_location loc = Comp_context->lexloc) : loc(loc) {}
@@ -47,6 +47,39 @@ public:
   int getLine() const { return loc.line_nb; }
   int getCol() const { return loc.col_nb; }
 };
+
+
+class Scope {
+public:
+    Scope(std::deque<std::unique_ptr<ExprAST>> deferExprs) : deferExprs(std::move(deferExprs)) {}
+    //Scope(Scope&&) noexcept(false) = default;
+    std::deque<std::unique_ptr<ExprAST>> deferExprs;
+    Scope clone() const {
+        std::deque<std::unique_ptr<ExprAST>> deferExprsCloned;
+        for (auto it = deferExprs.begin(); it != deferExprs.end(); ++it) {
+            deferExprsCloned.push_back((*it)->clone());
+        }
+        return Scope(std::move(deferExprsCloned));
+    }
+    std::string to_string(){
+        std::string body = "";
+        for (auto it = deferExprs.begin(); it != deferExprs.end(); ++it) {
+            body += (*it)->to_string() + "\n";
+        }
+        return body;
+    }
+};
+
+/*std::ostream& operator << (std::ostream& o, const Scope& s){
+    Scope cloned = s.clone();
+    while (!s.deferExprs.empty()){
+    auto expr = std::move(cloned.deferExprs.front());
+    o << expr->to_string() << std::endl;
+    cloned.deferExprs.pop_back();
+    } 
+    return o;
+}*/
+
 
 class EmptyExprAST : public ExprAST {
 public:
@@ -348,7 +381,15 @@ struct NEWCallExprAST : public ExprAST {
     NEWCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type) : function_expr(std::move(function_expr)), Args(std::move(Args)), template_passed_type(template_passed_type) {}
     std::string generate_c() override { return ""; }
     std::string to_string() override {
-        return "";
+        std::string call_str = function_expr->to_string();
+        if (!template_passed_type.is_empty){
+            call_str += "~" + create_pretty_name_for_type(template_passed_type) + "~";
+        }
+        call_str += "(";
+        for (int i = 0; i < Args.size(); i++){
+            call_str += Args.at(i)->to_string();
+        }
+        return call_str + ")";
     }
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;

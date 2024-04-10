@@ -32,8 +32,6 @@
 #include <typeinfo>
 #include <cxxabi.h>
 
-#include <queue>
-
 using namespace llvm;
 
 std::unique_ptr<LLVMContext> TheContext;
@@ -71,7 +69,9 @@ extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
 
 std::unordered_map<std::string, Value*> StringsGenerated;
 
-std::queue<std::unique_ptr<ExprAST>> deferExprs;
+std::deque<Scope> Scopes;
+
+//std::queue<std::unique_ptr<ExprAST>> deferExprs;
 
 
 bool is_in_extern = false;
@@ -1005,16 +1005,32 @@ Value* MatchExprAST::codegen(){
 }
 
 Value* DeferExprAST::codegen(){
-    deferExprs.push(std::move(Expr));
+    //deferExprs.push(std::move(Expr));
+    // modify the last scope so pop it then repush it
+    Scope back = std::move(Scopes.back());
+    Scopes.pop_back();
+    back.deferExprs.push_back(std::move(Expr));
+    Scopes.push_back(std::move(back));
     return Constant::getNullValue(get_type_llvm(void_type)); // TODO : return void type when returning null values
 }
 
+void createScope(){
+    Scope new_scope = Scope(std::deque<std::unique_ptr<ExprAST>>());
+    Scopes.push_back(std::move(new_scope));
+}
+
 void generateDeferExprs(){
-    while (!deferExprs.empty()){
-    auto expr = std::move(deferExprs.front());
+    Scope back = std::move(Scopes.back());
+    Log::Info() << "gen scope defers : " << back.to_string() << "\n";
+    for (auto it = back.deferExprs.begin(); it != back.deferExprs.end(); ++it) {
+        (*it)->codegen();
+    }
+    /*while (!back.deferExprs.empty()){
+    auto expr = back.deferExprs.front()->clone();
     expr->codegen();
-    deferExprs.pop();
-    } 
+    back.deferExprs.pop_back();
+    }*/ 
+    Scopes.pop_back();
 }
 
 
@@ -2379,6 +2395,8 @@ Function *FunctionAST::codegen() {
   }
   }
   //codegenStructTemplates();
+
+  createScope();
   Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
   for (int i = 0; i < Body.size(); i++){
@@ -2528,12 +2546,15 @@ Value *IfExprAST::codegen() {
 
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
+
+  createScope();
   Value *ThenV = nullptr;
   for (int i = 0; i < Then.size(); i++){
     ThenV = Then.at(i)->codegen();
     if (!ThenV)
       return nullptr;
   }
+  generateDeferExprs();
   if (ThenV->getType() != Type::getVoidTy(*TheContext)){
   phiType = ThenV->getType();
   }
@@ -2551,11 +2572,13 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(ElseBB);
   //bool is_else_empty = Else.empty();
   if (!Else.empty()){
+  createScope();
   for (int i = 0; i < Else.size(); i++){
     ElseV = Else.at(i)->codegen();
     if (!ElseV)
       return nullptr;
   }
+  generateDeferExprs();
   if (ElseV->getType() != Type::getVoidTy(*TheContext) && ElseV->getType() != phiType){
     if (!convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV)){
         return LogErrorV(this->loc, "Mismatch, expected : %s, got : %s", get_cpoint_type_from_llvm(phiType).c_stringify(), get_cpoint_type_from_llvm(ElseV->getType()).c_stringify());
@@ -2890,10 +2913,12 @@ Value* InfiniteLoopCodegen(std::vector<std::unique_ptr<ExprAST>>& Body, Function
     Builder->SetInsertPoint(loopBB);
     //BasicBlock* afterBB = BasicBlock::Create(*TheContext, "after_loop_infinite", TheFunction);
     //blocksForBreak.push(afterBB);
+    createScope();
     for (int i = 0; i < Body.size(); i++){
       if (!Body.at(i)->codegen())
         return nullptr;
     }
+    generateDeferExprs();
     blocksForBreak.pop();
     Builder->CreateBr(loopBB);
 
@@ -2947,11 +2972,13 @@ Value* LoopExprAST::codegen(){
     Value* value = Builder->CreateLoad(get_type_llvm(tempValueArrayType), ptr, VarName);
     Builder->CreateStore(value /*ptr*/, TempValueArray);
     blocksForBreak.push(AfterLoop);
+    createScope();
     for (int i = 0; i < Body.size(); i++){
     if (!Body.at(i)->codegen()){
       return nullptr;
     }
     }
+    generateDeferExprs();
     blocksForBreak.pop();
     Value* StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
     Value *CurrentPos = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "current_pos_loop_in");
@@ -2980,12 +3007,14 @@ Value* WhileExprAST::codegen(){
   blocksForBreak.push(AfterBB);
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
   Builder->SetInsertPoint(LoopBB);
+  createScope();
   Value* lastVal = nullptr;
   for (int i = 0; i < Body.size(); i++){
     lastVal = Body.at(i)->codegen();
     if (!lastVal)
       return nullptr;
   }
+  generateDeferExprs();
   blocksForBreak.pop();
   Builder->CreateBr(whileBB);
   Builder->SetInsertPoint(AfterBB);
@@ -3029,12 +3058,14 @@ Value *ForExprAST::codegen(){
   Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
   Builder->SetInsertPoint(LoopBB);
   blocksForBreak.push(AfterBB);
+  createScope();
   Value* lastVal = nullptr;
   for (int i = 0; i < Body.size(); i++){
     lastVal = Body.at(i)->codegen();
     if (!lastVal)
       return nullptr;
   }
+  generateDeferExprs();
   blocksForBreak.pop();
   Value *StepVal = nullptr;
   if (Step) {
