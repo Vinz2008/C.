@@ -121,6 +121,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Work on an arena allocator 
 - [x] Work on defer (to have memory management like in zig ?)
 - [ ] Make scopes expressions so you can declare scopes anywhere (ex : let a = { printd(2); var b = 2;  b + 1})
+- [ ] Make variable work with scopes
 
 ## Benchmarks compared to other languages
 
