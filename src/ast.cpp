@@ -68,6 +68,12 @@ std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v)
     return v_cloned;
 }
 
+template<typename T, typename ... Ptrs>
+std::vector<std::unique_ptr<T>> make_unique_ptr_static_vector(Ptrs&& ... ptrs){
+    std::vector<std::unique_ptr<T>> vec;
+    (vec.emplace_back( std::forward<Ptrs>(ptrs) ), ...);
+    return vec;
+}
 
 std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
     return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
@@ -180,7 +186,8 @@ std::unique_ptr<TestAST> TestAST::clone(){
 }
 
 std::unique_ptr<ExprAST> IfExprAST::clone(){
-    return std::make_unique<IfExprAST>(this->loc, Cond->clone(), clone_vector<ExprAST>(Then), clone_vector<ExprAST>(Else));
+    //return std::make_unique<IfExprAST>(this->loc, Cond->clone(), clone_vector<ExprAST>(Then), clone_vector<ExprAST>(Else));
+    return std::make_unique<IfExprAST>(this->loc, Cond->clone(), Then->clone(), (Else) ? Else->clone() : nullptr);
 }
 
 std::unique_ptr<ExprAST> ForExprAST::clone(){
@@ -215,6 +222,10 @@ std::unique_ptr<ArgsInlineAsm> ArgsInlineAsm::clone(){
     return std::make_unique<ArgsInlineAsm>(/*assembly_code->clone()*/ std::unique_ptr<StringExprAST>(dynamic_cast<StringExprAST*>(assembly_code->clone().release())), clone_vector<ArgInlineAsm>(InputOutputArgs));
 }
 
+std::unique_ptr<ExprAST> ScopeExprAST::clone(){
+    return std::make_unique<ScopeExprAST>(clone_vector<ExprAST>(Body));
+}
+
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
     std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
     auto E_gc_init = std::make_unique<CallExprAST>(emptyLoc, "gc_init", std::move(Args_gc_init), Cpoint_Type());
@@ -237,6 +248,21 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
     return LogError("expected ')'");
   getNextToken(); // eat ).
   return V;
+}
+
+std::unique_ptr<ExprAST> ParseScope(){
+    Log::Info() << "PARSING SCOPE" << "\n";
+    getNextToken(); // eat '{'
+    std::vector<std::unique_ptr<ExprAST>> Body;
+    auto ret = ParseBodyExpressions(Body);
+    if (!ret){
+        return nullptr;
+    }
+    if (CurTok != '}'){
+        return LogError("expected } in scope");
+    }
+    getNextToken();
+    return std::make_unique<ScopeExprAST>(std::move(Body));
 }
 
 std::unique_ptr<ExprAST> ParseConstantArray(){
@@ -532,6 +558,8 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseParenExpr();
   case '[':
     return ParseConstantArray();
+  case '{':
+    return ParseScope();
   case tok_if:
     return ParseIfExpr();
   case tok_return:
@@ -912,10 +940,8 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
       auto E = ParseExpression();
       if (!E)
         return nullptr;
-      if (is_func_body){
-      if (dynamic_cast<ReturnAST*>(E.get())){
+      if (is_func_body && dynamic_cast<ReturnAST*>(E.get())){
         return_found = true;
-      }
       }
       if (!return_found){
         Body.push_back(std::move(E));
@@ -1477,13 +1503,17 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   auto Cond = ParseExpression();
   if (!Cond)
     return nullptr;
-  if (CurTok != '{'){
+  /*if (CurTok != '{'){
     Log::Info() << "CurTok : " << CurTok << "\n";
     return LogError("expected {");
   }
-  getNextToken();  // eat the {
-  std::vector<std::unique_ptr<ExprAST>> Then;
-  auto ret = ParseBodyExpressions(Then);
+  getNextToken();*/  // eat the {
+  //std::vector<std::unique_ptr<ExprAST>> Then;
+  std::unique_ptr<ExprAST> Then = ParseExpression();
+  if (!Then){
+    return nullptr;
+  }
+  /*auto ret = ParseBodyExpressions(Then);
   if (!ret){
     return nullptr;
   }
@@ -1491,8 +1521,9 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   if (CurTok != '}'){
     return LogError("expected } in if");
   }
-  getNextToken();
-  std::vector<std::unique_ptr<ExprAST>> Else;
+  getNextToken();*/
+  //std::vector<std::unique_ptr<ExprAST>> Else;
+  std::unique_ptr<ExprAST> Else;
 else_start:
   if (CurTok == tok_else){
   getNextToken();
@@ -1501,13 +1532,20 @@ else_start:
     if (!else_if_expr){
       return nullptr;
     }
-    Else.push_back(std::move(else_if_expr));
+    //Else.push_back(std::move(else_if_expr));
+    if (Else){
+    Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(Else), std::move(else_if_expr)));
+    } else {
+        Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(else_if_expr)));
+    }
     //getNextToken();
+    Log::Info() << "Tok before verif tok_else : " << CurTok << "\n";
     if (CurTok == tok_else){
       goto else_start;
     }
   } else {
-  if (CurTok != '{'){
+  Else = ParseExpression();
+  /*if (CurTok != '{'){
     return LogError("expected {");
   }
   getNextToken();
@@ -1518,9 +1556,10 @@ else_start:
   if (CurTok != '}'){
     return LogError("expected } in else");
   }
-  getNextToken();
+  getNextToken();*/
   }
   }
+  Log::Info() << "CurTok at end of IfExprAST : " << CurTok << "\n";
   return std::make_unique<IfExprAST>(IfLoc, std::move(Cond), std::move(Then),
                                       std::move(Else));
 }
@@ -1817,6 +1856,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   std::vector<std::unique_ptr<ExprAST>> Body;
   getNextToken();  // eat '{'.
   auto ret = ParseBodyExpressions(Body);
+  Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
     return LogError("expected } after for");
   }

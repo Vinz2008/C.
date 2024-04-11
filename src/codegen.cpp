@@ -582,6 +582,20 @@ Value* ConstantStructExprAST::codegen(){
     return ConstantStruct::get(dyn_cast<StructType>(structType), structMembersVal);
 }
 
+Value* ScopeExprAST::codegen(){
+    Value* ret = nullptr;
+    createScope();
+    Log::Info() << "Scope size : " << Body.size() << "\n";
+    for (int i = 0; i < Body.size(); i++){
+        ret = Body.at(i)->codegen();
+        if (!ret){
+            return nullptr;
+        }
+    }
+    endScope();
+    return ret;
+}
+
 Type* StructDeclarAST::codegen(){
   Log::Info() << "CODEGEN STRUCT DECLAR" << "\n";
   StructType* structType = StructType::create(*TheContext);
@@ -1019,7 +1033,7 @@ void createScope(){
     Scopes.push_back(std::move(new_scope));
 }
 
-void generateDeferExprs(){
+void endScope(){
     Scope back = std::move(Scopes.back());
     Log::Info() << "gen scope defers : " << back.to_string() << "\n";
     for (auto it = back.deferExprs.begin(); it != back.deferExprs.end(); ++it) {
@@ -2403,7 +2417,7 @@ Function *FunctionAST::codegen() {
     RetVal = Body.at(i)->codegen();
   }
 
-  generateDeferExprs();
+  endScope();
   
   //if (RetVal) {
     Log::Info() << "before sret P.cpoint_type : " << P.cpoint_type << "\n";
@@ -2521,6 +2535,7 @@ GlobalVariable* GlobalVariableAST::codegen(){
 }
 
 Value *IfExprAST::codegen() {
+  Log::Info() << "IfExprAST codegen" << "\n";
   CpointDebugInfo.emitLocation(this);
   Value *CondV = Cond->codegen();
   if (!CondV)
@@ -2546,15 +2561,15 @@ Value *IfExprAST::codegen() {
 
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
-
-  createScope();
+  Value *ThenV = Then->codegen();
+  /*createScope();
   Value *ThenV = nullptr;
   for (int i = 0; i < Then.size(); i++){
     ThenV = Then.at(i)->codegen();
     if (!ThenV)
       return nullptr;
   }
-  generateDeferExprs();
+  endScope();*/
   if (ThenV->getType() != Type::getVoidTy(*TheContext)){
   phiType = ThenV->getType();
   }
@@ -2565,27 +2580,33 @@ Value *IfExprAST::codegen() {
   Builder->CreateBr(MergeBB);
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
   ThenBB = Builder->GetInsertBlock();
-  Value *ElseV = nullptr;
+  //Value *ElseV = nullptr;
   // Emit else block.
   //TheFunction->getBasicBlockList().push_back(ElseBB);
   TheFunction->insert(TheFunction->end(), ElseBB);
   Builder->SetInsertPoint(ElseBB);
+  Value *ElseV = nullptr;
+  if (Else){
+    ElseV = Else->codegen();
+    if (!ElseV){
+        return nullptr;
+    }
   //bool is_else_empty = Else.empty();
-  if (!Else.empty()){
-  createScope();
+  //if (!Else.empty()){
+  /*createScope();
   for (int i = 0; i < Else.size(); i++){
     ElseV = Else.at(i)->codegen();
     if (!ElseV)
       return nullptr;
   }
-  generateDeferExprs();
+  endScope();*/
   if (ElseV->getType() != Type::getVoidTy(*TheContext) && ElseV->getType() != phiType){
     if (!convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV)){
         return LogErrorV(this->loc, "Mismatch, expected : %s, got : %s", get_cpoint_type_from_llvm(phiType).c_stringify(), get_cpoint_type_from_llvm(ElseV->getType()).c_stringify());
     }
   }
-
-  } /*else {
+  }
+  /*}*/ /*else {
     Log::Info() << "Else empty" << "\n";
     ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
   }*/
@@ -2918,7 +2939,7 @@ Value* InfiniteLoopCodegen(std::vector<std::unique_ptr<ExprAST>>& Body, Function
       if (!Body.at(i)->codegen())
         return nullptr;
     }
-    generateDeferExprs();
+    endScope();
     blocksForBreak.pop();
     Builder->CreateBr(loopBB);
 
@@ -2978,7 +2999,7 @@ Value* LoopExprAST::codegen(){
       return nullptr;
     }
     }
-    generateDeferExprs();
+    endScope();
     blocksForBreak.pop();
     Value* StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
     Value *CurrentPos = Builder->CreateLoad(PosArrayAlloca->getAllocatedType(), PosArrayAlloca, "current_pos_loop_in");
@@ -3014,7 +3035,7 @@ Value* WhileExprAST::codegen(){
     if (!lastVal)
       return nullptr;
   }
-  generateDeferExprs();
+  endScope();
   blocksForBreak.pop();
   Builder->CreateBr(whileBB);
   Builder->SetInsertPoint(AfterBB);
@@ -3065,7 +3086,7 @@ Value *ForExprAST::codegen(){
     if (!lastVal)
       return nullptr;
   }
-  generateDeferExprs();
+  endScope();
   blocksForBreak.pop();
   Value *StepVal = nullptr;
   if (Step) {

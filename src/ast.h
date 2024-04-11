@@ -70,15 +70,22 @@ public:
     }
 };
 
-/*std::ostream& operator << (std::ostream& o, const Scope& s){
-    Scope cloned = s.clone();
-    while (!s.deferExprs.empty()){
-    auto expr = std::move(cloned.deferExprs.front());
-    o << expr->to_string() << std::endl;
-    cloned.deferExprs.pop_back();
-    } 
-    return o;
-}*/
+class ScopeExprAST : public ExprAST {
+public:
+    std::vector<std::unique_ptr<ExprAST>> Body;
+    ScopeExprAST(std::vector<std::unique_ptr<ExprAST>> Body) : Body(std::move(Body)) {}
+    Value *codegen() override;
+    std::unique_ptr<ExprAST> clone() override;
+    std::string to_string() override {
+        std::string body_str = "{\n";
+        for (int i = 0; i < Body.size(); i++){
+            body_str += Body.at(i)->to_string() + "\n";
+        }
+        body_str += "}\n";
+        return body_str;
+    }
+    std::string generate_c() override { return ""; } // TODO
+};
 
 
 class EmptyExprAST : public ExprAST {
@@ -755,24 +762,21 @@ public:
 
 class IfExprAST : public ExprAST {
   std::unique_ptr<ExprAST> Cond;
-  std::vector<std::unique_ptr<ExprAST>> Then, Else;
+  //std::vector<std::unique_ptr<ExprAST>> Then, Else;
+  std::unique_ptr<ExprAST> Then, Else;
 
 public:
-  IfExprAST(Source_location Loc, std::unique_ptr<ExprAST> Cond, std::vector<std::unique_ptr<ExprAST>> Then,
-            std::vector<std::unique_ptr<ExprAST>> Else)
+  IfExprAST(Source_location Loc, std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Then,
+            std::unique_ptr<ExprAST> Else)
     : ExprAST(Loc), Cond(std::move(Cond)), Then(std::move(Then)), Else(std::move(Else)) {}
 
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string body_then = "";
-    for (int i = 0; i < Then.size(); i++){
-        body_then += Then.at(i)->to_string() + "\n";
-    }
+    body_then += Then->to_string() + "\n";
     std::string body_else = "";
-    for (int i = 0; i < Else.size(); i++){
-        body_else += Else.at(i)->to_string() + "\n";
-    }
+    body_else += Else->to_string() + "\n";
     return "if " + Cond->to_string() + "{\n" + body_then + "} else {\n" + body_else + "}";
   }
   std::string generate_c() override;
@@ -973,6 +977,7 @@ std::unique_ptr<ExprAST> ParseMacroCall();
 std::unique_ptr<ExprAST> ParseClosure();
 std::unique_ptr<ExprAST> ParseSemiColon();
 std::unique_ptr<ExprAST> ParseDefer();
+std::unique_ptr<ExprAST> ParseScope();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

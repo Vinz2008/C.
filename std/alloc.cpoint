@@ -7,7 +7,7 @@ mod alloc {
 	func manual_alloc(size : int) void ptr{
 		var pointer : void ptr = malloc(size)
 		if pointer == null {
-			panic("Manual allocation by the OS failed")
+			#panic("Manual allocation by the OS failed")
 		}
 		pointer
 	}

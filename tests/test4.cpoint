@@ -7,7 +7,7 @@ func main(){
     } else if i%3 == 0 {
         printstr("Fizz\t")
     } else if i%5 == 0 {
-          printstr("Buzz\t")
+        printstr("Buzz\t")
     } else {
         printd(i)
         printstr("\t")

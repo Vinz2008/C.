@@ -302,7 +302,7 @@ std::string RedeclarationExprAST::generate_c(){
 }
 
 std::string IfExprAST::generate_c(){
-    std::string body_if = "";
+    /*std::string body_if = "";
     body_if += generate_body_c(Then);
     for (int i = 0; i < Then.size(); i++){
         body_if += Then.at(i)->generate_c() + ";\n";
@@ -312,7 +312,8 @@ std::string IfExprAST::generate_c(){
     for (int i = 0; i < Else.size(); i++){
         body_else += Else.at(i)->generate_c() + ";\n";
     }
-    return "if (" + Cond->generate_c() + "){\n" + body_if + "} else {\n" + body_else + "}\n";
+    return "if (" + Cond->generate_c() + "){\n" + body_if + "} else {\n" + body_else + "}\n";*/
+    return ""; // TODO : fix this
 }
 
 std::string WhileExprAST::generate_c(){
