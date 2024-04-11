@@ -1,0 +1,21 @@
+struct Arena {
+    var offset : i64
+    var capacity : i64
+    var data : u8 ptr
+}
+
+extern internal_arena_create() struct Arena;
+extern internal_arena_alloc(a : struct Arena ptr, size : i64) void;
+extern internal_arena_destroy(a : struct Arena ptr) void;
+
+func arena_create() struct Arena {
+    internal_arena_create()
+}
+
+func arena_alloc(a : struct Arena ptr, size : i64) void {
+    internal_arena_alloc(a, size)
+}
+
+func arena_destroy(a : struct Arena ptr){
+    internal_arena_destroy(a)
+}
