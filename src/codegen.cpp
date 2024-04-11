@@ -177,7 +177,7 @@ Function *getFunction(std::string Name) {
   // If not, check whether we can codegen the declaration from some existing
   // prototype.
   auto FI = FunctionProtos.find(Name);
-  if (FI != FunctionProtos.end()){
+  if (FI != FunctionProtos.end() && FI->second){
     Log::Info() << "FI->second->codegen() " << Name << "\n";
     return FI->second->codegen();
   }
@@ -437,7 +437,7 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
   return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
 }
 
-Value* getSizeOfStruct(AllocaInst *A){
+Value* getSizeOfStruct(Value *A){
     std::vector<Value*> ArgsV;
     ArgsV.push_back(A);
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // return -1 if object size is unknown
@@ -1891,9 +1891,12 @@ Value *CallExprAST::codegen() {
   }
   std::vector<Value *> ArgsV;
   bool has_added_sret = false;
+  if (has_sret){
+    ArgsV.push_back(SretArgAlloca);
+  }
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     if (has_sret && !has_added_sret){
-        ArgsV.push_back(SretArgAlloca);
+        //ArgsV.push_back(SretArgAlloca);
         i--;
         has_added_sret = true;
     } else {
@@ -1931,7 +1934,7 @@ Value *CallExprAST::codegen() {
   //std::vector<int> pos_vector_two_float;
   for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
     Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
-    if (/*arg_type.is_struct && !arg_type.is_ptr &&*/ should_pass_struct_byval(arg_type)){
+    if (/*arg_type.is_struct && !arg_type.is_ptr &&*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
     }
@@ -2041,7 +2044,7 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         }
         sizeof_type = NamedValues[Name]->type;
     }
-    if (/*sizeof_type.is_struct && !sizeof_type.is_ptr*/ should_pass_struct_byval(sizeof_type)){
+    if (/*sizeof_type.is_struct && !sizeof_type.is_ptr*/ is_just_struct(sizeof_type) && should_pass_struct_byval(sizeof_type)){
         /*int struct_size = 0;
         for (int i = 0; i < StructDeclarations[sizeof_type.struct_name]->members.size(); i++){
             StructDeclarations[sizeof_type.struct_name]->members.at(i).second
@@ -2434,9 +2437,11 @@ Function *FunctionAST::codegen() {
         ArgsV.push_back(SizeofExprAST(P.cpoint_type, false, "").codegen());
         ArgsV.push_back(BoolExprAST(false).codegen());
         Builder->CreateCall(memcpyF, ArgsV, "sret_memcpy");*/
-        Builder->CreateStore(RetVal, get_var_allocation("sret_arg"), false);
+        //Builder->CreateStore(RetVal, get_var_allocation("sret_arg"), false);
         //AllocaInst* sret_arg_allocation = dyn_cast<AllocaInst>(get_var_allocation("sret_arg"));
-        //Builder->CreateMemCpy(sret_arg_allocation, sret_arg_allocation->getAlign(), RetVal)
+        std::string sret_arg_name = "sret_arg";
+        Value* sret_ptr = VariableExprAST(emptyLoc, sret_arg_name, *get_variable_type(sret_arg_name)).codegen();
+        Builder->CreateMemCpy(sret_ptr, MaybeAlign(0), RetVal, MaybeAlign(0), getSizeOfStruct(sret_ptr));
         Builder->CreateRetVoid();
         goto after_ret;
     }

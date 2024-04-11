@@ -66,6 +66,9 @@ ifeq ($(UNAME),Darwin)
 # is MacOS
 LDFLAGS += -lintl
 endif
+ifneq (, $(shell which mold))
+LDFLAGS += -fuse-ld=mold
+endif
 endif
 
 
