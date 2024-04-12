@@ -3,9 +3,13 @@ import @std/alloc.cpoint
 
 extern gc_free(s : void ptr) void;
 
+extern malloc(size : i64) void ptr;
+extern free(pointer : void ptr) void;
+
 func main() int {
-    var l = gc_malloc(10 * sizeof int)
-    defer gc_free(l)
+    var l : int ptr = gc_malloc(10 * sizeof int)
+    #println("ptr gc_malloc {}", l)
+    // defer gc_free(l)
     l[0] = 2
     printi(l[0])
     if argc == 2 {
@@ -13,9 +17,13 @@ func main() int {
         defer gc_free(l_if)
         printstr("test")
     }
-    var l2 = alloc::manual_alloc(12* sizeof int)
-    defer alloc::manual_dealloc(l2)
+    var l2 : int ptr = malloc(12 * sizeof int)
+    #println("ptr manual_alloc {}", l2)
+    defer free(l2)
     l2[0] = 3
     printi(l2[0])
+    #println("test before free")
+    // gc_free(l)
+    #println("test after free")
     0
 }
