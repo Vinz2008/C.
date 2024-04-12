@@ -165,6 +165,40 @@ void print_help(){
 }
 
 
+// also stolen from zig
+struct TimeTracerRAII {
+  // Granularity in ms
+  unsigned TimeTraceGranularity;
+  StringRef TimeTraceFile, OutputFilename;
+  bool EnableTimeTrace;
+
+  TimeTracerRAII(StringRef ProgramName, StringRef OF, bool is_time_trace_on)
+    : TimeTraceGranularity(500U),
+      TimeTraceFile("trace.json"),
+      OutputFilename(OF),
+      EnableTimeTrace(!TimeTraceFile.empty() && is_time_trace_on) {
+    if (EnableTimeTrace) {
+      if (const char *G = std::getenv("CPOINT_TIME_TRACE_GRANULARITY"))
+        TimeTraceGranularity = (unsigned)std::atoi(G);
+
+      llvm::timeTraceProfilerInitialize(TimeTraceGranularity, ProgramName);
+    }
+  }
+
+  ~TimeTracerRAII() {
+    if (EnableTimeTrace) {
+      if (auto E = llvm::timeTraceProfilerWrite(TimeTraceFile, OutputFilename)) {
+        handleAllErrors(std::move(E), [&](const StringError &SE) {
+          errs() << SE.getMessage() << "\n";
+        });
+        return;
+      }
+      timeTraceProfilerCleanup();
+    }
+  }
+};
+
+
 // TODO : move this in operators.cpp ?
 void installPrecendenceOperators(){
     // Install standard binary operators.
@@ -433,6 +467,7 @@ int main(int argc, char **argv){
     int optimize_level = 0;
     bool explicit_with_gc = false; // add gc even with -no-std
     bool PICmode = false;
+    bool time_report = false;
     // use native target even if -target is used. Needed for now in windows
     bool use_native_target = false;
     std::string linker_additional_flags = "";
@@ -525,8 +560,9 @@ int main(int argc, char **argv){
           Comp_context->strip_mode = true;
         } else if (arg.compare("-flto") == 0){
           Comp_context->lto_mode = true;
+        } else if(arg.compare("-time-trace") == 0){
+            time_report = true;
         } else if (arg.compare(0, 2, "-O") == 0){
-          // TODO : change from -O 1 to -O1
           size_t pos = arg.find("O");
           std::string temp = arg.substr(pos+1, arg.size());
           is_optimised = true;
@@ -701,6 +737,11 @@ int main(int argc, char **argv){
         errs() << _("Could not open file: ") << EC.message();
         return 1;
     }
+    auto PID = sys::Process::getProcessId();
+    std::string ProcName = "cpoint-";
+    ProcName += std::to_string(PID);
+    TimeTracerRAII TimeTracer(ProcName,
+                              object_filename, time_report);
     llvm::CodeGenFileType FileType = CGFT_ObjectFile;
     if (asm_mode){
       FileType = CGFT_AssemblyFile;
@@ -781,6 +822,9 @@ int main(int argc, char **argv){
 
     if (Comp_context->lto_mode){
         writeBitcodeLTO(object_filename, false);
+    }
+    if (time_report) {
+        TimerGroup::printAll(errs());
     }
 
     dest.flush();

@@ -34,3 +34,4 @@ bindings.cpoint
 cpoint-run
 cpoint-from-c
 out.cpoint
+trace.json
