@@ -275,13 +275,17 @@ bool isArgString(ExprAST* E){
 
 Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
     std::vector<std::unique_ptr<ExprAST>> PrintfArgs;
+    bool is_error = false;
     if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
-        return LogErrorV(emptyLoc, "First argument of the print macro is not a constant string"); // TODO : pass loc to this function ?
+        // if it is not a string it is stderr, so it is a eprint or eprintln
+        is_error = true;
+        //return LogErrorV(emptyLoc, "First argument of the print macro is not a constant string"); // TODO : pass loc to this function ?
     }
-    auto print_format_expr = dynamic_cast<StringExprAST*>(Args.at(0).get());
+    int format_pos = (is_error) ? 1 : 0;
+    auto print_format_expr = dynamic_cast<StringExprAST*>(Args.at(format_pos).get());
     std::string print_format = print_format_expr->str;
     std::string generated_printf_format = "";
-    int arg_nb = 1;
+    int arg_nb = format_pos+1;
     for (int i = 0; i < print_format.size(); i++){
         if (print_format.at(i) == '{' && print_format.at(i+1) && '}'){
             bool is_string_found = false;
@@ -316,13 +320,15 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
             generated_printf_format += print_format.at(i);
         }
     }
-
+    if (is_error){
+        PrintfArgs.push_back(std::move(Args.at(0)));
+    }
     PrintfArgs.push_back(std::make_unique<StringExprAST>(generated_printf_format));
-    for (int i = 1; i < Args.size(); i++){
+    for (int i = format_pos+1; i < Args.size(); i++){
         PrintfArgs.push_back(std::move(Args.at(i)));
     }
 
-    auto call = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(PrintfArgs), Cpoint_Type());
+    auto call = std::make_unique<CallExprAST>(emptyLoc, is_error ? "fprintf" : "printf", std::move(PrintfArgs), Cpoint_Type());
     return call->codegen();
 }
 

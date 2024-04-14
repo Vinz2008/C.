@@ -98,7 +98,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Generate unreachables with unreachable (unreachable macro ?)
 - [ ] Add "-backend" flag to select the backend (for also adding a libgccjit flag)
 - [x] Add help flag (-h) to cpoint and cpoint-build
-- [ ] Implement a eprintln equivalent (writing to stderr)
+- [x] Implement a eprintln equivalent (writing to stderr)
 - [ ] Work on adding the sret attribute when needed to follow the x86 abi calling convention
 - [x] Add folder selection in cpoint-build (like in make -C)
 - [x] Add running test in cpoint-build

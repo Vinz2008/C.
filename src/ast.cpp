@@ -719,9 +719,13 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
     } else if (function_name == "dbg"){
         return generate_dbg_macro(ArgsMacro);
     } else if (function_name == "print"){
-        return generate_print_macro(ArgsMacro, false);
+        return generate_print_macro(ArgsMacro, false, false);
     } else if (function_name == "println"){
-        return generate_print_macro(ArgsMacro, true);
+        return generate_print_macro(ArgsMacro, true, false);
+    } else if (function_name == "eprint"){
+        return generate_print_macro(ArgsMacro, false, true);
+    } else if (function_name == "eprintln"){
+        return generate_print_macro(ArgsMacro, true, true);
     } else if (function_name == "unreachable"){
         return generate_unreachable_macro();
     } else if (function_name == "assume"){

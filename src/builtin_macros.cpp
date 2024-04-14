@@ -133,18 +133,32 @@ std::unique_ptr<ExprAST> generate_dbg_macro(std::vector<std::unique_ptr<ExprAST>
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
-std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro, bool is_println){
+std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro, bool is_println, bool is_error){
     // call internal function
     std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
+    Cpoint_Type stderr_type = Cpoint_Type(int_type, true);
+    if (is_error){
+        // maybe create a va_arg function in standard library that can simplify this and remove the need to pass stderr ?
+        GlobalVariableAST("stderr", false, true, stderr_type, nullptr, false, nullptr, "").codegen();
+        args_printf.push_back(std::make_pair("file", stderr_type));
+    }
     args_printf.push_back(std::make_pair("format", Cpoint_Type(i8_type, true)));
-    add_manually_extern("printf", Cpoint_Type(int_type), std::move(args_printf), 0, 30, true, false, "");
+    std::string function_name = "printf";
+    if (is_error){
+        function_name = "fprintf";
+    }
+    add_manually_extern(function_name, Cpoint_Type(int_type), std::move(args_printf), 0, 30, true, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
+    if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
+        return LogError("First argument of the print macro is not a constant string");
+    }
     if (is_println){
-        if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
-            return LogError("First argument of the println macro is not a constant string");
-        }
         auto stringExpr = dynamic_cast<StringExprAST*>(Args.at(0).get());
         stringExpr->str += "\n";
+    }
+
+    if (is_error){
+        Args.insert(Args.begin(), std::make_unique<VariableExprAST>(emptyLoc, "stderr", stderr_type));
     }
 
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_print", std::move(Args), Cpoint_Type());

@@ -12,7 +12,7 @@ func main(){
     file::symlink("test14.cpoint", "symlinked_test14.cpoint.temp")
     var fd_size = file::open("test14.cpoint")
     var size = file::get_file_size(fd_size)
-    #println("size of file : {}", size)
+    #eprintln("size of file : {}", size)
     file::close(fd_size)
     // var content = file::read_to_string(fd)
     // #println("file content : {}", content)
