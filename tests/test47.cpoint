@@ -9,7 +9,7 @@ extern free(pointer : void ptr) void;
 func main() int {
     var l : int ptr = gc_malloc(10 * sizeof int)
     #println("ptr gc_malloc {}", l)
-    // defer gc_free(l)
+    defer gc_free(l)
     l[0] = 2
     printi(l[0])
     if argc == 2 {
@@ -18,12 +18,9 @@ func main() int {
         printstr("test")
     }
     var l2 : int ptr = malloc(12 * sizeof int)
-    #println("ptr manual_alloc {}", l2)
     defer free(l2)
+    #println("ptr manual_alloc {}", l2)
     l2[0] = 3
     printi(l2[0])
-    #println("test before free")
-    // gc_free(l)
-    #println("test after free")
     0
 }

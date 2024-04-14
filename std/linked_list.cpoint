@@ -8,14 +8,16 @@ struct node_linked_list {
 struct linked_list {
     var head : struct node_linked_list ptr 
     var tail : struct node_linked_list ptr
-    func linked_list(){
+    func linked_list() void {
         self.head = null
         self.tail = null
         printd(3)
-        0
     }
-    func append(data : int){
-        var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list)
+    func append(data : int) void {
+        var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list * 2)
+        if temp == null {
+            #panic("failed allocation in linked list")
+        }
         temp.data = data
         temp.next = null
         if self.head == null {
@@ -27,9 +29,9 @@ struct linked_list {
             self.tail = temp
         }
     }
-    func print(){
+    func print() void {
         var current : struct node_linked_list ptr = self.head
-        while current != null {
+        while self.head != null {
             printi(current.data)
         }
     }

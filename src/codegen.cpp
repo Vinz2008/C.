@@ -1193,6 +1193,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 Log::Info() << "array for array member is ptr" << "\n";
                 cpoint_type.is_ptr = false;
                 indexes = {indexVal};
+                arrayPtr = Builder->CreateLoad(arrayPtr->getType(), arrayPtr);
             }
             Type* llvm_type = get_type_llvm(cpoint_type);
             Log::Info() << "Get LLVM TYPE" << "\n";
@@ -1580,7 +1581,7 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
 
         Value* array_or_ptr = allocated_value;
         // To make argv[0] work
-        if (/*cpoint_type_not_modified.is_ptr &&*/ cpoint_type_not_modified.nb_ptr > 1){
+        if (cpoint_type_not_modified.is_ptr /*&& cpoint_type_not_modified.nb_ptr > 1*/){
         array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
         }
         Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes, "", true);

@@ -123,7 +123,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make scopes expressions so you can declare scopes anywhere (ex : let a = { printd(2); var b = 2;  b + 1})
 - [ ] Make variable work with scopes
 - [ ] Finish making all expression containing Body (vectors of ExprAST) using only an expression that can be a scope expression
-- [ ] FIX MEMORY ALLOCATION BUG WITH FREE (loading ptrs with llvm ? why would it be with gc allocator and malloc ?)
 
 ## Benchmarks compared to other languages
 
