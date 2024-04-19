@@ -271,22 +271,6 @@ public:
   }
   std::string generate_c() override;
 };
-
-/*class UnionMemberExprAST : public ExprAST {
-public:
-  std::string UnionName;
-  std::string MemberName;
-  UnionMemberExprAST(const std::string &UnionName, const std::string &MemberName) : UnionName(UnionName), MemberName(MemberName) {}
-  Value* codegen();
-  std::unique_ptr<ExprAST> clone(){
-    return std::make_unique<UnionMemberExprAST>(UnionName, MemberName);
-  }
-  std::string to_string() override {
-    return UnionName + "." + MemberName;
-  }
-  std::string generate_c() override { return ""; }
-};*/
-
 class ConstantArrayExprAST : public ExprAST {
 public:
   std::vector<std::unique_ptr<ExprAST>> ArrayMembers;
@@ -552,8 +536,9 @@ public:
     std::string enum_member;
     std::string var_name;
     bool is_underscore;
-    std::vector<std::unique_ptr<ExprAST>> Body; 
-    matchCase(std::unique_ptr<ExprAST> expr, const std::string& enum_name, const std::string& enum_member, const std::string& var_name, bool is_underscore, std::vector<std::unique_ptr<ExprAST>> Body) : expr(std::move(expr)), enum_name(enum_name), enum_member(enum_member), var_name(var_name), is_underscore(is_underscore), Body(std::move(Body)) {}
+    std::unique_ptr<ExprAST> Body; 
+    //std::vector<std::unique_ptr<ExprAST>> Body; 
+    matchCase(std::unique_ptr<ExprAST> expr, const std::string& enum_name, const std::string& enum_member, const std::string& var_name, bool is_underscore, std::unique_ptr<ExprAST> Body) : expr(std::move(expr)), enum_name(enum_name), enum_member(enum_member), var_name(var_name), is_underscore(is_underscore), Body(std::move(Body)) {}
     std::unique_ptr<matchCase> clone();
 };
 
@@ -569,7 +554,8 @@ public:
         std::string match_body = "match " + matchVar + "{\n";
         for (int i = 0; i < matchCases.size(); i++){
             match_body += "\t" + matchCases.at(i)->expr->to_string() + "=> ";
-            if (matchCases.at(i)->Body.size() == 1){
+            match_body += matchCases.at(i)->Body->to_string();
+            /*if (matchCases.at(i)->Body.size() == 1){
                 match_body += matchCases.at(i)->Body.at(0)->to_string() + ",\n";
             } else {
                 match_body += "{\n";
@@ -577,7 +563,7 @@ public:
                     match_body += "\t\t" + matchCases.at(i)->Body.at(i)->to_string() + "\n";
                 }
                 match_body += "}\n";
-            }
+            }*/
         }
         match_body += "}";
         return match_body;
@@ -844,12 +830,13 @@ class ForExprAST : public ExprAST {
   std::string VarName;
   Cpoint_Type VarType;
   std::unique_ptr<ExprAST> Start, End, Step;
-  std::vector<std::unique_ptr<ExprAST>> Body;
+  //std::vector<std::unique_ptr<ExprAST>> Body;
+  std::unique_ptr<ExprAST> Body;
 
 public:
   ForExprAST(const std::string &VarName, Cpoint_Type VarType, std::unique_ptr<ExprAST> Start,
              std::unique_ptr<ExprAST> End, std::unique_ptr<ExprAST> Step,
-             std::vector<std::unique_ptr<ExprAST>> Body)
+             std::unique_ptr<ExprAST> Body)
     : VarName(VarName), VarType(VarType), Start(std::move(Start)), End(std::move(End)),
       Step(std::move(Step)), Body(std::move(Body)) {}
 
@@ -857,27 +844,27 @@ public:
   std::unique_ptr<ExprAST> clone();
   std::string to_string() override {
     std::string for_body = "";
-    for (int i = 0; i < Body.size(); i++){
-        for_body += Body.at(i)->to_string() + "\n";
-    }
-    return "for " + VarName + " = " + Start->to_string() + ", " + End->to_string() + ", " + Step->to_string() + "{\n" + for_body + "}";
+    for_body += Body->to_string();
+    return "for " + VarName + " = " + Start->to_string() + ", " + End->to_string() + ", " + Step->to_string() + " " + for_body;
   }
 	std::string generate_c() override;
 };
 
 class WhileExprAST : public ExprAST {
   std::unique_ptr<ExprAST> Cond;
-  std::vector<std::unique_ptr<ExprAST>> Body;
+  //std::vector<std::unique_ptr<ExprAST>> Body;
+  std::unique_ptr<ExprAST> Body;
 public:
-  WhileExprAST(std::unique_ptr<ExprAST> Cond, std::vector<std::unique_ptr<ExprAST>> Body) : Cond(std::move(Cond)), Body(std::move(Body)) {}
+  WhileExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Body) : Cond(std::move(Cond)), Body(std::move(Body)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone();
   std::string to_string() override {
     std::string while_body = "";
-    for (int i = 0; i < Body.size(); i++){
+    while_body += Body->to_string();
+    /*for (int i = 0; i < Body.size(); i++){
         while_body += Body.at(i)->to_string() + "\n";
-    }
-    return "while" + Cond->to_string() + " {\n" + while_body + "}";
+    }*/
+    return "while" + Cond->to_string() + " " + while_body;
   }
   std::string generate_c() override;
 };
@@ -885,7 +872,7 @@ public:
 class LoopExprAST : public ExprAST {
   std::string VarName;
   std::unique_ptr<ExprAST> Array;
-  std::vector<std::unique_ptr<ExprAST>> Body;
+  std::vector<std::unique_ptr<ExprAST>> Body; // keep this a vector of exprs because it is needed to differenciate infinite and not loops
   bool is_infinite_loop;
 public:
   LoopExprAST(std::string VarName, std::unique_ptr<ExprAST> Array, std::vector<std::unique_ptr<ExprAST>> Body, bool is_infinite_loop = false) : VarName(VarName), Array(std::move(Array)), Body(std::move(Body)), is_infinite_loop(is_infinite_loop) {}

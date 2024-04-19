@@ -844,9 +844,10 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
             found_underscore = true;
             defaultDestBB = BasicBlock::Create(*TheContext, "default_dest", TheFunction);
             Builder->SetInsertPoint(defaultDestBB);
-            for (int j = 0; j < matchCaseTemp->Body.size(); j++){
+            matchCaseTemp->Body->codegen();
+            /*for (int j = 0; j < matchCaseTemp->Body.size(); j++){
                 matchCaseTemp->Body.at(j)->codegen();
-            }
+            }*/
             Builder->CreateBr(AfterBB);
             switch_inst->setDefaultDest(defaultDestBB);
         } else {
@@ -887,9 +888,10 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
                 convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(int_type), val);
             }
             Log::Info() << "match val after converting : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
-            for (int j = 0; j < matchCaseTemp->Body.size(); j++){
+            matchCaseTemp->Body->codegen();
+            /*for (int j = 0; j < matchCaseTemp->Body.size(); j++){
                 matchCaseTemp->Body.at(j)->codegen();
-            }
+            }*/
             Builder->CreateBr(AfterBB);
             ConstantInt* constint_val = nullptr;
             Log::Info() << "value id : " << val->getValueID() << "\n";
@@ -957,9 +959,10 @@ Value* MatchExprAST::codegen(){
         BasicBlock *ElseBB;
         if (matchCaseTemp->is_underscore){
             //Builder->CreateBr(AfterMatch);
-            for (int i = 0; i < matchCaseTemp->Body.size(); i++){
+            matchCaseTemp->Body->codegen();
+            /*for (int i = 0; i < matchCaseTemp->Body.size(); i++){
                 matchCaseTemp->Body.at(i)->codegen();
-            }
+            }*/
             membersNotFound.clear();
             break;
         } else {
@@ -999,9 +1002,10 @@ Value* MatchExprAST::codegen(){
             Log::Info() << "Create var for match : " << enumDeclar->EnumMembers[pos]->Name << "\n";
         }
         }
-        for (int i = 0; i < matchCaseTemp->Body.size(); i++){
+        matchCaseTemp->Body->codegen();
+        /*for (int i = 0; i < matchCaseTemp->Body.size(); i++){
             matchCaseTemp->Body.at(i)->codegen();
-        }
+        }*/
         Builder->CreateBr(AfterMatch);
         //Builder->CreateBr(ElseBB);
         //TheFunction->getBasicBlockList().push_back(ElseBB);
@@ -3041,12 +3045,16 @@ Value* WhileExprAST::codegen(){
   Builder->CreateCondBr(CondV, LoopBB, AfterBB);
   Builder->SetInsertPoint(LoopBB);
   createScope();
-  Value* lastVal = nullptr;
+  Value* lastVal = Body->codegen();
+  if (!lastVal){
+    return nullptr;
+  }
+  /*Value* lastVal = nullptr;
   for (int i = 0; i < Body.size(); i++){
     lastVal = Body.at(i)->codegen();
     if (!lastVal)
       return nullptr;
-  }
+  }*/
   endScope();
   blocksForBreak.pop();
   Builder->CreateBr(whileBB);
@@ -3092,12 +3100,16 @@ Value *ForExprAST::codegen(){
   Builder->SetInsertPoint(LoopBB);
   blocksForBreak.push(AfterBB);
   createScope();
-  Value* lastVal = nullptr;
+  Value* lastVal = Body->codegen();
+  if (!lastVal){
+    return nullptr;
+  }
+  /*Value* lastVal = nullptr;
   for (int i = 0; i < Body.size(); i++){
     lastVal = Body.at(i)->codegen();
     if (!lastVal)
       return nullptr;
-  }
+  }*/
   endScope();
   blocksForBreak.pop();
   Value *StepVal = nullptr;

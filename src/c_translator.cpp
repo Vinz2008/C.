@@ -185,7 +185,7 @@ std::string ForExprAST::generate_c() {
     for_content += End->generate_c() + "; ";
     for_content += VarName + " = " + VarName + "+" + Step->generate_c();
 	for_content += "){\n";
-    for_content += generate_body_c(Body);
+    //for_content += generate_body_c(Body); // TODO this
     /*for (int i = 0; i < Body.size(); i++){
         for_content += Body.at(i)->generate_c() + ";\n";
     }*/
@@ -317,12 +317,13 @@ std::string IfExprAST::generate_c(){
 }
 
 std::string WhileExprAST::generate_c(){
-    std::string body_while = "";
+    /*std::string body_while = "";
     body_while += generate_body_c(Body);
     for (int i = 0; i < Body.size(); i++){
         body_while += Body.at(i)->generate_c() + ";\n";
     }
-    return "while (" + Cond->generate_c() + "){\n" + body_while + "}";
+    return "while (" + Cond->generate_c() + "){\n" + body_while + "}";*/
+    return ""; // TODO : fix this
 }
 
 std::string BoolExprAST::generate_c(){

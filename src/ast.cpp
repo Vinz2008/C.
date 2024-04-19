@@ -191,11 +191,11 @@ std::unique_ptr<ExprAST> IfExprAST::clone(){
 }
 
 std::unique_ptr<ExprAST> ForExprAST::clone(){
-    return std::make_unique<ForExprAST>(VarName, VarType, Start->clone(), End->clone(), Step->clone(), clone_vector<ExprAST>(Body));
+    return std::make_unique<ForExprAST>(VarName, VarType, Start->clone(), End->clone(), Step->clone(), Body->clone());
 }
 
 std::unique_ptr<ExprAST> WhileExprAST::clone(){
-    return std::make_unique<WhileExprAST>(Cond->clone(), clone_vector<ExprAST>(Body));
+    return std::make_unique<WhileExprAST>(Cond->clone(), Body->clone());
 }
 
 std::unique_ptr<ExprAST> LoopExprAST::clone(){
@@ -207,7 +207,7 @@ std::unique_ptr<matchCase> matchCase::clone(){
     if (expr){
         exprCloned = expr->clone();
     }
-    return std::make_unique<matchCase>(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, clone_vector<ExprAST>(Body));
+    return std::make_unique<matchCase>(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, Body->clone());
 }
 
 std::unique_ptr<ExprAST> MatchExprAST::clone(){
@@ -1620,7 +1620,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
     Log::Info() << "CurTok parsing match case : " << CurTok << "\n";
     while (CurTok != '}'){
         std::string VarName = "";
-        std::vector<std::unique_ptr<ExprAST>> Body;
+        std::unique_ptr<ExprAST> Body;
         std::unique_ptr<ExprAST> expr = nullptr;
         std::string enum_name = "";
         std::string enum_member_name = "";
@@ -1671,7 +1671,21 @@ std::unique_ptr<ExprAST> ParseMatch(){
             return LogError("Missing \"=>\" before match enum case body");
         }
         getNextToken();
-        if (CurTok == '{'){
+
+
+        auto Expr = ParseExpression();
+        bool is_body_expr = false;
+        if (dynamic_cast<ScopeExprAST*>(Expr.get())){
+            is_body_expr = true;
+        }
+        Body = std::move(Expr);
+        if (!is_body_expr){
+        if (CurTok != ','){
+            return LogError("Expected ',' after single line body of match enum case");
+        }
+        getNextToken();
+        }
+        /*if (CurTok == '{'){
             getNextToken();
             auto ret = ParseBodyExpressions(Body);
             if (!ret){
@@ -1685,7 +1699,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
                 return LogError("Expected ',' after single line body of match enum case");
             }
             getNextToken();
-        }
+        }*/
         matchCases.push_back(std::make_unique<matchCase>(std::move(expr), enum_name, enum_member_name, VarName, is_underscore, std::move(Body)));
     }
     /*if (CurTok != '}'){
@@ -1797,20 +1811,21 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   if (!Cond)
     return nullptr;
   Log::Info() << "first CurTok : " << CurTok << "\n";
-  if (CurTok != '{'){
+  /*if (CurTok != '{'){
     return LogError("expected {");
   }
-  getNextToken();
-  std::vector<std::unique_ptr<ExprAST>> Body;
-  auto ret = ParseBodyExpressions(Body);
-  if (!ret){
+  getNextToken();*/
+  std::unique_ptr<ExprAST> Body = ParseExpression();
+  /*std::vector<std::unique_ptr<ExprAST>> Body;
+  auto ret = ParseBodyExpressions(Body);*/
+  if (!Body){
     return nullptr;
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
-  if (CurTok != '}'){
+  /*if (CurTok != '}'){
     return LogError("expected }");
   }
-  getNextToken();
+  getNextToken();*/
   return std::make_unique<WhileExprAST>(std::move(Cond), std::move(Body));
 }
 
@@ -1853,18 +1868,19 @@ std::unique_ptr<ExprAST> ParseForExpr() {
 
   /*if (CurTok != tok_in)
     return LogError("expected 'in' after for");*/
-  if (CurTok != '{'){
+  /*if (CurTok != '{'){
     Log::Info() << "token befor : " << CurTok << "\n";
     return LogError("expected { after for");
-  }
-  std::vector<std::unique_ptr<ExprAST>> Body;
-  getNextToken();  // eat '{'.
-  auto ret = ParseBodyExpressions(Body);
+  }*/
+  //std::vector<std::unique_ptr<ExprAST>> Body;
+  std::unique_ptr<ExprAST> Body = ParseExpression();
+  //getNextToken();  // eat '{'.
+  //auto ret = ParseBodyExpressions(Body);
   Log::Info() << "CurTok : " << CurTok << "\n";
-  if (CurTok != '}'){
+  /*if (CurTok != '}'){
     return LogError("expected } after for");
   }
-  getNextToken();
+  getNextToken();*/
 
   return std::make_unique<ForExprAST>(IdName, varType, std::move(Start),
                                        std::move(End), std::move(Step),
