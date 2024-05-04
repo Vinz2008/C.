@@ -3,4 +3,5 @@ import @std/print.cpoint
 
 func main(){
     printd(3)
+    printstr(argv[0])
 }

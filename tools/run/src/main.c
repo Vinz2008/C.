@@ -16,6 +16,12 @@ bool startswith(char* str, char* line){
     return similarity >= length;
 }
 
+struct AdditionalArgsList {
+    size_t allocated_size;
+    size_t used;
+    char** list;
+};
+
 int main(int argc, char** argv){
     if (argc < 1){
         printf("need at least one argument\n");
@@ -23,14 +29,25 @@ int main(int argc, char** argv){
         exit(1);
     }
     char* filename = NULL;
-    for (int i = 0; i < argc; i++){
-        if (strcmp("-h", argv[i]) == 0){
-
-        } else {
+    struct AdditionalArgsList additional_args = (struct AdditionalArgsList){
+        .allocated_size = 1,
+        .used = 0,
+        .list = malloc(sizeof(char*)*1)
+    };
+    for (int i = 1; i < argc; i++){
+        if (strcmp("-h", argv[i]) == 0 && !filename){
+            // TODO
+            fprintf(stderr, "not implemented for now");
+            exit(1);
+        } else if (!filename) {
             filename = argv[i];
+        } else {
+            additional_args.list = realloc(additional_args.list, additional_args.allocated_size+1);
+            additional_args.allocated_size++;
+            additional_args.list[additional_args.used] = argv[i];
+            additional_args.used++;
         }
     }
-    //char* filename = argv[1];
     if (!filename){
         printf("couldn't find a filename in the arguments\n");
         exit(1);
@@ -44,8 +61,8 @@ int main(int argc, char** argv){
     bool found_shebang = false;
     if (startswith("#!", line)){
         found_shebang = true;
-        char* filename_without_shebang = malloc(sizeof(char) * 4096);
-        snprintf(filename_without_shebang, 4096, "%s.without_shebang", filename);
+        char* filename_without_shebang = malloc(sizeof(char) * FILENAME_MAX);
+        snprintf(filename_without_shebang, FILENAME_MAX, "%s.without_shebang", filename);
         FILE* f_without_shebang = fopen(filename_without_shebang, "w");
         if (!f_without_shebang){
             printf("couldn't open temp file\n");
@@ -59,9 +76,31 @@ int main(int argc, char** argv){
     }
     fclose(f);
     char* format = "cpoint -run -silent %s";
-    size_t size_alloc_c = strlen(format) + strlen(filename);
-    char* cmd = malloc(size_alloc_c * sizeof(char));
-    snprintf(cmd, size_alloc_c * sizeof(char), format, filename);
+    size_t size_alloc_c  = strlen(format) + strlen(filename);
+    char* cmd = NULL;
+    if (additional_args.used != 0) {
+        char* format_append = " --run-args=\"%s\"";
+        size_alloc_c += strlen(format_append);
+        format = strdup(format);
+        format = realloc(format, strlen(format) + strlen(format_append));
+        strcat(format, format_append);
+        size_t size_needed_for_args = 0;
+        for (int i = 0; i < additional_args.used; i++){
+            size_needed_for_args += strlen(additional_args.list[i])+2; // 2 for two spaces
+        }
+        size_alloc_c += size_needed_for_args;
+        char* args = malloc(sizeof(size_needed_for_args));
+        for (int i = 0; i < additional_args.used; i++){
+            strcat(args, " ");
+            strcat(args, additional_args.list[i]);
+            strcat(args, " ");
+        }
+        cmd = malloc(size_alloc_c * sizeof(char));
+        snprintf(cmd, size_alloc_c * sizeof(char), format, filename, args);
+    } else {
+        cmd = malloc(size_alloc_c * sizeof(char));
+        snprintf(cmd, size_alloc_c * sizeof(char), format, filename);
+    }
     system(cmd);
     free(cmd);
     if (found_shebang){

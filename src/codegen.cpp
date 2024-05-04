@@ -269,6 +269,15 @@ bool isArgString(ExprAST* E){
             Log::Info() << "Variable in Print Macro codegen is string" << "\n";
             return true;
         }
+    } else if (dynamic_cast<BinaryExprAST*>(E)){
+        auto binTemp = dynamic_cast<BinaryExprAST*>(E);
+        // TODO
+        if (binTemp->Op != "["){
+            return false;
+        }
+        // TODO : create a get_cpoint_type for every exprs so we have the exact type for anything exprs
+        // will need to have a cpoint_type or an optional return because it can fail to detect the type and it will need llvm, ex : adding two generic function so it can't detect what type will be returned by this binary expr
+        return false;
     }
     return false;
 }

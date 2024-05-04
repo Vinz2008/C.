@@ -3,4 +3,5 @@ import @std/print.cpoint
 
 func main(){
     printd(3)
+    #println("{}", cast i8 ptr argv[0])
 }

@@ -471,6 +471,7 @@ int main(int argc, char **argv){
     // use native target even if -target is used. Needed for now in windows
     bool use_native_target = false;
     std::string linker_additional_flags = "";
+    std::string run_args = "";
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
@@ -567,13 +568,16 @@ int main(int argc, char **argv){
           std::string temp = arg.substr(pos+1, arg.size());
           is_optimised = true;
           i++;
-          cout << "linker flag " << linker_additional_flags << endl; 
           optimize_level = std::stoi(temp);
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');
           linker_additional_flags += arg.substr(pos+1, arg.size());
           linker_additional_flags += ' ';
-          cout << "linker flag " << linker_additional_flags << endl; 
+          //cout << "linker flag " << linker_additional_flags << endl; 
+        } else if (arg.compare(0, 10, "-run-args=") == 0){
+          size_t pos = arg.find('=');
+          run_args += arg.substr(pos+1, arg.size());
+          run_args += ' ';
         } else {
           filename_found = true;
           Log::Print() << _("filename : ") << arg << "\n";
@@ -914,7 +918,9 @@ int main(int argc, char **argv){
       char actualpath[PATH_MAX+1];
       realpath(exe_filename.c_str(), actualpath);
       Log::Print() << "run executable at " << actualpath << "\n";
-      runCommand(actualpath);
+      std::string cmd = actualpath;
+      cmd += " " + run_args + " ";
+      runCommand(cmd);
     }
 
     }
