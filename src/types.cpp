@@ -549,8 +549,14 @@ std::string from_cpoint_type_to_printf_format(Cpoint_Type type){
         format = "%c";
         // TODO activate this or not ?
     }*/ else if (is_signed(type) || is_unsigned(type)){
-        if (type.type == i8_type){
+        if (type.type == i8_type || type.type == u8_type){
             format = "%c";
+        } else if (type.type == i64_type){
+            format = "%ld";
+        } else if (type.type == u64_type){
+            format = "%lu";
+        } else if (is_unsigned(type)){
+            format = "%u";
         } else {
             format = "%d";
         }

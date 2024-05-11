@@ -1425,9 +1425,9 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
         if (structType.is_ptr){
             structType.is_ptr = false;
+            Alloca = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true)), Alloca);
         }
         Log::Info() << "cpoint_type struct : " << structType << "\n";
-    
         Value* ptr = Builder->CreateGEP(get_type_llvm(structType), Alloca, { zero, index}, "", true);
         return ptr;
         }
