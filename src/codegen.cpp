@@ -1914,6 +1914,7 @@ Value *CallExprAST::codegen() {
   if (has_sret){
     ArgsV.push_back(SretArgAlloca);
   }
+  auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     if (has_sret && !has_added_sret){
         //ArgsV.push_back(SretArgAlloca);
@@ -1925,11 +1926,16 @@ Value *CallExprAST::codegen() {
     if (i < FunctionProtos[Callee]->Args.size()){
         arg_type = FunctionProtos[Callee]->Args.at(i).second;
     }
+    bool is_additional_arg = FunctionProtos[Callee]->is_variable_number_args && i >= FunctionProtos[Callee]->Args.size();
+    bool is_arg_passed_an_array = Args[i]->clone()->codegen()->getType()->isArrayTy();
     if (/*arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
     } else if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
         Value* loaded_vector = Builder->CreateLoad(vector_type_from_struct(FunctionProtos[Callee]->Args.at(i).second), AddrExprAST(Args[i]->clone()).codegen());
         temp_val = loaded_vector;
+    } else if ((arg_type.is_ptr || is_additional_arg) && is_arg_passed_an_array){ // passing an array to a function wanting a ptr or as additional arg of a variadic function
+        temp_val = AddrExprAST(Args[i]->clone()).codegen();
+        temp_val = Builder->CreateGEP(Args[i]->clone()->codegen()->getType(), temp_val, {zero, zero}, "arraydecay", true);
     } else {
         temp_val = Args[i]->codegen();
     }

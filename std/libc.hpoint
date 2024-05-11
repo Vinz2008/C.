@@ -44,6 +44,9 @@ extern getcwd(buf : i8 ptr) i8 ptr;
 extern getenv(var_name : i8 ptr) i8 ptr;
 extern setenv(var_name : i8 ptr, value : i8 ptr, overwrite : int) int;
 extern unsetenv(var_name : i8 ptr) int;
+extern fsync(fd : int) int;
+extern fdatasync(fd : int) int;
+extern ftruncate(fd : int, length : i64) int;
 
 extern lseek(fd : int, offset : int, whence : int) int; 
 

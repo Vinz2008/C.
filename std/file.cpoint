@@ -8,9 +8,12 @@ mod file {
 
 func open(path : i8 ptr) int {
     var mode : int = S_IRWXU
-    var o_rdwr : int = O_RDWR
-    var o_creat : int = O_CREAT
-    open(path, o_rdwr | o_creat, mode)
+    open(path, O_RDONLY, mode)
+}
+
+func create(path : i8 ptr) int {
+    var mode : int = S_IRWXU
+    open(path, O_RDWR | O_CREAT, mode)
 }
 
 func write(fd : int, buf : i8 ptr) int {
@@ -19,15 +22,6 @@ func write(fd : int, buf : i8 ptr) int {
 
 func close(fd : int) int {
     close(fd)
-}
-
-func create(path : i8 ptr) int {
-    if file::open(path) == -1 {
-        return -1
-    }
-    if file::close(path) == -1 {
-        return -1
-    }
 }
 
 func remove(path : i8 ptr) int {
@@ -76,16 +70,23 @@ func get_file_size(fd : int) i64 {
     buf.st_size
 }
 
-func read_to_string(fd : int) i8 {
+func read_to_string(fd : int) i8 ptr {
     var size = file::get_file_size(fd)
     var buf = gc_malloc(sizeof i8 * (size+1))
     var ret = read(fd, buf, size)
+    if ret < 0 {
+        #panic("error when reading file")
+    }
     while ret != 0 {
         ret = read(fd, buf, size)
+        if ret < 0 {
+            #panic("error when reading file")
+        }
     }
     buf
 }
 
+// TODO : move these 2 functions to a fs.cpoint file ?
 func canonicalize(path : i8 ptr) i8 ptr {
     var canonicalized_path : i8 ptr = gc_malloc(4096 * sizeof i8)
     realpath(path, canonicalized_path)
@@ -94,6 +95,18 @@ func canonicalize(path : i8 ptr) i8 ptr {
 
 func symlink(file_name : i8 ptr, symlink_name : i8 ptr) int {
     symlink(file_name, symlink_name)
+}
+
+func sync_all(fd : int){
+    fsync(fd)
+}
+
+func sync_data(fd : int){
+    fdatasync(fd)
+}
+
+func truncate(fd : int, length : i64){
+    ftruncate(fd, length)
 }
 
 }
