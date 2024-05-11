@@ -1176,7 +1176,7 @@ std::unique_ptr<MembersDeclarAST> ParseMembers(){
             }
             Externs.push_back(std::move(externAST));
         } else {
-            return LogErrorMembers("Unkown expression in members block");
+            return LogErrorMembers("Unknown expression in members block");
         }
         if (CurTok == ';'){
             getNextToken();

@@ -527,7 +527,7 @@ int main(int argc, char **argv){
             } else if ((std::string)argv[i] == "debug"){
                 Comp_context->is_release_mode = false;
             } else {
-                Log::Warning(emptyLoc) << "Unkown build mode, defaults to debug mode" << "\n";
+                Log::Warning(emptyLoc) << "Unknown build mode, defaults to debug mode" << "\n";
                 Comp_context->is_release_mode = false;
             }
         } else if (arg.compare("-verbose-std-build") == 0){
