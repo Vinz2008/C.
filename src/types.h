@@ -20,6 +20,7 @@ enum types {
     u64_type = -13,
     u128_type = -14,
     bool_type = -15,
+    other_type  = -16, // includes struct, enum, etc
     argv_type = -1000,
 };
 
@@ -53,6 +54,9 @@ public:
     Cpoint_Type(int type, bool is_ptr = false, int nb_ptr = 0, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_union = false, const std::string& union_name = "", bool is_enum = false, const std::string& enum_name = "", bool is_template_type = false, bool is_struct_template = false, /*const std::string&*/ Cpoint_Type* struct_template_type_passed = nullptr, bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr) 
                 : type(type), is_ptr(is_ptr), nb_ptr(nb_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_union(is_union), union_name(union_name), is_enum(is_enum), enum_name(enum_name), is_template_type(is_template_type), is_struct_template(is_struct_template), struct_template_type_passed(struct_template_type_passed), is_function(is_function), args(args), return_type(return_type) {
                     is_empty = false;
+                    if (is_ptr && nb_ptr == 0){
+                        nb_ptr = 1;
+                    }
                 }
     Cpoint_Type() {
         this->is_empty = true;

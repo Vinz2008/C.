@@ -127,6 +127,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] add const ptr and const types (const should be in type system)
 - [ ] fix the bug with bindgen that makes const ptr args not be written in prototypes
 - [ ] Remove int because it already exists ? (and create an alias in core so you can use the alias but there would not be int_type and i32_type in the compiler, only i32_type)
+- [ ] Replace all ExprAST->clone()->codegen()->getType() with just ExprAST->get_type()
 
 ## Benchmarks compared to other languages
 

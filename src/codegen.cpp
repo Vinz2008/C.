@@ -114,7 +114,7 @@ std::string module_function_mangling(std::string module_name, std::string functi
 Value* getTypeId(Value* valueLLVM){
     Type* valType = valueLLVM->getType();
     Cpoint_Type cpoint_type = get_cpoint_type_from_llvm(valType);
-    return ConstantFP::get(*TheContext, APFloat((double)cpoint_type.type));
+    return ConstantInt::get(*TheContext, APInt(32, (uint64_t)cpoint_type.type));
 }
 
 
@@ -469,9 +469,10 @@ Value *NumberExprAST::codegen() {
   if (trunc(Val) == Val){
     return ConstantInt::get(*TheContext, APInt(32, (int)Val, true));
   } else {
-    return ConstantFP::get(*TheContext, APFloat(Val));
+    //return ConstantFP::get(*TheContext, APFloat(Val));
+    return ConstantFP::get(get_type_llvm(double_type), APFloat(Val));
   }
-  return ConstantFP::get(*TheContext, APFloat(Val));
+  //return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
 Value* StringExprAST::codegen() {

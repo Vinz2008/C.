@@ -43,6 +43,7 @@ public:
   virtual Value *codegen() = 0;
   virtual std::unique_ptr<ExprAST> clone() = 0;
   virtual std::string to_string() = 0;
+  virtual Cpoint_Type get_type() = 0;
   virtual std::string generate_c() = 0;
   int getLine() const { return loc.line_nb; }
   int getCol() const { return loc.col_nb; }
@@ -84,6 +85,9 @@ public:
         body_str += "}\n";
         return body_str;
     }
+    Cpoint_Type get_type() override {
+        return Body.back()->get_type();
+    }
     std::string generate_c() override { return ""; } // TODO
 };
 
@@ -95,6 +99,9 @@ public:
     std::unique_ptr<ExprAST> clone() override { return std::make_unique<EmptyExprAST>(); }
     std::string to_string() override {
         return "";
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type();
     }
     std::string generate_c() override { return ""; }
 };
@@ -114,6 +121,13 @@ public:
     }
     return std::to_string(Val);
   }
+  Cpoint_Type get_type() override {
+    if (trunc(Val) == Val){
+        return int_type;
+    } else {
+        return double_type;
+    }
+  }
   std::string generate_c() override;
 };
 
@@ -127,6 +141,9 @@ public:
   }
   std::string to_string() override {
     return "\"" + str + "\"";
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(i8_type, true);
   }
   std::string generate_c() override;
 };
@@ -142,6 +159,9 @@ public:
   std::string to_string() override {
     return "\'" + std::string(1, (char)c) + "\'";
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(i8_type);
+  }
   std::string generate_c() override;
 };
 
@@ -155,6 +175,9 @@ public:
   }
   std::string to_string() override {
     return val ? "true" : "false";
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(bool_type);
   }
   std::string generate_c() override;
 };
@@ -172,6 +195,12 @@ public:
   std::string to_string() override {
     return "addr " + /*((Expr) ?*/ Expr->to_string() /*: Ident)*/;
   }
+  Cpoint_Type get_type() override {
+    Cpoint_Type type = Expr->get_type();
+    type.is_ptr = true;
+    type.nb_ptr++;
+    return type;
+  }
   std::string generate_c() override;
 };
 
@@ -185,6 +214,12 @@ public:
     }
     std::string to_string() override {
         return "deref " + Expr->to_string();
+    }
+    Cpoint_Type get_type() override {
+        Cpoint_Type type = Expr->get_type();
+        type.is_ptr = false;
+        type.nb_ptr--;
+        return type;
     }
     std::string generate_c() override;
 };
@@ -203,6 +238,9 @@ public:
   std::string to_string() override {
     return "sizeof " + Name != "" ? Name : create_pretty_name_for_type(type);
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(int_type);
+  }
   std::string generate_c() override;
 };
 
@@ -217,6 +255,9 @@ public:
 
     std::string to_string() override {
         return "typeId " + val->to_string();
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(int_type);
     }
     std::string generate_c() override { return ""; }
 };
@@ -254,6 +295,9 @@ public:
     std::string to_string() override {
         return "#asm(\"" + Args->assembly_code->str + "\")";
     }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(void_type); // is it ?
+    }
     std::string generate_c() override;
 };
 class VariableExprAST : public ExprAST {
@@ -269,6 +313,9 @@ public:
   std::string to_string() override {
     return Name;
   }
+  Cpoint_Type get_type() override {
+    return type;
+  }
   std::string generate_c() override;
 };
 class ConstantArrayExprAST : public ExprAST {
@@ -283,6 +330,11 @@ public:
         array += ArrayMembers.at(i)->to_string() + ",";
     }
     return "[" + array + "]";
+  }
+  Cpoint_Type get_type() override {
+    Cpoint_Type type = ArrayMembers.at(0)->get_type();
+    type.is_array = true;
+    return type;
   }
   std::string generate_c() override { return ""; }
 };
@@ -301,6 +353,9 @@ public:
         }
         return struct_name + " { " + struct_members_str + " }";
     }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(other_type, false, 0, false, 0, true, struct_name);
+    }
     std::string generate_c() override { return ""; }
 };
 
@@ -315,6 +370,9 @@ public:
     std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
         return EnumVarName + "::" + EnumMemberName + "(" + ((value) ? value->to_string() : (std::string)"") + ")";
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", true, EnumVarName);
     }
     std::string generate_c() override { return ""; }
 };
@@ -333,6 +391,9 @@ public:
   std::string to_string() override {
     return LHS->to_string() + " " + Op + " " + RHS->to_string();  
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(); // TODO : create a function in another file that will do it (it will be complicated)
+  }
   std::string generate_c() override;
 };
 
@@ -350,6 +411,9 @@ public:
   std::string to_string() override {
     return Opcode + Operand->to_string();
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(); // TODO : create a function in another file that will do it
+  }
   std::string generate_c() override;
 };
 
@@ -361,6 +425,9 @@ struct StructMemberCallExprAST : public ExprAST {
         return StructMember->LHS->to_string() + "." + StructMember->RHS->to_string();
     }
     std::string generate_c() override { return ""; }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(); // TODO : create a function in another file that will do it
+    }
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
 };
@@ -381,6 +448,9 @@ struct NEWCallExprAST : public ExprAST {
             call_str += Args.at(i)->to_string();
         }
         return call_str + ")";
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(); // TODO : create a function in another file that will do it
     }
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
@@ -437,6 +507,9 @@ public:
     // TODO maybe add the template type to the string expression (add a bool in this class to identify if a type is passed in the template)
     return function_name + template_type + args;
   }
+  Cpoint_Type get_type() override {
+        return Cpoint_Type(); // TODO : create a function in another file that will do it
+    }
   std::string generate_c() override;
 };
 
@@ -460,6 +533,9 @@ public:
     }
     return var_expr;
   }
+  Cpoint_Type get_type() override {
+    return cpoint_type;
+  }
   std::string generate_c() override;
 };
 
@@ -477,6 +553,9 @@ public:
     std::string member_expr  = member != "" ? "." + member : "";
     return VariableName + member_expr + " = " + Val->to_string();
   }
+  Cpoint_Type get_type() override {
+    return Val->get_type();
+  }
   std::string generate_c() override;
 };
 
@@ -492,6 +571,9 @@ public:
     std::string to_string() override {
       return "cast " + create_pretty_name_for_type(type) + " " + ValToCast->to_string();
     }
+    Cpoint_Type get_type() override {
+        return type;
+    }
     std::string generate_c() override;
 };
 
@@ -504,6 +586,9 @@ public:
     }
     std::string to_string() override {
         return "null";
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(void_type, true);
     }
     std::string generate_c() override;
 };
@@ -523,6 +608,9 @@ public:
     }
     std::string to_string() {
         return "";
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type();
     }
     std::string generate_c(){
         return ""; // How will we fucking use this with the c backend ?? No idea, will figure this out
@@ -568,6 +656,9 @@ public:
         match_body += "}";
         return match_body;
     }
+    Cpoint_Type get_type() override {
+        return matchCases.at(0)->Body->get_type();
+    }
     std::string generate_c() override { return ""; }
 };
 
@@ -583,6 +674,9 @@ public:
     std::string to_string() override {
         // TODO
         return "";
+    }
+    Cpoint_Type get_type() override {
+        return return_type;
     }
     std::string generate_c() override { return ""; }
 };
@@ -736,6 +830,9 @@ public:
     std::string to_string() override {
         return "";
     }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type();
+    }
     std::string generate_c() override { return ""; }
 };
 
@@ -765,6 +862,13 @@ public:
     body_else += Else->to_string() + "\n";
     return "if " + Cond->to_string() + "{\n" + body_then + "} else {\n" + body_else + "}";
   }
+  Cpoint_Type get_type() override {
+    if (!Else){
+        return Cpoint_Type(void_type);
+    } else {
+        return Then->get_type();
+    }
+  }
   std::string generate_c() override;
 };
 
@@ -782,6 +886,9 @@ public:
   std::string to_string() override {
     return "return " + returned_expr->to_string();
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
+  }
   std::string generate_c() override;
 };
 
@@ -794,6 +901,9 @@ public:
   }
   std::string to_string() override {
     return "break";
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
 };
@@ -809,6 +919,9 @@ public:
   std::string to_string() override {
     return "goto " + label_name;
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
+  }
   std::string generate_c() override;
 };
 
@@ -822,6 +935,9 @@ public:
   }
   std::string to_string() override {
     return label_name + ":";
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
 };
@@ -847,6 +963,9 @@ public:
     for_body += Body->to_string();
     return "for " + VarName + " = " + Start->to_string() + ", " + End->to_string() + ", " + Step->to_string() + " " + for_body;
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
+  }
 	std::string generate_c() override;
 };
 
@@ -865,6 +984,9 @@ public:
         while_body += Body.at(i)->to_string() + "\n";
     }*/
     return "while" + Cond->to_string() + " " + while_body;
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
 };
@@ -889,6 +1011,9 @@ public:
     }
     return "loop " +  loop_expr + "{\n" + loop_body + "}";
   }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
+  }
   std::string generate_c() override;
 };
 
@@ -901,6 +1026,9 @@ public:
   Value* codegen() override;
   std::string to_string() override {
     return ";";
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
   }
   std::string generate_c() override {
     return ";";
@@ -917,6 +1045,9 @@ public:
     }
     std::string to_string() override {
         return "defer " + Expr->to_string();
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(void_type);
     }
     std::string generate_c() override {
         return "";
