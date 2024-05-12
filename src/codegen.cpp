@@ -1881,15 +1881,15 @@ Value *CallExprAST::codegen() {
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
     if (Args.size() < CalleeF->arg_size()){
-      return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
+      return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
     }
   } else if (has_sret){
     if (CalleeF->arg_size() != Args.size()+1)
-        return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
+        return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
   } else {
     // If argument mismatch error.
   if (CalleeF->arg_size() != Args.size())
-    return LogErrorV(this->loc, "Incorrect number of arguments passed : %d args but %d expected", Args.size(), CalleeF->arg_size());
+    return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
   }
   Log::Info() << "has_sret : " << has_sret << "\n";
   AllocaInst* SretArgAlloca = nullptr;

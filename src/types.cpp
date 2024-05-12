@@ -156,6 +156,7 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         }
         goto finding_type;
     }
+    // TODO : find enums (how ?)
     if (llvm_type->isStructTy()){
         is_struct = true;
         StructType* struct_type = dyn_cast<StructType>(llvm_type);

@@ -35,7 +35,7 @@ bool is_typedefed_type(char* type_string){
 }
 
 const char* get_type_string_from_type_libclang(CXType type){
-    printf("get_type  type enum : %d\n", type.kind);
+    printf("get_type type enum : %d\n", type.kind);
     switch(type.kind){
         case CXType_Float:
         case CXType_Float16:
@@ -57,9 +57,8 @@ const char* get_type_string_from_type_libclang(CXType type){
             return pointer_type;
         case CXType_Void:
             return "void";
-        // TODO : replace bool with int ? (because in C, int is represented by an int while in C., the bool type is a i1)
         case CXType_Bool:
-            return "bool";
+            return "u8";
         case CXType_Long:
             return "i64";
         case CXType_Elaborated:
@@ -74,7 +73,7 @@ const char* get_type_string_from_type_libclang(CXType type){
             clang_disposeString(clangstr_type_spelling);
             return type_spelling;
         case CXType_Enum:
-            return "enum <insert name>";
+            return "enum <insert name>"; // TODO
         case CXType_LongDouble:
         case CXType_Double:
         default:
