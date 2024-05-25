@@ -145,6 +145,7 @@ USERNAME=$(shell logname)
 endif
 
 install: all
+	mkdir -p $(BINDIR)
 	cp cpoint $(BINDIR)/
 	cp build/cpoint-build $(BINDIR)/
 	cp tools/bindgen/cpoint-bindgen $(BINDIR)/
@@ -194,3 +195,13 @@ all-tests: test std-test
 
 onefetch:
 	onefetch --exclude bdwgc/* bdwgc_prefix/* tools/vscode/* tools/vim/*
+
+prepare-create-release:
+	mkdir -p temp_prefix
+	$(eval DESTDIR = $(abspath ./temp_prefix))
+
+create-release: prepare-create-release install
+	rm -rf temp_prefix/home
+	tar -czf cpoint-bin-release.tar.gz -C temp_prefix .
+	
+	

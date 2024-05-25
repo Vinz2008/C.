@@ -35,3 +35,5 @@ cpoint-run
 cpoint-from-c
 out.cpoint
 trace.json
+temp_prefix
+*.tar.gz
