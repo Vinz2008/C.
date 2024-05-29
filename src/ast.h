@@ -446,6 +446,9 @@ struct NEWCallExprAST : public ExprAST {
         call_str += "(";
         for (int i = 0; i < Args.size(); i++){
             call_str += Args.at(i)->to_string();
+            if (i < Args.size()-1){
+                call_str += ",";
+            }
         }
         return call_str + ")";
     }

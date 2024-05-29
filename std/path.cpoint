@@ -6,12 +6,9 @@ extern gc_strdup(s : i8 ptr) i8 ptr;
 
 func cpoint_get_extension(path : i8 ptr) i8 ptr {
     var pos: int = -1
-    for i = strlen(path)-1, i > 0, -1 {
-        printd(i)
-        var c : i8 = cast i8 path[i]
-        if c == '.' {
+    for i : int  = strlen(path)-1, i > 0, -1 {
+        if path[i] == '.' {
             pos = i
-            printstr("break")
             break
         }
     }
@@ -20,11 +17,11 @@ func cpoint_get_extension(path : i8 ptr) i8 ptr {
 
 mod path {
     func get_extension(path : i8 ptr) i8 ptr {
-        internal_get_extension(path)
+        cpoint_get_extension(path)
     }
 }
 
 test "get_extension" {
-    var ext = path::get_extension("test.c")
+    var ext : i8 ptr = path::get_extension("test.c")
     #expect(strcmp(ext, ".c") == 0)
 }

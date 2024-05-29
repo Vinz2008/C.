@@ -1722,6 +1722,14 @@ Value *BinaryExprAST::codegen() {
   Value *R = RHS->codegen();
   if (!L || !R)
     return nullptr;
+  if (Op == "+"){
+    if (L->getType()->isPointerTy()){
+        convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(i64_type)), L);
+    }
+    if (R->getType()->isPointerTy()){
+        convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(i64_type)), R);
+    }
+  }
   if (L->getType() == get_type_llvm(Cpoint_Type(i8_type)) || L->getType() == get_type_llvm(Cpoint_Type(i16_type))){
     convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(int_type)), L);
   } else if (R->getType() == get_type_llvm(Cpoint_Type(i8_type)) || R->getType() == get_type_llvm(Cpoint_Type(i16_type))){
@@ -1928,7 +1936,7 @@ Value *CallExprAST::codegen() {
         arg_type = FunctionProtos[Callee]->Args.at(i).second;
     }
     bool is_additional_arg = FunctionProtos[Callee]->is_variable_number_args && i >= FunctionProtos[Callee]->Args.size();
-    bool is_arg_passed_an_array = Args[i]->clone()->codegen()->getType()->isArrayTy();
+    bool is_arg_passed_an_array = /*Args[i]->clone()->codegen()->getType()->isArrayTy()*/ Args[i]->get_type().is_array;
     if (/*arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
     } else if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
@@ -2174,7 +2182,7 @@ Value* CharExprAST::codegen(){
 void TestAST::codegen(){
   Log::Info() << "Codegen test " << this->description << "\n";
   
-  testASTNodes.push_back(this->clone());
+  testASTNodes.push_back(this->clone()); // TODO : move instead ?
 }
 
 /*void generateTests(){
@@ -2566,6 +2574,8 @@ GlobalVariable* GlobalVariableAST::codegen(){
   return globalVar;
 }
 
+bool break_found = false; 
+
 Value *IfExprAST::codegen() {
   Log::Info() << "IfExprAST codegen" << "\n";
   CpointDebugInfo.emitLocation(this);
@@ -2586,11 +2596,12 @@ Value *IfExprAST::codegen() {
 
   // Create blocks for the then and else cases.  Insert the 'then' block at the
   // end of the function.
+  bool has_one_branch_break = false;
+
   BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then", TheFunction);
   BasicBlock *ElseBB = BasicBlock::Create(*TheContext, "else");
   BasicBlock *MergeBB = BasicBlock::Create(*TheContext, "ifcont");
   Builder->CreateCondBr(CondV, ThenBB, ElseBB);
-
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
   Value *ThenV = Then->codegen();
@@ -2608,8 +2619,12 @@ Value *IfExprAST::codegen() {
   /*if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
     convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
   }*/
-
-  Builder->CreateBr(MergeBB);
+  if (!break_found){
+    Builder->CreateBr(MergeBB);
+  } else {
+    has_one_branch_break = true;
+  }
+  break_found = false;
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
   ThenBB = Builder->GetInsertBlock();
   //Value *ElseV = nullptr;
@@ -2638,13 +2653,12 @@ Value *IfExprAST::codegen() {
     }
   }
   }
-  /*}*/ /*else {
-    Log::Info() << "Else empty" << "\n";
-    ElseV = ConstantFP::get(*TheContext, APFloat(0.0));
-  }*/
  
-
-  Builder->CreateBr(MergeBB);
+  if (!break_found){
+    Builder->CreateBr(MergeBB);
+  } else {
+    has_one_branch_break = true;
+  }
   // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
   ElseBB = Builder->GetInsertBlock();
 
@@ -2955,8 +2969,12 @@ Value* RedeclarationExprAST::codegen(){
 }
 
 Value* BreakExprAST::codegen(){
+  if (blocksForBreak.empty()){
+    return LogErrorV(this->loc, "Break statement not in a a loop");
+  }
   Builder->CreateBr(blocksForBreak.top());
-  Builder->SetInsertPoint(blocksForBreak.top());
+  //Builder->SetInsertPoint(blocksForBreak.top());
+  break_found = true;
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
@@ -2972,7 +2990,7 @@ Value* InfiniteLoopCodegen(std::vector<std::unique_ptr<ExprAST>>& Body, Function
         return nullptr;
     }
     endScope();
-    blocksForBreak.pop();
+    //blocksForBreak.pop();
     Builder->CreateBr(loopBB);
 
     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
