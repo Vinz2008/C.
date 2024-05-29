@@ -419,7 +419,7 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::read_register;
   } else if (Callee == "bitreverse"){
     intrisicId = Intrinsic::bitreverse;
-    Type* arg_type = Args.at(0)->clone()->codegen()->getType();
+    Type* arg_type = Args.at(0)->clone()->codegen()->getType(); // TODO : replace this
     if (arg_type->isFloatingPointTy()){
         return LogErrorV(emptyLoc, "Can't use the bitreverse intrisic on a floating point type arg"); 
     }
@@ -1478,8 +1478,9 @@ Value* StructMemberCallExprAST::codegen(){
             return refletionInstruction(MemberName, std::move(Args));
         }
     }
-    Type* temp_type = StructMember->LHS->clone()->codegen()->getType();
-    if (!temp_type->isStructTy() && !temp_type->isPointerTy()){
+    //Type* temp_type = StructMember->LHS->clone()->codegen()->getType();
+    Cpoint_Type temp_type = StructMember->LHS->get_type();
+    if (!temp_type.is_struct && !temp_type.is_ptr){
         // not struct member call
         // will handle the special name mangling in this function
         std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
@@ -1944,7 +1945,7 @@ Value *CallExprAST::codegen() {
         temp_val = loaded_vector;
     } else if ((arg_type.is_ptr || is_additional_arg) && is_arg_passed_an_array){ // passing an array to a function wanting a ptr or as additional arg of a variadic function
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
-        temp_val = Builder->CreateGEP(Args[i]->clone()->codegen()->getType(), temp_val, {zero, zero}, "arraydecay", true);
+        temp_val = Builder->CreateGEP(get_type_llvm(Args[i]->get_type()) /*Args[i]->clone()->codegen()->getType()*/, temp_val, {zero, zero}, "arraydecay", true);
     } else {
         temp_val = Args[i]->codegen();
     }
