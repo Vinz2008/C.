@@ -253,7 +253,7 @@ Value* get_var_allocation(std::string name){
 
 std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type){
     //return struct_name + "____" + type;
-    return struct_name + "____" + create_mangled_name_from_type(type);
+    return struct_name + "____" + type.create_mangled_name();
 }
 
 
@@ -317,7 +317,7 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
             Value* valueTemp = Args.at(arg_nb)->clone()->codegen();
             Type* arg_type = valueTemp->getType();
             Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
-            std::string temp_format = from_cpoint_type_to_printf_format(arg_cpoint_type);
+            std::string temp_format = arg_cpoint_type.to_printf_format();
             if (temp_format == ""){
                 return LogErrorV(emptyLoc, "Not Printable type in print macro");
             }
@@ -364,7 +364,7 @@ Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     if (is_string_found){
         format = "\"%s\"";
     } else {
-        format = from_cpoint_type_to_printf_format(valueCopyCpointType);
+        format = valueCopyCpointType.to_printf_format();
         if (format.find("%s") != std::string::npos){
             format = "\"" + format + "\"";
         }
@@ -689,9 +689,9 @@ Type* UnionDeclarAST::codegen(){
   Cpoint_Type biggest_type = Cpoint_Type(double_type);
   int biggest_type_size = 0;
   for (int i = 0; i < Vars.size(); i++){
-    if (get_type_number_of_bits(Vars.at(i)->cpoint_type) > biggest_type_size){
+    if (Vars.at(i)->cpoint_type.get_number_of_bits() > biggest_type_size){
       biggest_type = Vars.at(i)->cpoint_type;
-      biggest_type_size = get_type_number_of_bits(Vars.at(i)->cpoint_type);
+      biggest_type_size = Vars.at(i)->cpoint_type.get_number_of_bits();
     }
   }
   for (int i = 0; i < Vars.size(); i++){
@@ -723,9 +723,9 @@ Type* EnumDeclarAST::codegen(){
     Cpoint_Type biggest_type = Cpoint_Type(double_type);
     for (int i = 0; i < EnumMembers.size(); i++){
         if (EnumMembers.at(i)->Type){
-        if (get_type_number_of_bits(*(EnumMembers.at(i)->Type)) > biggest_type_size){
+        if (EnumMembers.at(i)->Type->get_number_of_bits() > biggest_type_size){
             biggest_type = *(EnumMembers.at(i)->Type);
-            biggest_type_size = get_type_number_of_bits(*(EnumMembers.at(i)->Type));
+            biggest_type_size = EnumMembers.at(i)->Type->get_number_of_bits();
         }
         }
     }
@@ -752,7 +752,7 @@ void MembersDeclarAST::codegen(){
             self_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
         } else {
             self_type = Cpoint_Type(get_type(members_for));
-            mangled_name_function = create_mangled_name_from_type(self_type) + "__" + function_name;;
+            mangled_name_function = self_type.create_mangled_name() + "__" + function_name;;
         }
         //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
         FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_type));
@@ -771,7 +771,7 @@ void MembersDeclarAST::codegen(){
             self_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
         } else {
             self_type = Cpoint_Type(get_type(members_for));
-            mangled_name_function = create_mangled_name_from_type(self_type) + "__" + function_name;;
+            mangled_name_function = self_type.create_mangled_name() + "__" + function_name;;
         }
         //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
         Proto->Args.insert(Proto->Args.begin(), std::make_pair("self", self_type));
@@ -1741,10 +1741,10 @@ Value *BinaryExprAST::codegen() {
   }
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
   if (Op == "&&"){
-    if (is_decimal_number_type(get_cpoint_type_from_llvm(L->getType()))){
+    if (get_cpoint_type_from_llvm(L->getType()).is_decimal_number_type()){
         convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(int_type)), L);
     }
-    if (is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
         convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(int_type)), R);
     }
   }
@@ -1885,7 +1885,7 @@ Value *CallExprAST::codegen() {
   if (FunctionProtos[Callee] == nullptr){
     return LogErrorV(this->loc, "Incorrect Function %s", Callee.c_str());
   }
-  bool has_sret = is_just_struct(FunctionProtos[Callee]->cpoint_type) && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
+  bool has_sret = FunctionProtos[Callee]->cpoint_type.is_just_struct() && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
   bool has_byval = false;
   if (FunctionProtos[Callee]->is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
@@ -1937,9 +1937,9 @@ Value *CallExprAST::codegen() {
     }
     bool is_additional_arg = FunctionProtos[Callee]->is_variable_number_args && i >= FunctionProtos[Callee]->Args.size();
     bool is_arg_passed_an_array = /*Args[i]->clone()->codegen()->getType()->isArrayTy()*/ Args[i]->get_type().is_array;
-    if (/*arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
+    if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
-    } else if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
+    } else if (arg_type.is_just_struct() && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
         Value* loaded_vector = Builder->CreateLoad(vector_type_from_struct(FunctionProtos[Callee]->Args.at(i).second), AddrExprAST(Args[i]->clone()).codegen());
         temp_val = loaded_vector;
     } else if ((arg_type.is_ptr || is_additional_arg) && is_arg_passed_an_array){ // passing an array to a function wanting a ptr or as additional arg of a variadic function
@@ -1969,7 +1969,7 @@ Value *CallExprAST::codegen() {
   //std::vector<int> pos_vector_two_float;
   for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
     Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
-    if (/*arg_type.is_struct && !arg_type.is_ptr &&*/ is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
+    if (/*arg_type.is_struct && !arg_type.is_ptr &&*/ arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
     }
@@ -1977,7 +1977,7 @@ Value *CallExprAST::codegen() {
     if (arg_type.type == i8_type && !arg_type.is_ptr && !arg_type.is_array){
         pos_signext.push_back(i);
     }
-    if (is_unsigned(arg_type)){
+    if (arg_type.is_unsigned()){
         pos_zeroext.push_back(i);
     }
     /*if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2){
@@ -2079,7 +2079,7 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         }
         sizeof_type = NamedValues[Name]->type;
     }
-    if (/*sizeof_type.is_struct && !sizeof_type.is_ptr*/ is_just_struct(sizeof_type) && should_pass_struct_byval(sizeof_type)){
+    if (sizeof_type.is_just_struct() && should_pass_struct_byval(sizeof_type)){
         /*int struct_size = 0;
         for (int i = 0; i < StructDeclarations[sizeof_type.struct_name]->members.size(); i++){
             StructDeclarations[sizeof_type.struct_name]->members.at(i).second
@@ -2101,7 +2101,7 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
             return LogErrorV(loc, "16 bits targets are not supported with compile time sizeof on pointers");
         }
     }
-    int size_type = get_type_number_of_bits(type);
+    int size_type = type.get_number_of_bits();
     return ConstantInt::get(*TheContext, APInt(32, (uint64_t)size_type/8, false));
 }
 
@@ -2128,7 +2128,7 @@ Value* SizeofExprAST::codegen(){
     if (!A){
         return LogErrorV(this->loc, "Sizeof Unknown variable name %s", Name.c_str());
     }
-    if (is_just_struct(NamedValues[Name]->type)){
+    if (NamedValues[Name]->type.is_just_struct()){
     Value* size =  getSizeOfStruct(A);
     //size = Builder->CreateMul(size, ConstantInt::get(*TheContext, APInt(32, 8, false)), "mul_converting_in_bits");
     return size;
@@ -2253,10 +2253,10 @@ Function *PrototypeAST::codegen() {
   for (int i = 0; i < Args.size(); i++){
     Cpoint_Type arg_type = Args.at(i).second;
     //if (arg_type.is_struct && !arg_type.is_ptr && !arg_type.is_array && should_pass_struct_byval(arg_type)){
-    if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
+    if (arg_type.is_just_struct() && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
         type_args.push_back(vector_type_from_struct(arg_type));
     } else {
-    if (is_just_struct(arg_type) && should_pass_struct_byval(arg_type)){
+    if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         arg_type.is_ptr = true;
     }
     type_args.push_back(get_type_llvm(arg_type));
@@ -2270,7 +2270,7 @@ Function *PrototypeAST::codegen() {
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
   FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(int_type)), args_type_main, false);
   } else {
-  if (is_just_struct(cpoint_type)){
+  if (cpoint_type.is_just_struct()){
     // replace this by if (should_return_struct_with_ptr())
     if (should_return_struct_with_ptr(cpoint_type)){
         has_sret = true;
@@ -2304,7 +2304,7 @@ Function *PrototypeAST::codegen() {
     Arg.setName("sret_arg");
     Idx = 0;
     has_added_sret = true;
-    } else if (/*Args.at(Idx).second.is_struct && !Args.at(Idx).second.is_ptr && !Args.at(Idx).second.is_array*/ is_just_struct(Args.at(Idx).second) && should_pass_struct_byval(Args.at(Idx).second)){
+    } else if (Args.at(Idx).second.is_just_struct() && should_pass_struct_byval(Args.at(Idx).second)){
         Log::Info() << "should_pass_struct_byval arg " << Args.at(Idx).first << " : " << Args.at(Idx).second << "\n";
         Cpoint_Type arg_type = get_cpoint_type_from_llvm(/*Arg.getType()*/ get_type_llvm(Args.at(Idx).second));
         Cpoint_Type by_val_ptr_type = arg_type;
@@ -2408,7 +2408,7 @@ Function *FunctionAST::codegen() {
     }
   } else {
   bool has_sret = false;
-  if (/*P.cpoint_type.is_struct*/ is_just_struct(P.cpoint_type) && should_return_struct_with_ptr(P.cpoint_type)){
+  if (P.cpoint_type.is_just_struct() && should_return_struct_with_ptr(P.cpoint_type)){
     has_sret = true;
   }
 
@@ -2420,7 +2420,7 @@ Function *FunctionAST::codegen() {
     if (has_sret){
         cpoint_type_arg = get_cpoint_type_from_llvm(Arg.getType());
         i--;
-    } else if (is_just_struct(P.Args.at(i).second) /*P.Args.at(i).second.is_struct && !P.Args.at(i).second.is_ptr*/ && should_pass_struct_byval(P.Args.at(i).second)){
+    } else if (P.Args.at(i).second.is_just_struct()  && should_pass_struct_byval(P.Args.at(i).second)){
         has_by_val = true;
         cpoint_type_arg = P.Args.at(i).second;
     } else {
@@ -2462,7 +2462,7 @@ Function *FunctionAST::codegen() {
     if (RetVal){
     Log::Info() << "before sret RetVal->getType()->isStructTy() : " << RetVal->getType()->isStructTy() << "\n";
     }
-    if  (/*P.cpoint_type.is_struct && !P.cpoint_type.is_ptr*/ is_just_struct(P.cpoint_type) && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
+    if  (P.cpoint_type.is_just_struct() && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
         Log::Info() << "sret storing in return" << "\n";
         /*auto intrisicId = Intrinsic::memcpy;
         Function* memcpyF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
@@ -3153,10 +3153,10 @@ Value *ForExprAST::codegen(){
       return nullptr;
   } else {
     // If not specified, use 1.0.
-    if (is_decimal_number_type(VarType)){
+    if (VarType.is_decimal_number_type()){
     StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
     } else {
-        StepVal = ConstantInt::get(*TheContext, APInt(get_type_number_of_bits(VarType), (uint64_t)1));
+        StepVal = ConstantInt::get(*TheContext, APInt(VarType.get_number_of_bits(), (uint64_t)1));
     }
   }
   if (StepVal->getType() != get_type_llvm(VarType)){
@@ -3167,7 +3167,7 @@ Value *ForExprAST::codegen(){
       Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, VarName.c_str());
   //Value *NextVar = Builder->CreateAdd(CurVar, StepVal, "nextvar_for"); // will need to make it into a function to have int add and fadd used depending of type
   Value* NextVar;
-  if (is_decimal_number_type(VarType)){
+  if (VarType.is_decimal_number_type()){
     NextVar = Builder->CreateFAdd(CurVar, StepVal, "nextvar_for");
   } else {
     NextVar = Builder->CreateAdd(CurVar, StepVal, "nextvar_for");
@@ -3359,7 +3359,7 @@ Value *VarExprAST::codegen() {
     //Log::Info() << "struct_declaration_name_temp " << struct_declaration_name_temp << "\n";
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type, struct_type_temp, struct_declaration_name_temp);
     //Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
-    if (/*cpoint_type.is_struct && !cpoint_type.is_ptr*/ is_just_struct(cpoint_type)){
+    if (cpoint_type.is_just_struct()){
       if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
       std::vector<Value *> ArgsV;
       

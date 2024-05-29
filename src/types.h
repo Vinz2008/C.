@@ -72,29 +72,35 @@ public:
         std::string str = create_pretty_name_for_type(*this);
         return str.c_str();
     }
-
+    int get_number_of_bits();
+    std::string to_printf_format();
+    bool is_just_struct();
+    std::string create_mangled_name();
+    bool is_decimal_number_type();
+    bool is_signed();
+    bool is_unsigned();
 };
 
-llvm::Type* get_type_llvm(Cpoint_Type cpoint_type);
+llvm::Type* get_type_llvm(Cpoint_Type cpoint_type); // TODO : move this to a meber function
 llvm::Value* get_default_value(Cpoint_Type type);
 llvm::Constant* get_default_constant(Cpoint_Type type);
 Cpoint_Type get_cpoint_type_from_llvm(llvm::Type* llvm_type);
 bool is_llvm_type_number(llvm::Type* llvm_type);
 llvm::Type* get_array_llvm_type(llvm::Type* type, int nb_element);
-bool is_decimal_number_type(Cpoint_Type type);
-bool is_signed(Cpoint_Type type);
-bool is_unsigned(Cpoint_Type type);
+//bool is_decimal_number_type(Cpoint_Type type);
+//bool is_signed(Cpoint_Type type);
+//bool is_unsigned(Cpoint_Type type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo, llvm::Value* &val);
-int get_type_number_of_bits(Cpoint_Type type);
+//int get_type_number_of_bits(Cpoint_Type type);
 std::string get_string_from_type(Cpoint_Type type);
-std::string create_mangled_name_from_type(Cpoint_Type type);
+//std::string create_mangled_name_from_type(Cpoint_Type type);
 llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
 llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);
 int from_val_to_int(llvm::Value* val);
-std::string from_cpoint_type_to_printf_format(Cpoint_Type type);
+//std::string from_cpoint_type_to_printf_format(Cpoint_Type type);
 int find_struct_type_size(Cpoint_Type cpoint_type);
-bool is_just_struct(Cpoint_Type type);
+//bool is_just_struct(Cpoint_Type type);
 int struct_get_number_type(Cpoint_Type cpoint_type, int type);
 bool is_struct_all_type(Cpoint_Type cpoint_type, int type);
 llvm::VectorType* vector_type_from_struct(Cpoint_Type cpoint_type);

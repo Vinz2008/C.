@@ -11,21 +11,21 @@ extern std::unique_ptr<IRBuilder<>> Builder;
 namespace operators {
 
 Value* LLVMCreateAdd(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
       return Builder->CreateAdd(L, R, "addtmp");
     }
     return Builder->CreateFAdd(L, R, "faddtmp");
 }
 
 Value* LLVMCreateSub(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
       return Builder->CreateSub(L, R, "subtmp");
     }
     return Builder->CreateFSub(L, R, "fsubtmp");
 }
 
 Value* LLVMCreateMul(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
       return Builder->CreateMul(L, R, "multmp");
     }
     return Builder->CreateFMul(L, R, "fmultmp");
@@ -33,8 +33,8 @@ Value* LLVMCreateMul(Value* L, Value* R){
 
 Value* LLVMCreateDiv(Value* L, Value* R){
     Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
-    if (!is_decimal_number_type(type)){
-      if (is_signed(type)){
+    if (!type.is_decimal_number_type()){
+      if (type.is_signed()){
         return Builder->CreateSDiv(L, R, "sdivtmp");
       } else {
         return Builder->CreateUDiv(L, R, "udivtmp");
@@ -45,8 +45,8 @@ Value* LLVMCreateDiv(Value* L, Value* R){
 
 Value* LLVMCreateRem(Value* L, Value* R){
     Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
-    if (!is_decimal_number_type(type)){
-      if (is_signed(type)){
+    if (!type.is_decimal_number_type()){
+      if (type.is_signed()){
         return Builder->CreateSRem(L, R, "sremtmp");
       } else {
         return Builder->CreateURem(L, R, "uremtmp");
@@ -56,7 +56,7 @@ Value* LLVMCreateRem(Value* L, Value* R){
 }
 
 Value* LLVMCreateCmp(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
       L = Builder->CreateICmpEQ(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
@@ -65,7 +65,7 @@ Value* LLVMCreateCmp(Value* L, Value* R){
 }
 
 Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
         L = Builder->CreateICmpNE(L, R, "notequalcmptmp");
     } else {
         L = Builder->CreateFCmpUNE(L, R, "notequalfcmptmp");
@@ -74,7 +74,7 @@ Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
 }
 
 Value* LLVMCreateGreaterThan(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
       L = Builder->CreateICmpSGT(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpOGT(L, R, "cmptmp");
@@ -83,7 +83,7 @@ Value* LLVMCreateGreaterThan(Value* L, Value* R){
 }
 
 Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
         L = Builder->CreateICmpSGE(L, R, "cmptmp");
     } else {
         L = Builder->CreateFCmpOGE(L, R, "cmptmp");
@@ -92,7 +92,7 @@ Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
 }
 
 Value* LLVMCreateSmallerThan(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
       L = Builder->CreateICmpSLT(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpOLT(L, R, "cmptmp");
@@ -102,7 +102,7 @@ Value* LLVMCreateSmallerThan(Value* L, Value* R){
 }
 
 Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R){
-    if (!is_decimal_number_type(get_cpoint_type_from_llvm(R->getType()))){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
         L = Builder->CreateICmpSLE(L, R, "cmptmp");
     } else {
         L = Builder->CreateFCmpOLE(L, R, "cmptmp");

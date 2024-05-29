@@ -42,7 +42,7 @@ bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
 }
 
 bool should_pass_struct_byval(Cpoint_Type cpoint_type){
-    if (is_just_struct(cpoint_type) && is_struct_all_type(cpoint_type, float_type)){
+    if (cpoint_type.is_just_struct() && is_struct_all_type(cpoint_type, float_type)){
         int float_nb = struct_get_number_type(cpoint_type, float_type);
         if (float_nb <= 2){
             return false;

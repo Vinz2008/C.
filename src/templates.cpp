@@ -28,7 +28,7 @@ void callTemplate(std::string& Callee, /*std::string*/ Cpoint_Type template_pass
   Log::Info() << "Callee : " << Callee << "\n";
   auto templateProto = std::make_unique<TemplateProto>(TemplateProtos[Callee]->functionAST->clone(), TemplateProtos[Callee]->template_type_name); 
   std::string typeName = "____type";
-  typeName = "____" + create_mangled_name_from_type(template_passed_type);
+  typeName = "____" + template_passed_type.create_mangled_name();
   std::string function_temp_name = templateProto->functionAST->Proto->Name + typeName; // add something to specify type
   templateProto->functionAST->Proto->Name = function_temp_name;
   //templateProto->functionAST->codegen();
