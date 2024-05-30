@@ -19,7 +19,7 @@ static std::string get_word(std::string str, int p){
             }
         }
     }
-    for (int i = pos; i < str.size() /*- 1*/ && str.at(i) != '-'; i++){
+    for (int i = pos; i < str.size() && str.at(i) != '-'; i++){
         r += str.at(i);
     }
     return r;

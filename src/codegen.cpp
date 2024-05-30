@@ -2672,239 +2672,6 @@ Value* LabelExprAST::codegen(){
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
-
-// TODO : remove the useless allocas
-/*Value* RedeclarationExprAST::codegen(){
-  // TODO move this from a AST node to an operator 
-  Log::Info() << "REDECLARATION CODEGEN" << "\n";
-  Log::Info() << "VariableName " << VariableName << "\n";
-  //bool is_object = false;
-  bool is_array = false;
-  if (index != nullptr){
-    is_array = true;
-  }
-  std::string ArrayName = "";
-  //int pos_array = -1;
-  bool is_global = false;
-  if (GlobalVariables[VariableName] != nullptr){
-    is_global = true;
-  }
-  Log::Info() << "is_global : " << is_global << "\n";
-  Log::Info() << "VariableName : " << VariableName << "\n";
-  //Function *TheFunction = Builder->GetInsertBlock()->getParent();
-  if (Val == nullptr){
-    return LogErrorV(this->loc, "Val is Nullptr\n");
-  }
-  if (dynamic_cast<EnumCreation*>(Val.get())){
-    auto Alloca = NamedValues[VariableName]->alloca_inst;
-    auto* enumCreation = dynamic_cast<EnumCreation*>(Val.get());
-    auto EnumMembers = std::move(EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->clone()->EnumMembers);
-    std::unique_ptr<EnumMember> enumMember = nullptr;
-    int pos_member = -1;
-    Cpoint_Type cpoint_type = NamedValues[VariableName]->type;
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
-    auto index_tag = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-    auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
-    for (int i = 0; i < EnumMembers.size(); i++){
-        if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
-            pos_member = i;
-            enumMember = EnumMembers.at(i)->clone();
-        }
-    }
-    if (!enumMember){
-        return LogErrorV(this->loc, "Couldn't find enum member %s", enumCreation->EnumMemberName.c_str());
-    }
-    if (!EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->enum_member_contain_type){
-        Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), Alloca);
-        NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-        return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-    }
-    Value* ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct", true);
-    Value* value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct", true);
-    Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
-    NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-    if (enumCreation->value){
-        Value* val = enumCreation->value->clone()->codegen();
-        if (val->getType() != get_type_llvm(*enumMember->Type)){
-            convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(*enumMember->Type), val);
-        }
-        Builder->CreateStore(val, value_tag);
-        NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-    }
-    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-  }
-  Value* ValDeclared = Val->codegen();
-  Cpoint_Type type = Cpoint_Type(0);
-  if (var_exists(VariableName)){
-    type = *get_variable_type(VariableName);
-  } else {
-    std::string nearest_variable;
-    int lowest_distance = 20;
-    int temp_distance = 30;
-    for ( const auto &p : NamedValues ){
-      //Log::Info() << "temp variable : " << p.first << "\n";
-      if (p.second != nullptr){
-      if ((temp_distance = stringDistance(VariableName, p.first)) < lowest_distance){
-        nearest_variable = p.first;
-        lowest_distance = temp_distance;
-      }
-      }
-      //Log::Info() << "string distance : " << temp_distance << "\n";
-    }
-    return LogErrorV(this->loc, "couldn't find variable \"%s\", maybe you meant \"%s\"", VariableName.c_str(), nearest_variable.c_str());
-  }
-  Log::Info() << "Redeclar var type : " << type << "\n";
-  if (type.nb_ptr > 0 && !type.is_ptr){
-    type.is_ptr = true;
-  }
-  if (!type.is_template_type && type.type != 0 && member == "" && !is_array){ 
-  if (ValDeclared->getType() != get_type_llvm(type)){
-    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(type), ValDeclared);
-  }
-  }
-  bool is_struct = false;
-  bool is_union = false;
-  //bool is_class = false;
-  if (member != ""){
-  Log::Info() << "objectName : " << VariableName << "\n";
-  if (var_exists(VariableName)){
-    if (UnionDeclarations[get_variable_type(VariableName)->union_name] != nullptr){
-      Log::Info() << "IS_UNION" << "\n";
-      is_union = true;
-    } else if (StructDeclarations[get_variable_type(VariableName)->struct_name] != nullptr){
-      Log::Info() << "IS_STRUCT" << "\n";
-      is_struct = true;
-    } else {
-        // Verify for generic mangling
-        Log::Info() << "get_variable_type(VariableName)->struct_name : " << get_variable_type(VariableName)->struct_name << "\n";
-        if (get_variable_type(VariableName)->is_struct_template && StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]){
-            is_struct = true;
-        } else {
-            return LogErrorV(this->loc, "The variable %s in redeclaration which is used with a member %s is neither a struct or an union", VariableName.c_str(), member.c_str());
-        }
-    }
-  }
-  }
-  if (is_union){
-    Cpoint_Type cpoint_type =  *get_variable_type(VariableName);
-    //AllocaInst *Alloca = (!is_global) ? NamedValues[VariableName]->alloca_inst : nullptr;
-    Value* ptr = get_var_allocation(VariableName);
-    auto members = UnionDeclarations[NamedValues[VariableName]->type.union_name]->members;
-    int pos_union = -1;
-    Log::Info() << "members.size() : " << members.size() << "\n";
-    for (int i = 0; i < members.size(); i++){
-      if (members.at(i).first == member){
-        pos_union = i;
-        break;
-      }
-    }
-    if (ValDeclared->getType() != get_type_llvm(members.at(pos_union).second)){
-        convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_union).second), ValDeclared);
-    }
-    Builder->CreateStore(ValDeclared, ptr);
-    NamedValues[VariableName] = std::make_unique<NamedValue>(ptr, cpoint_type);
-  } else if (is_struct){
-    Log::Info() << "StructName : " << VariableName << "\n";
-    std::vector<std::pair<std::string, Cpoint_Type>> members;
-    if (get_variable_type(VariableName)->is_struct_template){
-        Log::Info() << "get_struct_template_name : " << get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed) << "\n";
-        members = StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]->members;
-    } else {
-        members = StructDeclarations[get_variable_type(VariableName)->struct_name]->members;
-    }
-    int pos_struct = -1;
-    Log::Info() << "members.size() : " << members.size() << "\n";
-    for (int i = 0; i < members.size(); i++){
-      if (members.at(i).first == member){
-        pos_struct = i;
-        break;
-      }
-    }
-    Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-    auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
-    auto structPtr = get_var_allocation(VariableName);
-    Cpoint_Type cpoint_type = *get_variable_type(VariableName);
-    // TODO : should we use the cpoint_type in the NamedValue reassigning because it is changed here ?
-    if (cpoint_type.is_ptr){
-      cpoint_type.is_ptr = false;
-    }
-    auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct", true);
-    if (ValDeclared->getType() != get_type_llvm(members.at(pos_struct).second)){
-        convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_struct).second), ValDeclared);
-    }
-    Builder->CreateStore(ValDeclared, ptr);
-    // TODO : verify if this code is needed and remove it in all the code if not
-    if (is_var_local(VariableName)){
-        NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
-    } else {
-        GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
-    }
-  } else if (is_array) {
-    Log::Info() << "array redeclaration" << "\n";
-    Cpoint_Type cpoint_type = *get_variable_type(VariableName);
-    //Cpoint_Type cpoint_type = is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
-    Cpoint_Type member_type = cpoint_type;
-    Log::Info() << "member type : " << member_type << "\n";
-    if (member_type.is_ptr && !member_type.is_array){
-        Log::Info() << "is member" << "\n";
-        member_type.is_ptr = false;
-        member_type.nb_ptr = 0;
-        member_type.nb_element = 0;
-    } else {
-        member_type.is_array = false;
-        member_type.nb_element = 0;
-    }
-    if (ValDeclared->getType()->isArrayTy()){
-      AllocaInst *Alloca = NamedValues[VariableName]->alloca_inst;
-      Builder->CreateStore(ValDeclared, Alloca);
-      NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-      return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-    }
-    //Log::Info() << "Pos for GEP : " << pos_array << "\n";
-    Log::Info() << "ArrayName : " << VariableName << "\n";
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-    auto indexVal = index->codegen();
-    if (indexVal->getType() != get_type_llvm(int_type)){
-        convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(int_type), indexVal) ;
-    }
-    //indexVal = Builder->CreateFPToUI(indexVal, Type::getInt32Ty(*TheContext), "cast_gep_index");
-    if (!index){
-      return LogErrorV(this->loc, "couldn't find index for array %s", VariableName.c_str());
-    }
-    auto arrayPtr = get_var_allocation(VariableName);
-    Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
-    std::vector<Value*> indexes = { zero, indexVal};
-    if (cpoint_type.is_ptr && !cpoint_type.is_array){
-        Log::Info() << "array for array member is ptr" << "\n";
-        cpoint_type.is_ptr = false;
-        indexes = {indexVal};
-    }
-    Type* llvm_type = get_type_llvm(cpoint_type);
-    Log::Info() << "Get LLVM TYPE" << "\n";
-    auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);
-    Log::Info() << "Create GEP" << "\n";
-    if (ValDeclared->getType() != get_type_llvm(member_type)){
-      convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
-    }
-    Builder->CreateStore(ValDeclared, ptr);
-  } else {
-  Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
-  if (is_global){
-    Builder->CreateStore(ValDeclared, GlobalVariables[VariableName]->globalVar);
-  } else {
-  AllocaInst *Alloca = NamedValues[VariableName]->alloca_inst;
-  if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
-    return LogErrorV(this->loc, "Assigning to a variable a void value");
-  }
-  Builder->CreateStore(ValDeclared, Alloca);
-  // TODO : remove all the NamedValues redeclaration
-  NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-  }
-  }
-  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-}*/
-
 Value* BreakExprAST::codegen(){
   if (blocksForBreak.empty()){
     return LogErrorV(this->loc, "Break statement not in a a loop");
@@ -2949,16 +2716,8 @@ Value* LoopExprAST::codegen(){
     Value *StartVal = ConstantFP::get(*TheContext, APFloat(0.0));
     Builder->CreateStore(StartVal, PosArrayAlloca);
  
-    //if (auto ArrayVarPtr = dynamic_cast<VariableExprAST*>(Array.get())){
-    /*auto ArrayVarPtr = static_cast<VariableExprAST*>(Array.get());
-    std::unique_ptr<VariableExprAST> ArrayVar;
-    Array.release();
-    ArrayVar.reset(ArrayVarPtr);*/
     std::unique_ptr<VariableExprAST> ArrayVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(Array));
     Cpoint_Type cpoint_type = NamedValues[ArrayVar->getName()]->type;
-    //} else {
-      //return LogErrorV(this->loc, "Expected a Variable Expression in loop in");
-    //}
     Cpoint_Type tempValueArrayType = Cpoint_Type(cpoint_type);
     tempValueArrayType.is_array = false;
     tempValueArrayType.nb_element = 0;
@@ -3020,12 +2779,6 @@ Value* WhileExprAST::codegen(){
   if (!lastVal){
     return nullptr;
   }
-  /*Value* lastVal = nullptr;
-  for (int i = 0; i < Body.size(); i++){
-    lastVal = Body.at(i)->codegen();
-    if (!lastVal)
-      return nullptr;
-  }*/
   endScope();
   blocksForBreak.pop();
   Builder->CreateBr(whileBB);
@@ -3089,9 +2842,8 @@ Value *ForExprAST::codegen(){
     if (!StepVal)
       return nullptr;
   } else {
-    // If not specified, use 1.0.
     if (VarType.is_decimal_number_type()){
-    StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
+        StepVal = ConstantFP::get(*TheContext, APFloat(1.0));
     } else {
         StepVal = ConstantInt::get(*TheContext, APInt(VarType.get_number_of_bits(), (uint64_t)1));
     }
@@ -3309,13 +3061,6 @@ Value *VarExprAST::codegen() {
   }
 after_storing:
   CpointDebugInfo.emitLocation(this);
-  // Pop all our variables from scope.
-  /*for (unsigned i = 0, e = VarNames.size(); i != e; ++i)
-    NamedValues[VarNames[i].first] = OldBindings[i];
-  */
-  // Return the body computation.
-  //return BodyVal;
-  // for expr always returns 0.0.
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 

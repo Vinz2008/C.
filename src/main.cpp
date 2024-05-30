@@ -67,17 +67,11 @@ struct DebugInfo CpointDebugInfo;
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
 string filename = "";
-/*bool std_mode = true;
-bool gc_mode = true;*/
 extern std::string IdentifierStr;
-//bool debug_mode = false;
 bool debug_info_mode = false;
-//bool test_mode = false;
 bool silent_mode = false;
 
 bool link_files_mode = true;
-
-//bool is_release_mode = false;
 
 bool errors_found = false;
 int error_count = 0;
@@ -656,15 +650,6 @@ int main(int argc, char **argv){
     getNextToken();
     InitializeModule(first_filename);
 
-
-    if (is_optimised){
-    /*pass.add(createInstructionCombiningPass());
-    pass.add(createReassociatePass());
-    pass.add(createGVNPass());
-    pass.add(createCFGSimplificationPass());
-    pass.add(createFlattenCFGPass());
-    pass.add(createLoopUnrollPass(optimize_level));*/
-    }
     if (debug_info_mode){
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
                            DEBUG_METADATA_VERSION);
@@ -697,7 +682,6 @@ int main(int argc, char **argv){
     if (debug_info_mode){
     DBuilder->finalize();
     }
-    //TheModule->print(*file_out_ostream, nullptr);
     file_in.close();
     file_log.close();
     if (errors_found){
@@ -729,9 +713,6 @@ int main(int argc, char **argv){
     }
     TargetMachine* TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
-    /*if (Comp_context->lto_mode){
-        writeBitcodeLTO(object_filename, false);
-    } else {*/
     InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
     TheModule->setTargetTriple(TargetTriple);
@@ -873,9 +854,6 @@ int main(int argc, char **argv){
       gc_static_path.append("/");
       }
       gc_static_path.append("../bdwgc_prefix/lib/libgc.a");
-      /*std::string std_static_path = "-L";
-      std_static_path.append(std_path);
-      std_static_path.append(" -lstd");*/
       vect_obj_files.push_back(object_filename);
       if (Comp_context->std_mode){
       vect_obj_files.push_back(std_static_path);
@@ -925,7 +903,7 @@ int main(int argc, char **argv){
 
     }
 after_linking:
-    if (remove_temp_file /*&& !asm_mode*/){
+    if (remove_temp_file){
       remove(temp_filename.c_str());
     }
     return return_status;

@@ -31,7 +31,6 @@ void callTemplate(std::string& Callee, /*std::string*/ Cpoint_Type template_pass
   typeName = "____" + template_passed_type.create_mangled_name();
   std::string function_temp_name = templateProto->functionAST->Proto->Name + typeName; // add something to specify type
   templateProto->functionAST->Proto->Name = function_temp_name;
-  //templateProto->functionAST->codegen();
   TypeTemplateCallCodegen = std::make_pair(templateProto->functionAST->Proto->template_name, template_passed_type);
   add_manually_extern(templateProto->functionAST->Proto->Name, templateProto->functionAST->Proto->cpoint_type, templateProto->functionAST->Proto->Args, (templateProto->functionAST->Proto->IsOperator) ? 1 : 0, templateProto->functionAST->Proto->getBinaryPrecedence(), templateProto->functionAST->Proto->is_variable_number_args, templateProto->functionAST->Proto->has_template, templateProto->functionAST->Proto->template_name);
   Callee = function_temp_name;
@@ -59,7 +58,6 @@ void codegenStructTemplates(){
             Log::Info() << "Generating Struct " << StructTemplatesToGenerate.at(i)->structDeclarAST->Name << "\n";
             codegenedStructTemplates.push_back(TypeTemplateCallCodegen);
             StructTemplatesToGenerate.at(i)->structDeclarAST->codegen();
-            //StructTemplatesToGenerate.erase(std::next(StructTemplatesToGenerate.begin(), i));
         }
     }
 }

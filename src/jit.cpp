@@ -66,7 +66,6 @@ void HandleTopLevelExpression(){
         double (*FP)() = (double (*)())(intptr_t)ExprSymbol->getAddress().getValue();
         //void (*FP)() = (void (*)())(intptr_t)ExprSymbol.getAddress();
         fprintf(stderr, "Evaluated to %f\n", FP());
-        //FP();
     } else {
         fprintf(stderr, "Couldn't codegen top level expression");
     }

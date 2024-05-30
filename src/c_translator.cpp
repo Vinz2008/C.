@@ -297,10 +297,6 @@ std::string CharExprAST::generate_c(){
     return (std::string)"'" + (char)c + (std::string)"'";
 }
 
-/*std::string RedeclarationExprAST::generate_c(){
-    return VariableName + " = " + Val->generate_c();
-}*/
-
 std::string IfExprAST::generate_c(){
     /*std::string body_if = "";
     body_if += generate_body_c(Then);

@@ -46,7 +46,6 @@ namespace Preprocessor {
             size_t pos = 0;
             while (pos != std::string::npos){
                 pos = str.find(variable_name, pos);
-                //std::cout << "TEST PREPROCESSOR VAR" << std::endl;
                 if (pos != std::string::npos){
                     str.replace(pos, variable_name.length(), variables.at(i)->getValue());
                 }

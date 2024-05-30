@@ -10,7 +10,6 @@
 
 using namespace std;
 
-//extern bool debug_mode;
 extern bool debug_info_mode;
 
 extern std::unique_ptr<Compiler_context> Comp_context;

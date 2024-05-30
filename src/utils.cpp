@@ -42,11 +42,7 @@ bool doesExeExist(std::string filename){
         free(PATH);
     }
     for (int i = 0; i < PATHS.size(); i++){
-        //std::cout << "PATH " << i << " " << PATHS.at(i) << "\n";
-    }
-    for (int i = 0; i < PATHS.size(); i++){
         std::string exepath = PATHS.at(i) + "/" + filename;
-        //std::cout << "exepath " << exepath << "\n";
         if (fs::exists(exepath)){
             return true;
         }

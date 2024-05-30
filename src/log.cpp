@@ -15,7 +15,6 @@ std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_locatio
 std::unique_ptr<ExprAST> LogError(const char *Str, ...){
   va_list args;
   va_start(args, Str);
-  //fprintf(stderr, "LogError: %s\n", Str);
   vLogError(Str, args, emptyLoc);
   va_end(args);
   return nullptr;

@@ -108,15 +108,6 @@ std::unique_ptr<ExprAST> VarExprAST::clone(){
     if (!VarNames.empty()){
       Log::Info() << "VarNames.size() " << VarNames.size() << "\n";
       for (int i = 0; i < VarNames.size(); i++){
-        //std::string name = VarNames.at(i).first;
-        /*std::unique_ptr<ExprAST> val;
-        if (VarNames.at(i).second != nullptr){
-        val = VarNames.at(i).second->clone();
-        } else {
-          val = nullptr;
-        }*/
-        //VarNamesCloned.push_back(std::make_pair(name, std::move(val)));
-        //VarNamesCloned.push_back(std::make_pair(VarNames.at(i).first, std::move(val)));
         VarNamesCloned.push_back(std::make_pair(VarNames.at(i).first, VarNames.at(i).second ? VarNames.at(i).second->clone() : nullptr));
       }
     }
@@ -128,14 +119,6 @@ std::unique_ptr<ExprAST> VarExprAST::clone(){
     }
     return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
 }
-
-/*std::unique_ptr<ExprAST> RedeclarationExprAST::clone(){
-    std::unique_ptr<ExprAST> indexCloned = nullptr;
-    if (index != nullptr){
-      indexCloned = index->clone();
-    }
-    return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, std::move(indexCloned));
-}*/
 
 std::unique_ptr<FunctionAST> FunctionAST::clone(){
     return std::make_unique<FunctionAST>(Proto->clone(), clone_vector<ExprAST>(Body));
@@ -186,7 +169,6 @@ std::unique_ptr<TestAST> TestAST::clone(){
 }
 
 std::unique_ptr<ExprAST> IfExprAST::clone(){
-    //return std::make_unique<IfExprAST>(this->loc, Cond->clone(), clone_vector<ExprAST>(Then), clone_vector<ExprAST>(Else));
     return std::make_unique<IfExprAST>(this->loc, Cond->clone(), Then->clone(), (Else) ? Else->clone() : nullptr);
 }
 
@@ -219,7 +201,7 @@ std::unique_ptr<ExprAST> ClosureAST::clone(){
 }
 
 std::unique_ptr<ArgsInlineAsm> ArgsInlineAsm::clone(){
-    return std::make_unique<ArgsInlineAsm>(/*assembly_code->clone()*/ std::unique_ptr<StringExprAST>(dynamic_cast<StringExprAST*>(assembly_code->clone().release())), clone_vector<ArgInlineAsm>(InputOutputArgs));
+    return std::make_unique<ArgsInlineAsm>(std::unique_ptr<StringExprAST>(dynamic_cast<StringExprAST*>(assembly_code->clone().release())), clone_vector<ArgInlineAsm>(InputOutputArgs));
 }
 
 std::unique_ptr<ExprAST> ScopeExprAST::clone(){
@@ -285,10 +267,6 @@ std::unique_ptr<ExprAST> ParseConstantArray(){
       return nullptr;
     }
     ArrayMembers.push_back(std::move(E));
-    /*if (CurTok != ','){
-      return LogError("missing \',\' in constant array");
-    }
-    getNextToken();*/
     member_nb++;
   }
   return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembers));
@@ -302,7 +280,6 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   getNextToken();  // eat identifier.
   std::string member = "";
   std::unique_ptr<ExprAST> indexAST = nullptr;
-  //bool is_array = false;
   if (EnumDeclarations[IdName] != nullptr){
     Log::Info() << "enum_name : " << IdName << "\n";
     std::unique_ptr<ExprAST> Value = nullptr;
@@ -353,9 +330,6 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   if (StructDeclarations[IdName] != nullptr && CurTok == '{'){
     std::string struct_name = IdName;
     std::vector<std::unique_ptr<ExprAST>> StructMembers;
-    /*if (CurTok != '{'){
-        return LogError("Missing '{' in struct constant declaration");
-    }*/
     getNextToken();
     int member_nb = 0;
     while (true){
@@ -379,31 +353,16 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     return std::make_unique<ConstantStructExprAST>(struct_name, std::move(StructMembers));
   }
 
-  //if (CurTok != '(' && CurTok != /*'<'*/ '~'){ // Simple variable ref.
-    Log::Info() << "VariableExprAST" << "\n";
-    std::unique_ptr<Cpoint_Type> type;
-    if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
-      type = std::make_unique<Cpoint_Type>(double_type);
-    } else if (GlobalVariables[IdName] != nullptr){
-      type = std::make_unique<Cpoint_Type>(GlobalVariables[IdName]->type);
-    } else  {
-      type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
-    }
-    return std::make_unique<VariableExprAST>(IdLoc, IdName, *type);
-  //}
-  // Call.
-  Cpoint_Type template_passed_type = Cpoint_Type();
-  if (CurTok == '~'){
-    getNextToken();
-    template_passed_type = /*IdentifierStr*/ ParseTypeDeclaration(false);
-    //getNextToken();
-    if (CurTok != '~'){
-      return LogError("expected '~' not found");
-    }
-    getNextToken();
-    }
-    fprintf(stderr, "should use the binop implementation of callexpr\n");
-    exit(1);
+  Log::Info() << "VariableExprAST" << "\n";
+  std::unique_ptr<Cpoint_Type> type;
+  if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
+    type = std::make_unique<Cpoint_Type>(double_type);
+  } else if (GlobalVariables[IdName] != nullptr){
+    type = std::make_unique<Cpoint_Type>(GlobalVariables[IdName]->type);
+  } else  {
+    type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
+  }
+  return std::make_unique<VariableExprAST>(IdLoc, IdName, *type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){
@@ -453,14 +412,9 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
 
     // If this is a binop that binds at least as tightly as the current binop,
     // consume it, otherwise we are done.
-    //if (CurTok != '=' && CurTok != '|' && CurTok != '!'){
-    //Log::Info() << "CurTok before if : " << CurTok << "\n";
-    //if (CurTok != tok_op_multi_char){
     if (TokPrec < ExprPrec){
       return LHS;
     }
-    //}
-    //}
 
     // Okay, we know this is a binop.
     std::string BinOp = "";
@@ -640,7 +594,6 @@ std::unique_ptr<ExprAST> ParseInlineAsm(){
 
 std::unique_ptr<ExprAST> ParseMacroCall(){
     std::vector<std::unique_ptr<ExprAST>> ArgsMacro;
-    //std::unique_ptr<ArgsInlineAsm> argsInlineAsm;
     Log::Info() << "Parsing macro call" << "\n";
     getNextToken();
     std::string function_name = IdentifierStr;
@@ -651,37 +604,6 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
     getNextToken();
     if (function_name == "asm"){
         return ParseInlineAsm();
-        /*std::unique_ptr<StringExprAST> asm_code = get_Expr_from_ExprAST<StringExprAST>(ParseStrExpr());
-        if (!asm_code){
-            return nullptr;
-        }
-        std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs;
-        if (CurTok == ','){
-            getNextToken();
-            while (1) {
-                ArgInlineAsm::ArgType argType;
-                if (IdentifierStr == "in"){
-                    argType = ArgInlineAsm::ArgType::input;
-                } else if (IdentifierStr == "out") {
-                    argType = ArgInlineAsm::ArgType::output;
-                } else {
-                    return LogError("Unknown type of arg for the asm macro");
-                }
-                getNextToken();
-                auto argExpr = ParseExpression();
-                InputOutputArgs.push_back(std::make_unique<ArgInlineAsm>(std::move(argExpr), argType));
-                if (CurTok == ')'){
-                    break;
-                }
-                if (CurTok != ','){
-                    return LogError("Expected ')' or ',' in argument list of the asm macro");
-                }
-                getNextToken();
-            }
-        }
-        getNextToken(); // eat ')'
-        argsInlineAsm = std::make_unique<ArgsInlineAsm>(std::move(asm_code), std::move(InputOutputArgs));
-        return generate_asm_macro(std::move(argsInlineAsm));*/
     } else {
     auto ret = ParseFunctionArgs(ArgsMacro);
     if (!ret){
@@ -754,7 +676,6 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   Cpoint_Type default_type = Cpoint_Type(double_type);
   bool is_struct_template = false;
   Cpoint_Type* struct_template_type_passed = nullptr;
-  //Log::Info() << "type declaration found" << "\n";
   if (eat_token){
   getNextToken(); // eat the ':'
   }
@@ -762,19 +683,10 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
     LogError("expected identifier after var in type declaration");
     return default_type;
   }
-  /*if (CurTok == tok_identifier && IdentifierStr == TypeNameTemplateAST){
-
-  }*/ // TODO make a way to recognize a template type in cpoint_type. Remove the following code because the replacement of the type will be made in codegen
+  // TODO make a way to recognize a template type in cpoint_type. Remove the following code because the replacement of the type will be made in codegen
   if (CurTok == tok_identifier && IdentifierStr == TypeTemplateCallCodegen.first){
     Log::Info() << "Found template type in template call" << "\n";
-    //IdentifierStr = TypeTemplateCallCodegen.second;
     Cpoint_Type temp_type =  TypeTemplateCallCodegen.second;
-    /*getNextToken();
-    if (CurTok == tok_ptr){
-        temp_type.is_ptr = true;
-        temp_type.nb_ptr++;
-        getNextToken();
-    }*/
     return temp_type;
   }
   if (CurTok == tok_func){
@@ -828,8 +740,8 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
         }
         getNextToken();
         auto structDeclar = TemplateStructDeclars[struct_Name]->declarAST->clone();
-        structDeclar->Name = get_struct_template_name(struct_Name, /*struct_template_name*/ *struct_template_type_passed);
-        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(/*struct_template_name*/ *struct_template_type_passed, std::move(structDeclar)));
+        structDeclar->Name = get_struct_template_name(struct_Name, *struct_template_type_passed);
+        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(*struct_template_type_passed, std::move(structDeclar)));
         Log::Info() << "added to StructTemplatesToGenerate" << "\n";
         is_struct_template = true;
     }
@@ -1004,11 +916,11 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
       break;
   }
   // find template/generic
-  if (CurTok == /*'<'*/ '~'){
+  if (CurTok == '~'){
     getNextToken();
     template_name = IdentifierStr;
     getNextToken();
-    if (CurTok != /*'>'*/ '~'){
+    if (CurTok != '~'){
       return LogErrorP("Missing '~' in template declaration");
     }
     getNextToken();
@@ -1435,8 +1347,6 @@ std::unique_ptr<TypeDefAST> ParseTypeDef(){
   std::string new_type = IdentifierStr;
   getNextToken();
   Cpoint_Type value_type = ParseTypeDeclaration(false);
-  //std::string value_type = IdentifierStr;
-  //getNextToken();
   types.push_back(new_type);
   typeDefTable.push_back(value_type);
   return std::make_unique<TypeDefAST>(new_type, value_type);
@@ -1507,26 +1417,10 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   auto Cond = ParseExpression();
   if (!Cond)
     return nullptr;
-  /*if (CurTok != '{'){
-    Log::Info() << "CurTok : " << CurTok << "\n";
-    return LogError("expected {");
-  }
-  getNextToken();*/  // eat the {
-  //std::vector<std::unique_ptr<ExprAST>> Then;
   std::unique_ptr<ExprAST> Then = ParseExpression();
   if (!Then){
     return nullptr;
   }
-  /*auto ret = ParseBodyExpressions(Then);
-  if (!ret){
-    return nullptr;
-  }
-  Log::Info() << "CurTok : " << CurTok << "\n";
-  if (CurTok != '}'){
-    return LogError("expected } in if");
-  }
-  getNextToken();*/
-  //std::vector<std::unique_ptr<ExprAST>> Else;
   std::unique_ptr<ExprAST> Else;
 else_start:
   if (CurTok == tok_else){
@@ -1536,31 +1430,17 @@ else_start:
     if (!else_if_expr){
       return nullptr;
     }
-    //Else.push_back(std::move(else_if_expr));
     if (Else){
     Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(Else), std::move(else_if_expr)));
     } else {
         Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(else_if_expr)));
     }
-    //getNextToken();
     Log::Info() << "Tok before verif tok_else : " << CurTok << "\n";
     if (CurTok == tok_else){
       goto else_start;
     }
   } else {
   Else = ParseExpression();
-  /*if (CurTok != '{'){
-    return LogError("expected {");
-  }
-  getNextToken();
-  auto ret = ParseBodyExpressions(Else);
-  if (!ret){
-    return nullptr;
-  }
-  if (CurTok != '}'){
-    return LogError("expected } in else");
-  }
-  getNextToken();*/
   }
   }
   Log::Info() << "CurTok at end of IfExprAST : " << CurTok << "\n";
@@ -1577,14 +1457,11 @@ std::unique_ptr<ExprAST> ParseReturn(){
     return std::make_unique<ReturnAST>(nullptr);
   }
   auto return_value = ParseExpression();
-  //auto Result = std::make_unique<ReturnAST>(NumVal);
   if (!return_value){
     return nullptr;
   }
-  //getNextToken();
   Log::Info() << "CurTok return after : " << CurTok << "\n";
   return std::make_unique<ReturnAST>(std::move(return_value));
-  //return std::move(Result);
 }
 
 std::unique_ptr<ExprAST> ParseBreakExpr(){
@@ -1685,26 +1562,8 @@ std::unique_ptr<ExprAST> ParseMatch(){
         }
         getNextToken();
         }
-        /*if (CurTok == '{'){
-            getNextToken();
-            auto ret = ParseBodyExpressions(Body);
-            if (!ret){
-                return nullptr;
-            }
-            getNextToken(); // eat }
-        } else {
-            auto Expr = ParseExpression();
-            Body.push_back(std::move(Expr));
-            if (CurTok != ','){
-                return LogError("Expected ',' after single line body of match enum case");
-            }
-            getNextToken();
-        }*/
         matchCases.push_back(std::make_unique<matchCase>(std::move(expr), enum_name, enum_member_name, VarName, is_underscore, std::move(Body)));
     }
-    /*if (CurTok != '}'){
-        return LogError("Missing '}' in match");
-    }*/
     getNextToken();
     return std::make_unique<MatchExprAST>(matchVar, std::move(matchCases));
 }
@@ -1729,9 +1588,6 @@ std::unique_ptr<ExprAST> ParseClosure(){
     if (!ret){
         return nullptr;
     }
-    /*if (CurTok != ')'){
-        return LogError("Missing '(' in closure");
-    }*/
     getNextToken();
     std::vector<std::string> captured_vars;
     if (CurTok == '|'){
@@ -1811,21 +1667,11 @@ std::unique_ptr<ExprAST> ParseWhileExpr(){
   if (!Cond)
     return nullptr;
   Log::Info() << "first CurTok : " << CurTok << "\n";
-  /*if (CurTok != '{'){
-    return LogError("expected {");
-  }
-  getNextToken();*/
   std::unique_ptr<ExprAST> Body = ParseExpression();
-  /*std::vector<std::unique_ptr<ExprAST>> Body;
-  auto ret = ParseBodyExpressions(Body);*/
   if (!Body){
     return nullptr;
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
-  /*if (CurTok != '}'){
-    return LogError("expected }");
-  }
-  getNextToken();*/
   return std::make_unique<WhileExprAST>(std::move(Cond), std::move(Body));
 }
 
@@ -1865,23 +1711,8 @@ std::unique_ptr<ExprAST> ParseForExpr() {
     if (!Step)
       return nullptr;
   }
-
-  /*if (CurTok != tok_in)
-    return LogError("expected 'in' after for");*/
-  /*if (CurTok != '{'){
-    Log::Info() << "token befor : " << CurTok << "\n";
-    return LogError("expected { after for");
-  }*/
-  //std::vector<std::unique_ptr<ExprAST>> Body;
   std::unique_ptr<ExprAST> Body = ParseExpression();
-  //getNextToken();  // eat '{'.
-  //auto ret = ParseBodyExpressions(Body);
   Log::Info() << "CurTok : " << CurTok << "\n";
-  /*if (CurTok != '}'){
-    return LogError("expected } after for");
-  }
-  getNextToken();*/
-
   return std::make_unique<ForExprAST>(IdName, varType, std::move(Start),
                                        std::move(End), std::move(Step),
                                        std::move(Body));
@@ -1892,13 +1723,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
 
   std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNames;
   Cpoint_Type cpoint_type = Cpoint_Type(double_type);
-  /*int type = double_type;
-  bool is_ptr = false;
-  //int nb_element = 0;*/
   bool is_array = false;
-  /*std::string struct_name = "";
-  //std::string class_name = "";
-  int nb_ptr = 0;*/
   std::unique_ptr<ExprAST> index = nullptr;
   bool infer_type = false;
   // At least one variable name is required.
@@ -1920,10 +1745,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     infer_type = false;
     if (CurTok == ':'){
       Log::Info() << "Parse Type Declaration Var" << "\n";
-      cpoint_type = ParseTypeDeclaration(/*type, is_ptr, struct_name, nb_ptr*/);
-      /*if (a != nullptr){
-        return a;
-      }*/
+      cpoint_type = ParseTypeDeclaration();
     } else {
       Log::Info() << "Infering type (CurTok : " << CurTok << ")" << "\n";
       infer_type = true;

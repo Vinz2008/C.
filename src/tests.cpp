@@ -23,13 +23,8 @@ void generateTests(){
     ArgsPrintf.clear();
     std::string temp_description = testASTNodes.at(i)->description;
     std::unique_ptr<ExprAST> strExprAST;
-    //strExprAST = std::make_unique<StringExprAST>("Test %s running (in %s)\n");
     strExprAST = std::make_unique<StringExprAST>("Test " + temp_description + " running (in " + first_filename + ")\n");
     ArgsPrintf.push_back(std::move(strExprAST));
-    /*strExprAST = std::make_unique<StringExprAST>(temp_description);
-    ArgsPrintf.push_back(std::move(strExprAST));
-    strExprAST = std::make_unique<StringExprAST>(first_filename);
-    ArgsPrintf.push_back(std::move(strExprAST));*/
     printfCall = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(ArgsPrintf), Cpoint_Type(double_type));
     Body.push_back(std::move(printfCall));
     for (int j = 0; j < testASTNodes.at(i)->Body.size(); j++){

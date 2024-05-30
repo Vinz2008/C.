@@ -71,21 +71,15 @@ void goToNextLine(std::istream &__is, std::string &__str){
   Comp_context->lexloc.line = Comp_context->line;
   getLine(__is, __str);
   Comp_context->line = __str;
-  //Comp_context->lexloc.line = __str;
   file_log << "line size : " << __str.size() << "\n";
   pos = 0;
-  /*while (line.size == 0){
-  goToNextLine(__is,__str);
-  }*/
 }
 
 void go_to_next_line(){
   goToNextLine(file_in, line);
-  //handlePreprocessor();
 }
 
 void init_line(){
-  //Comp_context->lexloc.line_nb++;
   Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << " " << Comp_context->line << "\n";
   Comp_context->lexloc.col_nb = 0;
   getLine(file_in, line);
@@ -102,7 +96,6 @@ void handlePreprocessor(){
       goToNextLine(file_in, line);
     } else {
       handleEmptyLine();
-      //Log::Info() << "LAUNCH preprocess_replace_variable" << "\n";
       preprocess_replace_variable(line);
       break;
     }
@@ -113,7 +106,6 @@ void handleEmptyLine(){
   if (line.size() == 0){
     goToNextLine(file_in, line);
     handlePreprocessor();
-    //pos = 0;
   }
 }
 
@@ -163,7 +155,7 @@ int getCharLine(){
   }
   file_log << "next char after \\0 : " << line[pos] << "\n";
   }
-  if (c == '\n' || c == '\r' /*|| c == '\0'*/ || pos + 1 >= strlen(line.c_str())){
+  if (c == '\n' || c == '\r' || pos + 1 >= strlen(line.c_str())){
     goToNextLine(file_in, line);
     handlePreprocessor();
     //pos = 0;
@@ -190,10 +182,6 @@ int getCharLine(){
      Comp_context->lexloc.col_nb++;
   }
   handleEmptyLine();
-  /*if (line->size() == 0 && (*line)[pos] == '\0'){
-    file_log << "empty line" << "\n";
-    gotToNextLine(file_in, *line);
-  }*/
   file_log << "line : " << line << "\n";
   file_log << "c : " << (char)c << "\n";
   file_log << "c int : " << c << "\n";
@@ -311,7 +299,6 @@ static int gettok() {
             }
             NumVal = strtol(NumStr.c_str(), nullptr, 16);
             return tok_number;
-            //return tok_hex_number;
         } else {
             NumStr += '0';
             if (isdigit(LastChar) || LastChar == '.' || LastChar == '_'){
@@ -325,7 +312,6 @@ static int gettok() {
         }
     }
     if (isdigit(LastChar) || LastChar == '.' || LastChar == '_'){
-    //bool last_char_is_dot = false;
     do {
       if (LastChar != '_'){
           NumStr += LastChar;

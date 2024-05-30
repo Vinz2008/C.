@@ -73,7 +73,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     skip_spaces(line, pos);
 }
 
-bool getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::string>& Paths){
+bool getPath(std::string line, int& pos, std::vector<std::string>& Paths){
     std::string Path = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || line.at(pos) == '-' || isdigit(line.at(pos)))){
         Path += line.at(pos);
@@ -87,7 +87,6 @@ bool getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::
         bool importing_multiple_files = false;
         bool is_package = false;
 	    if (IdentifierStr == "std"){
-	    //pos_path += IdentifierStr.size();
 	    Path_temp = std_path;
         } else if (IdentifierStr == "github"){
             pos_path += 1; // pass ':'
@@ -98,7 +97,6 @@ bool getPath(std::string line, int& pos, /*std::string &Path*/ std::vector<std::
             std::string reponame = IdentifierStr;
             download_package_github(username, reponame);
             add_package(reponame);
-            //Log::Imports_Info() << "" << "\n";
             Path_temp = DEFAULT_PACKAGE_PATH;
             Path_temp.append("/");
             Path_temp.append(reponame);
@@ -172,16 +170,10 @@ std::string interpet_func_generics(std::string line, int pos, int nb_line, int& 
         declar += line.at(i);
         }
     }
-    //Log::Imports_Info() << "Declar generics : " << declar << "\n";
     if (pos_line != 0 && pos_line != nb_line){
         out_file << "\n";
     }
     declar = "func " + declar + "{" + "\n";
-    /*if (should_write_to_file){
-    out_file << "func " << declar << "{";
-    pos_line++;
-    modifier_for_line_count++;
-    }*/
     pos_line++;
     modifier_for_line_count++;
     int in_func_nb_of_opened_braces = 1;
@@ -244,9 +236,6 @@ std::string interpret_struct_generics(std::string line, int& pos, int nb_line, i
         declar += line.at(i);
         }
     }
-    /*if (pos_line != 0 && pos_line != nb_line){
-        out_file << "\n";
-    }*/
     declar += "{\n";
     pos_line++;
     modifier_for_line_count++;
@@ -273,20 +262,13 @@ std::string interpret_struct_generics(std::string line, int& pos, int nb_line, i
 
 void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     if (line.find('~') != std::string::npos){
-        //return interpret_struct_generics(line, pos, nb_line, pos_line);
         out_file << "struct " << interpret_struct_generics(line, pos, nb_line, pos_line);
         return;
     }
     std::string struct_declar = "";
-    //bool in_function = false;
     nb_of_opened_braces_struct = 0;
-    //nb_of_opened_braces_struct++;
     line = line.substr(pos, line.size()-1);
     while (true){
-        /*if (nb_of_opened_braces_struct == 0 && line.find('}') != std::string::npos){
-            Log::Imports_Info() << "break struct at line : " << line << "\n";
-            break;
-        }*/
         if (line.find('{') != std::string::npos){
             Log::Imports_Info() << "found { in struct" << "\n";
             nb_of_opened_braces_struct++;
@@ -300,9 +282,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
                 break;
             }
         }
-        //find_patterns(line, nb_line, pos_line);
         int pos = 0;
-        //skip_spaces(line, pos);
         while (pos < line.size() && isspace(line.at(pos))){
             Log::Info() << "skip space char : " << (char)line.at(pos) << "\n";
             pos++;
@@ -330,7 +310,6 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
                 }
                 pos_line++;
             }
-            //nb_of_opened_braces_struct--;
         } else if (IdentifierStr == "extern"){
             interpret_extern(line, pos_line);
         } else {
@@ -345,7 +324,6 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
         }
     }
     Log::Imports_Info() << "struct_declar : " << struct_declar << "\n";
-    //std::getline(imported_file, line); //get new line
     if (pos_line != 0 && pos_line != nb_line){
         out_file << "\n";
     }
@@ -355,8 +333,6 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
 
 void interpret_enum(std::string line, int& pos, int nb_line, int& pos_line){
     std::string enum_declar = "";
-    
-    //nb_of_opened_braces_struct++;
     while (true){
         for (int i = pos; i < line.size(); i++){
         if (line.at(i) != '}'){
@@ -577,7 +553,6 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
             }
             Log::Imports_Info() << "line : " << line << "\n";
             if (find_import_or_include(line) == 0){
-                //preprocess_replace_variable(line);
                 out_file << line;
             } else {
                 nb_imports++;
