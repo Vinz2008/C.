@@ -1111,7 +1111,7 @@ Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars, Stru
 Value* ClosureAST::codegen(){
     std::string closure_name = "closure" + std::to_string(closure_number);
     closure_number++;
-    auto Proto = std::make_unique<PrototypeAST>(this->loc, closure_name, ArgNames, return_type);
+    auto Proto = std::make_unique<PrototypeAST>(this->loc, closure_name, ArgNames, return_type, false, 0U, false, false, "", true);
     StructType* structType = nullptr;
     if (!captured_vars.empty()){
         structType = getClosureCapturedVarsStructType(captured_vars);
@@ -2288,8 +2288,11 @@ Function *PrototypeAST::codegen() {
     FunctionProtos[this->getName()] = this->clone();
     return nullptr;
   }
-
-  Function *F = Function::Create(FT, Function::ExternalLinkage, Name, TheModule.get());
+  GlobalValue::LinkageTypes linkageType = Function::ExternalLinkage;
+  if (is_private_func){
+    linkageType = Function::InternalLinkage;
+  }
+  Function *F = Function::Create(FT, linkageType, Name, TheModule.get());
 
   // Set names for all arguments.
   unsigned Idx = 0;
