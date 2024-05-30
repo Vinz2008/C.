@@ -542,7 +542,7 @@ public:
   std::string generate_c() override;
 };
 
-class RedeclarationExprAST : public ExprAST {
+/*class RedeclarationExprAST : public ExprAST {
   std::string VariableName;
   std::unique_ptr<ExprAST> Val;
   std::string member;
@@ -560,7 +560,7 @@ public:
     return Val->get_type();
   }
   std::string generate_c() override;
-};
+};*/
 
 class CastExprAST : public ExprAST {
 public:

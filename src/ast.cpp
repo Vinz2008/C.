@@ -129,13 +129,13 @@ std::unique_ptr<ExprAST> VarExprAST::clone(){
     return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
 }
 
-std::unique_ptr<ExprAST> RedeclarationExprAST::clone(){
+/*std::unique_ptr<ExprAST> RedeclarationExprAST::clone(){
     std::unique_ptr<ExprAST> indexCloned = nullptr;
     if (index != nullptr){
       indexCloned = index->clone();
     }
     return std::make_unique<RedeclarationExprAST>(VariableName, Val->clone(), member, std::move(indexCloned));
-}
+}*/
 
 std::unique_ptr<FunctionAST> FunctionAST::clone(){
     return std::make_unique<FunctionAST>(Proto->clone(), clone_vector<ExprAST>(Body));

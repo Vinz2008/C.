@@ -1226,81 +1226,20 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else if (BinExpr->Op.at(0) == '.'){
             // TODO : just use getStructMemberGEP
-            //if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
-                /*std::unique_ptr<VariableExprAST> structVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
-                std::string VariableName = structVar->Name;
-                if (!dynamic_cast<VariableExprAST*>(BinExpr->RHS.get())){
-                    return LogErrorV(emptyLoc, "Struct member is not an identifier");
-                }
-                std::unique_ptr<VariableExprAST> memberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->RHS));
-                std::string member = memberExpr->Name;
-                Log::Info() << "StructName : " << VariableName << "\n";
-                std::vector<std::pair<std::string, Cpoint_Type>> members;
-                Cpoint_Type* variable_type_temp = get_variable_type(VariableName);
-                if (!variable_type_temp){
-                    return LogErrorV(emptyLoc, "Trying to get a struct member from a variable that doesn't exist");
-                }
-                if (UnionDeclarations[variable_type_temp->union_name]){
-                    auto union_members = UnionDeclarations[NamedValues[VariableName]->type.union_name]->members;
-                    int pos_union = -1;
-                    for (int i = 0; i < union_members.size(); i++){
-                    if (union_members.at(i).first == member){
-                        pos_union = i;
-                        break;
-                    }
-                    }
-                    Value* unionPtr = get_var_allocation(VariableName);
-                    assignUnionMember(unionPtr, ValDeclared, union_members.at(pos_union).second);
-                    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-                }
-                if (variable_type_temp->is_struct_template){
-                    Log::Info() << "get_struct_template_name : " << get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed) << "\n";
-                    members = StructDeclarations[get_struct_template_name(get_variable_type(VariableName)->struct_name, *get_variable_type(VariableName)->struct_template_type_passed)]->members;
-                } else {
-                    // TODO : support enums
-                    
-                    if (StructDeclarations[variable_type_temp->struct_name]){
-                        members = StructDeclarations[variable_type_temp->struct_name]->members;
-                    } else {
-                        return LogErrorV(emptyLoc, "Trying to get a struct member from a struct type that doesn't exist");
-                    }
-                }
-                int pos_struct = -1;
-                Log::Info() << "members.size() : " << members.size() << "\n";
-                for (int i = 0; i < members.size(); i++){
-                if (members.at(i).first == member){
-                    pos_struct = i;
-                    break;
-                }
-                }
-                Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
-                auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-                auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
-                auto structPtr = get_var_allocation(VariableName);
-                Cpoint_Type cpoint_type = *get_variable_type(VariableName);
-                // TODO : should we use the cpoint_type in the NamedValue reassigning because it is changed here ?
-                if (cpoint_type.is_ptr){
-                cpoint_type.is_ptr = false;
-                }
-                auto ptr = Builder->CreateGEP(get_type_llvm(cpoint_type), structPtr, {zero, index}, "get_struct");
-                Cpoint_Type member_type = members.at(pos_struct).second;*/
-                Cpoint_Type member_type;
-                Value* ptr = getStructMemberGEP(std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type);
+            Cpoint_Type member_type;
+            Value* ptr = getStructMemberGEP(std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type);
                 
-                if (ValDeclared->getType() != get_type_llvm(member_type)){
-                    convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
-                }
-                Builder->CreateStore(ValDeclared, ptr);
-                // TODO : verify if this code is needed and remove it in all the code if not
-                /*if (is_var_local(VariableName)){
-                    NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
-                } else {
-                    GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
-                }*/
-                return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-            /*} else {
-                return LogErrorV(emptyLoc, "Using in an struct member something that is not a struct");
+            if (ValDeclared->getType() != get_type_llvm(member_type)){
+                convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
+            }
+            Builder->CreateStore(ValDeclared, ptr);
+            // TODO : verify if this code is needed and remove it in all the code if not
+            /*if (is_var_local(VariableName)){
+                NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
+            } else {
+                GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
             }*/
+            return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else {
             return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
         }
@@ -2735,7 +2674,7 @@ Value* LabelExprAST::codegen(){
 
 
 // TODO : remove the useless allocas
-Value* RedeclarationExprAST::codegen(){
+/*Value* RedeclarationExprAST::codegen(){
   // TODO move this from a AST node to an operator 
   Log::Info() << "REDECLARATION CODEGEN" << "\n";
   Log::Info() << "VariableName " << VariableName << "\n";
@@ -2796,11 +2735,7 @@ Value* RedeclarationExprAST::codegen(){
   }
   Value* ValDeclared = Val->codegen();
   Cpoint_Type type = Cpoint_Type(0);
-  /*if (is_global && GlobalVariables[VariableName] != nullptr){
-    type = GlobalVariables[VariableName]->type;
-  } else if (NamedValues[VariableName] != nullptr){
-    type = NamedValues[VariableName]->type;*/
-  if (var_exists(VariableName) /*GlobalVariables[VariableName] != nullptr || NamedValues[VariableName] != nullptr*/){
+  if (var_exists(VariableName)){
     type = *get_variable_type(VariableName);
   } else {
     std::string nearest_variable;
@@ -2832,7 +2767,7 @@ Value* RedeclarationExprAST::codegen(){
   //bool is_class = false;
   if (member != ""){
   Log::Info() << "objectName : " << VariableName << "\n";
-  if (var_exists(VariableName) /*NamedValues[VariableName] != nullptr*/){
+  if (var_exists(VariableName)){
     if (UnionDeclarations[get_variable_type(VariableName)->union_name] != nullptr){
       Log::Info() << "IS_UNION" << "\n";
       is_union = true;
@@ -2850,11 +2785,10 @@ Value* RedeclarationExprAST::codegen(){
     }
   }
   }
-  // TODO : replace all the NamedValues[VariableName]->type by get_variable_type(VariableName)
   if (is_union){
-    Cpoint_Type cpoint_type =  is_global ? GlobalVariables[VariableName]->type : NamedValues[VariableName]->type;
-    //AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VariableName, cpoint_type);
-    AllocaInst *Alloca = (!is_global) ? NamedValues[VariableName]->alloca_inst : nullptr;
+    Cpoint_Type cpoint_type =  *get_variable_type(VariableName);
+    //AllocaInst *Alloca = (!is_global) ? NamedValues[VariableName]->alloca_inst : nullptr;
+    Value* ptr = get_var_allocation(VariableName);
     auto members = UnionDeclarations[NamedValues[VariableName]->type.union_name]->members;
     int pos_union = -1;
     Log::Info() << "members.size() : " << members.size() << "\n";
@@ -2867,8 +2801,8 @@ Value* RedeclarationExprAST::codegen(){
     if (ValDeclared->getType() != get_type_llvm(members.at(pos_union).second)){
         convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(members.at(pos_union).second), ValDeclared);
     }
-    Builder->CreateStore(ValDeclared, Alloca);
-    NamedValues[VariableName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+    Builder->CreateStore(ValDeclared, ptr);
+    NamedValues[VariableName] = std::make_unique<NamedValue>(ptr, cpoint_type);
   } else if (is_struct){
     Log::Info() << "StructName : " << VariableName << "\n";
     std::vector<std::pair<std::string, Cpoint_Type>> members;
@@ -2889,7 +2823,7 @@ Value* RedeclarationExprAST::codegen(){
     Log::Info() << "Pos for GEP struct member redeclaration : " << pos_struct << "\n";
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_struct, true));
-    auto structPtr = /*NamedValues[VariableName]->alloca_inst*/ get_var_allocation(VariableName);
+    auto structPtr = get_var_allocation(VariableName);
     Cpoint_Type cpoint_type = *get_variable_type(VariableName);
     // TODO : should we use the cpoint_type in the NamedValue reassigning because it is changed here ?
     if (cpoint_type.is_ptr){
@@ -2969,7 +2903,7 @@ Value* RedeclarationExprAST::codegen(){
   }
   }
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-}
+}*/
 
 Value* BreakExprAST::codegen(){
   if (blocksForBreak.empty()){

@@ -110,18 +110,14 @@ before_is_ptr:
         Log::Info() << "create array type with " << cpoint_type.nb_element << " member of type of " << cpoint_type.type << "\n";
         type = llvm::ArrayType::get(type, cpoint_type.nb_element);
     }
-    //Log::Info() << "TEST before is function" << "\n";
     if (cpoint_type.is_function){
-        //Log::Info() << "TEST in function" << "\n";
         /*std::vector<Type *> args;
         for (int i = 0; i < cpoint_type.args.size(); i++){
             args.push_back(get_type_llvm(cpoint_type.args.at(i)));
         }
-        Log::Info() << "Generating function type" << "\n";
         if (cpoint_type.return_type == nullptr){
             Log::Info() << "cpoint_type.return_type is nullptr" << "\n";
         }
-        Log::Info() << "Cpoint type : " << *cpoint_type.return_type << "\n";
         type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);*/
         type = PointerType::get(*TheContext, 0);
     }
@@ -201,35 +197,6 @@ finding_type:
 Value* get_default_value(Cpoint_Type type){
     return static_cast<Value*>(get_default_constant(type));
 }
-
-/*int get_type_number_of_bits(Cpoint_Type type){
-    switch (type.type)
-    {
-    case int_type:
-    case i32_type:
-    case u32_type:
-        return 32;
-    case i8_type:
-    case u8_type:
-        return 8;
-    case i16_type:
-    case u16_type:
-        return 16;
-    case i64_type:
-    case u64_type:
-        return 64;
-    case u128_type:
-    case i128_type:
-        return 128;
-    case double_type:
-    case float_type:
-        return 64;
-    case bool_type:
-        return 1;
-    default:
-        return -1;
-    }
-}*/
 
 int Cpoint_Type::get_number_of_bits(){
     switch (type)
@@ -320,21 +287,6 @@ VectorType* vector_type_from_struct(Cpoint_Type cpoint_type){
     return VectorType::get(get_type_llvm(member_type), StructDeclarations[cpoint_type.struct_name]->members.size(), false);
 }
 
-/*bool is_unsigned(Cpoint_Type cpoint_type){
-    int type = cpoint_type.type;
-    return type == u8_type || type == u16_type || type == u32_type || type == u64_type || type == u128_type;
-}
-
-bool is_signed(Cpoint_Type cpoint_type){
-    int type = cpoint_type.type;
-    return type == i8_type || type == i16_type || type == i32_type || type == int_type || type == i64_type || type == i128_type || type == bool_type;
-    //return !is_unsigned(cpoint_type);
-}
-
-bool is_decimal_number_type(Cpoint_Type type){
-    return type.type == double_type || type.type == float_type;
-}*/
-
 bool Cpoint_Type::is_unsigned(){
     return type == u8_type || type == u16_type || type == u32_type || type == u64_type || type == u128_type;
 }
@@ -347,11 +299,6 @@ bool Cpoint_Type::is_signed(){
 bool Cpoint_Type::is_decimal_number_type(){
     return type == double_type || type == float_type;
 }
-
-// is a struct, but not a ptr and not an array
-/*bool is_just_struct(Cpoint_Type type){
-    return type.is_struct && !type.is_ptr && !type.is_array;
-}*/
 
 // is a struct, but not a ptr and not an array
 bool Cpoint_Type::is_just_struct(){
@@ -405,10 +352,6 @@ int from_val_to_int(Value* val){
 }
 
 Constant* from_val_to_constant(Value* val, Cpoint_Type type){
-    //Type* val_type = val->getType();
-    /*if (val_type != get_type_llvm(Cpoint_Type(double_type))){
-        return nullptr;
-    }*/
     if (dyn_cast<ConstantFP>(val)){
         auto constFP = dyn_cast<ConstantFP>(val);
         // TODO : add more types for variable types
@@ -427,7 +370,7 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
         }
     } else if (dyn_cast<ConstantInt>(val)) {
         auto constInt = dyn_cast<ConstantInt>(val);
-        if (type == Cpoint_Type(double_type)){
+        if (type == Cpoint_Type(double_type) || type == Cpoint_Type(float_type)){
             double val_double = (double)constInt->getSExtValue();
             return ConstantFP::get(*TheContext, APFloat(val_double));
         }
@@ -435,18 +378,6 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
             return constInt;
         }
     }
-    /*
-    if (type == Cpoint_Type(double_type) || type == Cpoint_Type(float_type)){
-        Log::Info() << "dyn_cast fp" << "\n";
-        return dyn_cast<ConstantFP>(val);
-    } else if (type == Cpoint_Type(int_type)){
-        if (val_type == get_type_llvm(Cpoint_Type(double_type))){
-
-        }
-        Log::Info() << "dyn_cast int" << "\n";
-        return dyn_cast<ConstantInt>(val);
-    }
-    std::cout << "dyn_cast default fp" << std::endl;*/
     return dyn_cast<ConstantFP>(val);
 }
 
@@ -557,68 +488,13 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
         return false; // TODO : maybe return true because technically the types are the same ?
     }
     return false;
-
-
-  /*switch (typeFrom.type)
-  {
-  case int_type:
-    if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
-      Log::Info() << "From int to float/double" << "\n";
-      Log::Info() << "typeFrom " << typeFrom.type << "\n";
-      val = Builder->CreateSIToFP(val, typeTo, "cast");
-    } else if (typeTo == Type::getInt32Ty(*TheContext)){
-      break;
-    }
-    break;
-  case float_type:
-  case double_type:
-    if (typeTo == Type::getInt32Ty(*TheContext)){
-      Log::Info() << "From float/double to int" << "\n";
-      val = Builder->CreateFPToUI(val, typeTo, "cast");
-    } else if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
-      break;
-    }
-    break;
-  default:
-    break;
-  }*/
 }
 
-/*std::string from_cpoint_type_to_printf_format(Cpoint_Type type){
-    std::string format;
-    if (type.is_ptr){
-        if (type.type == i8_type){
-            //format = "\"%s\"";
-            format = "%s";
-        } else {
-            format = "%p";
-        }
-    } else if (is_signed(type) || is_unsigned(type)){
-        if (type.type == i8_type || type.type == u8_type){
-            format = "%c";
-        } else if (type.type == i64_type){
-            format = "%ld";
-        } else if (type.type == u64_type){
-            format = "%lu";
-        } else if (is_unsigned(type)){
-            format = "%u";
-        } else {
-            format = "%d";
-        }
-    } else if (is_decimal_number_type(type)) {
-        format = "%f";
-    } else {
-        //return LogErrorV(emptyLoc, "Not Printable type in debug macro");
-        return "";
-    }
-    return format;
-}*/
 
 std::string Cpoint_Type::to_printf_format(){
     std::string format;
     if (is_ptr){
         if (type == i8_type){
-            //format = "\"%s\"";
             format = "%s";
         } else {
             format = "%p";
@@ -692,20 +568,6 @@ std::string get_string_from_type(Cpoint_Type type){
         return types.at(type.type-1+16);
     }
 }
-
-
-/*std::string create_mangled_name_from_type(Cpoint_Type type){
-    std::string name;
-    name = get_string_from_type(type);
-    if (type.is_ptr){
-        name += "_ptr";
-        // TODO : maybe use the nb_ptr to mangle differently
-    }
-    if (type.is_array){
-        name += "_array";
-    }
-    return name;   
-}*/
 
 std::string Cpoint_Type::create_mangled_name(){
     std::string name;
