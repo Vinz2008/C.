@@ -2116,7 +2116,6 @@ Value* SizeofExprAST::codegen(){
     Log::Info() << "codegen sizeof is type" << "\n";
     Cpoint_Type cpoint_type = type;
     if (cpoint_type.is_struct){
-        
         //return getSizeOfStruct(temp_alloca);
     }
     Type* llvm_type = get_type_llvm(cpoint_type);
