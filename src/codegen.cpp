@@ -995,7 +995,7 @@ Value* MatchExprAST::codegen(){
         if (pos == -1 && !has_custom_index){
             return LogErrorV(this->loc, "Couldn't find the member of this enum in match case");
         }
-        Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos)));
+        Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos))); // TODO : replace cmp with switch
         //cmp = Builder->CreateFCmpONE(cmp, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
         BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then_match", TheFunction);
         ElseBB = BasicBlock::Create(*TheContext, "else_match");
