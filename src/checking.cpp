@@ -18,10 +18,10 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
 
 Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_Type cpoint_type, Source_location loc){
     double indexd = -INFINITY;
-    if (indexConst->getType() == get_type_llvm(double_type)){
+    if (indexConst->getType() == get_type_llvm(double_type) || indexConst->getType() == get_type_llvm(float_type)){
       ConstantFP* indexConstFP = dyn_cast<ConstantFP>(indexConst);
       indexd = indexConstFP->getValue().convertToDouble();
-    } else if (indexConst->getType() == get_type_llvm(int_type)){
+    } else if (indexConst->getType() == get_type_llvm(int_type) || indexConst->getType() == get_type_llvm(i32_type)){
       ConstantInt* IndexConstInt = dyn_cast<ConstantInt>(indexConst);
       indexd = IndexConstInt->getValue().roundToDouble();
     }

@@ -123,7 +123,7 @@ public:
   }
   Cpoint_Type get_type() override {
     if (trunc(Val) == Val){
-        return int_type;
+        return i32_type;
     } else {
         return double_type;
     }
