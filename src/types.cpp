@@ -578,7 +578,7 @@ int get_type(std::string type){
     Log::Info() << "types_list_start.size() : " << types_list_start.size() << "\n";
     for (int i = 0; i < types_list.size(); i++){
        if (type == types_list.at(i)){
-        if (i >= types_list_start.size()){ // TODO : replace these static numbers with numbers depending  types_list.size()
+        if (i >= types_list_start.size()){
             return i-types_list_start.size();
         }
         return -(i + 1);
