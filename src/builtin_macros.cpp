@@ -136,7 +136,7 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
 std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro, bool is_println, bool is_error){
     // call internal function
     std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
-    Cpoint_Type stderr_type = Cpoint_Type(int_type, true);
+    Cpoint_Type stderr_type = Cpoint_Type(i32_type, true);
     if (is_error){
         // maybe create a va_arg function in standard library that can simplify this and remove the need to pass stderr ?
         GlobalVariableAST("stderr", false, true, stderr_type, nullptr, false, nullptr, "").codegen();
@@ -147,7 +147,7 @@ std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAS
     if (is_error){
         function_name = "fprintf";
     }
-    add_manually_extern(function_name, Cpoint_Type(int_type), std::move(args_printf), 0, 30, true, false, "");
+    add_manually_extern(function_name, Cpoint_Type(i32_type), std::move(args_printf), 0, 30, true, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
     if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
         return LogError("First argument of the print macro is not a constant string");

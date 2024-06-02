@@ -128,7 +128,7 @@ void add_externs_for_gc(){
 void add_externs_for_test(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
   args_printf.push_back(make_pair("format", Cpoint_Type(i8_type, true)));
-  add_manually_extern("printf", Cpoint_Type(int_type), std::move(args_printf), 0, 30, true, false, "");
+  add_manually_extern("printf", Cpoint_Type(i32_type), std::move(args_printf), 0, 30, true, false, "");
 }
 
 void print_help(){

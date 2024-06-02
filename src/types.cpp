@@ -97,8 +97,8 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             }
             }
             return type;
-        case argv_type:
-            return Type::getInt8PtrTy(*TheContext)->getPointerTo();
+        /*case argv_type:
+            return Type::getInt8PtrTy(*TheContext)->getPointerTo();*/
     }
     }
 before_is_ptr:
@@ -183,7 +183,7 @@ finding_type:
         type = void_type;
     } else {
         if (is_ptr){
-            type = int_type;
+            type = i32_type;
         } else {
         if (!is_struct && !is_array && !is_function){
         Log::Warning(emptyLoc) << "Unknown Type" << "\n";
@@ -312,7 +312,7 @@ Constant* get_default_constant(Cpoint_Type type){
     if (type.type == void_type){
         return nullptr;
     }
-    if (type.type == double_type){
+    if (type.type == double_type || type.type == float_type){
         return ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
@@ -385,7 +385,7 @@ Constant* from_val_to_constant_infer(Value* val){
     Type* type = val->getType();
     if (type == get_type_llvm(Cpoint_Type(double_type)) || type == get_type_llvm(Cpoint_Type(float_type))){
         return dyn_cast<ConstantFP>(val);
-    } else if (type == get_type_llvm(Cpoint_Type(int_type))){
+    } else if (type == get_type_llvm(Cpoint_Type(i32_type)) || type == get_type_llvm(Cpoint_Type(int_type))){
         return dyn_cast<ConstantInt>(val);
     }
     return dyn_cast<ConstantFP>(val);
@@ -405,7 +405,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   if (typeFrom.is_array && typeTo_cpoint.is_ptr){
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     Log::Info() << "from array to ptr TEST typeFrom : " << typeFrom << "\n";
-    //val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), val, "load_gep_ptr");
+    //val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(i32_type, true, 1)), val, "load_gep_ptr");
     val = Builder->CreateGEP(get_type_llvm(typeFrom), val, {zero, zero});
     Log::Info() << "from array to ptr TEST3" << "\n";
     val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true, 1)), val);
@@ -421,7 +421,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
     if (typeFrom.type == double_type || typeFrom.type ==  float_type){
-        val = Builder->CreateFPToUI(val, get_type_llvm(Cpoint_Type(int_type)), "ui_to_fp_inttoptr");
+        val = Builder->CreateFPToUI(val, get_type_llvm(Cpoint_Type(i32_type)), "ui_to_fp_inttoptr");
     }
     val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast");
     return true;
@@ -521,7 +521,7 @@ std::string Cpoint_Type::to_printf_format(){
 }
 
 
-std::vector<std::string> types{
+std::vector<std::string> types_list {
     "double",
     "int",
     "float",
@@ -536,13 +536,17 @@ std::vector<std::string> types{
     "u32",
     "u64",
     "u128",
+//    "jdhdhghdhdhjbdhjddhhyuuhjdhuudhuhduhduhother", // is just a random string that will never be a type so it will never detect it (TODO : replace with empty string or more random/longer string ?)
     "bool"
 };
 
 
 bool is_type(std::string type){
-    for (int i = 0; i < types.size(); i++){
-       if (type.compare(types.at(i)) == 0){
+    /*if (type == "int"){ // TODO : move this to a typedef in a core file
+        return true;
+    }*/
+    for (int i = 0; i < types_list.size(); i++){
+       if (type == types_list.at(i)){
 	    return true;
        }
     }
@@ -550,10 +554,13 @@ bool is_type(std::string type){
 }
 
 int get_type(std::string type){
-    for (int i = 0; i < types.size(); i++){
-       if (type == types.at(i)){
-        if (i >= 15){
-            return i+1-16;
+    /*if (type == "int"){
+        return -i32_type;
+    }*/
+    for (int i = 0; i < types_list.size(); i++){
+       if (type == types_list.at(i)){
+        if (i >= 15){ // TODO : replace these static numbers with numbers depending  types_list.size()
+            return i-15;
         }
         return -(i + 1);
        }
@@ -563,9 +570,9 @@ int get_type(std::string type){
 
 std::string get_string_from_type(Cpoint_Type type){
     if (type.type < 0){
-        return types.at(-(type.type + 1));
+        return types_list.at(-(type.type + 1));
     } else {
-        return types.at(type.type-1+16);
+        return types_list.at(type.type+15);
     }
 }
 

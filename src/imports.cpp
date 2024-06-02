@@ -363,7 +363,7 @@ void interpret_extern(std::string line, int& pos_line){
 }
 
 void interpret_type(std::string line, int& pos_line){
-    out_file << line << "\n";
+    out_file << "\n" << line << "\n";
     pos_line++;
 }
 

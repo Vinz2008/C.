@@ -37,7 +37,7 @@ DIType *DebugInfo::getI8Ty() {
 
 DIType* get_debuginfo_type(Cpoint_Type type){
   switch (type.type){
-  case int_type:
+  case i32_type:
     return CpointDebugInfo.getIntTy();
   case i8_type:
     return CpointDebugInfo.getI8Ty();  

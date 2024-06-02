@@ -239,7 +239,7 @@ public:
     return "sizeof " + Name != "" ? Name : create_pretty_name_for_type(type);
   }
   Cpoint_Type get_type() override {
-    return Cpoint_Type(int_type);
+    return Cpoint_Type(i32_type);
   }
   std::string generate_c() override;
 };
@@ -257,7 +257,7 @@ public:
         return "typeId " + val->to_string();
     }
     Cpoint_Type get_type() override {
-        return Cpoint_Type(int_type);
+        return Cpoint_Type(i32_type);
     }
     std::string generate_c() override { return ""; }
 };
@@ -769,6 +769,7 @@ public:
     std::vector<std::unique_ptr<PrototypeAST>> Externs;
     MembersDeclarAST(const std::string& members_name, const std::string& members_for, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> Externs) : members_name(members_name), members_for(members_for), Functions(std::move(Functions)), Externs(std::move(Externs)) {}
     void codegen();
+    Cpoint_Type get_self_type();
 };
 
 class EnumMember {

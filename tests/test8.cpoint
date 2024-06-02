@@ -4,7 +4,7 @@ extern printptr(x)
 
 var extern ext : float;
 var z : int = 2;
-var section_var : int section "custom_section";
+var section_var : int = 2 section "custom_section";
 
 func main() void {
   var c = "hello"

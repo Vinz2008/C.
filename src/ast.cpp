@@ -32,7 +32,7 @@ extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDec
 //extern bool std_mode;
 //extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
-extern std::vector<std::string> types;
+extern std::vector<std::string> types_list;
 extern std::vector</*std::string*/ Cpoint_Type> typeDefTable;
 
 extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
@@ -354,15 +354,16 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
 
   Log::Info() << "VariableExprAST" << "\n";
-  std::unique_ptr<Cpoint_Type> type;
+  /*std::unique_ptr<Cpoint_Type> type;
   if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
     type = std::make_unique<Cpoint_Type>(double_type);
   } else if (GlobalVariables[IdName] != nullptr){
     type = std::make_unique<Cpoint_Type>(GlobalVariables[IdName]->type);
   } else  {
     type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
-  }
-  return std::make_unique<VariableExprAST>(IdLoc, IdName, *type);
+  }*/
+  Cpoint_Type* type = get_variable_type(IdName);
+  return std::make_unique<VariableExprAST>(IdLoc, IdName, (type) ? *type : Cpoint_Type());
 }
 
 std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){
@@ -938,7 +939,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     while (CurTok == tok_identifier || CurTok == ':'){
       getNextToken();
     }
-    ArgNames.push_back(std::make_pair("argc", Cpoint_Type(int_type, false)));
+    ArgNames.push_back(std::make_pair("argc", Cpoint_Type(i32_type, false)));
     ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   } else {
   getNextToken();
@@ -1076,6 +1077,13 @@ std::unique_ptr<MembersDeclarAST> ParseMembers(){
     getNextToken();
     while ((CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
         if (CurTok == tok_func){
+            Cpoint_Type self_type;
+            if (!is_type(members_for)){
+                self_type = Cpoint_Type(other_type, true, 0, false, 0, true, members_for);;
+            } else {
+                self_type = Cpoint_Type(get_type(members_for));
+            }
+            NamedValues["self"] = std::make_unique<NamedValue>(nullptr, self_type);
             auto funcAST = ParseDefinition();
             if (funcAST == nullptr){
                 return LogErrorMembers("Error in members declaration funcs");
@@ -1184,8 +1192,8 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken();  // eat func.
   auto Proto = ParsePrototype();
   if (!Proto) return nullptr;
-  auto argsCopy(Proto->Args);
-  auto ProtoCopy = Proto->clone();
+  //auto argsCopy(Proto->Args);
+  //auto ProtoCopy = Proto->clone();
   if (CurTok != '{'){
     LogErrorF("Expected '{' in function definition");
   }
@@ -1347,7 +1355,7 @@ std::unique_ptr<TypeDefAST> ParseTypeDef(){
   std::string new_type = IdentifierStr;
   getNextToken();
   Cpoint_Type value_type = ParseTypeDeclaration(false);
-  types.push_back(new_type);
+  types_list.push_back(new_type);
   typeDefTable.push_back(value_type);
   return std::make_unique<TypeDefAST>(new_type, value_type);
 }
@@ -1752,7 +1760,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     if (is_array){
         cpoint_type.is_array = is_array;
-        cpoint_type.nb_element = from_val_to_int(index->clone()->codegen());;
+        cpoint_type.nb_element = from_val_to_int(index/*->clone()*/->codegen());;
     }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;

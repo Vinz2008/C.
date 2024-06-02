@@ -39,7 +39,7 @@ public:
                 c_type = c_translator::double_type;
                 break;
             case i32_type:
-            case int_type:
+//            case int_type:
                 c_type = c_translator::int_type;
                 break;
             case float_type:

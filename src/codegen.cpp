@@ -299,24 +299,14 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
         if (print_format.at(i) == '{' && print_format.at(i+1) && '}'){
             bool is_string_found = false;
             is_string_found = isArgString(Args.at(arg_nb).get());
-            /*if (dynamic_cast<StringExprAST*>(Args.at(arg_nb).get())){
-                Log::Info() << "StringExpr in Print Macro codegen" << "\n";
-                is_string_found = true;
-            } else if (dynamic_cast<VariableExprAST*>(Args.at(arg_nb).get())){
-                Log::Info() << "Variable in Print Macro codegen" << "\n";
-                auto varTemp = dynamic_cast<VariableExprAST*>(Args.at(arg_nb).get());
-                auto varTempCpointType = varTemp->type;
-                if (varTempCpointType.type == i8_type && varTempCpointType.is_ptr){
-                    Log::Info() << "Variable in Print Macro codegen is string" << "\n";
-                    is_string_found = true;
-                }
-            }*/
             if (is_string_found){
                 generated_printf_format += "%s";
             } else {
             Value* valueTemp = Args.at(arg_nb)->clone()->codegen();
             Type* arg_type = valueTemp->getType();
             Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
+            Cpoint_Type arg_type_new = Args.at(arg_nb)->get_type();
+            Log::Info() << "arg_type_new : " << arg_type_new << " arg_type_old : " << arg_cpoint_type << "\n";
             std::string temp_format = arg_cpoint_type.to_printf_format();
             if (temp_format == ""){
                 return LogErrorV(emptyLoc, "Not Printable type in print macro");
@@ -420,7 +410,9 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
   } else if (Callee == "bitreverse"){
     intrisicId = Intrinsic::bitreverse;
     Type* arg_type = Args.at(0)->clone()->codegen()->getType(); // TODO : replace this
-    if (arg_type->isFloatingPointTy()){
+    Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
+    Log::Info() << "type : " << arg_cpoint_type << "\n";
+    if (/*arg_type->isFloatingPointTy()*/ arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the bitreverse intrisic on a floating point type arg"); 
     }
     Tys = ArrayRef<Type*>(arg_type);
@@ -459,7 +451,7 @@ Value* getSizeOfStruct(Value *A){
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // is the calculation made at runtime
     std::vector<Type*> OverloadedTypes;
-    OverloadedTypes.push_back(get_type_llvm(int_type));
+    OverloadedTypes.push_back(get_type_llvm(i32_type));
     OverloadedTypes.push_back(get_type_llvm(i64_type));
     Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
     return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");
@@ -489,19 +481,22 @@ Value* StringExprAST::codegen() {
 
 Value *VariableExprAST::codegen() {
   // Look this variable up in the function.
-  if (GlobalVariables[Name] != nullptr){
+  /*if (GlobalVariables[Name] != nullptr){
     return Builder->CreateLoad(get_type_llvm(type), GlobalVariables[Name]->globalVar, Name.c_str());
-  }
+  }*/
   if (FunctionProtos[Name] != nullptr){
     return GeneratedFunctions[Name];
   }
-  if (NamedValues[Name] == nullptr) {
+  if (/*type == Cpoint_Type() &&*/ !var_exists(Name) /*NamedValues[Name] == nullptr*/) {
     return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
   }
-  AllocaInst *A = NamedValues[Name]->alloca_inst;
+  /*AllocaInst *A = NamedValues[Name]->alloca_inst;
   if (!A)
-    return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
-  return Builder->CreateLoad(A->getAllocatedType(), A, Name.c_str());
+    return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());*/
+  Value* ptr = get_var_allocation(Name);
+  Cpoint_Type var_type = *get_variable_type(Name); 
+  Log::Info() << "loading var " << Name << " of type " << type << "\n";
+  return Builder->CreateLoad(/*A->getAllocatedType()*/ /*get_type_llvm(type)*/ get_type_llvm(var_type), ptr, Name.c_str());
 }
 
 // TODO maybe use this function with va_arg internal functions
@@ -651,8 +646,9 @@ Type* StructDeclarAST::codegen(){
     /*if (is_in_struct_templates_codegen){
         mangled_name_function += "____" + create_mangled_name_from_type(TypeTemplateCallCodegen.second);
     }*/
-    Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
-    self_pointer_type = Cpoint_Type(double_type, true, 0, false, 0, true, Name);
+    /*Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
+    self_pointer_type = Cpoint_Type(other_type, true, 0, false, 0, true, Name);*/
+    Cpoint_Type self_pointer_type = Cpoint_Type(other_type, true, 0, false, 0, true, Name);
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
@@ -668,7 +664,7 @@ Type* StructDeclarAST::codegen(){
     function_name = ProtoExpr->Name;
     }
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
-    Cpoint_Type self_pointer_type = Cpoint_Type(double_type, true, 1, false, 0, true, Name);
+    Cpoint_Type self_pointer_type = Cpoint_Type(other_type, true, 1, false, 0, true, Name);
     ProtoExpr->Args.insert(ProtoExpr->Args.begin(), std::make_pair("self", self_pointer_type));
     ProtoExpr->Name = mangled_name_function;
     ProtoExpr->codegen();
@@ -709,7 +705,7 @@ Type* UnionDeclarAST::codegen(){
 Type* EnumDeclarAST::codegen(){
     Type* enumType = nullptr;
     if (!enum_member_contain_type){
-        enumType = get_type_llvm(int_type);
+        enumType = get_type_llvm(i32_type);
         EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, std::move(this->clone()));
         return nullptr;
     }
@@ -717,7 +713,7 @@ Type* EnumDeclarAST::codegen(){
     std::vector<Type*> dataType;
     StructType* enumStructType = StructType::create(*TheContext);
     enumStructType->setName(Name);
-    dataType.push_back(get_type_llvm(Cpoint_Type(int_type)));
+    dataType.push_back(get_type_llvm(Cpoint_Type(i32_type)));
     Log::Info() << "EnumDeclarAST TEST" << "\n";
     int biggest_type_size = 0;
     Cpoint_Type biggest_type = Cpoint_Type(double_type);
@@ -735,23 +731,33 @@ Type* EnumDeclarAST::codegen(){
     return enumStructType;
 }
 
+Cpoint_Type MembersDeclarAST::get_self_type(){
+    if (!is_type(members_for)){
+        return Cpoint_Type(other_type, true, 0, false, 0, true, members_for);;
+    } else {
+        return Cpoint_Type(get_type(members_for));;
+    }
+}
+
 void MembersDeclarAST::codegen(){
     bool is_builtin_type = is_type(members_for);
     if (StructDeclarations[members_for] == nullptr && !is_builtin_type){
         LogError("Members for a struct that doesn't exist");
         return;
     }
+    Cpoint_Type self_type = get_self_type();
+    Log::Info() << "self type : " << self_type << "\n";
     for (int i = 0; i < Functions.size(); i++){
         std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
         std::string function_name = FunctionExpr->Proto->getName();
         std::string mangled_name_function = "";
-        Cpoint_Type self_type;
+        //Cpoint_Type self_type;
         if (!is_builtin_type){
             StructDeclarations[members_for]->functions.push_back(function_name);
             mangled_name_function = struct_function_mangling(members_for, function_name);
-            self_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
+            //self_type = Cpoint_Type(other_type, true, 0, false, 0, true, members_for);
         } else {
-            self_type = Cpoint_Type(get_type(members_for));
+            //self_type = Cpoint_Type(get_type(members_for));
             mangled_name_function = self_type.create_mangled_name() + "__" + function_name;;
         }
         //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
@@ -764,13 +770,13 @@ void MembersDeclarAST::codegen(){
         std::unique_ptr<PrototypeAST> Proto = std::move(Externs.at(i));
         std::string function_name = Proto->getName();
         std::string mangled_name_function = "";
-        Cpoint_Type self_type;
+        //Cpoint_Type self_type;
         if (!is_builtin_type){
             StructDeclarations[members_for]->functions.push_back(function_name);
             mangled_name_function = struct_function_mangling(members_for, function_name);
-            self_type = Cpoint_Type(double_type, true, 0, false, 0, true, members_for);
+            //self_type = Cpoint_Type(other_type, true, 0, false, 0, true, members_for);
         } else {
-            self_type = Cpoint_Type(get_type(members_for));
+            //self_type = Cpoint_Type(get_type(members_for));
             mangled_name_function = self_type.create_mangled_name() + "__" + function_name;;
         }
         //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
@@ -834,9 +840,9 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
         is_bool = true;
     }
     if (is_bool){
-        val_from_var = Builder->CreateZExt(val_from_var, get_type_llvm(Cpoint_Type(int_type)), "cast_bool_match");
-    } else if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(int_type))){
-        convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(int_type)), val_from_var);
+        val_from_var = Builder->CreateZExt(val_from_var, get_type_llvm(Cpoint_Type(i32_type)), "cast_bool_match");
+    } else if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(i32_type))){
+        convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(i32_type)), val_from_var);
     }
 
     // for testing
@@ -894,8 +900,8 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
                 //return LogErrorV(emptyLoc, "Expression not supported in match case value");
             }
             Log::Info() << "match val : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
-            if (val->getType() != get_type_llvm(int_type)){
-                convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(int_type), val);
+            if (val->getType() != get_type_llvm(i32_type)){
+                convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(i32_type), val);
             }
             Log::Info() << "match val after converting : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
             matchCaseTemp->Body->codegen();
@@ -953,11 +959,11 @@ Value* MatchExprAST::codegen(){
     auto index_val = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     
     if (!enum_member_contain_type){
-        tag = Builder->CreateLoad(get_type_llvm(int_type), NamedValues[matchVar]->alloca_inst, matchVar);
+        tag = Builder->CreateLoad(get_type_llvm(i32_type), NamedValues[matchVar]->alloca_inst, matchVar);
     } else {
         tag_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_tag }, "tag_ptr", true);
         val_ptr = Builder->CreateGEP(get_type_llvm(NamedValues[matchVar]->type), NamedValues[matchVar]->alloca_inst, { zero, index_val }, "val_ptr", true);
-        tag = Builder->CreateLoad(get_type_llvm(int_type), tag_ptr, matchVar);
+        tag = Builder->CreateLoad(get_type_llvm(i32_type), tag_ptr, matchVar);
     }
     BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
     std::vector<std::string> membersNotFound;
@@ -995,7 +1001,7 @@ Value* MatchExprAST::codegen(){
         if (pos == -1 && !has_custom_index){
             return LogErrorV(this->loc, "Couldn't find the member of this enum in match case");
         }
-        Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(int_type), APInt(32, (uint64_t)pos))); // TODO : replace cmp with switch
+        Value* cmp = operators::LLVMCreateCmp(tag, ConstantInt::get(get_type_llvm(i32_type), APInt(32, (uint64_t)pos))); // TODO : replace cmp with switch
         //cmp = Builder->CreateFCmpONE(cmp, ConstantFP::get(*TheContext, APFloat(0.0)), "ifcond");
         BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then_match", TheFunction);
         ElseBB = BasicBlock::Create(*TheContext, "else_match");
@@ -1417,7 +1423,6 @@ Value* StructMemberCallExprAST::codegen(){
             return refletionInstruction(MemberName, std::move(Args));
         }
     }
-    //Type* temp_type = StructMember->LHS->clone()->codegen()->getType();
     Cpoint_Type temp_type = StructMember->LHS->get_type();
     if (!temp_type.is_struct && !temp_type.is_ptr){
         // not struct member call
@@ -1542,7 +1547,7 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         Value* array_or_ptr = allocated_value;
         // To make argv[0] work
         if (cpoint_type_not_modified.is_ptr /*&& cpoint_type_not_modified.nb_ptr > 1*/){
-        array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(int_type, true, 1)), allocated_value, "load_gep_ptr");
+        array_or_ptr = Builder->CreateLoad(get_type_llvm(Cpoint_Type(i32_type, true, 1)), allocated_value, "load_gep_ptr");
         }
         Value* ptr = Builder->CreateGEP(type_llvm, array_or_ptr, indexes, "", true);
         return ptr;
@@ -1671,9 +1676,9 @@ Value *BinaryExprAST::codegen() {
     }
   }
   if (L->getType() == get_type_llvm(Cpoint_Type(i8_type)) || L->getType() == get_type_llvm(Cpoint_Type(i16_type))){
-    convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(int_type)), L);
+    convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(i32_type)), L);
   } else if (R->getType() == get_type_llvm(Cpoint_Type(i8_type)) || R->getType() == get_type_llvm(Cpoint_Type(i16_type))){
-    convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(int_type)), R);
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(i32_type)), R);
   }
   if (L->getType() != R->getType()){
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
@@ -1682,10 +1687,10 @@ Value *BinaryExprAST::codegen() {
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
   if (Op == "&&"){
     if (get_cpoint_type_from_llvm(L->getType()).is_decimal_number_type()){
-        convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(int_type)), L);
+        convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(i32_type)), L);
     }
     if (get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
-        convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(int_type)), R);
+        convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(i32_type)), R);
     }
   }
   // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
@@ -1876,7 +1881,7 @@ Value *CallExprAST::codegen() {
         arg_type = FunctionProtos[Callee]->Args.at(i).second;
     }
     bool is_additional_arg = FunctionProtos[Callee]->is_variable_number_args && i >= FunctionProtos[Callee]->Args.size();
-    bool is_arg_passed_an_array = /*Args[i]->clone()->codegen()->getType()->isArrayTy()*/ Args[i]->get_type().is_array;
+    bool is_arg_passed_an_array = Args[i]->get_type().is_array;
     if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
     } else if (arg_type.is_just_struct() && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2) {
@@ -1884,7 +1889,7 @@ Value *CallExprAST::codegen() {
         temp_val = loaded_vector;
     } else if ((arg_type.is_ptr || is_additional_arg) && is_arg_passed_an_array){ // passing an array to a function wanting a ptr or as additional arg of a variadic function
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
-        temp_val = Builder->CreateGEP(get_type_llvm(Args[i]->get_type()) /*Args[i]->clone()->codegen()->getType()*/, temp_val, {zero, zero}, "arraydecay", true);
+        temp_val = Builder->CreateGEP(get_type_llvm(Args[i]->get_type()), temp_val, {zero, zero}, "arraydecay", true);
     } else {
         temp_val = Args[i]->codegen();
     }
@@ -2059,7 +2064,7 @@ Value* SizeofExprAST::codegen(){
     }
     Type* llvm_type = get_type_llvm(cpoint_type);
     Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
-    size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
+    size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
     return size;
   } else {
     Log::Info() << "codegen sizeof is variable" << "\n";
@@ -2077,7 +2082,7 @@ Value* SizeofExprAST::codegen(){
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // is the calculation made at runtime
     std::vector<Type*> OverloadedTypes;
-    OverloadedTypes.push_back(get_type_llvm(int_type));
+    OverloadedTypes.push_back(get_type_llvm(i32_type));
     OverloadedTypes.push_back(get_type_llvm(i64_type));
     Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
     return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");*/
@@ -2085,7 +2090,7 @@ Value* SizeofExprAST::codegen(){
   // TODO : utiliser getAllocationSize sur les AllocaInst
   Type* llvm_type = get_type_llvm(NamedValues[Name]->type);
   Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
-  size = Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(int_type)));
+  size = Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
   return size;
   } 
 }
@@ -2207,7 +2212,7 @@ Function *PrototypeAST::codegen() {
   std::vector<Type*> args_type_main;
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-2)));
   args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
-  FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(int_type)), args_type_main, false);
+  FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(i32_type)), args_type_main, false);
   } else {
   if (cpoint_type.is_just_struct()){
     // replace this by if (should_return_struct_with_ptr())
@@ -2329,8 +2334,8 @@ Function *FunctionAST::codegen() {
         //type = argv_type;
         type = Cpoint_Type(i8_type, true, 2);
       } else {
-        //type = int_type;
-        type = Cpoint_Type(int_type);
+        //type = i32_type;
+        type = Cpoint_Type(i32_type);
       }
       AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), /*Cpoint_Type(type, false)*/ type);
       if (debug_info_mode){
@@ -2502,8 +2507,6 @@ GlobalVariable* GlobalVariableAST::codegen(){
   GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
   if (is_array){
     auto indexVal = index->codegen();
-    /*auto constFP = dyn_cast<ConstantFP>(indexVal);
-    double indexD = constFP->getValueAPF().convertToDouble();*/
     int indexD = from_val_to_int(indexVal);
     cpoint_type.is_array = true;
     cpoint_type.nb_element = indexD;
@@ -2705,7 +2708,7 @@ Value* LoopExprAST::codegen(){
   if (is_infinite_loop || Array == nullptr){
     return InfiniteLoopCodegen(Body, TheFunction);
   } else {
-    auto double_cpoint_type = Cpoint_Type(double_type, false);
+    auto double_cpoint_type = Cpoint_Type(double_type, false); // TODO : add a way to select type
     AllocaInst *PosArrayAlloca = CreateEntryBlockAlloca(TheFunction, "pos_loop_in", double_cpoint_type);
     BasicBlock* CmpLoop = BasicBlock::Create(*TheContext, "cmp_loop_in", TheFunction);
     BasicBlock* InLoop = BasicBlock::Create(*TheContext, "body_loop_in", TheFunction);
@@ -2717,7 +2720,7 @@ Value* LoopExprAST::codegen(){
     Builder->CreateStore(StartVal, PosArrayAlloca);
  
     std::unique_ptr<VariableExprAST> ArrayVar = get_Expr_from_ExprAST<VariableExprAST>(std::move(Array));
-    Cpoint_Type cpoint_type = NamedValues[ArrayVar->getName()]->type;
+    Cpoint_Type cpoint_type = /*NamedValues[ArrayVar->getName()]->type*/ *get_variable_type(ArrayVar->getName());
     Cpoint_Type tempValueArrayType = Cpoint_Type(cpoint_type);
     tempValueArrayType.is_array = false;
     tempValueArrayType.nb_element = 0;
@@ -2932,7 +2935,7 @@ Value *VarExprAST::codegen() {
         AllocaInst* Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
         NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         Cpoint_Type cpoint_type = NamedValues[VarName]->type;
-        Cpoint_Type tag_type = Cpoint_Type(int_type);
+        Cpoint_Type tag_type = Cpoint_Type(i32_type);
         auto* enumCreation = dynamic_cast<EnumCreation*>(Init);
         
     
@@ -2975,9 +2978,11 @@ Value *VarExprAST::codegen() {
         Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
         NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         if (enumCreation->value){
-            Value* val = enumCreation->value->clone()->codegen();
+            //Value* val = enumCreation->value->clone()->codegen();
+            Cpoint_Type val_type = enumCreation->value->get_type();
+            Value* val = enumCreation->value->codegen();
             if (val->getType() != get_type_llvm(*enumMember->Type)){
-                convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(*enumMember->Type), val);
+                convert_to_type(val_type, get_type_llvm(*enumMember->Type), val);
             }
             Builder->CreateStore(val, value_tag);
             NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
