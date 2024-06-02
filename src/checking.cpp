@@ -21,7 +21,7 @@ Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_T
     if (indexConst->getType() == get_type_llvm(double_type) || indexConst->getType() == get_type_llvm(float_type)){
       ConstantFP* indexConstFP = dyn_cast<ConstantFP>(indexConst);
       indexd = indexConstFP->getValue().convertToDouble();
-    } else if (indexConst->getType() == get_type_llvm(int_type) || indexConst->getType() == get_type_llvm(i32_type)){
+    } else if (/*indexConst->getType() == get_type_llvm(int_type) ||*/ indexConst->getType() == get_type_llvm(i32_type)){
       ConstantInt* IndexConstInt = dyn_cast<ConstantInt>(indexConst);
       indexd = IndexConstInt->getValue().roundToDouble();
     }

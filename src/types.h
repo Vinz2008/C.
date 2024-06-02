@@ -6,7 +6,8 @@
 
 enum types {
     double_type = -1,
-    int_type = -2,
+//    int_type = -2,
+    bool_type = -2,
     float_type = -3,
     void_type = -4,
     i8_type = -5,
@@ -19,8 +20,8 @@ enum types {
     u32_type = -12,
     u64_type = -13,
     u128_type = -14,
-    bool_type = -15,
-    other_type  = -16, // includes struct, enum, etc
+//    bool_type = -15,
+    other_type  = -15, // includes struct, enum, etc
 //    argv_type = -1000,
     empty_type = -1000,
 };

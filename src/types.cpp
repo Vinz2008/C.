@@ -61,7 +61,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             type = Type::getDoubleTy(*TheContext);
             break;
         case i32_type:
-        case int_type:
+//        case int_type:
         case u32_type:
             type = Type::getInt32Ty(*TheContext);
             break;
@@ -201,7 +201,7 @@ Value* get_default_value(Cpoint_Type type){
 int Cpoint_Type::get_number_of_bits(){
     switch (type)
     {
-    case int_type:
+//    case int_type:
     case i32_type:
     case u32_type:
         return 32;
@@ -292,7 +292,7 @@ bool Cpoint_Type::is_unsigned(){
 }
 
 bool Cpoint_Type::is_signed(){
-    return type == i8_type || type == i16_type || type == i32_type || type == int_type || type == i64_type || type == i128_type || type == bool_type;
+    return type == i8_type || type == i16_type || type == i32_type /*|| type == int_type*/ || type == i64_type || type == i128_type || type == bool_type;
     //return !is_unsigned(cpoint_type);
 }
 
@@ -319,7 +319,7 @@ Constant* get_default_constant(Cpoint_Type type){
     switch (type.type){
         case bool_type:
         case i32_type:
-        case int_type:
+//        case int_type:
         case u32_type:
         case i8_type:
         case u8_type:
@@ -385,7 +385,7 @@ Constant* from_val_to_constant_infer(Value* val){
     Type* type = val->getType();
     if (type == get_type_llvm(Cpoint_Type(double_type)) || type == get_type_llvm(Cpoint_Type(float_type))){
         return dyn_cast<ConstantFP>(val);
-    } else if (type == get_type_llvm(Cpoint_Type(i32_type)) || type == get_type_llvm(Cpoint_Type(int_type))){
+    } else if (type == get_type_llvm(Cpoint_Type(i32_type)) /*|| type == get_type_llvm(Cpoint_Type(int_type))*/){
         return dyn_cast<ConstantInt>(val);
     }
     return dyn_cast<ConstantFP>(val);
@@ -522,7 +522,8 @@ std::string Cpoint_Type::to_printf_format(){
 
 std::vector<std::string> types_list_start = {
     "double",
-    "int",
+//    "int",
+    "bool",
     "float",
     "void",
     "i8",
@@ -536,16 +537,16 @@ std::vector<std::string> types_list_start = {
     "u64",
     "u128",
 //    "jdhdhghdhdhjbdhjddhhyuuhjdhuudhuhduhduhother", // is just a random string that will never be a type so it will never detect it (TODO : replace with empty string or more random/longer string ?)
-    "bool"
+//    "bool"
 };
 
 std::vector<std::string> types_list = types_list_start;
 
 
 bool is_type(std::string type){
-    /*if (type == "int"){ // TODO : move this to a typedef in a core file
+    if (type == "int"){ // TODO : move this to a typedef in a core file
         return true;
-    }*/
+    }
     for (int i = 0; i < types_list.size(); i++){
        if (type == types_list.at(i)){
 	    return true;
@@ -555,9 +556,9 @@ bool is_type(std::string type){
 }
 
 int get_type(std::string type){
-    /*if (type == "int"){
-        return -i32_type;
-    }*/
+    if (type == "int"){
+        return i32_type-1;
+    }
     Log::Info() << "types_list_start.size() : " << types_list_start.size() << "\n";
     for (int i = 0; i < types_list.size(); i++){
        if (type == types_list.at(i)){
