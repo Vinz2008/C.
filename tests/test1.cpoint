@@ -1,11 +1,11 @@
 import @std/print.cpoint
 
-extern printf(format : i8 ptr ...) int;
+extern printf(format : i8 ptr ...) i32;
 
 func main(){
-  var i : int = 2
-  var temp : int = 3
-  var p : int ptr = addr i
+  var i : i32 = 2
+  var temp : i32 = 3
+  var p : i32 ptr = addr i
   p = addr temp
   printi(i)
   // printi(deref p)

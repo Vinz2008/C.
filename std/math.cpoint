@@ -44,10 +44,10 @@ mod math {
     func exp(arg : double) double {
         exp(arg)
     }
-    func frexp(arg : double, exp : int ptr) double {
+    func frexp(arg : double, exp : i32 ptr) double {
         frexp(arg, exp)
     }
-    func ldexp(arg : double, exp : int) double {
+    func ldexp(arg : double, exp : i32) double {
         ldexp(arg, exp)
     }
     func log(arg : double) double {
@@ -65,7 +65,7 @@ mod math {
     func expm1(arg : double) double {
         expm1(arg)
     }
-    func ilogb(arg : double) int {
+    func ilogb(arg : double) i32 {
         ilogb(arg)
     }
     func log1p(arg : double) double {
@@ -77,7 +77,7 @@ mod math {
     func logb(arg : double) double {
         logb(arg)
     }
-    func scalbn(arg : double, n : int) double {
+    func scalbn(arg : double, n : i32) double {
         scalbn(arg, n)
     }
     func scalbln(arg : double, n : i64) double {

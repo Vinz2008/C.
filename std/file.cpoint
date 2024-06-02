@@ -2,37 +2,37 @@ include capi.hpoint
 include libc.hpoint
 import print.cpoint
 
-type fd_t int;
+type fd_t i32;
 
 mod file {
 
-func open(path : i8 ptr) int {
-    var mode : int = S_IRWXU
+func open(path : i8 ptr) i32 {
+    var mode : i32 = S_IRWXU
     open(path, O_RDONLY, mode)
 }
 
-func create(path : i8 ptr) int {
-    var mode : int = S_IRWXU
+func create(path : i8 ptr) i32 {
+    var mode : i32 = S_IRWXU
     open(path, O_RDWR | O_CREAT, mode)
 }
 
-func write(fd : int, buf : i8 ptr) int {
+func write(fd : i32, buf : i8 ptr) i32 {
     cwritefile(fd, buf)
 }
 
-func close(fd : int) int {
+func close(fd : i32) i32 {
     close(fd)
 }
 
-func remove(path : i8 ptr) int {
+func remove(path : i8 ptr) i32 {
     remove(path)
 }
 
 // TODO : fix this
-func get_line(fd : int) i8 ptr {
+func get_line(fd : i32) i8 ptr {
     var buffer_size = 20
     var buffer : i8 ptr = gc_malloc(buffer_size * sizeof i8)
-    var pos : int = 0
+    var pos : i32 = 0
     while read(fd, buffer + pos, 1) > 0 {
         // printf("%c\n", line[i])
         printf("buffer : %s\n", buffer)
@@ -61,7 +61,7 @@ func get_line(fd : int) i8 ptr {
 }
 
 // TODO : fix this
-func get_file_size(fd : int) i64 {
+func get_file_size(fd : i32) i64 {
     var buf : struct stat
     var ret = fstat(fd, addr buf)
     if ret == -1 {
@@ -70,7 +70,7 @@ func get_file_size(fd : int) i64 {
     buf.st_size
 }
 
-func read_to_string(fd : int) i8 ptr {
+func read_to_string(fd : i32) i8 ptr {
     var size = file::get_file_size(fd)
     var buf = gc_malloc(sizeof i8 * (size+1))
     var ret = read(fd, buf, size)
@@ -93,19 +93,19 @@ func canonicalize(path : i8 ptr) i8 ptr {
     canonicalized_path
 }
 
-func symlink(file_name : i8 ptr, symlink_name : i8 ptr) int {
+func symlink(file_name : i8 ptr, symlink_name : i8 ptr) i32 {
     symlink(file_name, symlink_name)
 }
 
-func sync_all(fd : int){
+func sync_all(fd : i32){
     fsync(fd)
 }
 
-func sync_data(fd : int){
+func sync_data(fd : i32){
     fdatasync(fd)
 }
 
-func truncate(fd : int, length : i64){
+func truncate(fd : i32, length : i64){
     ftruncate(fd, length)
 }
 

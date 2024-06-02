@@ -2,7 +2,7 @@ import @std/print.cpoint
 
 union un {
     var a : double
-    var b : int
+    var b : i32
 }
 
 func main() void {

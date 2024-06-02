@@ -7,8 +7,8 @@ extern linux_function();
 extern windows_function();
 ?[endif]
 func main() void {
-  var x : int = O_CREAT
-  var y : int = O_WRONLY
+  var x : i32 = O_CREAT
+  var y : i32 = O_WRONLY
   printi(x)
   printi(y)
 }

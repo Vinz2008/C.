@@ -1,6 +1,6 @@
 import print.cpoint
 
-func handle_args(argc : int, argv : i8 ptr ptr) void {
+func handle_args(argc : i32, argv : i8 ptr ptr) void {
     printi(argc)
     printstr(argv[0])
     for i = 0, i < argc-1, 1.0 {

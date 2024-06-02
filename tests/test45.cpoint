@@ -9,7 +9,7 @@ func test_func(f : func (void ptr) void ptr) void {
     
 }
 
-func main() int {
+func main() i32 {
     var capture_var = 2
     test_func(print_func)
     test_func(func(a : void ptr) void {

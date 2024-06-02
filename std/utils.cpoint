@@ -2,11 +2,11 @@ import print.cpoint
 
 mod std {
 mod utils {
-func average(x, y) int {
+func average(x, y) i32 {
   (x + y) / 2
 }
 
-func absolute(v) int {
+func absolute(v) i32 {
   if v < 0 { 
     0 - v 
   } else {

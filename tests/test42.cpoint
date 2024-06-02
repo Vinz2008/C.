@@ -1,7 +1,7 @@
 import @std/print.cpoint
 
 enum test_enum {
-    tag_int(int)
+    tag_int(i32)
     tag_float(float)
     tag_alone
 }
@@ -30,7 +30,7 @@ func main(){
     match te2 {
         test_enum::tag_int(i) => printi(i),
         _ => {
-            printstr("not int tag")
+            printstr("not i32 tag")
         }
     }
     var te_w : enum test_enum_without_val = test_enum_without_val::tag_alone2

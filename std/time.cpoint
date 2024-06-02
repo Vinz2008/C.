@@ -6,24 +6,24 @@ struct __timeval {
 }
 
 struct __tm {
-    var tm_sec : int
-    var tm_min : int
-    var tm_hour : int
-    var tm_mday : int
-    var tm_mon : int
-    var tm_year : int
-    var tm_wday : int
-    var tm_yday : int
-    var tm_isdst : int
+    var tm_sec : i32
+    var tm_min : i32
+    var tm_hour : i32
+    var tm_mday : i32
+    var tm_mon : i32
+    var tm_year : i32
+    var tm_wday : i32
+    var tm_yday : i32
+    var tm_isdst : i32
     var tm_gmtoff : i64
     var tm_zone : i8 ptr
 }
 
-extern gettimeofday(tv : struct __timeval ptr, tz : int ptr) int;
+extern gettimeofday(tv : struct __timeval ptr, tz : i32 ptr) i32;
 extern __internal_get_time() i64;
 extern time(t : i64 ptr) i64;
 extern localtime(timer : i64 ptr) struct __tm ptr;
-extern strftime(str : i8 ptr, maxsize : int, format : i8 ptr, timeptr : struct __tm ptr) int;
+extern strftime(str : i8 ptr, maxsize : i32, format : i8 ptr, timeptr : struct __tm ptr) i32;
 
 mod time {
     func get() i64 {

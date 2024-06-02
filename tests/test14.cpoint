@@ -2,9 +2,9 @@ import @std/print.cpoint
 import @std/file.cpoint
 
 func main(){
-    var fd : int = file::open("test_io.txt")
+    var fd : i32 = file::open("test_io.txt")
     #println("fd : {}", fd)
-    var out : int = file::write(fd, "test hello world\n")
+    var out : i32 = file::write(fd, "test hello world\n")
     #println("write output : {}", out)
     file::close(fd)
     var path = file::canonicalize("../tests")

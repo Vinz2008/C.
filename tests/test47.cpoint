@@ -6,18 +6,18 @@ extern gc_free(s : void ptr) void;
 extern malloc(size : i64) void ptr;
 extern free(pointer : void ptr) void;
 
-func main() int {
-    var l : int ptr = gc_malloc(10 * sizeof int)
+func main() i32 {
+    var l : i32 ptr = gc_malloc(10 * sizeof i32)
     #println("ptr gc_malloc {}", l)
     defer gc_free(l)
     l[0] = 2
     printi(l[0])
     if argc == 2 {
-        var l_if = gc_malloc(2 * sizeof int)
+        var l_if = gc_malloc(2 * sizeof i32)
         defer gc_free(l_if)
         printstr("test")
     }
-    var l2 : int ptr = malloc(12 * sizeof int)
+    var l2 : i32 ptr = malloc(12 * sizeof i32)
     defer free(l2)
     #println("ptr manual_alloc {}", l2)
     l2[0] = 3

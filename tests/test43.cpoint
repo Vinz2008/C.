@@ -3,6 +3,6 @@ import @std/print.cpoint
 
 func main(){
     var l : struct list
-    l.append(cast int 2)
-    printi(l.at(cast int 0))
+    l.append(cast i32 2)
+    printi(l.at(cast i32 0))
 }

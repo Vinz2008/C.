@@ -6,7 +6,7 @@ func main() double {
     if a == 2 {
         printi(argc)
     }
-    var t : struct pair~int~ 
+    var t : struct pair~i32~ 
     t.first = 32
     printi(t.get_first(a))
     0

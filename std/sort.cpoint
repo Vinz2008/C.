@@ -1,15 +1,15 @@
-func internal_swap(arr : int ptr, i : int, j : int) void {
+func i32ernal_swap(arr : i32 ptr, i : i32, j : i32) void {
     var temp = arr[j]
     arr[j] = arr[i]
 }
 
-func quicksortx(arr : int ptr, a: int, b : int) {
+func quicksortx(arr : i32 ptr, a: i32, b : i32) {
     if a >= b {
         return 1
     }
-    var key : int = arr[a]
-    var i : int = a + 1
-    var j : int = b
+    var key : i32 = arr[a]
+    var i : i32 = a + 1
+    var j : i32 = b
     // https://stackoverflow.com/questions/9558804/quick-sort-in-c
     while i < j && 1 {
         while i < j {
@@ -19,11 +19,11 @@ func quicksortx(arr : int ptr, a: int, b : int) {
             i = i + 1
         }
         if i < j { 
-            internal_swap(arr, i, j) 
+            i32ernal_swap(arr, i, j) 
         }
     }
     if arr[a] > arr[i] {
-        internal_swap(arr, a, i)
+        i32ernal_swap(arr, a, i)
         quicksortx(arr, a, i - 1)
         quicksortx(arr, i + 1, b)
     } else { // there is no left-hand-side
@@ -33,6 +33,6 @@ func quicksortx(arr : int ptr, a: int, b : int) {
 }
 
 
-func quicksort(arr : int ptr, len : int) {
+func quicksort(arr : i32 ptr, len : i32) {
     quicksortx(arr, 0, len - 1)
 }

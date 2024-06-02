@@ -1,7 +1,7 @@
 import panic.cpoint
 
-extern printf(format : i8 ptr ...) int;
-extern exit(i : int) void;
+extern printf(format : i8 ptr ...) i32;
+extern exit(i : i32) void;
 
 func expect(expression : double) void {
     if expression == false {

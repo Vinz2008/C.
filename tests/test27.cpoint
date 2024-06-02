@@ -2,8 +2,8 @@ import @std/panic.cpoint
 import @std/expect.cpoint
 import @std/print.cpoint 
 
-type new_type int;
-type int_ptr int ptr;
+type new_type i32;
+type int_ptr i32 ptr;
 
 func main() void {
   var hello : new_type = 2

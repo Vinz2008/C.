@@ -10,13 +10,13 @@ class test {
   } 
 }
 func main() void {
-  var a : int
+  var a : i32
   var b : double
   var c : i8
   var x : class test 
   var y : class test ptr
-  var z : int ptr 
-  z = gc_malloc(sizeof int)
+  var z : i32 ptr 
+  z = gc_malloc(sizeof i32)
   y = gc_malloc(12) 
   x.z = 2 
   x.x = 3
@@ -26,7 +26,7 @@ func main() void {
   printi(sizeof x)
   printi(sizeof y)
   printi(sizeof z)
-  printi(sizeof int)
+  printi(sizeof i32)
   printi(sizeof struct test)
   printd(x.z)
   printd(x.x)

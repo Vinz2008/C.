@@ -4,14 +4,14 @@ import print.cpoint
 extern gc_strdup(s : i8 ptr) i8 ptr;
 extern gc_free(s : void ptr) void;
 
-extern internal_append_char(c : i8, string : i8 ptr, size : int);
-extern internal_remove_char(string : i8 ptr, size : int);
+extern internal_append_char(c : i8, string : i8 ptr, size : i32);
+extern internal_remove_char(string : i8 ptr, size : i32);
 
 struct str {
     var pointer : i8 ptr
-    var len : int
-    var maxlength : int
-    var factor : int
+    var len : i32
+    var maxlength : i32
+    var factor : i32
 }
 
 mod String {
@@ -39,8 +39,8 @@ func removeChar(string : struct str ptr){
     string.len = string.len - 1
 }
 
-func lenstr(string : struct str) int {
-    var len : int = strlen(string.pointer)
+func lenstr(string : struct str) i32 {
+    var len : i32 = strlen(string.pointer)
     len
 }
 

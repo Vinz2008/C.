@@ -3,8 +3,8 @@ import @std/print.cpoint
 extern printptr(x)
 
 var extern ext : float;
-var z : int = 2;
-var section_var : int = 2 section "custom_section";
+var z : i32 = 2;
+var section_var : i32 = 2 section "custom_section";
 
 func main() void {
   var c = "hello"
@@ -16,6 +16,6 @@ func main() void {
   printi(z)
   z = 3
   printi(z)
-  var i : int = 0x25 // 37 in decimal
+  var i : i32 = 0x25 // 37 in decimal
   printi(i)
 }

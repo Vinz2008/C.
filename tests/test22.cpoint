@@ -8,7 +8,7 @@ class test {
   func test(){
     2
   }
-  func test_function(a : int){
+  func test_function(a : i32){
     printd(self.z)
     printstr("test_function called")
     a + 1 
@@ -22,7 +22,7 @@ func main(){
   y = alloc::manual_alloc(sizeof x)
   y.z = 3
   x.z = 2
-  x.test_function(cast int 2) 
-  y.test_function(cast int 3)
+  x.test_function(cast i32 2) 
+  y.test_function(cast i32 3)
   alloc::manual_dealloc(y)
 }

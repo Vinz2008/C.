@@ -3,7 +3,7 @@ import @std/print.cpoint
 func main() void {
     // #asm("movq $$60, %rax")
     // #asm("movq $$60, %rax\n movq $$2, %rdi \n syscall")
-    var x : int = 2
+    var x : i32 = 2
     #asm("mov {}, 60", out x)
     printi(x)
     #asm("mov rax, {}", in x)

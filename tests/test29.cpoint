@@ -5,6 +5,6 @@ func test(){
 }
 
 func main(){
-    var p : int ptr = test
+    var p : i32 ptr = test
     panic("panic test")
 }

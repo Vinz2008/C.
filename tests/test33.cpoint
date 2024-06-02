@@ -1,7 +1,7 @@
 import @std/print.cpoint
 
 struct a {
-    var b : int
+    var b : i32
 }
 
 members for a {
@@ -13,7 +13,7 @@ members for a {
 
 func main(){
     var d : double = 2
-    var d2 = cast int d
+    var d2 = cast i32 d
     var a_inst : struct a
     printd(a_inst.test())
 }

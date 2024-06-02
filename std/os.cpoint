@@ -1,20 +1,20 @@
 include libc.hpoint
 
-type fd_t int;
+type fd_t i32;
 
 ?[define PATH_MAX 4096]
 
 mod os {
-    func close(fd : fd_t) int {
+    func close(fd : fd_t) i32 {
         close(fd)
     }
-    func dup(fd : fd_t) int {
+    func dup(fd : fd_t) i32 {
         dup(fd)
     }
     func is_a_tty(fd : fd_t) bool {
         isatty(fd)
     }
-    func mkdir(path : i8 ptr, mode : int) int {
+    func mkdir(path : i8 ptr, mode : i32) i32 {
         mkdir(path, mode)
     }
 }

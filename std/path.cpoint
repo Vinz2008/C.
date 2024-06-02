@@ -5,8 +5,8 @@ import print.cpoint
 extern gc_strdup(s : i8 ptr) i8 ptr;
 
 func cpoint_get_extension(path : i8 ptr) i8 ptr {
-    var pos: int = -1
-    for i : int  = strlen(path)-1, i > 0, -1 {
+    var pos: i32 = -1
+    for i : i32  = strlen(path)-1, i > 0, -1 {
         if path[i] == '.' {
             pos = i
             break

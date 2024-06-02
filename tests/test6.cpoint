@@ -13,11 +13,11 @@ func test(x, y){
 func main(){
   var a : i8 = 4
   var b : i16 = 12
-  var c : int = a
+  var c : i32 = a
   var d : i8 = c
   var e : u8 = d
   var f : i8 ptr = addr a
-  var g : int = f
+  var g : i32 = f
   test(1, 2)
   test(a, b)
   test(e, 6)

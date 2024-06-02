@@ -9,10 +9,10 @@ func test~T~() T {
 }
 
 func main(){
-    test~int~()
+    test~i32~()
     test~double~()
     test~i64 ptr~()
     var si : struct test_struct~float~
-    var sf : struct test_struct~int~
+    var sf : struct test_struct~i32~
     var sf : struct test_struct~i16 ptr~
 }

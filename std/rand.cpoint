@@ -1,7 +1,7 @@
-extern rand() int;
+extern rand() i32;
 
 mod rand {
-    func random() int {
+    func random() i32 {
         rand()
     }
 }

@@ -2,7 +2,7 @@ import @std/print.cpoint
 
 var const a = 2;
 
-var extern b : int;
+var extern b : i32;
 
 var c = 32;
 

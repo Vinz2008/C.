@@ -5,7 +5,7 @@ func printd(d : double) void{
 	printd_internal(d)
 }
 
-func printi(i : int) void {
+func printi(i : i32) void {
 	printi_internal(i)
 }
 

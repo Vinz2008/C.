@@ -1,7 +1,7 @@
 import print.cpoint
 
 struct node_linked_list {
-    var data : int
+    var data : i32
     var next : struct node_linked_list ptr
 }
 
@@ -13,7 +13,7 @@ struct linked_list {
         self.tail = null
         printd(3)
     }
-    func append(data : int) void {
+    func append(data : i32) void {
         var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list * 2)
         if temp == null {
             #panic("failed allocation in linked list")

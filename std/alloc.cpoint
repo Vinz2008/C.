@@ -20,5 +20,5 @@ mod alloc {
 }
 
 test "manual_alloc" {
-    #expect(alloc::manual_alloc(sizeof int * 10) != null)
+    #expect(alloc::manual_alloc(sizeof i32 * 10) != null)
 }

@@ -1,6 +1,6 @@
 import @std/print.cpoint
 func test(x) void {
-  for i : int = 1, i <= x, 1.0 {
+  for i : i32 = 1, i <= x, 1.0 {
      printi(i)
   }
 }

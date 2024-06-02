@@ -1,11 +1,11 @@
 struct va_list {
-    var gp_offset : int
-    var fp_offset : int
+    var gp_offset : i32
+    var fp_offset : i32
     var overflow_arg_area : i8 ptr
     var reg_save_area : i8 ptr
 }
 
-extern vprintf(format : i8 ptr, arg : struct va_list ptr) int;
+extern vprintf(format : i8 ptr, arg : struct va_list ptr) i32;
 
 func printfmt_cpoint(format : i8 ptr ...) void {
     var va[1] : struct va_list 
