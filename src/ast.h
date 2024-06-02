@@ -675,7 +675,7 @@ public:
         return "";
     }
     Cpoint_Type get_type() override {
-        return return_type;
+        return Cpoint_Type(); // TODO : create a function pointer
     }
     std::string generate_c() override { return ""; }
 };

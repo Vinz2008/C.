@@ -45,7 +45,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add unions support in import
 - [x] Add enum support in import
 - [x] Add automatically when calling panic the file and line number to panic call
-- [x] Move functions from headers to cpp files to lower compile times
 - [x] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
 - [x] Add macro functions (for example with a syntax like #function())
 - [ ] Make if, for and while return values like in rust
