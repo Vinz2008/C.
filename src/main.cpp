@@ -97,6 +97,10 @@ extern Source_location emptyLoc;
 
 extern bool is_in_extern;
 
+extern std::vector<std::string> types_list;
+
+extern std::vector<Cpoint_Type> typeDefTable;
+
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName){
   if (FunctionProtos[fnName]){
     return;
@@ -129,6 +133,11 @@ void add_externs_for_test(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
   args_printf.push_back(make_pair("format", Cpoint_Type(i8_type, true)));
   add_manually_extern("printf", Cpoint_Type(i32_type), std::move(args_printf), 0, 30, true, false, "");
+}
+
+void add_default_typedefs(){
+  types_list.push_back("int");
+  typeDefTable.push_back(Cpoint_Type(i32_type));
 }
 
 void print_help(){
@@ -444,6 +453,7 @@ int main(int argc, char **argv){
     bindtextdomain("cpoint", /*"/usr/share/locale/"*/ /*"./locales/"*/ NULL);
     textdomain("cpoint");
     Comp_context = std::make_unique<Compiler_context>("", 1, 0, "<empty line>");
+    add_default_typedefs();
     string object_filename = "out.o";
     string exe_filename = "a.out";
     string temp_output = "";

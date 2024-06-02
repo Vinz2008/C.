@@ -287,11 +287,19 @@ VectorType* vector_type_from_struct(Cpoint_Type cpoint_type){
     return VectorType::get(get_type_llvm(member_type), StructDeclarations[cpoint_type.struct_name]->members.size(), false);
 }
 
+extern std::vector<Cpoint_Type> typeDefTable;
+
 bool Cpoint_Type::is_unsigned(){
+    if (type >= 0){
+        return typeDefTable.at(type).is_unsigned();
+    }
     return type == u8_type || type == u16_type || type == u32_type || type == u64_type || type == u128_type;
 }
 
 bool Cpoint_Type::is_signed(){
+    if (type >= 0){
+        return typeDefTable.at(type).is_signed();
+    }
     return type == i8_type || type == i16_type || type == i32_type /*|| type == int_type*/ || type == i64_type || type == i128_type || type == bool_type;
     //return !is_unsigned(cpoint_type);
 }
@@ -359,7 +367,7 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
             int val_int = (int)constFP->getValue().convertToDouble();
             return ConstantInt::get(*TheContext, llvm::APInt(type.get_number_of_bits(), val_int, true));
         }
-        if (type == Cpoint_Type(double_type)){
+        if (type.type == double_type || type.type == float_type){
             return constFP;
         }
         if (type.is_ptr){
@@ -370,7 +378,7 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
         }
     } else if (dyn_cast<ConstantInt>(val)) {
         auto constInt = dyn_cast<ConstantInt>(val);
-        if (type == Cpoint_Type(double_type) || type == Cpoint_Type(float_type)){
+        if (type.type == double_type || type.type == float_type){
             double val_double = (double)constInt->getSExtValue();
             return ConstantFP::get(*TheContext, APFloat(val_double));
         }
@@ -378,7 +386,9 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
             return constInt;
         }
     }
-    return dyn_cast<ConstantFP>(val);
+    LogError("Unknown type for val to constant");
+    return nullptr;
+    //return dyn_cast<ConstantFP>(val);
 }
 
 Constant* from_val_to_constant_infer(Value* val){
@@ -544,9 +554,9 @@ std::vector<std::string> types_list = types_list_start;
 
 
 bool is_type(std::string type){
-    if (type == "int"){ // TODO : move this to a typedef in a core file
+    /*if (type == "int"){ // TODO : move this to a typedef in a core file
         return true;
-    }
+    }*/
     for (int i = 0; i < types_list.size(); i++){
        if (type == types_list.at(i)){
 	    return true;
@@ -556,9 +566,9 @@ bool is_type(std::string type){
 }
 
 int get_type(std::string type){
-    if (type == "int"){
+    /*if (type == "int"){
         return i32_type-1;
-    }
+    }*/
     Log::Info() << "types_list_start.size() : " << types_list_start.size() << "\n";
     for (int i = 0; i < types_list.size(); i++){
        if (type == types_list.at(i)){

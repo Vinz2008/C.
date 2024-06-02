@@ -2499,7 +2499,7 @@ GlobalVariable* GlobalVariableAST::codegen(){
     //InitVal = from_val_to_constant_infer(Init->codegen());
     InitVal = from_val_to_constant(Init->codegen(), cpoint_type);
     if (!InitVal){
-        return LogErrorGLLVM("The constant initialization of the global variable wasn't a double so it couldn't be converted to a constant");
+        return LogErrorGLLVM("The constant initialization of the global variable couldn't be converted to a constant");
     }
     //InitVal = nullptr;
   }
