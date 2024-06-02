@@ -4,9 +4,11 @@
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DIBuilder.h"
 #include "types.h"
+#include "ast.h"
 
 using namespace llvm;
 extern std::unique_ptr<IRBuilder<>> Builder;
+extern std::unordered_map<std::string, int> BinopPrecedence;
 
 namespace operators {
 
@@ -122,5 +124,70 @@ Value* LLVMCreateAnd(Value* L, Value* R){
     return Builder->CreateAnd(L, R, "andtmp");
 }
 
+void installPrecendenceOperators(){
+    // Install standard binary operators.
+    // 1 is lowest precedence.
+    BinopPrecedence["="] = 5;
+    BinopPrecedence["||"] = 10;
+    BinopPrecedence["&&"] = 11;
+    BinopPrecedence["|"] = 12;
+    BinopPrecedence["^"] = 13;
+    BinopPrecedence["&"] = 14;
+
+    BinopPrecedence["!="] = 15;
+    BinopPrecedence["=="] = 15;
+
+    BinopPrecedence["<"] = 16;
+    BinopPrecedence["<="] = 16;
+    BinopPrecedence[">"] = 16;
+    BinopPrecedence[">="] = 16;
+
+    BinopPrecedence["<<"] = 20;
+    BinopPrecedence[">>"] = 20;
+
+    BinopPrecedence["+"] = 25;
+    BinopPrecedence["-"] = 25;
+
+    BinopPrecedence["*"] = 30;
+    BinopPrecedence["%"] = 30;
+    BinopPrecedence["/"] = 30;
+
+    BinopPrecedence["["] = 35;
+
+    BinopPrecedence["."] = 35;
+
+    BinopPrecedence["("] = 35;
+    BinopPrecedence["~"] = 35;
 }
 
+}
+
+Cpoint_Type UnaryExprAST::get_type(){
+    Cpoint_Type operand_type = Operand->get_type();
+    if (Opcode == '-'){
+        return operand_type;
+    }
+    if (Opcode == '&'){
+        Cpoint_Type new_type = operand_type;
+        new_type.is_ptr = true;
+        new_type.nb_ptr++;
+    }
+    if (Opcode == '*'){
+        return operand_type.deref_type();
+    }
+    return Cpoint_Type(); // TODO : add all operators
+}
+
+Cpoint_Type BinaryExprAST::get_type(){
+    if (Op == "=" || Op == "<<" || Op == ">>" || Op == "|" || Op == "^" || Op == "&" || Op == "+" || Op == "-" || Op == "*" || Op == "%" || Op == "/"){
+        return LHS->get_type();
+    }
+    if (Op == "||" || Op == "&&" || Op == "==" || Op == "!=" || Op == "<" || Op == "<=" || Op == ">" || Op == ">="){
+        return Cpoint_Type(bool_type);
+    }
+    if (Op == "["){
+        return LHS->get_type().deref_type();
+    }
+    // TODO : add all operators
+    return Cpoint_Type();
+}

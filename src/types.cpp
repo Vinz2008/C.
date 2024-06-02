@@ -500,6 +500,20 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     return false;
 }
 
+Cpoint_Type Cpoint_Type::deref_type(){
+    Cpoint_Type new_type = *this;
+    if (new_type.is_array){
+        new_type.is_array = false;
+    } else {
+        if (new_type.is_ptr){
+            new_type.nb_ptr--;
+            if (new_type.nb_ptr == 0){
+                new_type.is_ptr = false;
+            }
+        }
+    }
+    return new_type;
+}
 
 std::string Cpoint_Type::to_printf_format(){
     std::string format;

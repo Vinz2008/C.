@@ -82,6 +82,7 @@ public:
     bool is_decimal_number_type();
     bool is_signed();
     bool is_unsigned();
+    Cpoint_Type deref_type();
 };
 
 llvm::Type* get_type_llvm(Cpoint_Type cpoint_type); // TODO : move this to a meber function

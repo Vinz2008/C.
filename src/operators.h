@@ -19,4 +19,5 @@ namespace operators {
     Value* LLVMCreateLogicalOr(Value* L, Value* R);
     Value* LLVMCreateLogicalAnd(Value* L, Value* R);
     Value* LLVMCreateAnd(Value* L, Value* R);
+    void installPrecendenceOperators();
 }

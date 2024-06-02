@@ -42,6 +42,7 @@
 #include "tests.h"
 #include "lto.h"
 #include "jit.h"
+#include "operators.h"
 
 using namespace std;
 using namespace llvm;
@@ -200,46 +201,6 @@ struct TimeTracerRAII {
     }
   }
 };
-
-
-// TODO : move this in operators.cpp ?
-void installPrecendenceOperators(){
-    // Install standard binary operators.
-    // 1 is lowest precedence.
-    BinopPrecedence["="] = 5;
-
-    BinopPrecedence["||"] = 10;
-    BinopPrecedence["&&"] = 11;
-    BinopPrecedence["|"] = 12;
-    BinopPrecedence["^"] = 13;
-    BinopPrecedence["&"] = 14;
-
-    BinopPrecedence["!="] = 15;
-    BinopPrecedence["=="] = 15;
-
-    BinopPrecedence["<"] = 16;
-    BinopPrecedence["<="] = 16;
-    BinopPrecedence[">"] = 16;
-    BinopPrecedence[">="] = 16;
-
-    BinopPrecedence["<<"] = 20;
-    BinopPrecedence[">>"] = 20;
-
-    BinopPrecedence["+"] = 25;
-    BinopPrecedence["-"] = 25;
-
-    BinopPrecedence["*"] = 30;
-    BinopPrecedence["%"] = 30;
-    BinopPrecedence["/"] = 30;
-
-    BinopPrecedence["["] = 35;
-
-    BinopPrecedence["."] = 35;
-
-    BinopPrecedence["("] = 35;
-    BinopPrecedence["~"] = 35;
-
-}
 
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
@@ -588,7 +549,7 @@ int main(int argc, char **argv){
           filename = arg;
         }
     }
-    installPrecendenceOperators();
+    operators::installPrecendenceOperators();
     if (!filename_found){
 #if ENABLE_JIT
         return StartJIT();

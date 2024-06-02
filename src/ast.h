@@ -391,9 +391,7 @@ public:
   std::string to_string() override {
     return LHS->to_string() + " " + Op + " " + RHS->to_string();  
   }
-  Cpoint_Type get_type() override {
-    return Cpoint_Type(); // TODO : create a function in another file that will do it (it will be complicated)
-  }
+  Cpoint_Type get_type() override;
   std::string generate_c() override;
 };
 
@@ -411,9 +409,7 @@ public:
   std::string to_string() override {
     return Opcode + Operand->to_string();
   }
-  Cpoint_Type get_type() override {
-    return Cpoint_Type(); // TODO : create a function in another file that will do it
-  }
+  Cpoint_Type get_type() override;
   std::string generate_c() override;
 };
 
