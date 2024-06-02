@@ -520,8 +520,7 @@ std::string Cpoint_Type::to_printf_format(){
     return format;
 }
 
-
-std::vector<std::string> types_list {
+std::vector<std::string> types_list_start = {
     "double",
     "int",
     "float",
@@ -540,6 +539,25 @@ std::vector<std::string> types_list {
     "bool"
 };
 
+std::vector<std::string> types_list = types_list_start; /*{
+    "double",
+    "int",
+    "float",
+    "void",
+    "i8",
+    "i16",
+    "i32",
+    "i64",
+    "i128",
+    "u8",
+    "u16",
+    "u32",
+    "u64",
+    "u128",
+//    "jdhdhghdhdhjbdhjddhhyuuhjdhuudhuhduhduhother", // is just a random string that will never be a type so it will never detect it (TODO : replace with empty string or more random/longer string ?)
+    "bool"
+};*/
+
 
 bool is_type(std::string type){
     /*if (type == "int"){ // TODO : move this to a typedef in a core file
@@ -557,10 +575,11 @@ int get_type(std::string type){
     /*if (type == "int"){
         return -i32_type;
     }*/
+    Log::Info() << "types_list_start.size() : " << types_list_start.size() << "\n";
     for (int i = 0; i < types_list.size(); i++){
        if (type == types_list.at(i)){
-        if (i >= 15){ // TODO : replace these static numbers with numbers depending  types_list.size()
-            return i-15;
+        if (i >= types_list_start.size()){ // TODO : replace these static numbers with numbers depending  types_list.size()
+            return i-types_list_start.size();
         }
         return -(i + 1);
        }
@@ -572,7 +591,7 @@ std::string get_string_from_type(Cpoint_Type type){
     if (type.type < 0){
         return types_list.at(-(type.type + 1));
     } else {
-        return types_list.at(type.type+15);
+        return types_list.at(type.type+types_list_start.size());
     }
 }
 
