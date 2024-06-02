@@ -539,24 +539,7 @@ std::vector<std::string> types_list_start = {
     "bool"
 };
 
-std::vector<std::string> types_list = types_list_start; /*{
-    "double",
-    "int",
-    "float",
-    "void",
-    "i8",
-    "i16",
-    "i32",
-    "i64",
-    "i128",
-    "u8",
-    "u16",
-    "u32",
-    "u64",
-    "u128",
-//    "jdhdhghdhdhjbdhjddhhyuuhjdhuudhuhduhduhother", // is just a random string that will never be a type so it will never detect it (TODO : replace with empty string or more random/longer string ?)
-    "bool"
-};*/
+std::vector<std::string> types_list = types_list_start;
 
 
 bool is_type(std::string type){
