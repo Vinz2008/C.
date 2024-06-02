@@ -15,7 +15,7 @@ std::unique_ptr<StringExprAST> get_filename_tok(){
     return std::make_unique<StringExprAST>(filename_without_temp);
 }
 
-std::unique_ptr<StringExprAST> stringify_macro(std::unique_ptr<ExprAST> expr){
+std::unique_ptr<StringExprAST> stringify_macro(std::unique_ptr<ExprAST>& expr){
     return std::make_unique<StringExprAST>(expr->to_string());
 }
 
@@ -31,10 +31,11 @@ std::unique_ptr<ExprAST> generate_expect(std::vector<std::unique_ptr<ExprAST>>& 
     if (ArgsMacro.size() != 1){
         return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
     }
-    Args.push_back(ArgsMacro.at(0)->clone());
+    std::unique_ptr<StringExprAST> stringified_expr = stringify_macro(ArgsMacro.at(0));
+    Args.push_back(std::move(ArgsMacro.at(0)));
     Args.push_back(get_filename_tok());
     Args.push_back(std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_get_function_name", std::move(ArgsEmpty), Cpoint_Type(double_type)));
-    Args.push_back(stringify_macro(ArgsMacro.at(0)->clone()));
+    Args.push_back(std::move(stringified_expr));
     return std::make_unique<CallExprAST>(emptyLoc, "expectxplusexpr", std::move(Args), Cpoint_Type(double_type));
 }
 

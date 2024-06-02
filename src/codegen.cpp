@@ -615,7 +615,7 @@ Type* StructDeclarAST::codegen(){
   std::vector<std::pair<std::string,Cpoint_Type>> members;
   std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
-    std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(Vars.at(i)->clone());
+    std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(/*Vars.at(i)->clone()*/ std::move(Vars.at(i)));
     if (!VarExpr){
         Log::Info() << "VarExpr is nullptr" << "\n";
     }

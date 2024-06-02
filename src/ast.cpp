@@ -622,7 +622,7 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         if (ArgsMacro.size() != 1){
             return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "stringify", 1, ArgsMacro.size());
         }
-        return stringify_macro(std::move(ArgsMacro.at(0)));
+        return stringify_macro(ArgsMacro.at(0));
     } else if (function_name == "concat"){
         return generate_concat_macro(ArgsMacro);
     } else if (function_name == "line"){
