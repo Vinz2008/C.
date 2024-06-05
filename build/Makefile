@@ -13,6 +13,8 @@ OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 OBJS += ../src/cli.o
 
 CXXFLAGS = -c -g -Wall -Wno-sign-compare -std=c++17
+LDFLAGS = -lpthread
+
 all: $(OUTPUTBIN)
 
 release: set_release all
