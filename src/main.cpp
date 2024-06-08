@@ -532,7 +532,7 @@ int main(int argc, char **argv){
           size_t pos = arg.find("O");
           std::string temp = arg.substr(pos+1, arg.size());
           is_optimised = true;
-          i++;
+          //i++;
           optimize_level = std::stoi(temp);
         } else if (arg.compare(0, 14,  "-linker-flags=") == 0){
           size_t pos = arg.find('=');

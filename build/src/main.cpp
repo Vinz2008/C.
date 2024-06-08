@@ -172,7 +172,7 @@ void printHelp(){
 
 int main(int argc, char** argv){
 
-    std::vector<std::string> needed_exes = {"clang"};
+    std::vector<std::string> needed_exes = {"clang", "cpoint"};
     for (int i = 0; i < needed_exes.size(); i++){
         if (!doesExeExist(needed_exes.at(i))){
             std::cout << "Couldn't find the " << needed_exes.at(i) << " exe" << std::endl;

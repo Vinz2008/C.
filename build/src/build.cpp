@@ -51,6 +51,8 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
     std::cout << "buildFolder threads " << thread_number  << std::endl;
     std::string_view arguments_view = config["build"]["arguments"].value_or("");
     std::string arguments = (std::string) arguments_view;
+    int optimization_level = config["build"]["opt_level"].value_or(0);
+    arguments += " -O" + std::to_string(optimization_level);
     if (type == "dynlib"){
         arguments += " -fPIC ";
     }
