@@ -8,7 +8,7 @@ void generateTests(){
     return;
   }
   std::vector<std::pair<std::string,Cpoint_Type>> Args;
-  Args.push_back(std::make_pair("argc", Cpoint_Type(double_type, false)));
+  Args.push_back(std::make_pair("argc", Cpoint_Type(i32_type)));
   Args.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   auto Proto = std::make_unique<PrototypeAST>(emptyLoc, "main", Args, Cpoint_Type(double_type));
   std::vector<std::unique_ptr<ExprAST>> Body;

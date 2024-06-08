@@ -28,11 +28,11 @@ Value* GetVaAdressSystemV(std::unique_ptr<ExprAST> va){
 
 
 bool should_return_struct_with_ptr(Cpoint_Type cpoint_type){
-    int max_size = 64;
+    int max_size = 8; // 64 bit = 8 byte
     if (TripleLLVM.isArch32Bit()){
-        max_size = 32;
+        max_size = 4;
     } else if (TripleLLVM.isArch64Bit()){
-        max_size = 64;
+        max_size = 8;
     }
     int size_struct = find_struct_type_size(cpoint_type);
     if (size_struct > max_size){
@@ -50,11 +50,11 @@ bool should_pass_struct_byval(Cpoint_Type cpoint_type){
             return true;
         }
     }
-    int max_size = 64;
+    int max_size = 8; // 64 bit = 8 byte
     if (TripleLLVM.isArch32Bit()){
-        max_size = 32;
+        max_size = 4; // 32 bit
     } else if (TripleLLVM.isArch64Bit()){
-        max_size = 64;
+        max_size = 8;
     }
     int size_struct = find_struct_type_size(cpoint_type);
     if (size_struct > max_size){

@@ -28,6 +28,7 @@
 #include "config.h"
 #include "abi.h"
 #include "members.h"
+#include "types.h"
 
 #include <typeinfo>
 #include <cxxabi.h>
@@ -186,13 +187,24 @@ Function *getFunction(std::string Name) {
   return nullptr;
 }
 
-static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
+static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Type* type){
+  IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
+                 TheFunction->getEntryBlock().begin());
+  return TmpB.CreateAlloca(type, 0,
+                           VarName);
+}
+
+static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Cpoint_Type type){
+    return CreateEntryBlockAlloca(TheFunction, VarName, get_type_llvm(type));
+}
+
+/*static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction,
                                           StringRef VarName, Cpoint_Type type) {
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(),
                  TheFunction->getEntryBlock().begin());
   return TmpB.CreateAlloca(get_type_llvm(type), 0,
                            VarName);
-}
+}*/
 
 BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   for (Function::iterator b = TheFunction->begin(), be = TheFunction->end(); b != be; ++b){
@@ -449,7 +461,7 @@ Value* getSizeOfStruct(Value *A){
     ArgsV.push_back(A);
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // return -1 if object size is unknown
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
-    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // is the calculation made at runtime
+    ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // is the calculation made at runtime
     std::vector<Type*> OverloadedTypes;
     OverloadedTypes.push_back(get_type_llvm(i32_type));
     OverloadedTypes.push_back(get_type_llvm(i64_type));
@@ -2210,8 +2222,8 @@ Function *PrototypeAST::codegen() {
   bool has_sret = false;
   if (Name == "main"){
   std::vector<Type*> args_type_main;
-  args_type_main.push_back(get_type_llvm(Cpoint_Type(-2)));
-  args_type_main.push_back(get_type_llvm(Cpoint_Type(-4, true))->getPointerTo());
+  args_type_main.push_back(get_type_llvm(Cpoint_Type(i32_type)));
+  args_type_main.push_back(get_type_llvm(Cpoint_Type(void_type, true))->getPointerTo());
   FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(i32_type)), args_type_main, false);
   } else {
   if (cpoint_type.is_just_struct()){
@@ -2422,8 +2434,15 @@ Function *FunctionAST::codegen() {
         //Builder->CreateStore(RetVal, get_var_allocation("sret_arg"), false);
         //AllocaInst* sret_arg_allocation = dyn_cast<AllocaInst>(get_var_allocation("sret_arg"));
         std::string sret_arg_name = "sret_arg";
-        Value* sret_ptr = VariableExprAST(emptyLoc, sret_arg_name, *get_variable_type(sret_arg_name)).codegen();
-        Builder->CreateMemCpy(sret_ptr, MaybeAlign(0), RetVal, MaybeAlign(0), getSizeOfStruct(sret_ptr));
+        Value* sret_ptr = get_var_allocation(sret_arg_name);
+        //Value* sret_ptr = VariableExprAST(emptyLoc, sret_arg_name, *get_variable_type(sret_arg_name)).codegen();
+        AllocaInst* temp_var = CreateEntryBlockAlloca(TheFunction, "temp_retvar_sret", RetVal->getType());
+        Builder->CreateStore(RetVal, temp_var);
+        /*std::vector<Value*> Args;
+        Args.push_back(getSizeOfStruct(temp_var));
+        Builder->CreateCall(getFunction("printi"), Args);*/
+        //Builder->CreateCall(getFunction("printi"), std::vector<Value*>({getSizeOfStruct(sret_ptr)})); // for debugging purpose
+        Builder->CreateMemCpy(sret_ptr, MaybeAlign(0), /*RetVal*/ temp_var, MaybeAlign(0), getSizeOfStruct(sret_ptr));
         Builder->CreateRetVoid();
         goto after_ret;
     }

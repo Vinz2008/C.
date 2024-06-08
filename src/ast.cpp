@@ -939,7 +939,7 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     while (CurTok == tok_identifier || CurTok == ':'){
       getNextToken();
     }
-    ArgNames.push_back(std::make_pair("argc", Cpoint_Type(i32_type, false)));
+    ArgNames.push_back(std::make_pair("argc", Cpoint_Type(i32_type)));
     ArgNames.push_back(std::make_pair("argv",  Cpoint_Type(i8_type, true, 2)));
   } else {
   getNextToken();

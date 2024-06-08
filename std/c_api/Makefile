@@ -1,4 +1,7 @@
-CC?=clang
+ifeq ($(CC),cc)
+CC = clang
+endif
+
 SRC := $(wildcard *.c)
 OBJECTS := $(patsubst %.c, %.o, $(SRC))
 TARGET ?= $(shell gcc -dumpmachine)
