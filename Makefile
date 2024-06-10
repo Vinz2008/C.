@@ -113,14 +113,14 @@ gc:
 ifneq ($(OS),Windows_NT)
 	mkdir -p $(shell pwd)/bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
-	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static
+	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static  --target=$(TARGET)
 endif
 else
 #	rm -rf bdwgc_prefix
 #	mkdir bdwgc_prefix
 	mkdir -p bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
-	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static --disable-shared --target=$(TARGET)
+	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static --disable-shared
 endif
 endif
 	+make -C bdwgc
