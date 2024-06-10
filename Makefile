@@ -6,6 +6,7 @@ BINDIR ?= $(DESTDIR)/usr/bin
 PREFIX ?= $(DESTDIR)/usr/local
 NO_OPTI ?= false
 NO_STACK_PROTECTOR ?= false
+TARGET ?= $(shell $(CC) -dumpmachine)
 export CC
 export CXX
 
@@ -119,7 +120,7 @@ else
 #	mkdir bdwgc_prefix
 	mkdir -p bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
-	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static --disable-shared
+	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static --disable-shared --target=$(TARGET)
 endif
 endif
 	+make -C bdwgc
