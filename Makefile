@@ -108,16 +108,21 @@ cpoint-from-c:
 	+make -C tools/from-c $(MAKETARGET)
 
 
+CMAKE_GC?=FALSE
+CMAKE_FLAGS?=
+
 gc:
-#	cd bdwgc && ./autogen.sh && ./configure --enable-cplusplus
+ifeq ($(CMAKE_GC),TRUE)
+	mkdir -p $(shell pwd)/bdwgc_prefix
+	cd bdwgc && cmake -G "Ninja" -DCMAKE_INSTALL_PREFIX=$(shell pwd)/bdwgc_prefix -DBUILD_SHARED_LIBS=OFF $(CMAKE_FLAGS) && cmake --build . --config Release  &&  cmake --build . --target install 
+else
+
 ifneq ($(OS),Windows_NT)
 	mkdir -p $(shell pwd)/bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
 	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static  --host=$(TARGET)
 endif
 else
-#	rm -rf bdwgc_prefix
-#	mkdir bdwgc_prefix
 	mkdir -p bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
 	cd bdwgc && ./autogen.sh && ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static --disable-shared
@@ -125,6 +130,8 @@ endif
 endif
 	+make -C bdwgc
 	make -C bdwgc install
+
+endif
 
 std_lib: gc $(OUTPUTBIN)
 	+make -C std
