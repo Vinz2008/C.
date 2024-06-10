@@ -114,7 +114,8 @@ CMAKE_FLAGS?=
 gc:
 ifeq ($(CMAKE_GC),TRUE)
 	mkdir -p $(shell pwd)/bdwgc_prefix
-	cd bdwgc && cmake -G "Ninja" -DCMAKE_INSTALL_PREFIX=$(shell pwd)/bdwgc_prefix -DBUILD_SHARED_LIBS=OFF $(CMAKE_FLAGS) && cmake --build . --config Release  &&  cmake --build . --target install 
+	mkdir -p bdwgc/build && cd bdwgc/build && cmake -G "Ninja" -DCMAKE_INSTALL_PREFIX=$(shell pwd)/bdwgc_prefix -DBUILD_SHARED_LIBS=OFF $(CMAKE_FLAGS) .. && cmake --build . --config Release  &&  cmake --build . --target install 
+	rm -rf bdwgc/build
 else
 
 ifneq ($(OS),Windows_NT)

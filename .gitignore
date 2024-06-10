@@ -26,7 +26,6 @@ bdwgc_prefix
 cpoint-build
 valgrind-out.txt
 bindings.cpoint
-*.so
 *.mo
 *.test
 *.cpoint.without_shebang
@@ -37,3 +36,4 @@ out.cpoint
 trace.json
 temp_prefix
 *.tar.gz
+bdwgc/build
