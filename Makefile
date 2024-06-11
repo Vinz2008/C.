@@ -111,7 +111,6 @@ cpoint-from-c:
 CMAKE_GC?=FALSE
 CMAKE?=cmake
 CMAKE_FLAGS?=
-LDFLAGS_GC?=
 
 gc:
 ifeq ($(CMAKE_GC),TRUE)
@@ -123,7 +122,7 @@ else
 ifneq ($(OS),Windows_NT)
 	mkdir -p $(shell pwd)/bdwgc_prefix
 ifneq ($(shell test ! -f bdwgc/Makefile || echo 'yes'),yes)	
-	cd bdwgc && ./autogen.sh && LDFLAGS=$(LDFLAGS_GC) ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static  --host=$(TARGET)
+	cd bdwgc && ./autogen.sh &&  ./configure --prefix=$(shell pwd)/bdwgc_prefix --disable-threads  --enable-static  --host=$(TARGET) --with-pic
 endif
 else
 	mkdir -p bdwgc_prefix
