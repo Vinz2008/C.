@@ -11,7 +11,7 @@ SRCDIR=src
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
-CFLAGS = -c -g -Wall
+CFLAGS = -c -g -Wall -std=gnu17
 LDFLAGS = -lclang
 
 ifneq ($(OS),Windows_NT)
