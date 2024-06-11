@@ -166,7 +166,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             in_struct_declaration = true;
             clang_disposeString(clangstr_struct_name);
             break;
-        case CXCursor_FieldDecl:
+        case CXCursor_FieldDecl: {
             CXType field_type = clang_getCursorType(cursor);
             if (!pass_block && !is_in_typedef){
             CXString field_type_name = clang_getTypeSpelling(field_type);
@@ -177,6 +177,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(field_type_name);
             }
             break;
+        }
         case CXCursor_TypedefDecl:
             close_previous_blocks();
             CXString clangstr_new_type_name = clang_getCursorSpelling(cursor);
