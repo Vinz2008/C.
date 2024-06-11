@@ -48,20 +48,21 @@ const char* get_type_string_from_type_libclang(CXType type){
         case CXType_SChar:
         case CXType_UChar:
             return "i8";
-        case CXType_Pointer:
+        case CXType_Pointer: {
             CXType pointee_type = clang_getPointeeType(type);
             const char* pointee_type_str = get_type_string_from_type_libclang(pointee_type);
             char* ptr_str = " ptr";
             char* pointer_type = malloc((strlen(pointee_type_str) + strlen(ptr_str)) * sizeof(char));
             sprintf(pointer_type, "%s%s", pointee_type_str, ptr_str);
             return pointer_type;
+        }
         case CXType_Void:
             return "void";
         case CXType_Bool:
             return "u8";
         case CXType_Long:
             return "i64";
-        case CXType_Elaborated:
+        case CXType_Elaborated: {
             CXString clangstr_type_spelling = clang_getTypeSpelling(type);
             const char* type_spelling = clang_getCString(clangstr_type_spelling);
             if (is_typedefed_type((char*)type_spelling)){
@@ -72,6 +73,7 @@ const char* get_type_string_from_type_libclang(CXType type){
             }
             clang_disposeString(clangstr_type_spelling);
             return type_spelling;
+        }
         case CXType_Enum:
             return "enum <insert name>"; // TODO
         case CXType_LongDouble:
