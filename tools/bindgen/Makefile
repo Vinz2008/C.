@@ -19,11 +19,15 @@ UNAME := $(shell uname)
 ifeq ($(UNAME),Darwin)
 	CFLAGS += $(shell llvm-config --cflags)
 endif
+
+ifneq (, $(shell which lsb_release))
 DISTRO=$(shell lsb_release -si)
 ifeq ($(DISTRO),Ubuntu)
 	CFLAGS += -I/usr/lib/llvm-14/include/ 
 	LDFLAGS += -L/usr/lib/llvm-14/lib/
 endif
+endif
+
 endif
 
 all: $(OUTPUTBIN)
