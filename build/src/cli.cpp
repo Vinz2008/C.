@@ -77,6 +77,9 @@ void compileFile(std::string target, std::string arguments, std::string path, st
     if (fs::exists("../cpoint")){
         compiler = "../cpoint";
     }
+    if (fs::exists("../../cpoint")){
+        compiler = "../../cpoint";
+    }
     std::string cmd = compiler + " -c " + arguments + " " + path + " ";
     fs::path path_fs{ path };
     if (out_path == ""){

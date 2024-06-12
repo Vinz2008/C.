@@ -172,7 +172,10 @@ void printHelp(){
 
 int main(int argc, char** argv){
 
-    std::vector<std::string> needed_exes = {"clang", "cpoint"}; // TODO : support also ../cpoint as compiler
+    std::vector<std::string> needed_exes = {"clang"};
+    if (!fs::exists("../cpoint") && !fs::exists("../../cpoint")){
+        needed_exes.push_back("cpoint");
+    }
     for (int i = 0; i < needed_exes.size(); i++){
         if (!doesExeExist(needed_exes.at(i))){
             std::cout << "Couldn't find the " << needed_exes.at(i) << " exe" << std::endl;

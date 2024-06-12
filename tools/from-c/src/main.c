@@ -117,7 +117,7 @@ enum CXChildVisitResult getFirstChildVisitor(CXCursor c, CXCursor parent, CXClie
     struct Result {
         CXCursor child;
         bool found;
-    } result;
+    } /*result*/;
     struct Result *r = (struct Result*)client_data;
     r->found = true;
     r->child = c;
@@ -195,7 +195,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(cxString);
         }
         CXString cxString = clang_getTokenSpelling(unit, exprTokens[numLHSTokens]);
-        char* ret = clang_getCString(cxString);
+        const char* ret = clang_getCString(cxString);
         printf("op : %s\n", ret);
         //fprintf(outf, "%s\n", ret);
         fprintf(outf, "%s", ret);
