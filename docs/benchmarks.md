@@ -35,7 +35,7 @@ C -O3 (gcc 13.2.1) : 3.161s
 Rust release (rustc 1.77.1) : 2.712s  
 Rust debug (rustc 1.77.1) : 9.577s  
 Nim 2.0.2 release : 3.187s  
-Swift (swiftc 5.10) : 7.837s
+Swift (swiftc 5.10) : 7.837s  
 Go 1.22.2 : 3.164s  
 LuaJIT 2.1.1702233742 : 2.06s  
 V 0.4.5 : 2.727s    
