@@ -32,7 +32,7 @@ C. no opti : 2.716s
 C. -O3 : 2.711s  
 C no opti (gcc 13.2.1) : 3.177s  
 C -O3 (gcc 13.2.1) : 3.161s  
-Rust release (rustc 1.77.1) : 2.712s 
+Rust release (rustc 1.77.1) : 2.712s  
 Rust debug (rustc 1.77.1) : 9.577s  
 Nim 2.0.2 release : 3.187s  
 Swift (swiftc 5.10) : 7.837s
