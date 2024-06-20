@@ -12,7 +12,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/TargetRegistry.h"
-#if LLVM_VERSION_GE(17, 0)
+#if LLVM_VERSION_MAJOR <= 17
 #include "llvm/Support/Host.h"
 #else 
 #include "llvm/TargetParser/Host.h"
