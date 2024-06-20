@@ -12,7 +12,11 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/TargetRegistry.h"
+#if LLVM_VERSION_GE(17, 0)
 #include "llvm/Support/Host.h"
+#else 
+#include "llvm/TargetParser/Host.h"
+#endif
 #include "llvm/Support/FileSystem.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"

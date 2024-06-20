@@ -24,15 +24,15 @@ CXXFLAGS = -c -g -Wall -Wno-sign-compare
 # change it when it is changed with the llvm version
 WINDOWS_CXXFLAGS = -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 
-ifeq ($(OS),Windows_NT)
-CXXFLAGS += $(WINDOWS_CXXFLAGS)
-else
+# ifeq ($(OS),Windows_NT)
+# CXXFLAGS += $(WINDOWS_CXXFLAGS)
+# else
 ifneq (,$(findstring mingw,$(CXX)))
 CXXFLAGS += $(WINDOWS_CXXFLAGS)
 else
 CXXFLAGS += $(shell llvm-config --cxxflags)
 endif
-endif
+#endif
 
 ifeq ($(NO_OPTI),true)
 CXXFLAGS += -O0
@@ -49,10 +49,10 @@ CXXFLAGS += -DDEFAULT_PREFIX_PATH=\"$(PREFIX)\"
 endif
 
 ifeq ($(OS), Windows_NT)
-LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-16 -lstdc++ -lintl
+LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-17 -lstdc++ -lintl
 else
 ifneq (,$(findstring mingw,$(CXX)))
-LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-16 -lstdc++ -lintl
+LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-17 -lstdc++ -lintl
 else
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 endif
