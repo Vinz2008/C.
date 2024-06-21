@@ -587,9 +587,10 @@ Value* ConstantArrayExprAST::codegen(){
 Value* ConstantStructExprAST::codegen(){
     std::vector<Constant*> structMembersVal;
     for (int i = 0; i < StructMembers.size(); i++){
+        Cpoint_Type structMemberType = StructMembers.at(i)->get_type();
         Value* Vtemp = StructMembers.at(i)->codegen();
         if (get_type_llvm(StructDeclarations[struct_name]->members.at(i).second) != Vtemp->getType()){
-            convert_to_type(get_cpoint_type_from_llvm(Vtemp->getType()), get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), Vtemp);
+            convert_to_type(/*get_cpoint_type_from_llvm(Vtemp->getType())*/ structMemberType, get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), Vtemp);
         }
         Constant* constant;
         if (! (constant = dyn_cast<Constant>(Vtemp))){
@@ -845,6 +846,7 @@ void string_vector_erase(std::vector<std::string>& strings, std::string string){
 Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction){
     // For now consider by default it will compare ints
     AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
+    Cpoint_Type var_type = NamedValues[matchVar]->type;
     Value* val_from_var = Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, "load_match_const");
     bool is_bool = false;
     Log::Info() << "MatchNotEnumCodegen Alloca->getAllocatedType() : " << get_cpoint_type_from_llvm(Alloca->getAllocatedType()) << "\n";
@@ -854,7 +856,7 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     if (is_bool){
         val_from_var = Builder->CreateZExt(val_from_var, get_type_llvm(Cpoint_Type(i32_type)), "cast_bool_match");
     } else if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(i32_type))){
-        convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(i32_type)), val_from_var);
+        convert_to_type(/*get_cpoint_type_from_llvm(val_from_var->getType())*/ var_type, /*get_type_llvm(*/Cpoint_Type(i32_type)/*)*/, val_from_var);
     }
 
     // for testing
@@ -1221,9 +1223,10 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             if (!index){
                 return LogErrorV(emptyLoc, "couldn't find index for array %s", BinExpr->LHS->to_string().c_str());
             }
+            Cpoint_Type index_type = index->get_type();
             auto indexVal = index->codegen();
             if (indexVal->getType() != get_type_llvm(i64_type)){
-                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(i64_type), indexVal) ;
+                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(i64_type), indexVal) ; // TODO : replace the get_cpoint_type_from_llvm to index_type
             }
             Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
             std::vector<Value*> indexes = { zero, indexVal};
@@ -1675,7 +1678,8 @@ Value *BinaryExprAST::codegen() {
   if (Op.at(0) == '.'){
     return getStructMember(std::move(LHS), std::move(RHS));
   }
-  auto RHSCloned = RHS->clone();
+  Cpoint_Type LHS_type = LHS->get_type();
+  Cpoint_Type RHS_type = RHS->get_type();
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
@@ -1695,7 +1699,7 @@ Value *BinaryExprAST::codegen() {
   }
   if (L->getType() != R->getType()){
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
-    convert_to_type(get_cpoint_type_from_llvm(R->getType()) /*RHSCloned->get_type()*/, L->getType(), R); // TODO : uncomment for unsigned types support
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()) /*RHS_type*/, L->getType(), R); // TODO : uncomment for unsigned types support
   }
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
   if (Op == "&&"){
@@ -1739,11 +1743,11 @@ Value *BinaryExprAST::codegen() {
   case '*':
     return operators::LLVMCreateMul(L, R);
   case '%':
-    return operators::LLVMCreateRem(L, R);
+    return operators::LLVMCreateRem(L, R/*, RHS_type*/);
   case '<':
     return operators::LLVMCreateSmallerThan(L, R);
   case '/':
-    return operators::LLVMCreateDiv(L, R);
+    return operators::LLVMCreateDiv(L, R, LHS_type);
   case '>':
     return operators::LLVMCreateGreaterThan(L, R);
   case '^':

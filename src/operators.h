@@ -1,6 +1,7 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/IRBuilder.h"
+#include "types.h"
 
 using namespace llvm;
 
@@ -8,8 +9,8 @@ namespace operators {
     Value* LLVMCreateAdd(Value* L, Value* R);
     Value* LLVMCreateSub(Value* L, Value* R);
     Value* LLVMCreateMul(Value* L, Value* R);
-    Value* LLVMCreateDiv(Value* L, Value* R);
-    Value* LLVMCreateRem(Value* L, Value* R);
+    Value* LLVMCreateDiv(Value* L, Value* R, Cpoint_Type type);
+    Value* LLVMCreateRem(Value* L, Value* R/*, Cpoint_Type type*/);
     Value* LLVMCreateCmp(Value* L, Value* R);
     Value* LLVMCreateNotEqualCmp(Value* L, Value* R);
     Value* LLVMCreateGreaterThan(Value* L, Value* R);

@@ -33,8 +33,8 @@ Value* LLVMCreateMul(Value* L, Value* R){
     return Builder->CreateFMul(L, R, "fmultmp");
 }
 
-Value* LLVMCreateDiv(Value* L, Value* R){
-    Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
+Value* LLVMCreateDiv(Value* L, Value* R, Cpoint_Type type){
+    //Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
     if (!type.is_decimal_number_type()){
       if (type.is_signed()){
         return Builder->CreateSDiv(L, R, "sdivtmp");
@@ -45,7 +45,7 @@ Value* LLVMCreateDiv(Value* L, Value* R){
     return Builder->CreateFDiv(L, R, "fdivtmp");
 }
 
-Value* LLVMCreateRem(Value* L, Value* R){
+Value* LLVMCreateRem(Value* L, Value* R/*, Cpoint_Type type*/){ // TODO : uncomment
     Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
     if (!type.is_decimal_number_type()){
       if (type.is_signed()){
