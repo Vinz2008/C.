@@ -1269,15 +1269,15 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             is_global = true;
         }
         Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
+        if (ValDeclared->getType() != get_type_llvm(cpoint_type)){
+            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(cpoint_type), ValDeclared);
+        }
         if (is_global){
             Builder->CreateStore(ValDeclared, GlobalVariables[VarExpr->Name]->globalVar);
         } else {
         AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
         if (ValDeclared->getType() == get_type_llvm(Cpoint_Type(void_type))){
             return LogErrorV(emptyLoc, "Assigning to a variable a void value");
-        }
-        if (ValDeclared->getType() != get_type_llvm(cpoint_type)){
-            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(cpoint_type), ValDeclared);
         }
         Builder->CreateStore(ValDeclared, Alloca);
         // TODO : remove all the NamedValues redeclaration
@@ -1675,6 +1675,7 @@ Value *BinaryExprAST::codegen() {
   if (Op.at(0) == '.'){
     return getStructMember(std::move(LHS), std::move(RHS));
   }
+  auto RHSCloned = RHS->clone();
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
   if (!L || !R)
@@ -1694,7 +1695,7 @@ Value *BinaryExprAST::codegen() {
   }
   if (L->getType() != R->getType()){
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
-    convert_to_type(get_cpoint_type_from_llvm(R->getType()), L->getType(), R);
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()) /*RHSCloned->get_type()*/, L->getType(), R); // TODO : uncomment for unsigned types support
   }
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
   if (Op == "&&"){
