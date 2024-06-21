@@ -14,7 +14,7 @@
 #include "codegen.h"
 #include "config.h"
 #include "preprocessor.h"
-#include "builtin_macros.h"
+#include "macros.h"
 
 extern double NumVal;
 extern int CurTok;

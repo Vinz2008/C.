@@ -29,6 +29,11 @@
 #include "abi.h"
 #include "members.h"
 #include "types.h"
+#include "mangling.h"
+#include "reflection.h"
+#include "vars.h"
+#include "macros.h"
+#include "match.h"
 
 #include <typeinfo>
 #include <cxxabi.h>
@@ -58,12 +63,12 @@ std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
 std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 
-std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen; // contains the type of template in function call
+std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen; // contains the type of template in function call
 std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have multiple templates in the future ?
 
 std::vector<std::unique_ptr<ExternToGenerate>> externFunctionsToGenerate;
 
-std::vector<std::unique_ptr<FunctionAST>> closuresToGenerate;
+//std::vector<std::unique_ptr<FunctionAST>> closuresToGenerate;
 
 
 extern std::vector<std::unique_ptr<TestAST>> testASTNodes;
@@ -94,7 +99,7 @@ extern std::string TargetTriple;
 
 extern bool is_in_extern;
 
-int closure_number = 0;
+//int closure_number = 0;
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 
@@ -102,7 +107,7 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
 
 //bool should_pass_struct_byval(Cpoint_Type cpoint_type);
 
-std::string struct_function_mangling(std::string struct_name, std::string name){
+/*std::string struct_function_mangling(std::string struct_name, std::string name){
   std::string mangled_name = struct_name + "__" + name;
   return mangled_name;
 }
@@ -110,9 +115,9 @@ std::string struct_function_mangling(std::string struct_name, std::string name){
 std::string module_function_mangling(std::string module_name, std::string function_name){
   std::string mangled_name = module_name + "___" + function_name;
   return mangled_name;
-}
+}*/
 
-Value* getTypeId(Value* valueLLVM){
+/*Value* getTypeId(Value* valueLLVM){
     Type* valType = valueLLVM->getType();
     Cpoint_Type cpoint_type = get_cpoint_type_from_llvm(valType);
     return ConstantInt::get(*TheContext, APInt(32, (uint64_t)cpoint_type.type));
@@ -164,7 +169,7 @@ Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr
         return refletionInstrGetMemberNb(std::move(Args));
     }
     return LogErrorV(emptyLoc, "Unknown Reflection Instruction");
-}
+}*/
 
 Function *getFunction(std::string Name) {
   // First, see if the function has already been added to the current module.
@@ -194,7 +199,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarNa
                            VarName);
 }
 
-static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Cpoint_Type type){
+AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Cpoint_Type type){
     return CreateEntryBlockAlloca(TheFunction, VarName, get_type_llvm(type));
 }
 
@@ -218,7 +223,7 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 }
 
 
-bool is_var_local(std::string name){
+/*bool is_var_local(std::string name){
     if (NamedValues[name]){
         return true;
     } else if (GlobalVariables[name]){
@@ -261,15 +266,15 @@ Value* get_var_allocation(std::string name){
     } else {
         return nullptr;
     }
-}
+}*/
 
-std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type){
+/*std::string get_struct_template_name(std::string struct_name, Cpoint_Type type){
     //return struct_name + "____" + type;
     return struct_name + "____" + type.create_mangled_name();
-}
+}*/
 
 
-bool isArgString(ExprAST* E){
+/*bool isArgString(ExprAST* E){
     if (dynamic_cast<StringExprAST*>(E)){
         Log::Info() << "StringExpr in Print Macro codegen" << "\n";
         return true;
@@ -349,18 +354,6 @@ Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     std::string format = "%s";
     bool is_string_found = false;
     is_string_found = isArgString(VarDbg.get());
-    /*if (dynamic_cast<StringExprAST*>(VarDbg.get())){
-        is_string_found = true;
-    } else if (dynamic_cast<VariableExprAST*>(VarDbg.get())){
-        Log::Info() << "Variable in Dbg Macro codegen" << "\n";
-        auto varTemp = dynamic_cast<VariableExprAST*>(VarDbg.get());
-        auto varTempCpointType = varTemp->type;
-        Log::Info() << "type : " << varTempCpointType << "\n";
-        if (varTempCpointType.type == i8_type && varTempCpointType.is_ptr){
-            Log::Info() << "Variable in Dbg Macro codegen is string" << "\n";
-            is_string_found = true;
-        }
-    }*/
     auto valueCopyCpointType = get_cpoint_type_from_llvm(valueCopy->getType());
     Log::Info() << "valueCopyCpointType type : " << valueCopyCpointType.type << "\n";
     if (is_string_found){
@@ -379,7 +372,7 @@ Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
     
     auto call = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(Args), Cpoint_Type());
     return call->codegen();
-}
+}*/
 
 // TODO : change name of these function to be with underscodes ?
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -502,9 +495,6 @@ Value *VariableExprAST::codegen() {
   if (/*type == Cpoint_Type() &&*/ !var_exists(Name) /*NamedValues[Name] == nullptr*/) {
     return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
   }
-  /*AllocaInst *A = NamedValues[Name]->alloca_inst;
-  if (!A)
-    return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());*/
   Value* ptr = get_var_allocation(Name);
   Cpoint_Type var_type = *get_variable_type(Name); 
   Log::Info() << "loading var " << Name << " of type " << type << "\n";
@@ -828,22 +818,19 @@ Value* EnumCreation::codegen(){
     return ConstantInt::get(*TheContext, llvm::APInt(64, index, true));
 }
 
-void string_vector_erase(std::vector<std::string>& strings, std::string string){
+/*void string_vector_erase(std::vector<std::string>& strings, std::string string){
     std::vector<std::string>::iterator iter = strings.begin();
-    while (iter != strings.end())
-    {
+    while (iter != strings.end()){
         if (*iter == string){
             iter = strings.erase(iter);
-        }
-        else {
+        } else {
            ++iter;
         }
     }
+}*/
 
-}
 
-
-Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction){
+/*Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction){
     // For now consider by default it will compare ints
     AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
     Cpoint_Type var_type = NamedValues[matchVar]->type;
@@ -856,13 +843,14 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     if (is_bool){
         val_from_var = Builder->CreateZExt(val_from_var, get_type_llvm(Cpoint_Type(i32_type)), "cast_bool_match");
     } else if (Alloca->getAllocatedType() != get_type_llvm(Cpoint_Type(i32_type))){
-        convert_to_type(/*get_cpoint_type_from_llvm(val_from_var->getType())*/ var_type, /*get_type_llvm(*/Cpoint_Type(i32_type)/*)*/, val_from_var);
+        //convert_to_type(get_cpoint_type_from_llvm(val_from_var->getType()), get_type_llvm(Cpoint_Type(i32_type)), val_from_var);
+        convert_to_type(var_type, Cpoint_Type(i32_type), val_from_var);
     }
 
     // for testing
-    /*std::vector<Value*> Args;
-    Args.push_back(val_from_var);
-    Builder->CreateCall(getFunction("printi"), Args);*/
+    //std::vector<Value*> Args;
+    //Args.push_back(val_from_var);
+    //Builder->CreateCall(getFunction("printi"), Args);
 
     auto switch_inst = Builder->CreateSwitch(val_from_var, nullptr, matchCases.size());
     BasicBlock* defaultDestBB;
@@ -875,9 +863,9 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
             defaultDestBB = BasicBlock::Create(*TheContext, "default_dest", TheFunction);
             Builder->SetInsertPoint(defaultDestBB);
             matchCaseTemp->Body->codegen();
-            /*for (int j = 0; j < matchCaseTemp->Body.size(); j++){
-                matchCaseTemp->Body.at(j)->codegen();
-            }*/
+            //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
+            //    matchCaseTemp->Body.at(j)->codegen();
+            //}
             Builder->CreateBr(AfterBB);
             switch_inst->setDefaultDest(defaultDestBB);
         } else {
@@ -919,9 +907,9 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
             }
             Log::Info() << "match val after converting : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
             matchCaseTemp->Body->codegen();
-            /*for (int j = 0; j < matchCaseTemp->Body.size(); j++){
-                matchCaseTemp->Body.at(j)->codegen();
-            }*/
+            //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
+            //    matchCaseTemp->Body.at(j)->codegen();
+            //}
             Builder->CreateBr(AfterBB);
             ConstantInt* constint_val = nullptr;
             Log::Info() << "value id : " << val->getValueID() << "\n";
@@ -937,9 +925,9 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
         defaultDestBB = BasicBlock::Create(*TheContext, "default_dest_unreachable", TheFunction);
         Builder->SetInsertPoint(defaultDestBB);
         // for testing
-        /*std::vector<std::unique_ptr<ExprAST>> Args;
-        Args.push_back(std::make_unique<StringExprAST>("not accessible"));
-        CallExprAST(emptyLoc, "printstr", std::move(Args), Cpoint_Type(double_type)).codegen();*/
+        //std::vector<std::unique_ptr<ExprAST>> Args;
+        //Args.push_back(std::make_unique<StringExprAST>("not accessible"));
+        //CallExprAST(emptyLoc, "printstr", std::move(Args), Cpoint_Type(double_type)).codegen();
         Builder->CreateBr(AfterBB);
         switch_inst->setDefaultDest(defaultDestBB);
     }
@@ -950,10 +938,10 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     Builder->SetInsertPoint(AfterBB);
 
     return Constant::getNullValue(get_type_llvm(double_type));
-}
+}*/
 
 // TODO : refactor this code in multiple functions
-Value* MatchExprAST::codegen(){
+/*Value* MatchExprAST::codegen(){
     Function *TheFunction = Builder->GetInsertBlock()->getParent();
     Value* tag;
     Value* tag_ptr;
@@ -990,9 +978,9 @@ Value* MatchExprAST::codegen(){
         if (matchCaseTemp->is_underscore){
             //Builder->CreateBr(AfterMatch);
             matchCaseTemp->Body->codegen();
-            /*for (int i = 0; i < matchCaseTemp->Body.size(); i++){
-                matchCaseTemp->Body.at(i)->codegen();
-            }*/
+            // for (int i = 0; i < matchCaseTemp->Body.size(); i++){
+            //     matchCaseTemp->Body.at(i)->codegen();
+            // }
             membersNotFound.clear();
             break;
         } else {
@@ -1033,9 +1021,9 @@ Value* MatchExprAST::codegen(){
         }
         }
         matchCaseTemp->Body->codegen();
-        /*for (int i = 0; i < matchCaseTemp->Body.size(); i++){
-            matchCaseTemp->Body.at(i)->codegen();
-        }*/
+        // for (int i = 0; i < matchCaseTemp->Body.size(); i++){
+        //     matchCaseTemp->Body.at(i)->codegen();
+        // }
         Builder->CreateBr(AfterMatch);
         //Builder->CreateBr(ElseBB);
         //TheFunction->getBasicBlockList().push_back(ElseBB);
@@ -1056,7 +1044,7 @@ Value* MatchExprAST::codegen(){
     TheFunction->insert(TheFunction->end(), AfterMatch);
     Builder->SetInsertPoint(AfterMatch);
     return Constant::getNullValue(get_type_llvm(double_type));
-}
+}*/
 
 Value* DeferExprAST::codegen(){
     //deferExprs.push(std::move(Expr));
@@ -1088,7 +1076,7 @@ void endScope(){
 }
 
 
-StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_vars){
+/*StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_vars){
     std::vector<Type*> structElements;
     for (int i = 0; i < captured_vars.size(); i++){
         Cpoint_Type* temp_type = get_variable_type(captured_vars.at(i));
@@ -1126,9 +1114,9 @@ Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars, Stru
     }
 
     return structAlloca;
-}
+}*/
 
-Value* ClosureAST::codegen(){
+/*Value* ClosureAST::codegen(){
     std::string closure_name = "closure" + std::to_string(closure_number);
     closure_number++;
     auto Proto = std::make_unique<PrototypeAST>(this->loc, closure_name, ArgNames, return_type, false, 0U, false, false, "", true);
@@ -1163,7 +1151,7 @@ Value* ClosureAST::codegen(){
         return function_with_trampoline;
     }
     return f;
-}
+}*/
 
 void assignUnionMember(Value* union_ptr, Value* val, Cpoint_Type member_type){
     if (val->getType() != get_type_llvm(member_type)){
@@ -2201,13 +2189,13 @@ void TestAST::codegen(){
     }
 }*/
 
-void generateClosures(){
+/*void generateClosures(){
     if (!closuresToGenerate.empty()){
         for (int i = 0; i < closuresToGenerate.size(); i++){
             closuresToGenerate.at(i)->codegen();
         }
     }
-}
+}*/
 
 Function *PrototypeAST::codegen() {
   std::vector<Type *> type_args;

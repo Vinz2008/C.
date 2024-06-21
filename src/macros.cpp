@@ -1,4 +1,4 @@
-#include "builtin_macros.h"
+#include "macros.h"
 #include <memory>
 #include <ctime>
 
@@ -177,4 +177,104 @@ std::unique_ptr<ExprAST> generate_assume_macro(std::vector<std::unique_ptr<ExprA
     }
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_assume", std::move(Args), Cpoint_Type());
+}
+
+bool isArgString(ExprAST* E){
+    if (dynamic_cast<StringExprAST*>(E)){
+        Log::Info() << "StringExpr in Print Macro codegen" << "\n";
+        return true;
+    } else if (dynamic_cast<VariableExprAST*>(E)){
+        Log::Info() << "Variable in Print Macro codegen" << "\n";
+        auto varTemp = dynamic_cast<VariableExprAST*>(E);
+        auto varTempCpointType = varTemp->type;
+        if (varTempCpointType.type == i8_type && varTempCpointType.is_ptr){
+            Log::Info() << "Variable in Print Macro codegen is string" << "\n";
+            return true;
+        }
+    } else if (dynamic_cast<BinaryExprAST*>(E)){
+        auto binTemp = dynamic_cast<BinaryExprAST*>(E);
+        // TODO
+        if (binTemp->Op != "["){
+            return false;
+        }
+        // TODO : create a get_cpoint_type for every exprs so we have the exact type for anything exprs
+        // will need to have a cpoint_type or an optional return because it can fail to detect the type and it will need llvm, ex : adding two generic function so it can't detect what type will be returned by this binary expr
+        return false;
+    }
+    return false;
+}
+
+Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
+    std::vector<std::unique_ptr<ExprAST>> PrintfArgs;
+    bool is_error = false;
+    if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
+        // if it is not a string it is stderr, so it is a eprint or eprintln
+        is_error = true;
+        //return LogErrorV(emptyLoc, "First argument of the print macro is not a constant string"); // TODO : pass loc to this function ?
+    }
+    int format_pos = (is_error) ? 1 : 0;
+    auto print_format_expr = dynamic_cast<StringExprAST*>(Args.at(format_pos).get());
+    std::string print_format = print_format_expr->str;
+    std::string generated_printf_format = "";
+    int arg_nb = format_pos+1;
+    for (int i = 0; i < print_format.size(); i++){
+        if (print_format.at(i) == '{' && print_format.at(i+1) && '}'){
+            bool is_string_found = false;
+            is_string_found = isArgString(Args.at(arg_nb).get());
+            if (is_string_found){
+                generated_printf_format += "%s";
+            } else {
+            Value* valueTemp = Args.at(arg_nb)->clone()->codegen();
+            Type* arg_type = valueTemp->getType();
+            Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
+            Cpoint_Type arg_type_new = Args.at(arg_nb)->get_type(); // TODO
+            Log::Info() << "arg_type_new : " << arg_type_new << " arg_type_old : " << arg_cpoint_type << "\n";
+            std::string temp_format = arg_cpoint_type.to_printf_format();
+            if (temp_format == ""){
+                return LogErrorV(emptyLoc, "Not Printable type in print macro");
+            }
+            generated_printf_format += temp_format; 
+            }
+            arg_nb++;
+            i++;
+        } else {
+            generated_printf_format += print_format.at(i);
+        }
+    }
+    if (is_error){
+        PrintfArgs.push_back(std::move(Args.at(0)));
+    }
+    PrintfArgs.push_back(std::make_unique<StringExprAST>(generated_printf_format));
+    for (int i = format_pos+1; i < Args.size(); i++){
+        PrintfArgs.push_back(std::move(Args.at(i)));
+    }
+
+    auto call = std::make_unique<CallExprAST>(emptyLoc, is_error ? "fprintf" : "printf", std::move(PrintfArgs), Cpoint_Type());
+    return call->codegen();
+}
+
+Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg){
+    std::vector<std::unique_ptr<ExprAST>> Args;
+    auto valueCopy = VarDbg->codegen();
+    std::string format = "%s";
+    bool is_string_found = false;
+    is_string_found = isArgString(VarDbg.get());
+    auto valueCopyCpointType = get_cpoint_type_from_llvm(valueCopy->getType());
+    Log::Info() << "valueCopyCpointType type : " << valueCopyCpointType.type << "\n";
+    if (is_string_found){
+        format = "\"%s\"";
+    } else {
+        format = valueCopyCpointType.to_printf_format();
+        if (format.find("%s") != std::string::npos){
+            format = "\"" + format + "\"";
+        }
+    }
+    if (format == ""){
+        return LogErrorV(emptyLoc, "Not Printable type in debug macro");
+    }
+    Args.push_back(std::make_unique<StringExprAST>(VarDbg->to_string() + " = " + format + "\n"));
+    Args.push_back(std::move(VarDbg));
+    
+    auto call = std::make_unique<CallExprAST>(emptyLoc, "printf", std::move(Args), Cpoint_Type());
+    return call->codegen();
 }

@@ -13,3 +13,6 @@ std::unique_ptr<ExprAST> generate_dbg_macro(std::vector<std::unique_ptr<ExprAST>
 std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro, bool is_println, bool is_error);
 std::unique_ptr<ExprAST> generate_unreachable_macro();
 std::unique_ptr<ExprAST> generate_assume_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro);
+
+Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args);
+Value* DbgMacroCodegen(std::unique_ptr<ExprAST> VarDbg);
