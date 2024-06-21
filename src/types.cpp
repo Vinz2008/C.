@@ -402,16 +402,21 @@ Constant* from_val_to_constant_infer(Value* val){
 }
 
 
+bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
+    Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
+    return convert_to_type(typeFrom, typeTo_cpoint, val);
+}
+
 // TODO : have multiple version of this function with args : Cpoint_Type and Cpoint_Type, Type* and Type*, Cpoint_type and Type*, just with differences like :
 // Cpoint_Type and Type* is just calling the Cpoint_Type and Cpoint_Type one after calling get_cpoint_type_from_llvm on the Type*
 // it will make the function more optimised in a lot of cases 
-bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
+bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &val){
     // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
-  Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
+  //Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
   Log::Info() << "typeFrom : " << typeFrom << "\n";
   Log::Info() << "typeTo : " << typeTo_cpoint << "\n";
-  Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";
+  //Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";
   if (typeFrom.is_array && typeTo_cpoint.is_ptr){
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
     Log::Info() << "from array to ptr TEST typeFrom : " << typeFrom << "\n";
@@ -426,14 +431,14 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
   }
   if (typeFrom.is_ptr && !typeTo_cpoint.is_ptr){
     Log::Info() << "PtrToInt" << "\n";
-    val = Builder->CreatePtrToInt(val, typeTo, "ptrtoint_cast");
+    val = Builder->CreatePtrToInt(val, get_type_llvm(typeTo_cpoint), "ptrtoint_cast");
     return true;
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
     if (typeFrom.type == double_type || typeFrom.type ==  float_type){
         val = Builder->CreateFPToUI(val, get_type_llvm(Cpoint_Type(i32_type)), "ui_to_fp_inttoptr");
     }
-    val = Builder->CreateIntToPtr(val, typeTo, "inttoptr_cast");
+    val = Builder->CreateIntToPtr(val, get_type_llvm(typeTo_cpoint), "inttoptr_cast");
     return true;
   }
   if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){
@@ -447,50 +452,50 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
         if (typeFrom.type == double_type && typeTo_cpoint.type == float_type){
             Log::Info() << "From double to float" << "\n";
             //val = Builder->CreateFPExt(val, typeTo, "cast");
-            val = Builder->CreateFPTrunc(val, typeTo, "cast");
+            val = Builder->CreateFPTrunc(val, get_type_llvm(typeTo_cpoint), "cast");
             return true;
         } else if (typeFrom.type == float_type && typeTo_cpoint.type == double_type){
             Log::Info() << "From float to double" << "\n";
             //val = Builder->CreateFPTrunc(val, typeTo, "cast");
-            val = Builder->CreateFPExt(val, typeTo, "cast");
+            val = Builder->CreateFPExt(val, get_type_llvm(typeTo_cpoint), "cast");
             return true;
         }
         return false;
     } else if (typeTo_cpoint.is_signed()){
       Log::Info() << "From float/double to signed int" << "\n";
-      val = Builder->CreateFPToUI(val, typeTo, "cast"); // change this to signed int conversion. For now it segfaults
+      val = Builder->CreateFPToUI(val, get_type_llvm(typeTo_cpoint), "cast"); // change this to signed int conversion. For now it segfaults
       return true;
     } else if (typeTo_cpoint.is_unsigned()){
       Log::Info() << "From float/double to unsigned int" << "\n";
-      val = Builder->CreateFPToUI(val, typeTo, "cast");
+      val = Builder->CreateFPToUI(val, get_type_llvm(typeTo_cpoint), "cast");
       return true;
     }
     return false;
   }
   int nb_bits_type_from = -1;
   int nb_bits_type_to = -1;
-  if (typeTo == Type::getDoubleTy(*TheContext) || typeTo == Type::getFloatTy(*TheContext)){
+  if (typeTo_cpoint.type == double_type || typeTo_cpoint.type == float_type){
         Log::Info() << "is_signed typeFrom.type " << typeFrom.type << " : " << typeFrom.is_signed() << "\n";
         if (typeFrom.is_signed()){
             Log::Info() << "SIToFP\n";
-            val = Builder->CreateSIToFP(val, typeTo, "sitofp_cast");
+            val = Builder->CreateSIToFP(val, get_type_llvm(typeTo_cpoint), "sitofp_cast");
         } else {
-            val = Builder->CreateUIToFP(val, typeTo, "uitofp_cast");
+            val = Builder->CreateUIToFP(val, get_type_llvm(typeTo_cpoint), "uitofp_cast");
         }
         return true;
     } else if ((nb_bits_type_from = typeFrom.get_number_of_bits()) != -1 && nb_bits_type_from != (nb_bits_type_to = typeTo_cpoint.get_number_of_bits())){
         if (nb_bits_type_from < nb_bits_type_to){
             if (typeFrom.is_signed()){
                 Log::Info() << "Sext cast" << "\n";
-                val = Builder->CreateSExt(val, typeTo, "sext_cast");
+                val = Builder->CreateSExt(val, get_type_llvm(typeTo_cpoint), "sext_cast");
             } else {
                 Log::Info() << "Zext cast" << "\n";
-                val = Builder->CreateZExt(val, typeTo, "zext_cast");
+                val = Builder->CreateZExt(val, get_type_llvm(typeTo_cpoint), "zext_cast");
             }
             return true;
         } else {
             Log::Info() << "Trunc cast" << "\n";
-            val = Builder->CreateTrunc(val, typeTo, "trunc_cast");
+            val = Builder->CreateTrunc(val, get_type_llvm(typeTo_cpoint), "trunc_cast");
             return true;
         }
     }
