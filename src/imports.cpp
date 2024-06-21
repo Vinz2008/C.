@@ -38,7 +38,7 @@ public:
     ArgVarImport(const std::string &name, int type) : name(name), type(type) {}
 };
 
-void import_error(const char* format, ...){
+static void import_error(const char* format, ...){
     std::va_list args;
     va_start(args, format);
     fprintf(stderr, "\e[0;31m" /*red*/ "Error in imports\n" /*reset*/ "\e[0m");
@@ -49,7 +49,7 @@ void import_error(const char* format, ...){
     exit(1);
 }
 
-int get_nb_lines(std::ifstream& file_code, std::string filename){
+static int get_nb_lines(std::ifstream& file_code, std::string filename){
     int numLines = 0;
     file_code.open(filename);
     std::string unused;
@@ -64,7 +64,7 @@ static void skip_spaces(std::string line, int& pos){
         pos++;
     }
 }
-void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
+static void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     IdentifierStr = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '_' || line.at(pos) == '-')){
         IdentifierStr += line.at(pos);
@@ -73,7 +73,7 @@ void getIdentifierStr(std::string line, int& pos, std::string &IdentifierStr){
     skip_spaces(line, pos);
 }
 
-bool getPath(std::string line, int& pos, std::vector<std::string>& Paths){
+static bool getPath(std::string line, int& pos, std::vector<std::string>& Paths){
     std::string Path = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '/' || line.at(pos) == '_' || line.at(pos) == '.' || line.at(pos) == '@' || line.at(pos) == ':' || line.at(pos) == '-' || isdigit(line.at(pos)))){
         Path += line.at(pos);
@@ -140,7 +140,7 @@ bool getPath(std::string line, int& pos, std::vector<std::string>& Paths){
     return false;
 }
 
-void getPathFromFilePOV(std::string& Path, std::string file_src){
+static void getPathFromFilePOV(std::string& Path, std::string file_src){
     Log::Imports_Info() << "file_src : " << file_src << "\n";
     Log::Imports_Info() << "Path : " << Path << "\n";
     int pos_last_slash = 0;
@@ -163,7 +163,7 @@ void getPathFromFilePOV(std::string& Path, std::string file_src){
     Log::Imports_Info() << "Path after serialization : " << Path << "\n";
 }
 
-std::string interpet_func_generics(std::string line, int pos, int nb_line, int& pos_line, bool should_write_to_file = true){
+static std::string interpet_func_generics(std::string line, int pos, int nb_line, int& pos_line, bool should_write_to_file = true){
     std::string declar = "";
     for (int i = pos; i < line.size(); i++){
         if (line.at(i) != '{'){
@@ -200,7 +200,7 @@ std::string interpet_func_generics(std::string line, int pos, int nb_line, int& 
     return declar;
 }
 
-std::string interpret_func(std::string line, int& pos, int nb_line, int& pos_line, bool should_write_to_file = true){
+static std::string interpret_func(std::string line, int& pos, int nb_line, int& pos_line, bool should_write_to_file = true){
     if (line.find('~') != std::string::npos){
         return interpet_func_generics(line, pos, nb_line, pos_line, should_write_to_file);
     }
@@ -229,7 +229,7 @@ void interpret_extern(std::string line, int& pos_line);
 
 int nb_of_opened_braces_struct;
 
-std::string interpret_struct_generics(std::string line, int& pos, int nb_line, int& pos_line){
+static std::string interpret_struct_generics(std::string line, int& pos, int nb_line, int& pos_line){
     std::string declar = "";
     for (int i = pos; i < line.size(); i++){
         if (line.at(i) != '{'){
@@ -260,7 +260,7 @@ std::string interpret_struct_generics(std::string line, int& pos, int nb_line, i
     return declar;
 }
 
-void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
+static void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     if (line.find('~') != std::string::npos){
         out_file << "struct " << interpret_struct_generics(line, pos, nb_line, pos_line);
         return;
@@ -331,7 +331,7 @@ void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
     pos_line++;
 }
 
-void interpret_enum(std::string line, int& pos, int nb_line, int& pos_line){
+static void interpret_enum(std::string line, int& pos, int nb_line, int& pos_line){
     std::string enum_declar = "";
     while (true){
         for (int i = pos; i < line.size(); i++){

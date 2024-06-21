@@ -128,6 +128,7 @@ bool is_llvm_type_number(Type* llvm_type){
     return llvm_type == Type::getDoubleTy(*TheContext) || llvm_type == Type::getInt8Ty(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt32Ty(*TheContext) || llvm_type == Type::getInt64Ty(*TheContext) || llvm_type == Type::getInt128Ty(*TheContext);
 }
 
+// TODO : remove this (not used)
 Type* get_array_llvm_type(Type* type, int nb_element){
     return llvm::ArrayType::get(type, nb_element);
 }
@@ -600,7 +601,7 @@ int get_type(std::string type){
     return 1;
 }
 
-std::string get_string_from_type(Cpoint_Type type){
+static std::string get_string_from_type(Cpoint_Type type){
     if (type.type < 0){
         return types_list.at(-(type.type + 1));
     } else {

@@ -179,7 +179,7 @@ std::unique_ptr<ExprAST> generate_assume_macro(std::vector<std::unique_ptr<ExprA
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_assume", std::move(Args), Cpoint_Type());
 }
 
-bool isArgString(ExprAST* E){
+static bool isArgString(ExprAST* E){
     if (dynamic_cast<StringExprAST*>(E)){
         Log::Info() << "StringExpr in Print Macro codegen" << "\n";
         return true;

@@ -122,7 +122,7 @@ string TargetTriple;
 
 Triple TripleLLVM;
 
-void add_externs_for_gc(){
+static void add_externs_for_gc(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
   add_manually_extern("gc_init", Cpoint_Type(void_type), std::move(args_gc_init), 0, 30, false, false, "");
   std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
@@ -134,18 +134,18 @@ void add_externs_for_gc(){
   add_manually_extern("gc_realloc", Cpoint_Type(void_type, true), std::move(args_gc_realloc), 0, 30, false, false, "");
 }
 
-void add_externs_for_test(){
+static void add_externs_for_test(){
   std::vector<std::pair<std::string, Cpoint_Type>> args_printf;
   args_printf.push_back(make_pair("format", Cpoint_Type(i8_type, true)));
   add_manually_extern("printf", Cpoint_Type(i32_type), std::move(args_printf), 0, 30, true, false, "");
 }
 
-void add_default_typedefs(){
+static void add_default_typedefs(){
   types_list.push_back("int");
   typeDefTable.push_back(Cpoint_Type(i32_type));
 }
 
-void print_help(){
+static void print_help(){
     std::cout << "Usage : cpoint [options] file" << std::endl;
     std::cout << "Options : " << std::endl;
     std::cout << "  -std : Select the path where is the std which will be builded" << std::endl;
@@ -307,7 +307,7 @@ void HandleComment(){
   Log::Info() << "token : " << CurTok << "\n";
 }
 
-void HandleTest(){
+static void HandleTest(){
   if (auto testAST = ParseTest()){
       testAST->codegen();
   } else {

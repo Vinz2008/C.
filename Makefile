@@ -72,7 +72,6 @@ LDFLAGS += -fuse-ld=mold
 endif
 endif
 
-
 SRCDIR=src
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
@@ -88,8 +87,8 @@ release: set_release all
 debug: set_debug all
 
 set_release: 
-	$(eval CXXFLAGS += -O3) 
-	$(eval LDFLAGS += -s) 
+	$(eval CXXFLAGS += -O3 -flto) 
+	$(eval LDFLAGS += -s -flto) 
 	$(eval MAKETARGET += release)
 
 set_debug:

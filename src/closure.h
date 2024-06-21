@@ -5,5 +5,5 @@
 
 using namespace llvm;
 
-StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_vars);
-Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars, StructType* structType);
+//StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_vars);
+//Value* getClosureCapturedVarsStruct(std::vector<std::string> captured_vars, StructType* structType);

@@ -8,11 +8,11 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 980KB stripped, ≈35MB not stripped
+- compiler less than 670KB stripped, ≈37MB not stripped
 - classes support
 - goto support
 - automatic casting
-- generics
+- generics and closures
 - rust-like pattern matching 
 - gc and manual memory management
 - extremely fast linking (mold used by default)

@@ -1,9 +1,7 @@
 #include <iostream>
 
-std::string r;
-
 static std::string get_word(std::string str, int p){
-    r.clear();
+    std::string r = "";
     int nb = 0;
     int pos = -1;
     if (p == 0){

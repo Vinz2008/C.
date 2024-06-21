@@ -14,14 +14,14 @@ Value* getTypeId(Value* valueLLVM){
 }
 
 
-Value* refletionInstrTypeId(std::vector<std::unique_ptr<ExprAST>> Args){
+static Value* refletionInstrTypeId(std::vector<std::unique_ptr<ExprAST>> Args){
     if (Args.size() > 1){
         return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
     }
     return getTypeId(Args.at(0)->codegen());
 }
 
-Value* refletionInstrGetStructName(std::vector<std::unique_ptr<ExprAST>> Args){
+static Value* refletionInstrGetStructName(std::vector<std::unique_ptr<ExprAST>> Args){
     if (Args.size() > 1){
         return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
     }
@@ -35,7 +35,7 @@ Value* refletionInstrGetStructName(std::vector<std::unique_ptr<ExprAST>> Args){
     return Builder->CreateGlobalStringPtr(StringRef(structName.c_str()));
 }
 
-Value* refletionInstrGetMemberNb(std::vector<std::unique_ptr<ExprAST>> Args){
+static Value* refletionInstrGetMemberNb(std::vector<std::unique_ptr<ExprAST>> Args){
     if (Args.size() > 1){
         return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
     }

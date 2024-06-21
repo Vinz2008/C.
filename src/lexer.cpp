@@ -32,7 +32,7 @@ string last_line_str = "";
 
 extern bool last_line;
 
-void LogErrorLexer(const char *Str, ...){
+static void LogErrorLexer(const char *Str, ...){
   va_list args;
   va_start(args, Str);
   vLogError(Str, args, emptyLoc);
@@ -41,7 +41,7 @@ void LogErrorLexer(const char *Str, ...){
 
 void handlePreprocessor();
 
-int getLine(std::istream &__is, std::string &__str){
+static int getLine(std::istream &__is, std::string &__str){
   if (!getline(__is, __str)){
       last_line = true;
       file_log << "end of file" << "\n";
@@ -54,7 +54,7 @@ std::string get_line_returned(){
 }
 
 
-bool is_char_one_of_these(int c, std::string chars){
+static bool is_char_one_of_these(int c, std::string chars){
     for (int i = 0; i < chars.size(); i++){
         if (c == chars.at(i)){
             return true;
@@ -63,7 +63,7 @@ bool is_char_one_of_these(int c, std::string chars){
     return false;
 }
 
-void goToNextLine(std::istream &__is, std::string &__str){
+static void goToNextLine(std::istream &__is, std::string &__str){
   file_log << "new line" << "\n";
   Comp_context->lexloc.line_nb++;
   Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << " " << Comp_context->line << "\n";
@@ -79,14 +79,14 @@ void go_to_next_line(){
   goToNextLine(file_in, line);
 }
 
-void init_line(){
+static void init_line(){
   Log::Info() << "lines nb increment : " << Comp_context->lexloc.line_nb << " " << Comp_context->line << "\n";
   Comp_context->lexloc.col_nb = 0;
   getLine(file_in, line);
   Comp_context->line = line;
 }
 
-void handleEmptyLine();
+static void handleEmptyLine();
 
 void handlePreprocessor(){
   while (true){
@@ -102,7 +102,7 @@ void handlePreprocessor(){
   }
 }
 
-void handleEmptyLine(){
+static void handleEmptyLine(){
   if (line.size() == 0){
     goToNextLine(file_in, line);
     handlePreprocessor();
@@ -112,7 +112,8 @@ void handleEmptyLine(){
 // is last char from stdin \n
 bool is_last_char_next_line_jit = false;
 
-int getCharLineStdin(){
+#if ENABLE_JIT
+static int getCharLineStdin(){
     if (is_last_char_next_line_jit){
         return '\0';
     }
@@ -126,8 +127,9 @@ int getCharLineStdin(){
     }
     return c;
 }
+#endif
 
-int peekCharLine(){
+static int peekCharLine(){
     if (pos <= line.size()){
         return line[pos];
     } else {
@@ -135,7 +137,7 @@ int peekCharLine(){
     }
 }
 
-int getCharLine(){
+static int getCharLine(){
 #if ENABLE_JIT
   if (Comp_context->jit_mode){
     char c = getCharLineStdin();

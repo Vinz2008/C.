@@ -76,7 +76,7 @@ static void skip_spaces(std::string line, int& pos){
     }
 }
 
-int get_next_word(std::string line, int& pos){
+static int get_next_word(std::string line, int& pos){
     word = "";
     while (pos < line.size() && (isalnum(line.at(pos)) || line.at(pos) == '=' || line.at(pos) == '\"' || line.at(pos) == '_')){
         word += line.at(pos);
@@ -86,7 +86,7 @@ int get_next_word(std::string line, int& pos){
     return 0;
 }
 
-bool compare_line(std::string line, std::string pattern){
+static bool compare_line(std::string line, std::string pattern){
     int pos_cmp = 0;
     while (isspace(line.at(pos_cmp))){
         pos_cmp++;
@@ -104,7 +104,7 @@ bool compare_line(std::string line, std::string pattern){
 }
 
 // TODO : refactor this code with a vector of expressions (with in the the next operator or empty string if it is the end of the expression) or a simple AST
-void preprocess_if(std::string instruction, int& pos){
+static void preprocess_if(std::string instruction, int& pos){
     std::string l2 = "";
     std::string op2 = "";
     std::string r2 = "";

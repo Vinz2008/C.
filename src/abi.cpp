@@ -7,7 +7,7 @@ extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::unique_ptr<LLVMContext> TheContext;
 extern Triple TripleLLVM;
 
-int get_pointer_size(){
+int get_pointer_size(){ // TODO : remove this (it is not used)
     if (TripleLLVM.isArch32Bit()){
         return 32;
     } else if (TripleLLVM.isArch64Bit()){

@@ -18,6 +18,7 @@ bool operator!=(Source_location loc1, Source_location loc2){
     return !((loc1.col_nb == loc2.col_nb) && (loc1.is_empty == loc2.is_empty) && (loc1.line == loc2.line) && (loc1.line_nb == loc2.line_nb));
 }
 
+// TODO : remove this (not used ?)
 int stringDistance(std::string s1, std::string s2) {
     // Create a table to store the results of subproblems
     std::vector<std::vector<int>> dp(s1.length() + 1, std::vector<int>(s2.length() + 1));
