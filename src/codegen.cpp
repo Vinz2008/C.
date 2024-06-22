@@ -791,9 +791,30 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
     return value;
 }
 
+// TODO : maybe move this to the ast part to make worj the get_type
+// returns either a CallExprAST or a StructMemberCallExprAST
+std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type){
+    Log::Info() << "NEWCallExprAST codegen" << "\n";
+    if (dynamic_cast<VariableExprAST*>(function_expr.get())){
+        Log::Info() << "Args size" << Args.size() << "\n";
+        std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
+        return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type);
+    } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
+        Log::Info() << "Doing call on binaryExpr : " << BinExpr->Op << "\n";
+        if (BinExpr->Op == "."){
+            return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args));
+        } else {
+            return LogError("Unknown operator before call () operator");
+        }
+    }
+    return LogError("Trying to call an expression which it is not implemented for");
+}
+
 // TODO : rename OPCallExprAST
 Value* NEWCallExprAST::codegen(){
-    Log::Info() << "NEWCallExprAST codegen" << "\n";
+    return getASTNewCallExprAST(std::move(function_expr), std::move(Args), template_passed_type)->codegen();
+    /*Log::Info() << "NEWCallExprAST codegen" << "\n";
     if (dynamic_cast<VariableExprAST*>(function_expr.get())){
         Log::Info() << "Args size" << Args.size() << "\n";
         std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
@@ -807,7 +828,7 @@ Value* NEWCallExprAST::codegen(){
             return LogErrorV(emptyLoc, "Unknown operator before call () operator");
         }
     }
-    return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");
+    return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");*/
 }
 
 Value* StructMemberCallExprAST::codegen(){
@@ -1680,7 +1701,7 @@ Function *FunctionAST::codegen() {
   codegenStructTemplates();
   auto &P = *Proto;
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
-  FunctionProtos[Proto->getName()] = Proto->clone();
+  FunctionProtos[Proto->getName()] = Proto->clone(); // TODO : move this assignement and all the others to FunctionProtos from the codegen step to the ast step 
   // First, check for an existing function from a previous 'extern' declaration.
   std::string name = P.getName();
   Log::Info() << "Name " << name << "\n";

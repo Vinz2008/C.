@@ -105,3 +105,4 @@ Cpoint_Type* get_variable_type(std::string name);
 Value* get_var_allocation(std::string name);
 Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& member_type);
 AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Cpoint_Type type);
+Function *getFunction(std::string Name);

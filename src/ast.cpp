@@ -354,14 +354,6 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   }
 
   Log::Info() << "VariableExprAST" << "\n";
-  /*std::unique_ptr<Cpoint_Type> type;
-  if (NamedValues[IdName] == nullptr && GlobalVariables[IdName] == nullptr){
-    type = std::make_unique<Cpoint_Type>(double_type);
-  } else if (GlobalVariables[IdName] != nullptr){
-    type = std::make_unique<Cpoint_Type>(GlobalVariables[IdName]->type);
-  } else  {
-    type = std::make_unique<Cpoint_Type>(NamedValues[IdName]->type);
-  }*/
   Cpoint_Type* type = get_variable_type(IdName);
   return std::make_unique<VariableExprAST>(IdLoc, IdName, (type) ? *type : Cpoint_Type());
 }
@@ -969,7 +961,9 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     Log::Info() << "mangled name is : " << FnName << "\n";
   }
   Log::Info() << "FnLoc in ast : " << FnLoc << "\n";
-  return std::make_unique<PrototypeAST>(FnLoc, FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
+  auto Proto = std::make_unique<PrototypeAST>(FnLoc, FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
+  //FunctionProtos[FnName] = Proto->clone();
+  return Proto;
 }
 
 std::unique_ptr<StructDeclarAST> ParseStruct(){
@@ -1216,6 +1210,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   Log::Info() << "end of function" << "\n";
   bool has_template = Proto->has_template;
   std::string FunctionName = Proto->Name;
+  //FunctionProtos[Proto->getName()] = Proto->clone();
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
     std::string template_name = functionAST->Proto->template_name;
