@@ -134,7 +134,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make closure private to file (like static functions in c)
 - [ ] Split codegen.cpp (and ast.cpp ?) in match.cpp, closures.cpp, etc
 - [ ] Make all functions not used in other files static
-- [ ] Add the timestamp, compile flags and target in info and help
 
 ## Benchmarks compared to other languages
 
