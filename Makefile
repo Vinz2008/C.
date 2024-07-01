@@ -17,7 +17,7 @@ else
 OUTPUTBIN = cpoint
 endif
 
-CXXFLAGS = -c -g -Wall -Wno-sign-compare
+CXXFLAGS = -c -g -Wall -Wno-sign-compare -DTARGET="\"$(TARGET)\""
 
 # CXXFLAGS += -MMD
 

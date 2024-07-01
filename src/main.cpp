@@ -47,6 +47,7 @@
 #include "lto.h"
 #include "jit.h"
 #include "operators.h"
+#include "cli_infos.h"
 
 using namespace std;
 using namespace llvm;
@@ -143,33 +144,6 @@ static void add_externs_for_test(){
 static void add_default_typedefs(){
   types_list.push_back("int");
   typeDefTable.push_back(Cpoint_Type(i32_type));
-}
-
-static void print_help(){
-    std::cout << "Usage : cpoint [options] file" << std::endl;
-    std::cout << "Options : " << std::endl;
-    std::cout << "  -std : Select the path where is the std which will be builded" << std::endl;
-    std::cout << "  -no-std : Make the compiler to not link to the std. It is the equivalent of -freestanding in gcc" << std::endl;
-    std::cout << "  -c : Create an object file instead of an executable" << std::endl;
-    std::cout << "  -target-triplet : Select the target triplet to select the target to compile to" << std::endl;
-    std::cout << "  -verbose-std-build : Make the build of the standard library verbose. It is advised to activate this if the std doesn't build" << std::endl;
-    std::cout << "  -no-delete-import-file : " << std::endl;
-    std::cout << "  -no-gc : Make the compiler not add functions for garbage collection" << std::endl;
-    std::cout << "  -with-gc : Activate the garbage collector explicitally (it is by default activated)" << std::endl;
-    std::cout << "  -no-imports : Deactivate imports in the compiler" << std::endl;
-    std::cout << "  -rebuild-gc : Force rebuilding the garbage collector" << std::endl;
-    std::cout << "  -no-rebuild-std : Make the compiler not rebuild the standard library. You probably only need to rebuild it when you change the target" << std::endl;
-    std::cout << "  -linker-flags=[flags] : Select additional linker flags" << std::endl;
-    std::cout << "  -d : Activate debug mode to see debug logs" << std::endl;
-    std::cout << "  -o : Select the output file name" << std::endl;
-    std::cout << "  -g : Enable debuginfos" << std::endl;
-    std::cout << "  -silent : Make the compiler silent" << std::endl;
-    std::cout << "  -build-mode : Select the build mode (release or debug)" << std::endl;
-    std::cout << "  -fPIC : Make the compiler produce position-independent code" << std::endl;
-    std::cout << "  -compile-time-sizeof : The compiler gets the size of types at compile time" << std::endl;
-    std::cout << "  -test : Compile tests" << std::endl;
-    std::cout << "  -run-test : Run tests" << std::endl;
-    std::cout << "others : TODO" << std::endl;
 }
 
 
@@ -441,6 +415,7 @@ int main(int argc, char **argv){
     bool use_native_target = false;
     std::string linker_additional_flags = "";
     std::string run_args = "";
+    std::string llvm_default_target_triple = sys::getDefaultTargetTriple();
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
@@ -479,6 +454,12 @@ int main(int argc, char **argv){
           debug_info_mode = true;
         } else if (arg.compare("-h") == 0 || arg.compare("-help") == 0){
             print_help();
+            exit(0);
+        } else if (arg.compare("-v") == 0 || arg.compare("--version") == 0){
+            print_version();
+            exit(0);
+        } else if (arg.compare("--infos") == 0){
+            print_infos(llvm_default_target_triple);
             exit(0);
         } else if (arg.compare("-no-std") == 0){
           Comp_context->std_mode = false;
@@ -615,7 +596,7 @@ int main(int argc, char **argv){
     if (target_triplet_found_bool){
     TargetTriple = target_triplet_found;
     } else {
-    TargetTriple = sys::getDefaultTargetTriple();
+    TargetTriple = llvm_default_target_triple;
     }
     std::string os_name = get_os(TargetTriple);
     TripleLLVM = Triple(TargetTriple);
