@@ -6,18 +6,25 @@ func print_func(a : void ptr) void ptr {
 }
 
 func test_func(f : func (void ptr) void ptr) void {
-    
+    f(null)
 }
 
 func main() i32 {
-    var capture_var = 2
+    var capture_var = 1
+    var capture_var2 = 2
     test_func(print_func)
-    test_func(func(a : void ptr) void {
+    test_func(func(a : void ptr) void ptr {
         printstr("hello world")
+        null
     })
-    test_func(func(a : void ptr) |capture_var| void ptr {
+    test_func(func(a : void ptr) |capture_var, capture_var2| void ptr {
         printstr("hello world 2")
-        printd(closure.capture_var)
+        #println("{}", a)
+        printi(closure.capture_var)
+        printi(closure.capture_var2)
+        null
+    })
+    test_func(func(a : void ptr) |capture_var, capture_var2| void ptr {
         null
     })
     0

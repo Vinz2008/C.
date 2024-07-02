@@ -454,13 +454,13 @@ int main(int argc, char **argv){
           debug_info_mode = true;
         } else if (arg.compare("-h") == 0 || arg.compare("-help") == 0){
             print_help();
-            exit(0);
+            return 0;
         } else if (arg.compare("-v") == 0 || arg.compare("--version") == 0){
             print_version();
-            exit(0);
+            return 0;
         } else if (arg.compare("--infos") == 0){
             print_infos(llvm_default_target_triple);
-            exit(0);
+            return 0;
         } else if (arg.compare("-no-std") == 0){
           Comp_context->std_mode = false;
         } else if (arg.compare("-fPIC") == 0){
@@ -528,6 +528,9 @@ int main(int argc, char **argv){
           size_t pos = arg.find('=');
           run_args += arg.substr(pos+1, arg.size());
           run_args += ' ';
+        } else if (arg.at(0) == '-'){
+            fprintf(stderr, "Unknown flag : %s\n", arg.c_str());
+            return 1;
         } else {
           filename_found = true;
           Log::Print() << _("filename : ") << arg << "\n";
@@ -540,13 +543,13 @@ int main(int argc, char **argv){
         return StartJIT();
 #else
         fprintf(stderr, "didn't find a filename in args\n");
-        exit(1);
+        return 1;
 #endif
     }
     Log::Info() << "filename at end : " << filename << "\n";
     if (!filesystem::exists(filename)){
         fprintf(stderr, RED "File %s doesn't exist\n" CRESET, filename.c_str());
-        exit(1);
+        return 1;
     }
     first_filename = filename;
     if (output_temp_found){

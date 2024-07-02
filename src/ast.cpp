@@ -1601,9 +1601,11 @@ std::unique_ptr<ExprAST> ParseClosure(){
             if (CurTok == '|'){
                 break;
             }
+            Log::Info() << "closure Curtok : " << CurTok << "\n";
             if (CurTok != ','){
                 return LogError("Expected '|' or ',' in captured vars list in closure");
             }
+            getNextToken();
         }
         getNextToken();
     }

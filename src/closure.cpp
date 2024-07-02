@@ -1,6 +1,7 @@
 #include "closure.h"
 #include "types.h"
 #include "codegen.h"
+#include "llvm/TargetParser/Triple.h"
 
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<Module> TheModule;
@@ -58,6 +59,8 @@ void generateClosures(){
     }
 }
 
+extern std::string TargetTriple;
+
 Value* ClosureAST::codegen(){
     std::string closure_name = "closure" + std::to_string(closure_number);
     closure_number++;
@@ -68,18 +71,32 @@ Value* ClosureAST::codegen(){
         if (!structType){
             return nullptr;
         }
-        Proto->Args.insert(Proto->Args.begin(), std::make_pair("closure", get_cpoint_type_from_llvm(structType)));
+        Cpoint_Type StructTypeCpoint = get_cpoint_type_from_llvm(structType);
+        StructTypeCpoint.is_ptr = true;
+        StructTypeCpoint.nb_ptr++;
+        Proto->Args.insert(Proto->Args.begin(), std::make_pair("closure", StructTypeCpoint));
         
     }
     auto functionAST = std::make_unique<FunctionAST>(Proto->clone(), std::move(Body));
     closuresToGenerate.push_back(std::move(functionAST));
     auto f = Proto->codegen();
     if (!captured_vars.empty()){
+        f->arg_begin()->addAttr(Attribute::Nest);
         Value* closureArgs = getClosureCapturedVarsStruct(captured_vars, structType);
         Function *TheFunction = Builder->GetInsertBlock()->getParent();
         auto trampAlloca = CreateEntryBlockAlloca(TheFunction, "tramp", Cpoint_Type(i8_type, false, 0, true, 72));
-        trampAlloca->setAlignment(Align::Constant<16>()); // Is it needed ?
-        // trampoline of 72 bytes and alignement of 16 should be enough for all platforms : https://stackoverflow.com/questions/15509341/how-much-space-for-a-llvm-trampoline
+        auto triple = Triple(TargetTriple);
+        // trampoline of 72 bytes  should be enough for all platforms : https://stackoverflow.com/questions/15509341/how-much-space-for-a-llvm-trampoline
+        // Is it needed ? (according to the gcc codebase, some 64 bit platforms like aarch64 needs an alignement of 64, sparc needs 128, and nvptx 256)
+        if (triple.isNVPTX()){
+            trampAlloca->setAlignment(Align::Constant<256/8>());
+        } else if (triple.isSPARC()){
+            trampAlloca->setAlignment(Align::Constant<128/8>());
+        } else if (triple.isArch32Bit()){
+            trampAlloca->setAlignment(Align::Constant<32/8>());
+        } else {
+            trampAlloca->setAlignment(Align::Constant<64/8>()); // Is it needed ? (according to the gcc codebase, some 64 bit platforms like aarch64 needs 64, sparc needs 128, and nvptx 256)
+        }
         std::vector<Value*> ArgsInitTrampoline;
         ArgsInitTrampoline.push_back(trampAlloca);
         ArgsInitTrampoline.push_back(f);
@@ -89,7 +106,8 @@ Value* ClosureAST::codegen(){
         std::vector<Value*> ArgsAdjustTrampoline;
         ArgsAdjustTrampoline.push_back(trampAlloca);
         Function* adjust_trampoline_func = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::adjust_trampoline);
-        auto function_with_trampoline = Builder->CreateCall(adjust_trampoline_func, ArgsAdjustTrampoline, "trampoline_closure_adjust");
+        Value* function_with_trampoline = Builder->CreateCall(adjust_trampoline_func, ArgsAdjustTrampoline, "trampoline_closure_adjust");
+        //function_with_trampoline = Builder->CreateBitCast(function_with_trampoline, f->getFunctionType());
         return function_with_trampoline;
     }
     return f;

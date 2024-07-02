@@ -133,7 +133,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Create a way to cross-compile easily the compiler (target prefix on gcc ? clang when cross compiling ? clang by default ?)
 - [ ] Make closure private to file (like static functions in c)
 - [ ] Split codegen.cpp (and ast.cpp ?) in match.cpp, closures.cpp, etc
-- [ ] Make all functions not used in other files static
+- [ ] Make every string translated in french (and other languages ?) with gettext
+- [ ] Refactor big functions in ast.cpp and codegen.cpp as smaller functions
 
 ## Benchmarks compared to other languages
 

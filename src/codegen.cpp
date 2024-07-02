@@ -1171,6 +1171,14 @@ Value *BinaryExprAST::codegen() {
   return Builder->CreateCall(F, Ops, "binop");
 }
 
+Cpoint_Type callexpr_get_arg_type_function(std::string Callee, int pos){
+    if (FunctionProtos[Callee]){
+        return FunctionProtos[Callee]->Args.at(pos).second;
+    } else {
+        return NamedValues[Callee]->type.args.at(pos);
+    }
+}
+
 Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   Function* TheFunction = Builder->GetInsertBlock()->getParent();
@@ -1237,46 +1245,67 @@ Value *CallExprAST::codegen() {
   if (is_function_template){
     callTemplate(Callee, template_passed_type);
   }
+  // TODO : get code like for local and global variables for local and global functions to simplify the code and minimize the number of ifs (ex : get_arg_type function with just a std::string Callee arg)
   Function *CalleeF = getFunction(Callee);
-  //Function *TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "is_function_template : " << is_function_template << "\n";
-  if (!CalleeF && !is_function_template)
-    return LogErrorV(this->loc, "Unknown function referenced %s", Callee.c_str());
-  /*if (TemplateProtos[Callee] != nullptr){
-    callTemplate(Callee);
-  }*/
-  Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
-  Log::Info() << "Args.size : " << Args.size() << "\n";
-  if (FunctionProtos[Callee] == nullptr){
-    return LogErrorV(this->loc, "Incorrect Function %s", Callee.c_str());
+  Cpoint_Type function_return_type;
+  Value* function_ptr_from_local_var = nullptr;
+  bool is_variable_number_args = false;
+  size_t args_size = 0;
+  // including hidden struct args
+  size_t real_args_size = 0;
+  // if the functions is a struct member call
+  bool contains_hidden_struct_arg = false;
+  if (CalleeF){
+    function_return_type = FunctionProtos[Callee]->cpoint_type;
+    is_variable_number_args = FunctionProtos[Callee]->is_variable_number_args;
+    real_args_size = CalleeF->arg_size();
+    args_size = FunctionProtos[Callee]->Args.size();
+    if (args_size != FunctionProtos[Callee]->Args.size()){
+        contains_hidden_struct_arg = true;
+    }
+  } else if (NamedValues[Callee] && NamedValues[Callee]->type.is_function){
+    function_ptr_from_local_var = Builder->CreateLoad(get_type_llvm(NamedValues[Callee]->type), NamedValues[Callee]->alloca_inst, "load_func_ptr");
+    is_variable_number_args = false; // TODO : add variable number of args for function pointers ?
+    args_size = real_args_size = NamedValues[Callee]->type.args.size();
+    function_return_type = *NamedValues[Callee]->type.return_type;
+    Cpoint_Type first_arg_type = NamedValues[Callee]->type.args.at(0).type;
+    if (Callee.find("__") != std::string::npos && first_arg_type.is_struct && first_arg_type.is_ptr){
+        contains_hidden_struct_arg = true;
+        real_args_size--;
+    }
   }
-  bool has_sret = FunctionProtos[Callee]->cpoint_type.is_just_struct() && should_return_struct_with_ptr(FunctionProtos[Callee]->cpoint_type);
+
+  if (!CalleeF && !is_function_template && !function_ptr_from_local_var)
+    return LogErrorV(this->loc, "Unknown function referenced %s", Callee.c_str());
+  if (CalleeF){
+  Log::Info() << "CalleeF->arg_size : " << CalleeF->arg_size() << "\n";
+  }
+  Log::Info() << "Args.size : " << Args.size() << "\n";
+  bool has_sret = function_return_type.is_just_struct() && should_return_struct_with_ptr(function_return_type);
   bool has_byval = false;
-  if (FunctionProtos[Callee]->is_variable_number_args){
+  if (/*FunctionProtos[Callee]->is_variable_number_args*/ is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
-    if (Args.size() < CalleeF->arg_size()){
-      return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
+    if (Args.size() < /*CalleeF->arg_size()*/ real_args_size){
+      return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), /*CalleeF->arg_size()*/ args_size);
     }
   } else if (has_sret){
-    if (CalleeF->arg_size() != Args.size()+1)
+    if (/*CalleeF->arg_size()*/ real_args_size != Args.size()+1)
         return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
   } else {
     // If argument mismatch error.
-  if (CalleeF->arg_size() != Args.size())
+  if (/*CalleeF->arg_size()*/ real_args_size != Args.size())
     return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
   }
   Log::Info() << "has_sret : " << has_sret << "\n";
   AllocaInst* SretArgAlloca = nullptr;
   if (has_sret){
-    SretArgAlloca = CreateEntryBlockAlloca(TheFunction, FunctionProtos[Callee]->cpoint_type.struct_name + "_sret", FunctionProtos[Callee]->cpoint_type);
+    SretArgAlloca = CreateEntryBlockAlloca(TheFunction, function_return_type.struct_name + "_sret", function_return_type);
     int idx = 0;
     for (auto& Arg : CalleeF->args()){
         if (idx == 0){
-        Log::Info() << "Adding sret attr in callexpr" << "\n";
-        /*Arg.addAttr(Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
-        Arg.addAttr(Attribute::getWithAlignment(*TheContext, Align(8)));*/
-        addArgSretAttribute(Arg, SretArgAlloca->getAllocatedType());
-        //Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(SretArgAlloca->getAllocatedType()));
+            Log::Info() << "Adding sret attr in callexpr" << "\n";
+            addArgSretAttribute(Arg, SretArgAlloca->getAllocatedType());
         } else {
             break;
         }
@@ -1291,16 +1320,20 @@ Value *CallExprAST::codegen() {
   auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     if (has_sret && !has_added_sret){
-        //ArgsV.push_back(SretArgAlloca);
         i--;
         has_added_sret = true;
     } else {
     Value* temp_val;
     Cpoint_Type arg_type = Cpoint_Type(double_type);
-    if (i < FunctionProtos[Callee]->Args.size()){
-        arg_type = FunctionProtos[Callee]->Args.at(i).second;
+    if (i < /*FunctionProtos[Callee]->Args.size()*/ args_size){
+        arg_type = callexpr_get_arg_type_function(Callee, i);
+        /*if (CalleeF){
+            arg_type = FunctionProtos[Callee]->Args.at(i).second;
+        } else {
+            arg_type = NamedValues[Callee]->type.args.at(i);
+        }*/
     }
-    bool is_additional_arg = FunctionProtos[Callee]->is_variable_number_args && i >= FunctionProtos[Callee]->Args.size();
+    bool is_additional_arg = /*FunctionProtos[Callee]->is_variable_number_args*/ is_variable_number_args && i >= /*FunctionProtos[Callee]->Args.size()*/ args_size;
     bool is_arg_passed_an_array = Args[i]->get_type().is_array;
     if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
@@ -1316,11 +1349,11 @@ Value *CallExprAST::codegen() {
     if (!temp_val){
       return nullptr;
     }
-    if (i < FunctionProtos[Callee]->Args.size()){
-    if (temp_val->getType() != get_type_llvm(FunctionProtos[Callee]->Args.at(i).second)){
-      Log::Info() << "name of arg converting in call expr : " << FunctionProtos[Callee]->Args.at(i).first << "\n";
+    if (i < /*FunctionProtos[Callee]->Args.size()*/ args_size){
+    if (temp_val->getType() != get_type_llvm(/*FunctionProtos[Callee]->Args.at(i).second*/ arg_type)){
+      Log::Info() << "name of arg converting in call expr : " << ((FunctionProtos[Callee]) ? FunctionProtos[Callee]->Args.at(i).first : (std::string)"(couldn't be found because it is a function pointer)") << "\n"; // TODO : fix this ?
       //return LogErrorV(this->loc, "Arg %s type is wrong in the call of %s\n Expected type : %s, got type : %s\n", FunctionProtos[Callee]->Args.at(i).second, Callee, create_pretty_name_for_type(get_cpoint_type_from_llvm(temp_val->getType())), create_pretty_name_for_type(FunctionProtos[Callee]->Args.at(i).second));
-        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(FunctionProtos[Callee]->Args.at(i).second), temp_val);
+        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(/*FunctionProtos[Callee]->Args.at(i).second*/ arg_type), temp_val);
     }
     }
     ArgsV.push_back(temp_val);
@@ -1331,10 +1364,9 @@ Value *CallExprAST::codegen() {
   std::vector<int> pos_byval;
   std::vector<int> pos_signext;
   std::vector<int> pos_zeroext;
-  //std::vector<int> pos_vector_two_float;
-  for (int i = 0; i < FunctionProtos[Callee]->Args.size(); i++){
-    Cpoint_Type arg_type = FunctionProtos[Callee]->Args.at(i).second;
-    if (/*arg_type.is_struct && !arg_type.is_ptr &&*/ arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
+  for (int i = 0; i < /*FunctionProtos[Callee]->Args.size()*/  args_size; i++){
+    Cpoint_Type arg_type = /*FunctionProtos[Callee]->Args.at(i).second*/ callexpr_get_arg_type_function(Callee, i);
+    if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
     }
@@ -1345,19 +1377,22 @@ Value *CallExprAST::codegen() {
     if (arg_type.is_unsigned()){
         pos_zeroext.push_back(i);
     }
-    /*if (is_just_struct(arg_type) && is_struct_all_type(arg_type, float_type) && struct_get_number_type(arg_type, float_type) <= 2){
-        pos_vector_two_float.push_back(i);
-    }*/
   }
-  /*for (int i = 0; i < pos_vector_two_float.size(); i++){
-    Value* loaded_vector = Builder->CreateLoad(vector_type_from_struct(FunctionProtos[Callee]->Args.at(pos_vector_two_float.at(i)).second), ArgsV.at(pos_vector_two_float.at(i)));
-    std::replace(ArgsV.begin(), ArgsV.end(), ArgsV.at(pos_vector_two_float.at(i)), loaded_vector);
-  }*/
   std::string NameCallTmp = "calltmp";
-  if (CalleeF->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || has_sret){
+  if (/*CalleeF->getReturnType()*/ function_return_type  == /*get_type_llvm(*/Cpoint_Type(void_type)/*)*/ || has_sret){
     NameCallTmp = "";
   }
-  auto call = Builder->CreateCall(CalleeF, ArgsV, NameCallTmp);
+  CallInst* call = nullptr;
+  if (CalleeF){
+    call = Builder->CreateCall(CalleeF, ArgsV, NameCallTmp);
+  } else {
+    Log::Info() << "function type : " << NamedValues[Callee]->type << "\n";
+    std::vector<Type*> args_llvm_types;
+    for (int i = 0; i < NamedValues[Callee]->type.args.size(); i++){
+        args_llvm_types.push_back(get_type_llvm(NamedValues[Callee]->type.args.at(i)));
+    }
+    call = Builder->CreateCall(FunctionCallee(/*dyn_cast<FunctionType>(function_ptr_from_local_var->getType())*/ FunctionType::get(get_type_llvm(*NamedValues[Callee]->type.return_type), args_llvm_types, false), function_ptr_from_local_var), ArgsV, NameCallTmp);
+  }
   if (has_sret){
     call->addParamAttr(0, Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
     call->addParamAttr(0, Attribute::getWithAlignment(*TheContext, Align(8)));
