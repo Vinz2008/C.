@@ -1009,10 +1009,10 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
         if (!declar){
             return LogErrorS("Error in struct declaration vars");
         }
-        if (declar->cpoint_type.struct_name == structName && declar->cpoint_type.is_ptr){ // TODO : fix this ? 
+        /*if (declar->cpoint_type.struct_name == structName && declar->cpoint_type.is_ptr){ // TODO : fix this ? 
         declar->cpoint_type.is_struct = false;
         declar->cpoint_type.struct_name = "";
-        }
+        }*/
         std::string VarName = declar->VarNames.at(0).first;
         StructDeclarations[structName]->members.push_back(std::make_pair(VarName, declar->cpoint_type));
         VarList.push_back(std::move(declar));

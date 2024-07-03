@@ -4,9 +4,10 @@ import @std/print.cpoint
 func main(){
     var ll : struct linked_list 
     printd(2)
-    ll.append(1)
-    ll.append(2)
-    ll.append(3)
+    for i : i32 = 1, i < 10, 1 { 
+        ll.append(i)
+    }
+    ll.remove_first()
     ll.remove_last()
     ll.print()
 }

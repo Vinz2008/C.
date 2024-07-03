@@ -45,14 +45,30 @@ struct linked_list {
         var data = self.tail.data
         var current : struct node_linked_list ptr = self.head
 
-        while current.next != null {
+        while current.next.next != null {
             current = current.next
         }
+        current.next = null
+        data
     }
     func remove(index : i32) i32 {
         if self.head == null {
             #panic("removing from empty linked list")
         }
+        if index == 0 {
+            return self.remove_first()
+        }
+        var current : struct node_linked_list ptr = self.head
+        for i : i32 = 0, i < index-1, 1 {
+            if current.next == null {
+                return -1
+            }
+            current = current.next
+        }
+        var temp_node : struct node_linked_list ptr = current.next
+        var data = temp_node.data
+        current.next = temp_node.next
+        data
     }
     func print() void {
         if self.head != null {
