@@ -11,7 +11,6 @@ struct linked_list {
     func linked_list() void {
         self.head = null
         self.tail = null
-        printd(3)
     }
     func append(data : i32) void {
         var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list * 2)
@@ -20,6 +19,7 @@ struct linked_list {
         }
         temp.data = data
         temp.next = null
+        // printi(temp.data)
         if self.head == null {
             self.head = temp
             self.tail = temp
@@ -29,10 +29,40 @@ struct linked_list {
             self.tail = temp
         }
     }
-    func print() void {
+
+    func remove_first() i32 {
+        if self.head == null {
+            #panic("removing from empty linked list")
+        }
+        var data : i32 = self.head.data
+        self.head = self.head.next
+        data
+    }
+    func remove_last() i32 {
+        if self.head == null {
+            #panic("removing from empty linked list")
+        }
+        var data = self.tail.data
         var current : struct node_linked_list ptr = self.head
-        while self.head != null {
-            printi(current.data)
+
+        while current.next != null {
+            current = current.next
+        }
+    }
+    func remove(index : i32) i32 {
+        if self.head == null {
+            #panic("removing from empty linked list")
+        }
+    }
+    func print() void {
+        if self.head != null {
+            #print("list : ")
+            var current : struct node_linked_list ptr = self.head
+            while current != null {
+                #print("{} ", current.data)
+                current = current.next
+            }
+            #print("\n")
         }
     }
 }

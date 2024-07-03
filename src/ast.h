@@ -320,7 +320,8 @@ public:
         //fprintf(stderr, "No type found (compiler bug probably)");
         //exit(1);
     }*/
-   return type;
+   return *get_variable_type(Name);
+   //return type;
   }
   std::string generate_c() override;
 };
@@ -555,6 +556,11 @@ public:
   }
   Cpoint_Type get_type() override {
     // return FunctionProtos[Callee]->cpoint_type;
+    if (FunctionProtos[Callee]){
+        return FunctionProtos[Callee]->cpoint_type;
+    } else {
+        // TODO : implement this for function pointers in local vars
+    }
     return Cpoint_Type(); // TODO : create a function in another file that will do it
   }
   std::string generate_c() override;

@@ -5,5 +5,8 @@ func main(){
     var ll : struct linked_list 
     printd(2)
     ll.append(1)
-    // ll.print()
+    ll.append(2)
+    ll.append(3)
+    ll.remove_last()
+    ll.print()
 }

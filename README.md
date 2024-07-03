@@ -135,6 +135,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Split codegen.cpp (and ast.cpp ?) in match.cpp, closures.cpp, etc
 - [ ] Make every string translated in french (and other languages ?) with gettext
 - [ ] Refactor big functions in ast.cpp and codegen.cpp as smaller functions
+- [ ] Remove useless Log::Info() calls
+- [ ] Replace all uses emptyLoc by the real loc passed to the function 
 
 ## Benchmarks compared to other languages
 

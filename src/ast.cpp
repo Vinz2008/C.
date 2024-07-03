@@ -717,6 +717,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   if (CurTok == tok_struct || CurTok == tok_class){
     getNextToken();
     struct_Name = IdentifierStr;
+    type = other_type;
     Log::Info() << "struct_Name " << struct_Name << "\n";
     getNextToken();
     if (CurTok == '~'){
@@ -745,6 +746,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
       getNextToken();
     }
   } else if (CurTok == tok_union){
+    type = other_type;
     getNextToken();
     unionName = IdentifierStr;
     getNextToken();
@@ -753,6 +755,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
       getNextToken();
     }
   } else if (CurTok == tok_enum){
+    type = other_type;
     getNextToken();
     enumName = IdentifierStr;
     getNextToken();
@@ -962,12 +965,12 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   }
   Log::Info() << "FnLoc in ast : " << FnLoc << "\n";
   auto Proto = std::make_unique<PrototypeAST>(FnLoc, FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
-  //FunctionProtos[FnName] = Proto->clone();
+  FunctionProtos[FnName] = Proto->clone();
   return Proto;
 }
 
 std::unique_ptr<StructDeclarAST> ParseStruct(){
-  int i = 0;
+  //int i = 0;
   std::string template_name = "";
   bool has_template = false;
   std::vector<std::unique_ptr<VarExprAST>> VarList;
@@ -992,6 +995,9 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     return LogErrorS("Expected '{' in Struct");
   }
   getNextToken();
+  /*std::vector<std::pair<std::string,Cpoint_Type>> members;
+  std::vector<std::string> functions;*/
+  StructDeclarations[structName] = std::make_unique<StructDeclaration>(nullptr, std::vector<std::pair<std::string,Cpoint_Type>>(), std::vector<std::string>());
   while ((CurTok == tok_var || CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
     Log::Info() << "Curtok in struct parsing : " << CurTok << "\n";
     if (CurTok == tok_var){
@@ -1003,36 +1009,60 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
         if (!declar){
             return LogErrorS("Error in struct declaration vars");
         }
+        if (declar->cpoint_type.struct_name == structName && declar->cpoint_type.is_ptr){ // TODO : fix this ? 
+        declar->cpoint_type.is_struct = false;
+        declar->cpoint_type.struct_name = "";
+        }
+        std::string VarName = declar->VarNames.at(0).first;
+        StructDeclarations[structName]->members.push_back(std::make_pair(VarName, declar->cpoint_type));
         VarList.push_back(std::move(declar));
     } else if (CurTok == tok_extern){
         getNextToken();
-        auto protoExpr = ParsePrototype();
-        PrototypeAST* protoPtr = dynamic_cast<PrototypeAST*>(protoExpr.get());
+        std::unique_ptr<PrototypeAST> /*protoExpr*/ Proto = ParsePrototype();
+        /*PrototypeAST* protoPtr = dynamic_cast<PrototypeAST*>(protoExpr.get());
         if (protoPtr == nullptr){
             return LogErrorS("Error in struct declaration externs");
         }
         std::unique_ptr<PrototypeAST> Proto;
         protoExpr.release();
-        Proto.reset(protoPtr);
+        Proto.reset(protoPtr);*/
         if (Proto == nullptr){ return nullptr; }
+        std::string function_name;
+        if (Proto->Name == structName){
+            // Constructor
+            function_name = "Constructor__Default";
+        } else {
+            function_name = Proto->Name;
+        }
+        StructDeclarations[structName]->functions.push_back(function_name);
         ExternFunctions.push_back(std::move(Proto));
         Log::Info() << "CurTok after extern : " << CurTok << "\n";
         
     } else if (CurTok == tok_func){
       Log::Info() << "function found in struct" << "\n";
-      auto funcAST = ParseDefinition();
+      Cpoint_Type self_type = Cpoint_Type(other_type, true, 1, false, 0, true, structName);
+      NamedValues["self"] = std::make_unique<NamedValue>(nullptr, self_type);
+      std::unique_ptr<FunctionAST> /*funcAST*/ declar = ParseDefinition();
       Log::Info() << "AFTER ParseDefinition" << "\n";
-      FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
+      /*FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
       if (functionAST == nullptr){
       return LogErrorS("Error in struct declaration funcs");
       }
       std::unique_ptr<FunctionAST> declar;
       funcAST.release();
-      declar.reset(functionAST);
+      declar.reset(functionAST);*/
       if (declar == nullptr){return nullptr;}
+      std::string function_name;
+      if (declar->Proto->Name == structName){
+        // Constructor
+        function_name = "Constructor__Default";
+      } else {
+        function_name = declar->Proto->Name;
+      }
+      StructDeclarations[structName]->functions.push_back(function_name);
       Functions.push_back(std::move(declar));
-      Log::Info() << "Function Number in struct : " << i+1 << "\n";
-      i++;
+      /*Log::Info() << "Function Number in struct : " << i+1 << "\n";
+      i++;*/
     }
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
@@ -1040,6 +1070,41 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     return LogErrorS("Expected '}' in struct");
   }
   getNextToken();  // eat '}'.
+  /*std::vector<std::pair<std::string,Cpoint_Type>> members;
+  for (int i = 0; i < VarList.size(); i++){
+    std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(VarList.at(i)->clone());
+    if (!VarExpr){
+        Log::Info() << "VarExpr is nullptr" << "\n";
+    }
+    Log::Info() << "Var StructDeclar type codegen : " << VarExpr->cpoint_type << "\n";
+    if (VarExpr->cpoint_type.struct_name == structName && VarExpr->cpoint_type.is_ptr){ // TODO : fix this ? 
+        VarExpr->cpoint_type.is_struct = false;
+        VarExpr->cpoint_type.struct_name = "";
+    }
+    std::string VarName = VarExpr->VarNames.at(0).first;
+    members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
+  }
+  std::vector<std::string> functions;
+  for (int i = 0; i < Functions.size(); i++){
+    std::string function_name;
+    if (Functions.at(i)->Proto->Name == structName){
+        // Constructor
+        function_name = "Constructor__Default";
+    } else {
+        function_name = Functions.at(i)->Proto->Name;
+    }
+    functions.push_back(function_name);
+  }
+  for (int i = 0; i < ExternFunctions.size(); i++){
+    std::string function_name;
+    if (ExternFunctions.at(i)->Name == structName){
+        // Constructor
+        function_name = "Constructor__Default";
+    } else {
+        function_name = ExternFunctions.at(i)->Name;
+    }
+    functions.push_back(function_name);
+  }*/
   auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);
   if (has_template){
     Log::Info() << "Parse struct has template" << "\n";
@@ -1047,6 +1112,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     is_template_parsing_struct = true;
     return nullptr;
   }
+  //StructDeclarations[structName] = std::make_unique<StructDeclaration>(nullptr, members, functions);
   return structDeclar;
 }
 
@@ -1210,7 +1276,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   Log::Info() << "end of function" << "\n";
   bool has_template = Proto->has_template;
   std::string FunctionName = Proto->Name;
-  //FunctionProtos[Proto->getName()] = Proto->clone();
+  FunctionProtos[Proto->getName()] = Proto->clone();
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
     std::string template_name = functionAST->Proto->template_name;
@@ -1768,9 +1834,13 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       if (!Init)
         return nullptr;
     }
-    if (infer_type && Init == nullptr){
-        Log::Info() << "Missing type declaration and default value to do type inference. Type defaults to double" << "\n";
-        cpoint_type.type = double_type;
+    if (infer_type){
+        if (Init){
+            cpoint_type = Init->get_type();
+        } else {
+            Log::Info() << "Missing type declaration and default value to do type inference. Type defaults to double" << "\n";
+            cpoint_type.type = double_type;
+        }
     }
     VarNames.push_back(std::make_pair(Name, std::move(Init)));
 

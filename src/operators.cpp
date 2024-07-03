@@ -5,6 +5,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "types.h"
 #include "ast.h"
+#include "codegen.h"
 
 using namespace llvm;
 extern std::unique_ptr<IRBuilder<>> Builder;
@@ -178,6 +179,8 @@ Cpoint_Type UnaryExprAST::get_type(){
     return Cpoint_Type(); // TODO : add all operators
 }
 
+#include <typeinfo>
+
 Cpoint_Type BinaryExprAST::get_type(){
     if (Op == "=" || Op == "<<" || Op == ">>" || Op == "|" || Op == "^" || Op == "&" || Op == "+" || Op == "-" || Op == "*" || Op == "%" || Op == "/"){
         return LHS->get_type();
@@ -188,6 +191,18 @@ Cpoint_Type BinaryExprAST::get_type(){
     if (Op == "["){
         return LHS->get_type().deref_type();
     }
+    if (Op == "."){
+        auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(RHS->clone());
+        if (!varExprMember){
+            LogError("expected an identifier for a struct member");
+            return Cpoint_Type();
+        }
+        std::string MemberName = varExprMember->Name;
+        Log::Info() << "LHS name struct member : " << typeid(*LHS.get()).name() << "\n";
+        Cpoint_Type LHS_type = LHS->get_type();
+        return get_member_type_and_pos_object(LHS_type, MemberName)->first;
+    }
     // TODO : add all operators
+    LogError("trying to get the type from an operator for which the function it is not implemented");
     return Cpoint_Type();
 }

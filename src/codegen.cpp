@@ -320,26 +320,26 @@ Type* StructDeclarAST::codegen(){
   StructType* structType = StructType::create(*TheContext);
   structType->setName(Name);
   std::vector<Type*> dataTypes;
-  std::vector<std::pair<std::string,Cpoint_Type>> members;
-  std::vector<std::string> functions;
+  //std::vector<std::pair<std::string,Cpoint_Type>> members;
+  //std::vector<std::string> functions;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(/*Vars.at(i)->clone()*/ std::move(Vars.at(i)));
     if (!VarExpr){
         Log::Info() << "VarExpr is nullptr" << "\n";
     }
     Log::Info() << "Var StructDeclar type codegen : " << VarExpr->cpoint_type << "\n";
-    if (VarExpr->cpoint_type.struct_name == Name && VarExpr->cpoint_type.is_ptr){
+    /*if (VarExpr->cpoint_type.struct_name == Name && VarExpr->cpoint_type.is_ptr){ // TODO : fix this ?
         VarExpr->cpoint_type.is_struct = false;
         VarExpr->cpoint_type.struct_name = "";
-    }
+    }*/
     Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     dataTypes.push_back(var_type);
-    std::string VarName = VarExpr->VarNames.at(0).first;
-    members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
+    //std::string VarName = VarExpr->VarNames.at(0).first;
+    //members.push_back(std::make_pair(VarName, VarExpr->cpoint_type)); // already done in ast.cpp
   }
   structType->setBody(dataTypes);
   Log::Info() << "added struct declaration name " << Name << " to StructDeclarations" << "\n";
-  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, members, functions);
+  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, /*members*/ StructDeclarations[Name]->members, /*functions*/  StructDeclarations[Name]->functions);
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = Functions.at(i)->clone();
     std::string function_name;
@@ -360,7 +360,7 @@ Type* StructDeclarAST::codegen(){
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
-    functions.push_back(function_name);  
+    //functions.push_back(function_name);  
   }
   for (int i = 0; i < ExternFunctions.size(); i++){
     std::unique_ptr<PrototypeAST> ProtoExpr = std::move(ExternFunctions.at(i));
@@ -376,10 +376,10 @@ Type* StructDeclarAST::codegen(){
     ProtoExpr->Args.insert(ProtoExpr->Args.begin(), std::make_pair("self", self_pointer_type));
     ProtoExpr->Name = mangled_name_function;
     ProtoExpr->codegen();
-    functions.push_back(function_name);
+    //functions.push_back(function_name);
   }
 
-  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
+  //StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
   Log::Info() << "appending to StructDeclarations struct " << Name << "\n";
   return structType;
 }
@@ -689,11 +689,61 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
     return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
 }
 
+std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectType, std::string MemberName){
+    Cpoint_Type member_type;
+    int pos = -1;
+    if (objectType.is_union){
+        std::vector<std::pair<std::string, Cpoint_Type>> members = UnionDeclarations[objectType.union_name]->members;
+        for (int i = 0; i < members.size(); i++){
+        Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
+        if (members.at(i).first == MemberName){
+            pos = i;
+            break;
+        }
+        }
+        if (pos == -1){
+            LogError("Unknown member %s in struct member", MemberName.c_str());
+            return nullptr;    
+        }
+        member_type = members.at(pos).second;
+    } else {
+        std::vector<std::pair<std::string, Cpoint_Type>> members;
+        if (objectType.struct_template_type_passed){
+            Log::Info() << "is template" << "\n";
+            members = StructDeclarations[get_struct_template_name(objectType.struct_name, *objectType.struct_template_type_passed)]->members;
+        } else {
+            if (!StructDeclarations[objectType.struct_name]){
+                LogError("struct not found \"%s\"", objectType.struct_name.c_str());
+                return nullptr;
+            }
+            members = StructDeclarations[objectType.struct_name]->members;
+        }
+        Log::Info() << "members.size() : " << members.size() << "\n";
+        for (int i = 0; i < members.size(); i++){
+        Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
+            if (members.at(i).first == MemberName){
+                pos = i;
+                break;
+            }
+        }
+        Log::Info() << "Pos for GEP struct member " << pos << "\n";
+        if (pos == -1){
+            LogError("Unknown member %s in struct member", MemberName.c_str());
+            return nullptr;
+        }
+        member_type = members.at(pos).second;
+    }
+    return new std::pair<Cpoint_Type, int>(member_type, pos);
+}
+
 // only doing GEP, not loading
 // member_type is for returning
 // get struct, or union
 // TODO : maybe rename it to getObjectMember (it returns only the ptr without load so maybe calling it getObjectMemberPtr)
+// TODO : return a pair like get_member_type_and_pos_object
 Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& member_type){
+    // TODO : refactor all of this so it is not just recopied code one after the other
+    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
     if (dynamic_cast<VariableExprAST*>(struct_expr.get())){
         Value* Alloca = nullptr;
         std::unique_ptr<VariableExprAST> structVarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(struct_expr));
@@ -704,7 +754,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
         std::string MemberName = varExprMember->Name;
         if (!var_exists(StructName)){
-            return LogErrorV(emptyLoc, "Can't find struct that is used for a member");
+            return LogErrorV(emptyLoc, "Can't find struct %s that is used for a member", StructName.c_str());
         }
         Alloca = get_var_allocation(StructName);
         Cpoint_Type structType = *get_variable_type(StructName);
@@ -723,9 +773,15 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             Log::Info() << "struct_template_type_passed : " << *structType.struct_template_type_passed << "\n";
         }
         //Log::Info() << "struct_declaration_name length : " << structType.struct_name.length() << "\n";
-    
+        std::pair<Cpoint_Type, int>* temp_pair = get_member_type_and_pos_object(structType, MemberName);
+        if (!temp_pair){
+            return nullptr;
+        }
+        member_type = temp_pair->first;
+        Log::Info() << "index : " << temp_pair->second << "\n";
+        int pos = temp_pair->second;
         if (structType.is_union){
-            auto members = UnionDeclarations[structType.union_name]->members;
+            /*auto members = UnionDeclarations[structType.union_name]->members;
             int pos = -1;
             for (int i = 0; i < members.size(); i++){
             Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
@@ -737,13 +793,13 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             if (pos == -1){
             return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
             }
-            member_type = members.at(pos).second;
+            member_type = members.at(pos).second;*/
             return Alloca;
         } else {
         /*if (!StructDeclarations[structType.struct_name]){
             return LogErrorV(emptyLoc, "Can't find struct type : %s", structType.struct_name.c_str());
         }*/
-        std::vector<std::pair<std::string, Cpoint_Type>> members;
+        /*std::vector<std::pair<std::string, Cpoint_Type>> members;
         if (structType.struct_template_type_passed){
             Log::Info() << "is template" << "\n";
             members = StructDeclarations[get_struct_template_name(structType.struct_name, *structType.struct_template_type_passed)]->members;
@@ -763,17 +819,54 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         if (pos == -1){
             return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
         }
-        member_type = members.at(pos).second;
-        auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
+        member_type = members.at(pos).second;*/
         auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
         if (structType.is_ptr){
             structType.is_ptr = false;
+            if (structType.nb_ptr > 0){
+                structType.nb_ptr--;
+            }
             Alloca = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true)), Alloca);
         }
         Log::Info() << "cpoint_type struct : " << structType << "\n";
         Value* ptr = Builder->CreateGEP(get_type_llvm(structType), Alloca, { zero, index}, "", true);
         return ptr;
         }
+    } else if (dynamic_cast<BinaryExprAST*>(struct_expr.get())){
+        std::unique_ptr<BinaryExprAST> structBinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(struct_expr));
+        if (structBinExpr->Op != "."){
+            return LogErrorV(emptyLoc, "Trying to use the struct member operator with an operator expression which it is not implemented for");
+        }
+        Cpoint_Type objectType = /*structBinExpr->RHS->get_type()*/ structBinExpr->get_type();
+        //Log::Info() << "objectType : " << objectType << "\n";
+        auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(std::move(member));
+        if (!varExprMember){
+            return LogErrorV(emptyLoc, "expected an identifier for a struct member");
+        }
+        std::string MemberName = varExprMember->Name;
+        std::pair<Cpoint_Type, int>* temp_pair = get_member_type_and_pos_object(objectType, MemberName);
+        if (!temp_pair){
+            return nullptr;
+        }
+        member_type = temp_pair->first;
+        Log::Info() << "member_type : " << member_type << "\n";
+        int pos = temp_pair->second;
+        Log::Info() << "index : " << pos << "\n";
+        Cpoint_Type member_type_binop_struct;
+        Value* lStruct = getStructMemberGEP(std::move(structBinExpr->LHS), std::move(structBinExpr->RHS), member_type_binop_struct);
+        if (!lStruct){
+            return nullptr;
+        }
+        auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
+        if (member_type_binop_struct.is_ptr){
+            member_type_binop_struct.is_ptr = false;
+            member_type_binop_struct.nb_ptr--;
+            lStruct = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true)), lStruct);
+        }
+        Log::Info() << "member_type_binop_struct : " << member_type_binop_struct << "\n";
+        Value* ptr = Builder->CreateGEP(get_type_llvm(member_type_binop_struct), lStruct, { zero, index}, "", true);
+        return ptr;
+        //return lStruct;
     }
     return LogErrorV(emptyLoc, "Trying to use the struct member operator with an expression which it is not implemented for");
 }
@@ -2455,6 +2548,7 @@ Value *VarExprAST::codegen() {
       InitVal = Init->codegen();
       if (!InitVal)
         return nullptr;
+      // TODO : remove it because it is already done in the ast part
       if (infer_type){
         cpoint_type = Cpoint_Type(get_cpoint_type_from_llvm(InitVal->getType()));
       }
