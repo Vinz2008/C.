@@ -12,10 +12,12 @@ func main() i32 {
     defer gc_free(l)
     l[0] = 2
     printi(l[0])
-    if argc == 2 {
+    if l[0] == 2 {
         var l_if = gc_malloc(2 * sizeof i32)
         defer gc_free(l_if)
         printstr("test")
+        l_if[0] = 10
+        #println("l_fi[0] : {}", l_if[0])
     }
     var l2 : i32 ptr = malloc(12 * sizeof i32)
     defer free(l2)

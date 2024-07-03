@@ -5,4 +5,7 @@ struct pair~T~ {
     func get_first() T {
         self.first
     }
+    func get_second() T {
+        self.second
+    }
 }

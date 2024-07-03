@@ -2520,7 +2520,8 @@ Value *VarExprAST::codegen() {
       std::vector<Value *> ArgsV;
       
       auto A = NamedValues[VarName]->alloca_inst;
-      Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
+      //Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
+      Value* thisClass = A;
       ArgsV.push_back(thisClass);
       Builder->CreateCall(constructorF, ArgsV, "calltmp");
       }
