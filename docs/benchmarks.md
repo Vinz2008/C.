@@ -18,8 +18,8 @@ Crystal 1.11.2 : 191.155s
 V 0.4.6 : 187.359s   
 Swift (swiftc 5.10.1) : 473.061s  
 PyPy 7.3.16 : 346.977s  
-Php :   
-Lua :   
+Php 8.3.8 : 2258s  
+Lua 5.4.7 : 2002.52s 
 LuaJIT 2.1.1702233742 : 387.21s   
 Go 1.22.4 : 144.123s  
 Java (Openjdk 22) : 98s  
