@@ -299,6 +299,41 @@ public:
     }
     std::string generate_c() override;
 };
+
+// TODO : fix the reorder warning
+class PrototypeAST {
+public:
+  bool IsOperator;
+  unsigned Precedence;  // Precedence if a binary op.
+  Cpoint_Type cpoint_type;
+  std::string Name;
+  bool is_variable_number_args;
+  bool has_template;
+  std::string template_name;
+  bool is_private_func;
+  std::vector<std::pair<std::string,Cpoint_Type>> Args;
+  int Line;
+  PrototypeAST(Source_location loc, const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, Cpoint_Type cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false, bool has_template = false,  const std::string& template_name = "", bool is_private_func = false)
+    : Name(name), Args(std::move(Args)), cpoint_type(cpoint_type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args), has_template(has_template), template_name(template_name), is_private_func(is_private_func), Line(loc.line_nb) {}
+
+  const std::string &getName() const { return Name; }
+  Function *codegen();
+  bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
+  bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
+  char getOperatorName() const {
+    assert(isUnaryOp() || isBinaryOp());
+    return Name[Name.size() - 1];
+  }
+  unsigned getBinaryPrecedence() const { return Precedence; }
+  int getLine() const { return Line; }
+  std::unique_ptr<PrototypeAST> clone(){
+    return std::make_unique<PrototypeAST>((Source_location){Line, 0}, Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
+  }
+  c_translator::Function* c_codegen();
+};
+
+extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
+
 class VariableExprAST : public ExprAST {
 public:
   std::string Name;
@@ -320,6 +355,13 @@ public:
         //fprintf(stderr, "No type found (compiler bug probably)");
         //exit(1);
     }*/
+   if (FunctionProtos[Name]){
+    std::vector<Cpoint_Type> args;
+    for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){
+        args.push_back(FunctionProtos[Name]->Args.at(i).second);
+    }
+    return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, true, args, new Cpoint_Type(FunctionProtos[Name]->cpoint_type));
+   }
    return *get_variable_type(Name);
    //return type;
   }
@@ -420,41 +462,9 @@ public:
   std::string generate_c() override;
 };
 
-// TODO : fix the reorder warning
-class PrototypeAST {
-public:
-  bool IsOperator;
-  unsigned Precedence;  // Precedence if a binary op.
-  Cpoint_Type cpoint_type;
-  std::string Name;
-  bool is_variable_number_args;
-  bool has_template;
-  std::string template_name;
-  bool is_private_func;
-  std::vector<std::pair<std::string,Cpoint_Type>> Args;
-  int Line;
-  PrototypeAST(Source_location loc, const std::string &name, std::vector<std::pair<std::string,Cpoint_Type>> Args, Cpoint_Type cpoint_type, bool IsOperator = false, unsigned Prec = 0, bool is_variable_number_args = false, bool has_template = false,  const std::string& template_name = "", bool is_private_func = false)
-    : Name(name), Args(std::move(Args)), cpoint_type(cpoint_type), IsOperator(IsOperator), Precedence(Prec), is_variable_number_args(is_variable_number_args), has_template(has_template), template_name(template_name), is_private_func(is_private_func), Line(loc.line_nb) {}
-
-  const std::string &getName() const { return Name; }
-  Function *codegen();
-  bool isUnaryOp() const { return IsOperator && Args.size() == 1; }
-  bool isBinaryOp() const { return IsOperator && Args.size() == 2; }
-  char getOperatorName() const {
-    assert(isUnaryOp() || isBinaryOp());
-    return Name[Name.size() - 1];
-  }
-  unsigned getBinaryPrecedence() const { return Precedence; }
-  int getLine() const { return Line; }
-  std::unique_ptr<PrototypeAST> clone(){
-    return std::make_unique<PrototypeAST>((Source_location){Line, 0}, Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
-  }
-  c_translator::Function* c_codegen();
-};
-
 extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 
-class PrototypeAST;
+//class PrototypeAST;
 
 struct StructMemberCallExprAST : public ExprAST {
     std::unique_ptr<BinaryExprAST> StructMember;

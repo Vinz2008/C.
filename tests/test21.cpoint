@@ -1,13 +1,13 @@
 import @std/print.cpoint
 import @std/pair.cpoint
 
-func main() double {
+func main() i32 {
     var a : double = 2
     if a == 2 {
         printi(argc)
     }
     var t : struct pair~i32~ 
     t.first = 32
-    printi(t.get_first(a))
+    printi(t.get_first())
     0
 }

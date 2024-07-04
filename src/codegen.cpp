@@ -320,8 +320,8 @@ Type* StructDeclarAST::codegen(){
   StructType* structType = StructType::create(*TheContext);
   structType->setName(Name);
   std::vector<Type*> dataTypes;
-  //std::vector<std::pair<std::string,Cpoint_Type>> members;
-  //std::vector<std::string> functions;
+  std::vector<std::pair<std::string,Cpoint_Type>> members_for_template;
+  std::vector<std::string> functions_for_template;
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(/*Vars.at(i)->clone()*/ std::move(Vars.at(i)));
     if (!VarExpr){
@@ -334,12 +334,24 @@ Type* StructDeclarAST::codegen(){
     }*/
     Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     dataTypes.push_back(var_type);
-    //std::string VarName = VarExpr->VarNames.at(0).first;
-    //members.push_back(std::make_pair(VarName, VarExpr->cpoint_type)); // already done in ast.cpp
+    std::string VarName = VarExpr->VarNames.at(0).first;
+    if (is_in_struct_templates_codegen){
+        members_for_template.push_back(std::make_pair(VarName, VarExpr->cpoint_type)); // already done in ast.cpp
+    }
   }
   structType->setBody(dataTypes);
-  Log::Info() << "added struct declaration name " << Name << " to StructDeclarations" << "\n";
-  StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, /*members*/ StructDeclarations[Name]->members, /*functions*/  StructDeclarations[Name]->functions);
+  Log::Info() << "adding struct declaration name " << Name << " to StructDeclarations" << "\n";
+  if (!is_in_struct_templates_codegen){
+    //auto functions = StructDeclarations[Name]->functions;
+    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, StructDeclarations[Name]->members, /*functions*/  StructDeclarations[Name]->functions);
+  } else {
+        std::string structName = Name.substr(0, Name.find("____"));
+        StructDeclarations[Name] = StructDeclarations[structName]->clone();
+        StructDeclarations[Name]->struct_type = structType;
+  }
+ if (is_in_struct_templates_codegen){
+    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members_for_template), StructDeclarations[Name]->functions);
+  }
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = Functions.at(i)->clone();
     std::string function_name;
@@ -360,7 +372,9 @@ Type* StructDeclarAST::codegen(){
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
     FunctionExpr->Proto->Name = mangled_name_function;
     FunctionExpr->codegen();
-    //functions.push_back(function_name);  
+    if (is_in_struct_templates_codegen){
+        functions_for_template.push_back(function_name);
+    }
   }
   for (int i = 0; i < ExternFunctions.size(); i++){
     std::unique_ptr<PrototypeAST> ProtoExpr = std::move(ExternFunctions.at(i));
@@ -376,10 +390,14 @@ Type* StructDeclarAST::codegen(){
     ProtoExpr->Args.insert(ProtoExpr->Args.begin(), std::make_pair("self", self_pointer_type));
     ProtoExpr->Name = mangled_name_function;
     ProtoExpr->codegen();
-    //functions.push_back(function_name);
+    if (is_in_struct_templates_codegen){
+        functions_for_template.push_back(function_name);
+    }
   }
-
-  //StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members), std::move(functions));
+  // TODO : for now, enable it after just for templates, see later if there is another solution
+  if (is_in_struct_templates_codegen){
+    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, /*std::move(members_for_template)*/ StructDeclarations[Name]->members, std::move(functions_for_template));
+  }
   Log::Info() << "appending to StructDeclarations struct " << Name << "\n";
   return structType;
 }
@@ -702,7 +720,7 @@ std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectTy
         }
         }
         if (pos == -1){
-            LogError("Unknown member %s in struct member", MemberName.c_str());
+            LogError("Unknown member %s in union member", MemberName.c_str());
             return nullptr;    
         }
         member_type = members.at(pos).second;
@@ -829,7 +847,8 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             Alloca = Builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true)), Alloca);
         }
         Log::Info() << "cpoint_type struct : " << structType << "\n";
-        Value* ptr = Builder->CreateGEP(get_type_llvm(structType), Alloca, { zero, index}, "", true);
+        auto structTypeLLVM = get_type_llvm(structType);
+        Value* ptr = Builder->CreateGEP(/*get_type_llvm(structType)*/ structTypeLLVM, Alloca, { zero, index}, "", true);
         return ptr;
         }
     } else if (dynamic_cast<BinaryExprAST*>(struct_expr.get())){
@@ -2013,7 +2032,10 @@ before_ret:
 after_ret:
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
-    verifyFunction(*TheFunction);
+    auto& out = outs();
+    if (llvm::verifyFunction(*TheFunction, &out)){
+        return nullptr;
+    }
     return TheFunction;
   //}
   

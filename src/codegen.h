@@ -64,6 +64,9 @@ public:
     std::vector<std::pair<std::string,Cpoint_Type>> members;
     std::vector<std::string> functions;
     StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members, std::vector<std::string> functions) : struct_type(struct_type), members(std::move(members)), functions(std::move(functions)) {}
+    std::unique_ptr<StructDeclaration> clone(){
+        return std::make_unique<StructDeclaration>(struct_type, members, functions);
+    }
 };
 
 class UnionDeclaration {
@@ -88,11 +91,11 @@ public:
     ExternToGenerate(std::string Name, llvm::FunctionType* functionType, std::vector<std::pair<std::string, Cpoint_Type>> Args) : Name(Name), functionType(functionType), Args(Args) {}
 };
 
-std::string module_function_mangling(std::string module_name, std::string function_name);
+//std::string module_function_mangling(std::string module_name, std::string function_name);
 //void codegenTemplates();
 //void codegenStructTemplates();
 //void generateTests();
-std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type);
+//std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cpoint_Type type);
 void generateExterns();
 void generateClosures();
 

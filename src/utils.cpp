@@ -12,11 +12,10 @@ namespace fs = std::filesystem;
 bool FileExists(std::string filename){
     std::ifstream file(filename);
     if(file.is_open()){
-    return 1;
+    return true;
     file.close();
-    } else {
-    return 0;
-    }
+    } 
+    return false;
 }
 bool FolderExists(std::string foldername){
     struct stat sb;
