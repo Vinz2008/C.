@@ -1,0 +1,84 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-04 23:41+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../src/cli_infos.cpp:10
+msgid ""
+"Usage : cpoint [options] file\n"
+"Options : \n"
+"  -std : Select the path where is the std which will be builded\n"
+"  -no-std : Make the compiler to not link to the std. It is the equivalent "
+"of -freestanding in gcc\n"
+"  -c : Create an object file instead of an executable\n"
+"  -target-triplet : Select the target triplet to select the target to "
+"compile to\n"
+"  -verbose-std-build : Make the build of the standard library verbose. It is "
+"advised to activate this if the std doesn't build\n"
+"  -no-delete-import-file : \n"
+"  -no-gc : Make the compiler not add functions for garbage collection\n"
+"  -with-gc : Activate the garbage collector explicitally (it is by default "
+"activated)\n"
+"  -no-imports : Deactivate imports in the compiler\n"
+"  -rebuild-gc : Force rebuilding the garbage collector\n"
+"  -no-rebuild-std : Make the compiler not rebuild the standard library. You "
+"probably only need to rebuild it when you change the target\n"
+"  -linker-flags=[flags] : Select additional linker flags\n"
+"  -d : Activate debug mode to see debug logs\n"
+"  -o : Select the output file name\n"
+"  -g : Enable debuginfos\n"
+"  -silent : Make the compiler silent\n"
+"  -build-mode : Select the build mode (release or debug)\n"
+"  -fPIC : Make the compiler produce position-independent code\n"
+"  -compile-time-sizeof : The compiler gets the size of types at compile "
+"time\n"
+"  -test : Compile tests\n"
+"  -run-test : Run tests\n"
+msgstr ""
+
+#: ../src/main.cpp:443
+msgid "custom path std : "
+msgstr ""
+
+#: ../src/main.cpp:536
+msgid "filename : "
+msgstr ""
+
+#: ../src/main.cpp:647
+#, c-format
+msgid "exited with %d errors\n"
+msgstr ""
+
+#: ../src/main.cpp:681
+msgid "Could not open file: "
+msgstr ""
+
+#: ../src/main.cpp:755
+msgid "TheTargetMachine can't emit a file of this type"
+msgstr ""
+
+#: ../src/main.cpp:778
+msgid "Wrote "
+msgstr ""
+
+#: ../src/main.cpp:793
+msgid "Built the standard library"
+msgstr ""
+
+#: ../src/main.cpp:840
+msgid "Linked the executable"
+msgstr ""

@@ -11,6 +11,7 @@
 #include "dependencies.h"
 #include "build.h"
 #include "get_args.h"
+#include "../../src/gettext.h"
 #define  TOML_HEADER_ONLY 1
 #include <toml++/toml.h>
 #include <algorithm>
@@ -150,7 +151,27 @@ void runPrebuildCommands(toml::v3::table& config){
 }
 
 void printHelp(){
-    std::cout << "Usage : cpoint-build [options] [command]" << std::endl;
+    std::string print_help = _("Usage : cpoint-build [options] [command]\n\
+Options : \n\
+    -f : Select the toml config file for the project\n\
+    -j : Select the number of threads to use (use it like in Make, ex : \"-j8\")\n\
+    -h : Print this page (You wan also use --help)\n\
+\n\
+Commands : \n\
+    build : Build the project in the folder\n\
+    clean : Clean the project\n\
+    info : Print infos of the project\n\
+    download/update : Update dependencies\n\
+    add : Add a dependency to the project\n\
+    new : Create a new project in a new folder\n\
+    open-page : Open the website of the project\n\
+    init : Init a project in the folder\n\
+    cross-compile : Cross-compile the project\n\
+    install : Install the binary\n\
+    install_path : Print the path where binaries are installed\n\
+");
+    std::cout << print_help << std::endl;
+    /*std::cout << "Usage : cpoint-build [options] [command]" << std::endl;
     std::cout << "Options : " << std::endl;
     std::cout << "    -f : Select the toml config file for the project" << std::endl;
     std::cout << "    -j : Select the number of threads to use (use it like in Make, ex : \"-j8\")" << std::endl;
@@ -167,11 +188,13 @@ void printHelp(){
     std::cout << "    init : Init a project in the folder" << std::endl;
     std::cout << "    cross-compile : Cross-compile the project" << std::endl;
     std::cout << "    install : Install the binary" << std::endl;
-    std::cout << "    install_path : Print the path where binaries are installed" << std::endl;
+    std::cout << "    install_path : Print the path where binaries are installed" << std::endl;*/
 }
 
 int main(int argc, char** argv){
-
+    setlocale(LC_ALL, "");
+    bindtextdomain("cpoint-build", "/usr/share/locale/" /*"./locales/"*/ /*NULL*/);
+    textdomain("cpoint-build");
     std::vector<std::string> needed_exes = {"clang"};
     if (!fs::exists("../cpoint") && !fs::exists("../../cpoint")){
         needed_exes.push_back("cpoint");

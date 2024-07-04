@@ -1,4 +1,5 @@
 cpoint
+!cpoint/
 *.exe
 out.c
 *.ll
@@ -24,6 +25,7 @@ test_io.txt
 *.temp
 bdwgc_prefix
 cpoint-build
+!cpoint-build
 valgrind-out.txt
 bindings.cpoint
 *.mo

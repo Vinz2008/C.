@@ -1,0 +1,41 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-07-04 23:41+0200\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../build/src/main.cpp:154
+msgid ""
+"Usage : cpoint-build [options] [command]\n"
+"Options : \n"
+"    -f : Select the toml config file for the project\n"
+"    -j : Select the number of threads to use (use it like in Make, ex : \"-"
+"j8\")\n"
+"    -h : Print this page (You wan also use --help)\n"
+"\n"
+"Commands : \n"
+"    build : Build the project in the folder\n"
+"    clean : Clean the project\n"
+"    info : Print infos of the project\n"
+"    download/update : Update dependencies\n"
+"    add : Add a dependency to the project\n"
+"    new : Create a new project in a new folder\n"
+"    open-page : Open the website of the project\n"
+"    init : Init a project in the folder\n"
+"    cross-compile : Cross-compile the project\n"
+"    install : Install the binary\n"
+"    install_path : Print the path where binaries are installed\n"
+msgstr ""

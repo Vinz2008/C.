@@ -137,6 +137,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Refactor big functions in ast.cpp and codegen.cpp as smaller functions
 - [ ] Remove useless Log::Info() calls
 - [ ] Replace all uses emptyLoc by the real loc passed to the function 
+- [ ] Add debuginfos
 
 ## Benchmarks compared to other languages
 

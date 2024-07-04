@@ -4,7 +4,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <filesystem>
-#include <libintl.h>
+//#include <libintl.h>
 #include <locale.h>
 #include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -389,7 +389,7 @@ int StartJIT(){
 
 int main(int argc, char **argv){
     setlocale(LC_ALL, "");
-    bindtextdomain("cpoint", /*"/usr/share/locale/"*/ /*"./locales/"*/ NULL);
+    bindtextdomain("cpoint", "/usr/share/locale/" /*"./locales/"*/ /*NULL*/);
     textdomain("cpoint");
     Comp_context = std::make_unique<Compiler_context>("", 1, 0, "<empty line>");
     add_default_typedefs();
@@ -452,7 +452,7 @@ int main(int argc, char **argv){
           optimize_level = std::stoi((std::string)argv[i]);
         }*/ else if (arg.compare("-g") == 0){
           debug_info_mode = true;
-        } else if (arg.compare("-h") == 0 || arg.compare("-help") == 0){
+        } else if (arg.compare("-h") == 0 || arg.compare("--help") == 0){
             print_help();
             return 0;
         } else if (arg.compare("-v") == 0 || arg.compare("--version") == 0){
