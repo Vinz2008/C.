@@ -4,6 +4,10 @@
 #include "imports.h"
 #include "log.h"
 
+#ifdef _WIN32
+#include "windows.h"
+#endif
+
 namespace fs = std::filesystem;
 
 static bool ends_with(std::string str, std::string suffix){
