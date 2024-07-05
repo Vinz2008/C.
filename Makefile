@@ -49,7 +49,8 @@ CXXFLAGS += -DDEFAULT_PREFIX_PATH=\"$(PREFIX)\"
 endif
 
 ifeq ($(OS), Windows_NT)
-LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-17 -lstdc++ -lintl
+LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-17 -lstdc++ 
+# LDFLAGS += -lintl # for now not needed (TODO ?)
 else
 ifneq (,$(findstring mingw,$(CXX)))
 LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-17 -lstdc++ -lintl

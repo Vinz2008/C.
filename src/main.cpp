@@ -388,9 +388,11 @@ int StartJIT(){
 #endif
 
 int main(int argc, char **argv){
+#ifndef _WIN32 // TODO : make work gettext on windows (removed also because of problems with mingw gettext in the docker ci)
     setlocale(LC_ALL, "");
     bindtextdomain("cpoint", "/usr/share/locale/" /*"./locales/"*/ /*NULL*/);
     textdomain("cpoint");
+#endif
     Comp_context = std::make_unique<Compiler_context>("", 1, 0, "<empty line>");
     add_default_typedefs();
     string object_filename = "out.o";
