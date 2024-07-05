@@ -53,7 +53,8 @@ LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-17 -lstdc++
 # LDFLAGS += -lintl # for now not needed (TODO ?)
 else
 ifneq (,$(findstring mingw,$(CXX)))
-LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-17 -lstdc++ -lintl
+LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-17 -lstdc++ 
+#LDFLAGS += -lintl
 else
 LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
 endif
