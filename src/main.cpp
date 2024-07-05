@@ -26,6 +26,7 @@
 #include "llvm/Passes/StandardInstrumentations.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Support/Process.h"
 #include "config.h"
 #include "lexer.h"
 #include "ast.h"

@@ -1,5 +1,8 @@
 #ifndef LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
 #define LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
+#include "config.h"
+
+#if ENABLE_JIT
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ExecutionEngine/Orc/CompileOnDemandLayer.h"
@@ -144,9 +147,6 @@ private:
 
 #endif // LLVM_EXECUTIONENGINE_ORC_KALEIDOSCOPEJIT_H
 
-#include "config.h"
-
-#if ENABLE_JIT
 void launchJIT();
 void HandleTopLevelExpression();
 #endif
