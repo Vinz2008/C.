@@ -11,7 +11,18 @@ else
 endif
 
 else
+IS_WINDOWS = false
+
+
 ifeq ($(OS), Windows_NT)
+IS_WINDOWS = true
+endif
+
+ifneq (,$(findstring mingw,$(TARGET)))
+IS_WINDOWS = true
+endif
+
+ifeq ($(IS_WINDOWS), true)
 #$(warning $(shell Test-Path -Path ..\cpoint.exe -PathType Leaf))
 #ifeq ($(shell Test-Path -Path ..\cpoint.exe -PathType Leaf),True)
 	CCPOINT=../cpoint.exe
