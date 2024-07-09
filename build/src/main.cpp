@@ -192,9 +192,11 @@ Commands : \n\
 }
 
 int main(int argc, char** argv){
+#ifndef _WIN32
     setlocale(LC_ALL, "");
     bindtextdomain("cpoint-build", "/usr/share/locale/" /*"./locales/"*/ /*NULL*/);
     textdomain("cpoint-build");
+#endif
     std::vector<std::string> needed_exes = {"clang"};
     if (!fs::exists("../cpoint") && !fs::exists("../../cpoint")){
         needed_exes.push_back("cpoint");
