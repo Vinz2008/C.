@@ -27,6 +27,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/Process.h"
+#include <llvm/Transforms/Instrumentation/ThreadSanitizer.h>
 #include "config.h"
 #include "lexer.h"
 #include "ast.h"
@@ -107,6 +108,9 @@ extern bool is_in_extern;
 extern std::vector<std::string> types_list;
 
 extern std::vector<Cpoint_Type> typeDefTable;
+
+
+// TODO : refactor this code (move it in other files, for example move the generation by llvm of an object file in a separate function in another file)
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName){
   if (FunctionProtos[fnName]){
@@ -416,6 +420,7 @@ int main(int argc, char **argv){
     bool time_report = false;
     // use native target even if -target is used. Needed for now in windows
     bool use_native_target = false;
+    bool thread_sanitizer = false;
     std::string linker_additional_flags = "";
     std::string run_args = "";
     std::string llvm_default_target_triple = sys::getDefaultTargetTriple();
@@ -515,7 +520,9 @@ int main(int argc, char **argv){
         } else if (arg.compare("-flto") == 0){
           Comp_context->lto_mode = true;
         } else if(arg.compare("-time-trace") == 0){
-            time_report = true;
+          time_report = true;
+        } else if (arg.compare("-thread-sanitizer") == 0){
+          thread_sanitizer = true;
         } else if (arg.compare(0, 2, "-O") == 0){
           size_t pos = arg.find("O");
           std::string temp = arg.substr(pos+1, arg.size());
@@ -689,10 +696,18 @@ int main(int argc, char **argv){
     ProcName += std::to_string(PID);
     TimeTracerRAII TimeTracer(ProcName,
                               object_filename, time_report);
+
+#if LLVM_VERSION_MAJOR >= 18 
+  llvm::CodeGenFileType FileType = CodeGenFileType::ObjectFile;
+  if (asm_mode){
+    FileType = CodeGenFileType::AssemblyFile;
+  }
+#else
     llvm::CodeGenFileType FileType = CGFT_ObjectFile;
     if (asm_mode){
       FileType = CGFT_AssemblyFile;
     }
+#endif    
 
     // this is stolen from zig
     // maybe try to remove some parts to see what is necessary (TODO ?)
@@ -731,6 +746,13 @@ int main(int argc, char **argv){
     pass_builder.crossRegisterProxies(loop_am, function_am,
                                       cgscc_am, module_am);
 
+
+    if (thread_sanitizer){
+      pass_builder.registerOptimizerLastEPCallback([](ModulePassManager &module_pm, OptimizationLevel level) {
+            module_pm.addPass(ModuleThreadSanitizerPass());
+            module_pm.addPass(createModuleToFunctionPassAdaptor(ThreadSanitizerPass()));
+        });
+    }
     ModulePassManager module_pm;
     OptimizationLevel opt_level;
     if (optimize_level == 0){
@@ -838,6 +860,9 @@ int main(int argc, char **argv){
       }
       if (Comp_context->lto_mode){
         linker_additional_flags += " -flto ";
+      }
+      if (thread_sanitizer){
+        linker_additional_flags += " -ltsan ";
       }
       link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
       Log::Print() << _("Linked the executable") << "\n";

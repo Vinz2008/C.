@@ -137,7 +137,10 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Refactor big functions in ast.cpp and codegen.cpp as smaller functions
 - [ ] Remove useless Log::Info() calls
 - [ ] Replace all uses emptyLoc by the real loc passed to the function 
-- [ ] Add debuginfos
+- [ ] Add debuginfos 
+- [ ] Add cc and ar like zig cc 
+- [x] Add thread sanitizer (https://github.com/ziglang/zig/blob/master/src/zig_llvm.cpp#L307)
+- [ ] Add thread sanitizer to cpoint-build
 
 ## Benchmarks compared to other languages
 
