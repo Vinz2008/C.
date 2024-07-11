@@ -218,16 +218,21 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
 }
 
 Value* getSizeOfStruct(Value *A){
-    std::vector<Value*> ArgsV;
+    Type* llvm_type = A->getType();
+    auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
+    Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
+    size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
+    return size;
+    /*std::vector<Value*> ArgsV;
     ArgsV.push_back(A);
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 0, true))); // return -1 if object size is unknown
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // return unknown size if null is passed
     ArgsV.push_back(ConstantInt::get(*TheContext, llvm::APInt(1, 1, true))); // is the calculation made at runtime
     std::vector<Type*> OverloadedTypes;
-    OverloadedTypes.push_back(get_type_llvm(i32_type));
+//    OverloadedTypes.push_back(get_type_llvm(i32_type));
     OverloadedTypes.push_back(get_type_llvm(i64_type));
     Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::objectsize, OverloadedTypes);
-    return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");
+    return Builder->CreateCall(CalleeF, ArgsV, "sizeof_calltmp");*/
 }
 
 Value *NumberExprAST::codegen() {
@@ -307,10 +312,17 @@ Value* ScopeExprAST::codegen(){
     Value* ret = nullptr;
     createScope();
     Log::Info() << "Scope size : " << Body.size() << "\n";
+    bool should_break = false;
     for (int i = 0; i < Body.size(); i++){
+        if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
+          should_break = true;
+        }
         ret = Body.at(i)->codegen();
         if (!ret){
             return nullptr;
+        }
+        if (should_break){
+          break;
         }
     }
     endScope();
@@ -2120,7 +2132,7 @@ Value *IfExprAST::codegen() {
 
   // Create blocks for the then and else cases.  Insert the 'then' block at the
   // end of the function.
-  bool has_one_branch_break = false;
+  bool has_one_branch_if = true;
 
   BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then", TheFunction);
   BasicBlock *ElseBB = BasicBlock::Create(*TheContext, "else");
@@ -2128,6 +2140,7 @@ Value *IfExprAST::codegen() {
   Builder->CreateCondBr(CondV, ThenBB, ElseBB);
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
+  bool has_then_return = Then->contains_return();
   Value *ThenV = Then->codegen();
   /*createScope();
   Value *ThenV = nullptr;
@@ -2143,10 +2156,10 @@ Value *IfExprAST::codegen() {
   /*if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
     convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
   }*/
-  if (!break_found){
+  if (!break_found && !has_then_return){
     Builder->CreateBr(MergeBB);
   } else {
-    has_one_branch_break = true;
+    has_one_branch_if = true;
   }
   break_found = false;
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
@@ -2157,7 +2170,9 @@ Value *IfExprAST::codegen() {
   TheFunction->insert(TheFunction->end(), ElseBB);
   Builder->SetInsertPoint(ElseBB);
   Value *ElseV = nullptr;
+  bool has_else_return = false;
   if (Else){
+    has_else_return = Else->contains_return();
     ElseV = Else->codegen();
     if (!ElseV){
         return nullptr;
@@ -2178,10 +2193,10 @@ Value *IfExprAST::codegen() {
   }
   }
  
-  if (!break_found){
+  if (!break_found && !has_else_return){
     Builder->CreateBr(MergeBB);
   } else {
-    has_one_branch_break = true;
+    has_one_branch_if = true;
   }
   // Codegen of 'Else' can change the current block, update ElseBB for the PHI.
   ElseBB = Builder->GetInsertBlock();
@@ -2194,8 +2209,8 @@ Value *IfExprAST::codegen() {
   if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
     return nullptr;
   }
-  PHINode *PN = Builder->CreatePHI(phiType, 2, "iftmp");
-
+  if (Else && !has_one_branch_if){
+  PHINode* PN = Builder->CreatePHI(phiType, 2, "iftmp");
   if (ThenV->getType() == Type::getVoidTy(*TheContext) && phiType != Type::getVoidTy(*TheContext)){
     //ThenV = ConstantFP::get(*TheContext, APFloat(0.0));
     ThenV = get_default_constant(get_cpoint_type_from_llvm(phiType));
@@ -2219,7 +2234,9 @@ Value *IfExprAST::codegen() {
   }
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
-  return PN;
+  }
+  //return nullptr;
+  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 
 
@@ -2459,11 +2476,11 @@ Value *ForExprAST::codegen(){
   else
     NamedValues.erase(VarName);
 
-  // for expr always returns 0.0.
-  if (lastVal){
+  // is is needed ?
+  /*if (lastVal){
     return lastVal;
-  }
-  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+  }*/ 
+  return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
 Value *UnaryExprAST::codegen() {
@@ -2647,7 +2664,7 @@ Value *VarExprAST::codegen() {
   }
 after_storing:
   CpointDebugInfo.emitLocation(this);
-  return Constant::getNullValue(Type::getDoubleTy(*TheContext));
+  return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
 void InitializeModule(std::string filename) {

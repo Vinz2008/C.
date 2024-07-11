@@ -47,6 +47,10 @@ public:
   virtual std::string to_string() = 0;
   virtual Cpoint_Type get_type() = 0;
   virtual std::string generate_c() = 0;
+   // maybe refactor this to contain any expr
+  virtual bool contains_return(){
+    return false;
+  }
   int getLine() const { return loc.line_nb; }
   int getCol() const { return loc.col_nb; }
 };
@@ -73,6 +77,29 @@ public:
     }
 };
 
+class ReturnAST : public ExprAST {
+  std::unique_ptr<ExprAST> returned_expr;
+  //double Val;
+public:
+  ReturnAST(std::unique_ptr<ExprAST> returned_expr)
+  : returned_expr(std::move(returned_expr)) {}
+  //ReturnAST(double val) : Val(val) {}
+  Value *codegen() override;
+  std::unique_ptr<ExprAST> clone(){
+    return std::make_unique<ReturnAST>(returned_expr->clone());
+  }
+  std::string to_string() override {
+    return "return " + returned_expr->to_string();
+  }
+  Cpoint_Type get_type() override {
+    return Cpoint_Type(void_type);
+  }
+  std::string generate_c() override;
+  bool contains_return() override {
+    return true;
+  }
+};
+
 class ScopeExprAST : public ExprAST {
 public:
     std::vector<std::unique_ptr<ExprAST>> Body;
@@ -91,6 +118,14 @@ public:
         return Body.back()->get_type();
     }
     std::string generate_c() override { return ""; } // TODO
+    bool contains_return() override {
+      for (int i = 0; i < Body.size(); i++){
+        if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
+          return true;
+        }
+      }
+      return false;
+    }
 };
 
 
@@ -715,6 +750,14 @@ public:
         return matchCases.at(0)->Body->get_type();
     }
     std::string generate_c() override { return ""; }
+    bool contains_return() override {
+      for (int i = 0; i < matchCases.size(); i++){
+        if (matchCases.at(i)->Body->contains_return()){
+          return true;
+        }
+      }
+      return false;
+    }
 };
 
 class ClosureAST : public ExprAST {
@@ -734,6 +777,14 @@ public:
         return Cpoint_Type(); // TODO : create a function pointer
     }
     std::string generate_c() override { return ""; }
+    bool contains_return() override {
+      for (int i = 0; i < Body.size(); i++){
+        if (Body.at(i)->contains_return()){
+          return true;
+        }
+      }
+      return false;
+    }
 };
 
 class FunctionAST {
@@ -895,26 +946,9 @@ public:
     }
   }
   std::string generate_c() override;
-};
-
-class ReturnAST : public ExprAST {
-  std::unique_ptr<ExprAST> returned_expr;
-  //double Val;
-public:
-  ReturnAST(std::unique_ptr<ExprAST> returned_expr)
-  : returned_expr(std::move(returned_expr)) {}
-  //ReturnAST(double val) : Val(val) {}
-  Value *codegen() override;
-  std::unique_ptr<ExprAST> clone(){
-    return std::make_unique<ReturnAST>(returned_expr->clone());
+  bool contains_return() override {
+    return Then->contains_return() && Else->contains_return(); 
   }
-  std::string to_string() override {
-    return "return " + returned_expr->to_string();
-  }
-  Cpoint_Type get_type() override {
-    return Cpoint_Type(void_type);
-  }
-  std::string generate_c() override;
 };
 
 class BreakExprAST : public ExprAST {
@@ -992,6 +1026,9 @@ public:
     return Cpoint_Type(void_type);
   }
 	std::string generate_c() override;
+  bool contains_return() override {
+    return Body->contains_return(); 
+  }
 };
 
 class WhileExprAST : public ExprAST {
@@ -1014,6 +1051,10 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
+  bool contains_return() override {
+    return Body->contains_return();
+  }
+  
 };
 
 class LoopExprAST : public ExprAST {
@@ -1040,6 +1081,18 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
+  bool contains_return() override { 
+    if (is_infinite_loop){
+      // we'll consider that an infinite loop doesn't return, maybe make it returns a never type (TODO : create a never type ?)
+      return false;
+    }
+    for (int i = 0; i < Body.size(); i++){
+      if (Body.at(i)->contains_return()){
+        return true;
+      }
+    }
+    return false;
+  }
 };
 
 class SemicolonExprAST : public ExprAST {

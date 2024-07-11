@@ -1,15 +1,15 @@
-func unary!(v){
+func unary!(v : bool) bool {
   if v {
-    return 0
+    false
   } else {
-    return 1
+    true
   }
 }
 
-func binary& 6 (LHS, RHS){
+func binary& 6 (LHS : bool, RHS : bool) bool {
   if !LHS {
-    0
+    false
   } else {
-    return !!RHS
+    !!RHS
   }
 }

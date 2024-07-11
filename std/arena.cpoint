@@ -16,6 +16,6 @@ func arena_alloc(a : struct Arena ptr, size : i64) void {
     internal_arena_alloc(a, size)
 }
 
-func arena_destroy(a : struct Arena ptr){
+func arena_destroy(a : struct Arena ptr) void {
     internal_arena_destroy(a)
 }
