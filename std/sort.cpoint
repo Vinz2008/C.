@@ -1,4 +1,4 @@
-func i32ernal_swap(arr : i32 ptr, i : i32, j : i32) void {
+func internal_swap(arr : i32 ptr, i : i32, j : i32) void {
     var temp = arr[j]
     arr[j] = arr[i]
 }
@@ -19,11 +19,11 @@ func quicksortx(arr : i32 ptr, a: i32, b : i32) {
             i = i + 1
         }
         if i < j { 
-            i32ernal_swap(arr, i, j) 
+            internal_swap(arr, i, j) 
         }
     }
     if arr[a] > arr[i] {
-        i32ernal_swap(arr, a, i)
+        internal_swap(arr, a, i)
         quicksortx(arr, a, i - 1)
         quicksortx(arr, i + 1, b)
     } else { // there is no left-hand-side

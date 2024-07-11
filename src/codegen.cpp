@@ -180,21 +180,23 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::read_register;
   } else if (Callee == "bitreverse"){
     intrisicId = Intrinsic::bitreverse;
-    Type* arg_type = Args.at(0)->clone()->codegen()->getType(); // TODO : replace this
-    Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
+    /*Type* arg_type = Args.at(0)->clone()->codegen()->getType(); // TODO : replace this
+    Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);*/
+    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
     Log::Info() << "type : " << arg_cpoint_type << "\n";
     if (/*arg_type->isFloatingPointTy()*/ arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the bitreverse intrisic on a floating point type arg"); 
     }
-    Tys = ArrayRef<Type*>(arg_type);
+    Tys = ArrayRef<Type*>(/*arg_type*/ get_type_llvm(arg_cpoint_type));
   } else if (Callee == "ctpop"){
     intrisicId = Intrinsic::ctpop;
-    Type* arg_type = Args.at(0)->clone()->codegen()->getType();
+    //Type* arg_type = Args.at(0)->clone()->codegen()->getType();
     //Type* arg_type = get_type_llvm(Cpoint_Type(i32_type));
-    if (arg_type->isFloatingPointTy()){
+    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+    if (/*arg_type->isFloatingPointTy()*/ arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
     }
-    Tys = ArrayRef<Type*>(arg_type);
+    Tys = ArrayRef<Type*>(/*arg_type*/ get_type_llvm(arg_cpoint_type));
     // TODO : refactor this into a real template ?
   }
   Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId, Tys);

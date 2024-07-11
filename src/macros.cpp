@@ -224,11 +224,12 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
             if (is_string_found){
                 generated_printf_format += "%s";
             } else {
-            Value* valueTemp = Args.at(arg_nb)->clone()->codegen();
+            /*Value* valueTemp = Args.at(arg_nb)->clone()->codegen();
             Type* arg_type = valueTemp->getType();
             Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);
             Cpoint_Type arg_type_new = Args.at(arg_nb)->get_type(); // TODO
-            Log::Info() << "arg_type_new : " << arg_type_new << " arg_type_old : " << arg_cpoint_type << "\n";
+            Log::Info() << "arg_type_new : " << arg_type_new << " arg_type_old : " << arg_cpoint_type << "\n";*/
+            Cpoint_Type arg_cpoint_type = Args.at(arg_nb)->get_type();
             std::string temp_format = arg_cpoint_type.to_printf_format();
             if (temp_format == ""){
                 return LogErrorV(emptyLoc, "Not Printable type in print macro");
