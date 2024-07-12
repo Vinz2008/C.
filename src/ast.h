@@ -533,10 +533,34 @@ struct StructMemberCallExprAST : public ExprAST {
     }
     std::string generate_c() override { return ""; }
     Cpoint_Type get_type() override {
-        assert(StructMember->LHS->get_type().is_struct);
         assert(dynamic_cast<VariableExprAST*>(StructMember->RHS.get()));
-        std::string function_mangled_name = struct_function_mangling(StructMember->LHS->get_type().struct_name, dynamic_cast<VariableExprAST*>(StructMember->RHS.get())->Name);
-        return FunctionProtos[function_mangled_name]->cpoint_type;
+        auto RHS_variable_expr = dynamic_cast<VariableExprAST*>(StructMember->RHS.get());
+        if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
+            auto LHS_variable_expr = dynamic_cast<VariableExprAST*>(StructMember->LHS.get());
+            if (LHS_variable_expr->Name == "reflection"){
+                // if a new reflection instruction is added, it needs to be added here
+                if (RHS_variable_expr->Name == "typeid" || RHS_variable_expr->Name == "getmembernb"){
+                    return Cpoint_Type(i32_type);
+                } else if (RHS_variable_expr->Name == "getstructname"){
+                    return Cpoint_Type(i8_type, true);
+                } else {
+                    LogError("Unknown Reflection Instruction");
+                    return Cpoint_Type();
+                }
+            }
+        }
+        Cpoint_Type LHS_type = StructMember->LHS->get_type();
+        if (LHS_type.is_struct){
+            std::string struct_name = LHS_type.struct_name;
+            if (LHS_type.is_struct_template){
+                struct_name = get_struct_template_name(struct_name, *LHS_type.struct_template_type_passed);
+            }
+            std::string function_mangled_name = struct_function_mangling(/*StructMember->LHS->get_type().struct_name*/ struct_name, RHS_variable_expr->Name);
+            return FunctionProtos[function_mangled_name]->cpoint_type;
+        } else {
+            std::string function_mangled_name = LHS_type.create_mangled_name() + "__" + RHS_variable_expr->Name;
+            return FunctionProtos[function_mangled_name]->cpoint_type;
+        }
     }
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;

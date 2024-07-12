@@ -47,7 +47,8 @@ static Value* refletionInstrGetMemberNb(std::vector<std::unique_ptr<ExprAST>> Ar
     int nb_member = -1;
     nb_member = structType->getNumElements();
     Log::Info() << "getmembernbname : " << nb_member << "\n";
-    return ConstantFP::get(*TheContext, APFloat((double)nb_member));
+    //return ConstantFP::get(*TheContext, APFloat((double)nb_member));
+    return ConstantInt::get(*TheContext, APInt(32, (uint64_t)nb_member));
 }
 
 Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr<ExprAST>> Args){

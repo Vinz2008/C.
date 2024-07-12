@@ -35,7 +35,7 @@ endif
 #endif
 
 ifeq ($(NO_OPTI),true)
-CXXFLAGS += -O0
+CXXFLAGS += -O0 -ggdb3
 else
 CXXFLAGS += -O2
 endif

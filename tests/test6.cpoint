@@ -6,7 +6,7 @@ func test(x, y){
     1
   } else { 
     printd(x + y)
-    return x + y
+    x + y
   } 
 }
 
