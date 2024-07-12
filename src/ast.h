@@ -46,6 +46,9 @@ template <class T>
 std::unique_ptr<T> get_Expr_from_ExprAST(std::unique_ptr<ExprAST> E);
 
 //std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
+
+// TODO : maybe move big functions from this file to cpp files
+
 class ExprAST {
 public:
   ExprAST(Source_location loc = Comp_context->lexloc) : loc(loc) {}
