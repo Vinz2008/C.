@@ -214,6 +214,23 @@ void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
     Body.push_back(std::move(E_gc_init));
 }
 
+bool is_of_expr_type(ExprAST* expr, enum ExprType exprType){
+    if (exprType == ExprType::Return){
+        return dynamic_cast<ReturnAST*>(expr);
+    } else if (exprType == ExprType::Break){
+        return dynamic_cast<BreakExprAST*>(expr);
+    } else if (exprType == ExprType::Unreachable){
+        if (dynamic_cast<CallExprAST*>(expr)){
+            CallExprAST* call_expr = dynamic_cast<CallExprAST*>(expr);
+            if (call_expr->Callee ==  "cpoint_internal_unreachable"){
+                return true;
+            }
+        }
+        return false;
+    }
+    return false;
+}
+
 static std::unique_ptr<ExprAST> ParseNumberExpr() {
   auto Result = std::make_unique<NumberExprAST>(NumVal);
   getNextToken(); // consume the number
@@ -358,6 +375,24 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   return std::make_unique<VariableExprAST>(IdLoc, IdName, (type) ? *type : Cpoint_Type());
 }
 
+std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type){
+    Log::Info() << "NEWCallExprAST codegen" << "\n";
+    if (dynamic_cast<VariableExprAST*>(function_expr.get())){
+        Log::Info() << "Args size" << Args.size() << "\n";
+        std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
+        return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type);
+    } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
+        Log::Info() << "Doing call on binaryExpr : " << BinExpr->Op << "\n";
+        if (BinExpr->Op == "."){
+            return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args));
+        } else {
+            return LogError("Unknown operator before call () operator");
+        }
+    }
+    return LogError("Trying to call an expression which it is not implemented for");
+}
+
 std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){
     Log::Info() << "CallExprAST FOUND" << "\n";
     std::vector<std::unique_ptr<ExprAST>> Args;
@@ -382,7 +417,8 @@ std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool 
         return LogError("Expected ) in call args");
     }
     getNextToken(); // eat ')'
-    return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), template_passed_type);
+    //return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), template_passed_type);
+    return getASTNewCallExprAST(std::move(LHS), std::move(Args), template_passed_type);
 }
 
 static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,

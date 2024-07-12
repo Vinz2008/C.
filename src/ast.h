@@ -33,6 +33,15 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 
 class StructDeclarAST;
 
+
+// enum used for contains_expr
+// only exprs that are useful for contains_expr that are added, not all exprs
+enum ExprType {
+    Break = 0,
+    Return = 1,
+    Unreachable = 2,
+};
+
 template <class T>
 std::unique_ptr<T> get_Expr_from_ExprAST(std::unique_ptr<ExprAST> E);
 
@@ -48,7 +57,12 @@ public:
   virtual Cpoint_Type get_type() = 0;
   virtual std::string generate_c() = 0;
    // maybe refactor this to contain any expr
-  virtual bool contains_return(){
+  /*virtual bool contains_return(){
+    return false;
+  }*/
+  
+  // find if the expressions contains another expr in a body (ex : break, return or unreachable )
+  virtual bool contains_expr(enum ExprType exprType){
     return false;
   }
   int getLine() const { return loc.line_nb; }
@@ -95,10 +109,16 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
-  bool contains_return() override {
-    return true;
+  bool contains_expr(enum ExprType exprType) override {
+    //return true;
+    if (exprType == ExprType::Return){
+        return true;
+    }
+    return false;
   }
 };
+
+bool is_of_expr_type(ExprAST* expr, enum ExprType exprType);
 
 class ScopeExprAST : public ExprAST {
 public:
@@ -118,11 +138,14 @@ public:
         return Body.back()->get_type();
     }
     std::string generate_c() override { return ""; } // TODO
-    bool contains_return() override {
+    bool contains_expr(enum ExprType exprType) override {
       for (int i = 0; i < Body.size(); i++){
-        if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
-          return true;
+        if (is_of_expr_type(Body.at(i).get(), exprType)){
+            return true;
         }
+        /*if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
+          return true;
+        }*/
       }
       return false;
     }
@@ -520,7 +543,9 @@ struct StructMemberCallExprAST : public ExprAST {
 };
 
 
+
 // TODO : rename NexCallExprAST to generalCallExpr (which includes normal call, member call, etc)
+// TODO : not needed anymore, remove it ?
 struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> function_expr;
     std::vector<std::unique_ptr<ExprAST>> Args;
@@ -549,11 +574,10 @@ struct NEWCallExprAST : public ExprAST {
 };
 
 class CallExprAST : public ExprAST {
+public:
   std::string Callee;
   std::vector<std::unique_ptr<ExprAST>> Args;
   /*std::string*/ Cpoint_Type template_passed_type;
-
-public:
   CallExprAST(Source_location Loc, const std::string &Callee,
               std::vector<std::unique_ptr<ExprAST>> Args, /*const std::string&*/ Cpoint_Type template_passed_type)
       : ExprAST(Loc), Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
@@ -609,6 +633,14 @@ public:
     return Cpoint_Type(); // TODO : create a function in another file that will do it
   }
   std::string generate_c() override;
+  virtual bool contains_expr(enum ExprType exprType){
+    if (exprType == ExprType::Unreachable){
+        if (Callee == "cpoint_internal_unreachable"){
+            return true;
+        }
+    }
+    return false;
+  }
 };
 
 class VarExprAST : public ExprAST {
@@ -750,9 +782,10 @@ public:
         return matchCases.at(0)->Body->get_type();
     }
     std::string generate_c() override { return ""; }
-    bool contains_return() override {
+    bool contains_expr(enum ExprType exprType) override {
       for (int i = 0; i < matchCases.size(); i++){
-        if (matchCases.at(i)->Body->contains_return()){
+        //if (matchCases.at(i)->Body->contains_return()){
+        if (matchCases.at(i)->Body->contains_expr(exprType)){
           return true;
         }
       }
@@ -777,9 +810,10 @@ public:
         return Cpoint_Type(); // TODO : create a function pointer
     }
     std::string generate_c() override { return ""; }
-    bool contains_return() override {
+    bool contains_expr(enum ExprType exprType) override {
       for (int i = 0; i < Body.size(); i++){
-        if (Body.at(i)->contains_return()){
+        //if (Body.at(i)->contains_return()){
+        if (Body.at(i)->contains_expr(exprType)){
           return true;
         }
       }
@@ -946,8 +980,12 @@ public:
     }
   }
   std::string generate_c() override;
-  bool contains_return() override {
-    return Then->contains_return() && Else->contains_return(); 
+  bool contains_expr(enum ExprType exprType) override {
+    /*if (Else){
+        return Then->contains_expr(exprType) && Else->contains_expr(exprType); 
+    }
+    return Then->contains_expr(exprType);*/
+    return  Then->contains_expr(exprType) && Else && Else->contains_expr(exprType);
   }
 };
 
@@ -965,6 +1003,9 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
+  virtual bool contains_expr(enum ExprType exprType){
+    return exprType == ExprType::Break;
+  }
 };
 
 class GotoExprAST : public ExprAST {
@@ -1025,9 +1066,9 @@ public:
   Cpoint_Type get_type() override {
     return Cpoint_Type(void_type);
   }
-	std::string generate_c() override;
-  bool contains_return() override {
-    return Body->contains_return(); 
+  std::string generate_c() override;
+  bool contains_expr(enum ExprType exprType) override {
+    return Body->contains_expr(exprType); 
   }
 };
 
@@ -1051,8 +1092,8 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
-  bool contains_return() override {
-    return Body->contains_return();
+  bool contains_expr(enum ExprType exprType) override {
+    return Body->contains_expr(exprType);
   }
   
 };
@@ -1081,13 +1122,13 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
-  bool contains_return() override { 
-    if (is_infinite_loop){
+  bool contains_expr(enum ExprType exprType) override {
+    if (exprType == ExprType::Return && is_infinite_loop){
       // we'll consider that an infinite loop doesn't return, maybe make it returns a never type (TODO : create a never type ?)
       return false;
     }
     for (int i = 0; i < Body.size(); i++){
-      if (Body.at(i)->contains_return()){
+      if (Body.at(i)->contains_expr(exprType)){
         return true;
       }
     }

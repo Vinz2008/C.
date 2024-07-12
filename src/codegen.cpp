@@ -214,7 +214,11 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
   if (Callee == "abs"){
     ArgsV.push_back(BoolExprAST(false).codegen());  // the bool is if it is a poison value
   }
-  return Builder->CreateCall(CalleeF, ArgsV, "calltmp");
+  std::string call_instruction_name = "calltmp";
+  if (CalleeF->getReturnType()->isVoidTy()){
+    call_instruction_name = "";
+  }
+  return Builder->CreateCall(CalleeF, ArgsV, call_instruction_name);
 }
 
 Value* getSizeOfStruct(Value *A){
@@ -308,13 +312,12 @@ Value* ConstantStructExprAST::codegen(){
     return ConstantStruct::get(dyn_cast<StructType>(structType), structMembersVal);
 }
 
-Value* ScopeExprAST::codegen(){
-    Value* ret = nullptr;
-    createScope();
-    Log::Info() << "Scope size : " << Body.size() << "\n";
+Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
     bool should_break = false;
+    Value* ret = nullptr;
     for (int i = 0; i < Body.size(); i++){
-        if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
+        //if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
+        if (Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::Unreachable)){
           should_break = true;
         }
         ret = Body.at(i)->codegen();
@@ -325,6 +328,28 @@ Value* ScopeExprAST::codegen(){
           break;
         }
     }
+    return ret;
+}
+
+Value* ScopeExprAST::codegen(){
+    //Value* ret = nullptr;
+    createScope();
+    Log::Info() << "Scope size : " << Body.size() << "\n";
+    /*bool should_break = false;
+    for (int i = 0; i < Body.size(); i++){
+        //if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
+        if (Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::Unreachable)){
+          should_break = true;
+        }
+        ret = Body.at(i)->codegen();
+        if (!ret){
+            return nullptr;
+        }
+        if (should_break){
+          break;
+        }
+    }*/
+   Value* ret = codegenBody(Body);
     endScope();
     return ret;
 }
@@ -917,9 +942,9 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
     return value;
 }
 
-// TODO : maybe move this to the ast part to make worj the get_type
+// TODO : maybe move this to the ast part to make work the get_type (IMPORTANT)
 // returns either a CallExprAST or a StructMemberCallExprAST
-std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type){
+/*std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type){
     Log::Info() << "NEWCallExprAST codegen" << "\n";
     if (dynamic_cast<VariableExprAST*>(function_expr.get())){
         Log::Info() << "Args size" << Args.size() << "\n";
@@ -935,11 +960,12 @@ std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_
         }
     }
     return LogError("Trying to call an expression which it is not implemented for");
-}
+}*/
 
 // TODO : rename OPCallExprAST
 Value* NEWCallExprAST::codegen(){
-    return getASTNewCallExprAST(std::move(function_expr), std::move(Args), template_passed_type)->codegen();
+    return nullptr;
+    //return getASTNewCallExprAST(std::move(function_expr), std::move(Args), template_passed_type)->codegen();
     /*Log::Info() << "NEWCallExprAST codegen" << "\n";
     if (dynamic_cast<VariableExprAST*>(function_expr.get())){
         Log::Info() << "Args size" << Args.size() << "\n";
@@ -1747,7 +1773,7 @@ void TestAST::codegen(){
   }
   Body.push_back(std::make_unique<NumberExprAST>(0));
   
-  auto funcAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
+  auto funcAST = std::make_unique<FunctionAST>(std::mo&e(Proto), std::move(Body));
   funcAST->codegen();
 }*/
 
@@ -1902,6 +1928,12 @@ Function *FunctionAST::codegen() {
   CpointDebugInfo.LexicalBlocks.push_back(SP);
   CpointDebugInfo.emitLocation(nullptr);
   }
+  bool contains_return_or_unreachable = false;
+  for (int i = 0; i < Body.size(); i++){
+    if (Body.at(i)->contains_expr(ExprType::Unreachable) || Body.at(i)->contains_expr(ExprType::Return)){
+        contains_return_or_unreachable = true;
+    }
+  }
 
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
@@ -1977,11 +2009,12 @@ Function *FunctionAST::codegen() {
   //codegenStructTemplates();
 
   createScope();
-  Value *RetVal = nullptr;
+  //Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
-  for (int i = 0; i < Body.size(); i++){
+  Value *RetVal = codegenBody(Body);
+  /*for (int i = 0; i < Body.size(); i++){
     RetVal = Body.at(i)->codegen();
-  }
+  }*/
 
   endScope();
   
@@ -2038,16 +2071,20 @@ Function *FunctionAST::codegen() {
         Log::Warning(emptyLoc) << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
     }
 before_ret:
+    if (!contains_return_or_unreachable){
     if (RetVal){
     Builder->CreateRet(RetVal);
     } else {
     Builder->CreateRetVoid();
     }
+    }
 after_ret:
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
+    // TODO : maybe enable this only in somes cases and/or add a LLVM error warning before it (need to output to string before to stdout)
     auto& out = outs();
     if (llvm::verifyFunction(*TheFunction, &out)){
+        std::cout << "\n";
         return nullptr;
     }
     return TheFunction;
@@ -2110,7 +2147,7 @@ GlobalVariable* GlobalVariableAST::codegen(){
   return globalVar;
 }
 
-bool break_found = false; 
+//bool break_found = false; 
 
 Value *IfExprAST::codegen() {
   Log::Info() << "IfExprAST codegen" << "\n";
@@ -2140,7 +2177,8 @@ Value *IfExprAST::codegen() {
   Builder->CreateCondBr(CondV, ThenBB, ElseBB);
   // Emit then value.
   Builder->SetInsertPoint(ThenBB);
-  bool has_then_return = Then->contains_return();
+  bool has_then_return = /*Then->contains_return()*/ Then->contains_expr(ExprType::Return);
+  bool has_then_break = Then->contains_expr(ExprType::Break);
   Value *ThenV = Then->codegen();
   /*createScope();
   Value *ThenV = nullptr;
@@ -2156,12 +2194,12 @@ Value *IfExprAST::codegen() {
   /*if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
     convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
   }*/
-  if (!break_found && !has_then_return){
+  if (!has_then_break /*!break_found*/ && !has_then_return){
     Builder->CreateBr(MergeBB);
   } else {
     has_one_branch_if = true;
   }
-  break_found = false;
+  //break_found = false;
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
   ThenBB = Builder->GetInsertBlock();
   //Value *ElseV = nullptr;
@@ -2171,8 +2209,10 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(ElseBB);
   Value *ElseV = nullptr;
   bool has_else_return = false;
+  bool has_else_break = false;
   if (Else){
-    has_else_return = Else->contains_return();
+    has_else_return = /*Else->contains_return()*/ Else->contains_expr(ExprType::Return);
+    has_else_break = Else->contains_expr(ExprType::Break);
     ElseV = Else->codegen();
     if (!ElseV){
         return nullptr;
@@ -2193,7 +2233,7 @@ Value *IfExprAST::codegen() {
   }
   }
  
-  if (!break_found && !has_else_return){
+  if (/*!break_found*/ !has_else_break && !has_else_return){
     Builder->CreateBr(MergeBB);
   } else {
     has_one_branch_if = true;
@@ -2277,7 +2317,7 @@ Value* BreakExprAST::codegen(){
   }
   Builder->CreateBr(blocksForBreak.top());
   //Builder->SetInsertPoint(blocksForBreak.top());
-  break_found = true;
+  //break_found = true;
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));
 }
 

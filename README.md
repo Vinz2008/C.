@@ -141,6 +141,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add cc and ar like zig cc 
 - [x] Add thread sanitizer (https://github.com/ziglang/zig/blob/master/src/zig_llvm.cpp#L307)
 - [ ] Add thread sanitizer to cpoint-build
+- [ ] Add noreturn return value (return void and add the noreturn attribute to the function)
 
 ## Benchmarks compared to other languages
 
