@@ -84,13 +84,13 @@ void runCustomScripts(toml::v3::table& config){
             if constexpr (toml::is_string<decltype(script)>){
                 std::string cmd = (std::string)script;
                 if (is_cross_compiling){
-                std::cout << "cross-compiling : " << std::endl;
+                std::cout << "cross-compiling : " << std::endl; // TODO : remove this / make it debug output
                 std::string target_cross_compiler = config["cross-compile"]["target"].value_or("");
                 cmd = "TARGET=" + target_cross_compiler + " " + (std::string)script;
                 }
                 Log() << "script : " << cmd << "\n";
                 std::unique_ptr<ProgramReturn> returnScript = runCommand(cmd);
-                std::cout << returnScript->buffer << std::endl;
+                std::cout << returnScript->buffer << std::endl; // TODO : remove this / make it debug output
             }
         });
     }
@@ -256,7 +256,7 @@ int main(int argc, char** argv){
         modeBuild = NEW_PROJECT_MODE;
         i++;
         if (i >= argc){
-            std::cout << "Missing folder argument when creating a project" << std::endl;
+            std::cout << _("Missing folder argument when creating a project") << std::endl;
             exit(1);
         }
         project_name_to_create = argv[i];
@@ -330,7 +330,7 @@ int main(int argc, char** argv){
         installBinary(repo_path + "/" + outfile, install_outfile);
         }
         std::string username_or_nothing = (username != "") ? username + "/" : (std::string)"";
-        std::cout << "Installed successfully the " << username_or_nothing << /*repo_name*/ package_name << " repo to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
+        std::cout << _("Installed successfully the ") << username_or_nothing << /*repo_name*/ package_name << _(" repo to ") << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
         auto subprojects = config["subfolders"]["projects"];
         if (toml::array* arr = subprojects.as_array()){
         arr->for_each([&config, repo_path, username, repo_name](auto&& sub){
@@ -344,7 +344,8 @@ int main(int argc, char** argv){
                 }
                 installBinary(sub_path + "/" + sub_outfile, install_sub_outfile);
                 std::string username_or_nothing = (username != "") ? username + "/" : (std::string)"";
-                std::cout << "Installed successfully the " << username_or_nothing << repo_name << "repo " << sub << " binary " << " to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_sub_outfile << "\n";
+                //std::cout << _("Installed successfully the ") << username_or_nothing << repo_name << "repo " << sub << " binary " << " to " << DEFAULT_BUILD_INSTALL_PATH "/" + install_sub_outfile << "\n";
+                printf("Installed successfully the %s%s repo %s binary to %s/%s\n", username_or_nothing.c_str(), repo_name.c_str(), ((std::string)sub).c_str(), DEFAULT_BUILD_INSTALL_PATH, install_sub_outfile.c_str());
             }
         });
     }

@@ -101,7 +101,7 @@ void addDependency(std::string dependency_name, toml::v3::table& config){
     if (toml::array* arr = github_dependencies.as_array()){
         arr->for_each([dependency_name](auto&& dep){
             if constexpr (toml::is_string<decltype(dep)>){
-                std::cout << "add dependency : " << dependency_name << std::endl;
+                std::cout << "add dependency : " << dependency_name << std::endl; // TODO : remove this / make it debug output
                 std::cout << "dep : " << dep << std::endl;
             }
         });

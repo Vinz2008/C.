@@ -70,7 +70,7 @@ void linkLibrary(std::vector<std::string> PathList, std::string outfilename, std
         std::string out_path = (path_fs.extension() == ".a") ? path_fs.string() : path_fs.replace_extension(".o").string();
         cmd += out_path + " ";
     }
-    std::cout << "lib link cmd : " << cmd << std::endl;
+    std::cout << "lib link cmd : " << cmd << std::endl; // TODO : remove this / make it debug output
     runCommand(cmd);
 }
 
@@ -85,6 +85,6 @@ void linkDynamicLibrary(std::vector<std::string> PathList, std::string outfilena
         std::string out_path = path_fs.replace_extension(".o").string();
         cmd += out_path + " ";
     }
-    std::cout << "dynlib link cmd : " << cmd << std::endl;
+    std::cout << "dynlib link cmd : " << cmd << std::endl; // TODO : remove this / make it debug output
     runCommand(cmd);
 }

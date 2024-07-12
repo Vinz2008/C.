@@ -4,6 +4,7 @@
 #include "files.h"
 #include "cli.h"
 #include <filesystem>
+#include "../../src/gettext.h"
 
 namespace fs = std::filesystem;
 
@@ -30,7 +31,7 @@ void buildFileEachThread(int index, std::string target, std::string sysroot, std
 }
 
 void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number, std::vector<std::string> localPathList, std::string arguments){
-    std::cout << "Multi threaded with " << thread_number << " threads" << std::endl;
+    std::cout << _("Multi threaded with ") << thread_number << " threads" << std::endl;
     std::vector<std::thread> threads;
     buildFileEachThreadPathList = localPathList;
     for (int i = 0; i < localPathList.size(); i+=thread_number){
@@ -48,7 +49,7 @@ void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, s
 extern std::vector<std::string> PathList;
 
 void buildFolder(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number){
-    std::cout << "buildFolder threads " << thread_number  << std::endl;
+    std::cout << "buildFolder threads " << thread_number  << std::endl; // TODO : remove this / make it debug output
     std::string_view arguments_view = config["build"]["arguments"].value_or("");
     std::string arguments = (std::string) arguments_view;
     int optimization_level = config["build"]["opt_level"].value_or(0);

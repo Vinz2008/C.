@@ -1,6 +1,7 @@
 #include <iostream>
 #include <filesystem>
 #include "../../src/config.h"
+#include "../../src/gettext.h"
 
 namespace fs = std::filesystem;
 
@@ -25,11 +26,11 @@ void installBinary(std::string exe_path, std::string name_binary){
         fs::remove(out_path);
         fs::copy_file(exe_path, out_path);
     } catch (fs::filesystem_error& e) {
-        std::cout << "Could not install binary" << e.what() << "\n";
+        std::cout << _("Could not install binary") << e.what() << "\n";
         exit(1);
     }
 }
 
 void printInstallPathMessage(){
-    std::cout << "You need to " << INSTALL_PATH_ACTION << "to add binaries installed with cpoint-build to your path : \n " << CMD_INSTALL_PATH_WITHOUT_PATH << DEFAULT_BUILD_INSTALL_PATH << PREFIX_AFTER_CMD << "\"" << std::endl;
+    std::cout << _("You need to ") << INSTALL_PATH_ACTION << _("to add binaries installed with cpoint-build to your path : \n ") << CMD_INSTALL_PATH_WITHOUT_PATH << DEFAULT_BUILD_INSTALL_PATH << PREFIX_AFTER_CMD << "\"" << std::endl;
 }
