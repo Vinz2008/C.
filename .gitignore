@@ -39,3 +39,4 @@ trace.json
 temp_prefix
 *.tar.gz
 bdwgc/build
+test.c

@@ -145,6 +145,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Remove protos for not existent functions from FunctionsProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it)
 - [ ] Make it possible to link llvm statically to the compiler
 - [ ] Fix bug when returning from function in if and else branch
+- [ ] Add lld to the compiler (like in zig)
 
 ## Benchmarks compared to other languages
 

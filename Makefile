@@ -222,7 +222,7 @@ std-test:
 all-tests: test std-test
 
 onefetch:
-	onefetch --exclude bdwgc/* bdwgc_prefix/* tools/vscode/* tools/vim/*
+	onefetch --exclude bdwgc/* bdwgc_prefix/* tools/vscode/* tools/vim/* src/external/*
 
 prepare-create-release:
 	mkdir -p temp_prefix

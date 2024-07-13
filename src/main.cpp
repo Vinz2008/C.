@@ -50,6 +50,8 @@
 #include "jit.h"
 #include "operators.h"
 #include "cli_infos.h"
+#include "clang.h"
+#include "ar.h"
 
 using namespace std;
 using namespace llvm;
@@ -435,6 +437,36 @@ int main(int argc, char **argv){
     bool filename_found = false;
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
+#ifdef ENABLE_CLANG_EMBEDDED_COMPILER
+        if (arg.compare("cc") == 0 || arg.compare("c++") == 0 || arg.compare("-cc1") == 0 || arg.compare("-cc1as") == 0){
+            printf("argc : %d\n", argc);
+            std::vector<char*> clang_args;
+            std::vector<std::string> args_vector(argv, argv+argc);
+            // means that we are in the second process called from the clang driver
+            bool call_from_clang_driver = false;
+            if (std::find(args_vector.begin(), args_vector.end(), "-cc1") != args_vector.end() || std::find(args_vector.begin(), args_vector.end(), "-cc1ass") != args_vector.end()){
+                printf("call_from_clang_driver\n");
+                call_from_clang_driver = true;
+                //i += 2;
+            }
+            while (i < argc){
+                clang_args.push_back(argv[i]);
+                //printf("CLANG ARG added : %s\n", clang_args.back());
+                printf("%s ", clang_args.back());
+                i++;    
+            }
+            clang_args.push_back(nullptr);
+            exit(launch_clang(clang_args.size()-1, clang_args.data()));
+        } else if (arg.compare("ar") == 0 || arg.compare("ranlib") == 0 || arg.compare("lib") == 0){
+            std::vector<char*> ar_args;
+            while (i < argc){
+                ar_args.push_back(argv[i]);
+                i++;    
+            }
+            ar_args.push_back(nullptr);
+            return launch_ar(ar_args.size()-1, ar_args.data());
+        }
+#endif
         if (arg.compare("-d") == 0){
             cout << "debug mode" << endl;
             Comp_context->debug_mode = true;
