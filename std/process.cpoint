@@ -1,11 +1,5 @@
 import panic.cpoint
-
-extern system(cmd : i8 ptr) i32;
-extern exit(status : i32) void;
-extern abort() void;
-extern getpid() i32;
-extern fork() i32;
-extern execvp(file : i8 ptr, argv : i8 ptr ptr)
+include libc.hpoint
 
 mod process {
     func create(cmd : i8 ptr) i32 {
@@ -20,10 +14,10 @@ mod process {
             _ => {}
         }
     }
-    func abort() void {
+    func abort() never {
         abort()
     }
-    func exit(status : i32) void {
+    func exit(status : i32) never {
         exit(status)
     }
     func get_id() i32 {

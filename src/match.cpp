@@ -98,11 +98,16 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
                 convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(i32_type), val);
             }
             Log::Info() << "match val after converting : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
+            bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
+            bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
+            bool does_body_return_never = matchCaseTemp->Body->get_type().type == never_type;
             matchCaseTemp->Body->codegen();
             //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
             //    matchCaseTemp->Body.at(j)->codegen();
             //}
-            Builder->CreateBr(AfterBB);
+            if (!has_match_return && !has_match_unreachable && !does_body_return_never){
+                Builder->CreateBr(AfterBB);
+            }
             ConstantInt* constint_val = nullptr;
             Log::Info() << "value id : " << val->getValueID() << "\n";
             if (dyn_cast<ConstantInt>(val)){
@@ -211,11 +216,16 @@ Value* MatchExprAST::codegen(){
             Log::Info() << "Create var for match : " << enumDeclar->EnumMembers[pos]->Name << "\n";
         }
         }
+        bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
+        bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
+        bool does_body_return_never = matchCaseTemp->Body->get_type().type == never_type;
         matchCaseTemp->Body->codegen();
         // for (int i = 0; i < matchCaseTemp->Body.size(); i++){
         //     matchCaseTemp->Body.at(i)->codegen();
         // }
+        if (!has_match_return && !does_body_return_never && !has_match_unreachable){
         Builder->CreateBr(AfterMatch);
+        }
         //Builder->CreateBr(ElseBB);
         //TheFunction->getBasicBlockList().push_back(ElseBB);
         TheFunction->insert(TheFunction->end(), ElseBB);
@@ -234,5 +244,5 @@ Value* MatchExprAST::codegen(){
     //TheFunction->getBasicBlockList().push_back(AfterMatch);
     TheFunction->insert(TheFunction->end(), AfterMatch);
     Builder->SetInsertPoint(AfterMatch);
-    return Constant::getNullValue(get_type_llvm(double_type));
+    return Constant::getNullValue(get_type_llvm(double_type)); // TODO : return a phi node
 }

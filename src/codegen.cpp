@@ -1942,8 +1942,9 @@ Function *FunctionAST::codegen() {
   }
   bool is_return_never_type = false;
   if (P.cpoint_type.type == never_type){
-    if (Body.back()->get_type().type == never_type){
-        
+    if (Body.back()->get_type().type != never_type){
+        LogError("Never type is not returned when the functions has a never return type");
+        return nullptr;
     }
     is_return_never_type = true;
   }
@@ -2245,7 +2246,7 @@ Value *IfExprAST::codegen() {
   }
   }
  
-  if (/*!break_found*/ !has_else_break && !has_else_return){
+  if (/*!break_found*/ !has_else_break && !has_else_return){ // TODO : add has_else unreachable ?
     Builder->CreateBr(MergeBB);
   } else {
     has_one_branch_if = true;

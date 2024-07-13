@@ -17,38 +17,42 @@
 ?[define EEXIST 17]
 ?[define ENAMETOOLONG 36]
 
-extern puts(s : i8 ptr) int;
-extern putchar(c : int) int;
-extern exit(code : int) never;
-extern open(path : i8 ptr, flag : int ...) int;
-extern close(fd : int) int;
-extern read(fd : int, buf : void ptr, size : i64) i64;
-extern malloc(size : int) void ptr;
+extern puts(s : i8 ptr) i32;
+extern putchar(c : i32) i32;
+extern exit(code : i32) never;
+extern open(path : i8 ptr, flag : i32 ...) i32;
+extern close(fd : i32) i32;
+extern read(fd : i32, buf : void ptr, size : i64) i64;
+extern malloc(size : i32) void ptr;
 extern strdup(s : i8 ptr) i8 ptr;
 extern strcpy(dest : i8 ptr, src : i8 ptr) i8 ptr;
 extern strcat(dest : i8 ptr, src : i8 ptr) i8 ptr;
-extern strcmp(s1 : i8 ptr, s2 : i8 ptr) int;
-extern strncat(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
-extern strncpy(dest : i8 ptr, src : i8 ptr, size : int) i8 ptr;
+extern strcmp(s1 : i8 ptr, s2 : i8 ptr) i32;
+extern strncat(dest : i8 ptr, src : i8 ptr, size : i32) i8 ptr;
+extern strncpy(dest : i8 ptr, src : i8 ptr, size : i32) i8 ptr;
 extern strlen(str : i8 ptr) i64;
-extern remove(path : i8 ptr) int;
-extern mkdir(path : i8 ptr, mode : int) int;
+extern remove(path : i8 ptr) i32;
+extern mkdir(path : i8 ptr, mode : i32) i32;
 extern realpath(path : i8 ptr, resolved_path : i8 ptr) i8 ptr;
-extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) int;
-extern printf(format : i8 ptr ...) int;
-extern system(cmd : i8 ptr) int;
-extern chdir(path : i8 ptr) int;
-extern dup(fd : int) int;
-extern isatty(fd : int) int;
+extern symlink(file_name : i8 ptr, symlink_name : i8 ptr) i32;
+extern printf(format : i8 ptr ...) i32;
+extern system(cmd : i8 ptr) i32;
+extern chdir(path : i8 ptr) i32;
+extern dup(fd : i32) i32;
+extern isatty(fd : i32) i32;
 extern getcwd(buf : i8 ptr) i8 ptr;
 extern getenv(var_name : i8 ptr) i8 ptr;
-extern setenv(var_name : i8 ptr, value : i8 ptr, overwrite : int) int;
-extern unsetenv(var_name : i8 ptr) int;
-extern fsync(fd : int) int;
-extern fdatasync(fd : int) int;
-extern ftruncate(fd : int, length : i64) int;
+extern setenv(var_name : i8 ptr, value : i8 ptr, overwrite : i32) i32;
+extern unsetenv(var_name : i8 ptr) i32;
+extern fsync(fd : i32) i32;
+extern fdatasync(fd : i32) i32;
+extern ftruncate(fd : i32, length : i64) i32;
+extern abort() never;
+extern getpid() i32;
+extern fork() i32;
+extern execvp(file : i8 ptr, argv : i8 ptr ptr) i32;
 
-extern lseek(fd : int, offset : int, whence : int) int; 
+extern lseek(fd : i32, offset : i32, whence : i32) i32; 
 
 ?[define SEEK_SET 0]
 ?[define SEEK_CUR 1]
@@ -77,11 +81,11 @@ struct stat {
     var __glibc_reserved[3] : i64
 }
 
-extern fstat(fd : int, buf : struct stat ptr) i32;
+extern fstat(fd : i32, buf : struct stat ptr) i32;
 
 // opaque type
 struct DIR {
-    var i : int
+    var i : i32
 }
 extern opendir(name : i8 ptr) struct DIR ptr;
 
@@ -94,7 +98,7 @@ struct dirent {
     var d_name[256] : i8
 }
 extern readdir(dir : struct DIR ptr) struct dirent ptr;
-extern closedir(dir : struct DIR ptr) int; 
+extern closedir(dir : struct DIR ptr) i32; 
 
 type pthread_t i64;
 type time_t i64;
