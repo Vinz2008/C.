@@ -1,0 +1,13 @@
+func test_panic() never {
+    #panic("test panic")
+}
+
+func test_unreachable() never {
+    #unreachable()
+}
+
+extern exit(status : i32) never;
+
+func test_exit() never {
+    exit(1)
+}

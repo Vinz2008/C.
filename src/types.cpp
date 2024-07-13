@@ -88,6 +88,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             type = Type::getInt1Ty(*TheContext);
             break;
         case void_type:
+        case never_type:
             if (!cpoint_type.is_ptr){
             type = Type::getVoidTy(*TheContext);
             } else {

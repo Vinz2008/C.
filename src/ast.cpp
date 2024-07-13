@@ -45,7 +45,7 @@ extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> Struc
 
 extern std::unique_ptr<Preprocessor::Context> context;
 
-Cpoint_Type ParseTypeDeclaration(bool eat_token);
+Cpoint_Type ParseTypeDeclaration(bool eat_token = true, bool is_return = false);
 
 bool is_comment = false;
 
@@ -691,7 +691,7 @@ std::unique_ptr<ExprAST> ParseSemiColon(){
     return std::make_unique<SemicolonExprAST>();
 }
 
-Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
+Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= false*/){
   int type = double_type; 
   bool is_ptr = false;
   std::string struct_Name = "";
@@ -707,6 +707,14 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token = true){
   Cpoint_Type* struct_template_type_passed = nullptr;
   if (eat_token){
   getNextToken(); // eat the ':'
+  }
+  if (CurTok == tok_never){
+    if (!is_return){
+        LogError("Can't use the never type not in a return");
+        return Cpoint_Type();
+    }
+    getNextToken();
+    return Cpoint_Type(never_type);
   }
   if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union && CurTok != tok_enum){
     LogError("expected identifier after var in type declaration");
@@ -904,6 +912,8 @@ std::unique_ptr<ExprAST> ParseBool(bool bool_value){
   return std::make_unique<BoolExprAST>(bool_value);
 }
 
+bool struct_parsing = false;
+
 static std::unique_ptr<PrototypeAST> ParsePrototype() {
   std::string FnName;
   Source_location FnLoc = Comp_context->curloc;
@@ -986,10 +996,10 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     return LogErrorP("Invalid number of operands for operator : %d args but %d expected", ArgNames.size(), Kind);
   Log::Info() << "Tok : " << CurTok << "\n";
   Cpoint_Type cpoint_type = Cpoint_Type(double_type);
-  if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class){
+  if (CurTok == tok_identifier || CurTok == tok_struct || CurTok == tok_class || CurTok == tok_never){
     Log::Info() << "Tok type : " << CurTok << "\n";
     Log::Info() << "type : " << IdentifierStr << "\n";
-    cpoint_type = ParseTypeDeclaration(false);
+    cpoint_type = ParseTypeDeclaration(false, true);
   }
   if (!modulesNamesContext.empty()){
     std::string module_mangled_function_name = FnName;
@@ -1001,11 +1011,14 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   }
   Log::Info() << "FnLoc in ast : " << FnLoc << "\n";
   auto Proto = std::make_unique<PrototypeAST>(FnLoc, FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
+  /*if (!struct_parsing){
   FunctionProtos[FnName] = Proto->clone();
+  }*/
   return Proto;
 }
 
 std::unique_ptr<StructDeclarAST> ParseStruct(){
+  struct_parsing = true;
   //int i = 0;
   std::string template_name = "";
   bool has_template = false;
@@ -1021,6 +1034,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     template_name = IdentifierStr;
     getNextToken();
     if (CurTok != '~'){
+      struct_parsing = false;
       return LogErrorS("Missing '~' in template struct declaration");
     }
     getNextToken();
@@ -1028,6 +1042,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     TypeTemplateCallAst = template_name;
   }
   if (CurTok != '{'){
+    struct_parsing = false;
     return LogErrorS("Expected '{' in Struct");
   }
   getNextToken();
@@ -1039,10 +1054,12 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     if (CurTok == tok_var){
         auto exprAST = ParseVarExpr();
         if (!exprAST){
+            struct_parsing = false;
             return nullptr;
         }
         std::unique_ptr<VarExprAST> declar = get_Expr_from_ExprAST<VarExprAST>(std::move(exprAST));
         if (!declar){
+            struct_parsing = false;
             return LogErrorS("Error in struct declaration vars");
         }
         /*if (declar->cpoint_type.struct_name == structName && declar->cpoint_type.is_ptr){ // TODO : fix this ? 
@@ -1103,6 +1120,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
   if (CurTok != '}'){
+    struct_parsing = false;
     return LogErrorS("Expected '}' in struct");
   }
   getNextToken();  // eat '}'.
@@ -1142,6 +1160,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     functions.push_back(function_name);
   }*/
   auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);
+  struct_parsing = false;
   if (has_template){
     Log::Info() << "Parse struct has template" << "\n";
     TemplateStructDeclars[structName] = std::make_unique<StructDeclar>(std::move(structDeclar), template_name);
@@ -1312,7 +1331,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   Log::Info() << "end of function" << "\n";
   bool has_template = Proto->has_template;
   std::string FunctionName = Proto->Name;
-  FunctionProtos[Proto->getName()] = Proto->clone();
+  //FunctionProtos[Proto->getName()] = Proto->clone();
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
     std::string template_name = functionAST->Proto->template_name;

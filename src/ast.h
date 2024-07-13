@@ -109,7 +109,8 @@ public:
     return "return " + returned_expr->to_string();
   }
   Cpoint_Type get_type() override {
-    return Cpoint_Type(void_type);
+    //return Cpoint_Type(void_type);
+    return Cpoint_Type(never_type);
   }
   std::string generate_c() override;
   bool contains_expr(enum ExprType exprType) override {
@@ -652,6 +653,9 @@ public:
   }
   Cpoint_Type get_type() override {
     // return FunctionProtos[Callee]->cpoint_type;
+    if (Callee == "cpoint_internal_unreachable" /*|| Callee == "panicx" || Callee == "panic"*/){
+        return Cpoint_Type(never_type);
+    }
     if (FunctionProtos[Callee]){
         return FunctionProtos[Callee]->cpoint_type;
     } else {
@@ -1027,7 +1031,8 @@ public:
     return "break";
   }
   Cpoint_Type get_type() override {
-    return Cpoint_Type(void_type);
+    //return Cpoint_Type(void_type);
+    return Cpoint_Type(never_type);
   }
   std::string generate_c() override;
   virtual bool contains_expr(enum ExprType exprType){

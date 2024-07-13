@@ -19,7 +19,7 @@
 
 extern puts(s : i8 ptr) int;
 extern putchar(c : int) int;
-extern exit(code : int) void;
+extern exit(code : int) never;
 extern open(path : i8 ptr, flag : int ...) int;
 extern close(fd : int) int;
 extern read(fd : int, buf : void ptr, size : i64) i64;

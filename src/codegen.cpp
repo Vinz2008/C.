@@ -1531,7 +1531,7 @@ Value *CallExprAST::codegen() {
     }
   }
   std::string NameCallTmp = "calltmp";
-  if (/*CalleeF->getReturnType()*/ function_return_type  == /*get_type_llvm(*/Cpoint_Type(void_type)/*)*/ || has_sret){
+  if (/*CalleeF->getReturnType()*/ function_return_type.type  == /*get_type_llvm(*/void_type/*)*/ || function_return_type.type == never_type || has_sret){
     NameCallTmp = "";
   }
   CallInst* call = nullptr;
@@ -1566,6 +1566,9 @@ Value *CallExprAST::codegen() {
   for (int i = 0; i < pos_zeroext.size(); i++){
     call->addParamAttr(pos_zeroext.at(i), Attribute::ZExt);
   }
+  }
+  if (FunctionProtos[Callee]->cpoint_type.type == never_type){
+    Builder->CreateUnreachable();
   }
   return call;
 }
@@ -1844,7 +1847,10 @@ Function *PrototypeAST::codegen() {
     linkageType = Function::InternalLinkage;
   }
   Function *F = Function::Create(FT, linkageType, Name, TheModule.get());
-
+  if (cpoint_type.type == never_type){
+    F->addFnAttr(Attribute::NoReturn);
+    F->addFnAttr(Attribute::NoUnwind);
+  }
   // Set names for all arguments.
   unsigned Idx = 0;
   bool has_added_sret = false;
@@ -1934,7 +1940,13 @@ Function *FunctionAST::codegen() {
         contains_return_or_unreachable = true;
     }
   }
-
+  bool is_return_never_type = false;
+  if (P.cpoint_type.type == never_type){
+    if (Body.back()->get_type().type == never_type){
+        
+    }
+    is_return_never_type = true;
+  }
   // Record the function arguments in the NamedValues map.
   NamedValues.clear();
   // clean the map for Template types
@@ -2071,7 +2083,7 @@ Function *FunctionAST::codegen() {
         Log::Warning(emptyLoc) << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
     }
 before_ret:
-    if (!contains_return_or_unreachable){
+    if (!contains_return_or_unreachable && !is_return_never_type){
     if (RetVal){
     Builder->CreateRet(RetVal);
     } else {

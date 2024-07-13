@@ -22,6 +22,7 @@ enum types {
     u128_type = -14,
 //    bool_type = -15,
     other_type  = -15, // includes struct, enum, etc
+    never_type = -16,
 //    argv_type = -1000,
     empty_type = -1000,
 };

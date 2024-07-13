@@ -3,9 +3,9 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define NO_GC_PANIC() panicx("using the gc with no_gc mode set in the build.toml", __FILE__, __FUNCTION__);
+extern void panicx(char* string, const char* filename, const char* function) __attribute__ ((noreturn));;
 
-extern void panicx(char* string, const char* filename, const char* function);
+#define NO_GC_PANIC() panicx("using the gc with no_gc mode set in the build.toml", __FILE__, __FUNCTION__);
 
 void gc_init(){
 #ifndef NO_STD

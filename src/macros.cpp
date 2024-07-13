@@ -44,7 +44,7 @@ std::unique_ptr<ExprAST> generate_panic(std::vector<std::unique_ptr<ExprAST>>& A
     args_panic.push_back(std::make_pair("string", Cpoint_Type(i8_type, true)));
     args_panic.push_back(std::make_pair("filename", Cpoint_Type(i8_type, true)));
     args_panic.push_back(std::make_pair("function", Cpoint_Type(i8_type, true)));
-    add_manually_extern("panicx", Cpoint_Type(void_type), std::move(args_panic), 0, 30, false, false, "");
+    add_manually_extern("panicx", Cpoint_Type(never_type), std::move(args_panic), 0, 30, false, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args;
     std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
     if (ArgsMacro.size() != 1){

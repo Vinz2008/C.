@@ -142,7 +142,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add thread sanitizer (https://github.com/ziglang/zig/blob/master/src/zig_llvm.cpp#L307)
 - [ ] Add thread sanitizer to cpoint-build
 - [ ] Add noreturn return value (return void and add the noreturn attribute to the function)
-- [ ] Remove protos for not existent functions from FunctionsProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it)
+- [ ] Remove protos for not existent functions from FunctionProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it)
 - [ ] Make it possible to link llvm statically to the compiler
 - [ ] Fix bug when returning from function in if and else branch
 - [ ] Add lld to the compiler (like in zig)
