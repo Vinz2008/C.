@@ -4,7 +4,8 @@ CC ?= gcc
 DESTDIR ?= /
 BINDIR ?= $(DESTDIR)/usr/bin
 PREFIX ?= $(DESTDIR)/usr/local
-NO_OPTI ?= false
+# TODO : should no_opti true or false by default ?
+NO_OPTI ?= true
 NO_STACK_PROTECTOR ?= false
 TARGET ?= $(shell $(CC) -dumpmachine)
 export CC
@@ -23,6 +24,13 @@ CXXFLAGS = -c -g -Wall -Wno-sign-compare -DTARGET="\"$(TARGET)\""
 
 # change it when it is changed with the llvm version
 WINDOWS_CXXFLAGS = -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
+
+# TODO : replace all lowercases false and trues by TRUE and FALSE  
+CLANG_EMBEDDED_COMPILER = false
+
+ifneq ($(shell $(CC) -dM -E src/config.h | grep ENABLE_CLANG_EMBEDDED_COMPILER),)
+CLANG_EMBEDDED_COMPILER = true
+endif
 
 # ifeq ($(OS),Windows_NT)
 # CXXFLAGS += $(WINDOWS_CXXFLAGS)
@@ -78,6 +86,12 @@ SRCDIR=src
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
+ifeq ($(CLANG_EMBEDDED_COMPILER),true)
+CLANG_EXTERNAL_SRCS := $(wildcard $(SRCDIR)/external/*.cpp)
+CLANG_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(CLANG_EXTERNAL_SRCS))
+OBJS += $(CLANG_EXTERNAL_OBJS)
+LDFLAGS += -lclang-cpp
+endif
 
 #DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))
 
@@ -147,9 +161,6 @@ $(OUTPUTBIN): $(OBJS)
 $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
-clean-build:
-	rm -f ./src/*.o ./src/*.temp
-
 
 ifneq ($(OS),Windows_NT)
 USERNAME=$(shell logname)
@@ -182,6 +193,9 @@ run:
 	./$(OUTPUTBIN) -std ./std tests/test2.cpoint
 #	./$(OUTPUTBIN) -std ./std tests/test2.cpoint -no-gc
 
+clean-build:
+	rm -f ./src/*.o ./src/*.temp
+
 clean: clean-build
 	make -C std/c_api clean
 	make -C std clean
@@ -192,6 +206,9 @@ clean: clean-build
 	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
 	make -C bdwgc clean
 	rm bdwgc/Makefile
+
+all-clean: clean
+	rm -f ./src/external/*.o
 
 test:
 	make -C tests python

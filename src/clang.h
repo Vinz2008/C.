@@ -1,0 +1,1 @@
+int launch_clang(int argc, char** argv);

@@ -2169,7 +2169,7 @@ Value *IfExprAST::codegen() {
 
   // Create blocks for the then and else cases.  Insert the 'then' block at the
   // end of the function.
-  bool has_one_branch_if = true;
+  bool has_one_branch_if = false;
 
   BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "then", TheFunction);
   BasicBlock *ElseBB = BasicBlock::Create(*TheContext, "else");
@@ -2274,6 +2274,7 @@ Value *IfExprAST::codegen() {
   }
   PN->addIncoming(ThenV, ThenBB);
   PN->addIncoming(ElseV, ElseBB);
+  return PN;
   }
   //return nullptr;
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));

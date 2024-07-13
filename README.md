@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 670KB stripped, ≈37MB not stripped
+- compiler less than 670KB stripped, ≈31MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -143,6 +143,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add thread sanitizer to cpoint-build
 - [ ] Add noreturn return value (return void and add the noreturn attribute to the function)
 - [ ] Remove protos for not existent functions from FunctionsProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it)
+- [ ] Make it possible to link llvm statically to the compiler
+- [ ] Fix bug when returning from function in if and else branch
 
 ## Benchmarks compared to other languages
 
@@ -157,6 +159,10 @@ Length of benchmarks in seconds, lower is better
 ## Note about the name
 
 C. is pronounced like C point. It was named like it and not C dot or period but C point because I just named the executable cpoint without thinking about it and then remembered that it is not a transparent translation from french and that it should have been name ccomma, but hey I am too lazy to fix it  ¯\\_(ツ)_/¯
+
+## LLVM version used
+
+The recommended LLVM version is 18.x. (17.x could work, but it is not garenteed to work without some edits in the code or disabling some flags)
 
 ## Locales
 

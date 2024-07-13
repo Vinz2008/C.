@@ -15,6 +15,9 @@
 
 #define ENABLE_JIT 0
 
+// comment this if you want to disable it (it is not like the other flags because it is needed to be known in the build system)
+#define ENABLE_CLANG_EMBEDDED_COMPILER
+
 #define BUILD_TIMESTAMP __TIMESTAMP__
 
 #ifndef TARGET
