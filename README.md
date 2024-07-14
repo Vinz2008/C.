@@ -148,7 +148,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Force default values to variables (maybe have in the future a default trait/function member like in rust) 
 - [ ] Extend preprocessor functionalities (default vars, operators, else, etc)
 - [ ] Add a flag to only preprocess (-E ?)
-
+- [ ] Create website for the programming language (use cssg ? svelte ?)
 ## Benchmarks compared to other languages
 
 [Complete benchmarks](https://github.com/Vinz2008/C./tree/master/docs/benchmarks.md)
