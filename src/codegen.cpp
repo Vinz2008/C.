@@ -1567,7 +1567,7 @@ Value *CallExprAST::codegen() {
     call->addParamAttr(pos_zeroext.at(i), Attribute::ZExt);
   }
   }
-  if (FunctionProtos[Callee]->cpoint_type.type == never_type){
+  if (FunctionProtos[Callee] && FunctionProtos[Callee]->cpoint_type.type == never_type){
     Builder->CreateUnreachable();
   }
   return call;
