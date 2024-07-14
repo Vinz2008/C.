@@ -6,9 +6,8 @@
 #include "log.h"
 
 std::unique_ptr<Preprocessor::Context> context;
-std::string word;
-std::stringstream wordstrtream;
-
+static std::string word;
+static std::stringstream wordstrtream;
 
 namespace Preprocessor {
     void Context::add_variable(std::unique_ptr<Variable> var){
@@ -55,8 +54,6 @@ namespace Preprocessor {
     }
 }
 
-
-
 void init_context_preprocessor(){
     std::vector<std::unique_ptr<Preprocessor::Variable>> variables;
     context = std::make_unique<Preprocessor::Context>(std::move(variables));
@@ -88,12 +85,15 @@ static int get_next_word(std::string line, int& pos){
 
 static bool compare_line(std::string line, std::string pattern){
     int pos_cmp = 0;
+    int pos_cmp2 = 0;
+    if (line.size() > 0){
     while (isspace(line.at(pos_cmp))){
         pos_cmp++;
     }
-    int pos_cmp2 = line.size()-1;
+    pos_cmp2 = line.size()-1;
     while (isspace(line.at(pos_cmp2))){
         pos_cmp2--;
+    }
     }
     std::string without_space_line = line.substr(pos_cmp, pos_cmp2+1);
     Log::Preprocessor_Info() << "without space line for comparison : " << without_space_line << "\n";
@@ -104,7 +104,7 @@ static bool compare_line(std::string line, std::string pattern){
 }
 
 // TODO : refactor this code with a vector of expressions (with in the the next operator or empty string if it is the end of the expression) or a simple AST
-static void preprocess_if(std::string instruction, int& pos){
+static void preprocess_if(std::string instruction, int& pos, std::ifstream& file_code, int& pos_line_file){
     std::string l2 = "";
     std::string op2 = "";
     std::string r2 = "";
@@ -150,12 +150,13 @@ static void preprocess_if(std::string instruction, int& pos){
         
         if (is_if_true){
             Log::Preprocessor_Info() << "if true" << "\n";
-                //go_to_next_line();
         } else {
             Log::Preprocessor_Info() << "if false" << "\n";
-             while (!compare_line(get_line_returned(), "?[endif]")){
+            std::string line = "";
+             while (!compare_line(/*get_line_returned()*/ line, "?[endif]")){
                 Log::Preprocessor_Info() << "line passed " << get_line_returned() << "\n";
-                go_to_next_line();
+                /*go_to_next_line();*/ std::getline(file_code, line);
+                pos_line_file++;
             }
         }
         } else {
@@ -164,7 +165,7 @@ static void preprocess_if(std::string instruction, int& pos){
     }
 }
 
-void preprocess_instruction(std::string line){
+void preprocess_instruction(std::string line, std::ifstream& file_code, int& pos_line_file){
     Log::Info() << "LINE : " << line << "\n";
     std::string instruction;
     int pos_line = 0;
@@ -176,7 +177,7 @@ void preprocess_instruction(std::string line){
     Log::Preprocessor_Info() << "instruction : " << instruction << "\n";
     get_next_word(instruction, pos);
     if (word == "if"){
-        preprocess_if(instruction, pos);
+        preprocess_if(instruction, pos, file_code, pos_line_file);
     } else if (word == "endif"){
         Log::Preprocessor_Info() << "endif" << "\n";
     } else if (word == "define"){
@@ -210,7 +211,6 @@ void preprocess_instruction(std::string line){
         Log::Preprocessor_Error() << error << "\n";
         exit(1);
     }
-
 }
 
 void preprocess_replace_variable(std::string& str){

@@ -48,7 +48,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
 - [x] Add macro functions (for example with a syntax like #function())
 - [ ] Make if, for and while return values like in rust
-- [ ] Move preprocessing to import stage
+- [x] Move preprocessing to import stage
 - [x] Deduplicate identical strings when creating them by keeping them in a hashmap when generating them
 - [x] Add the string version of the expression in the expect macro
 - [ ] Add rust-like "traits" for simple types like i32 or float (It will be called "members" and not traits but it will be the same : add methods to types, but it will need to make the '.' an operator)  
@@ -146,6 +146,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix bug when returning from function in if and else branch 
 - [ ] Add lld to the compiler (like in zig) 
 - [ ] Force default values to variables (maybe have in the future a default trait/function member like in rust) 
+- [ ] Extend preprocessor functionalities (default vars, operators, else, etc)
 
 ## Benchmarks compared to other languages
 

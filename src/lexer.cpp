@@ -39,7 +39,7 @@ static void LogErrorLexer(const char *Str, ...){
   va_end(args);
 }
 
-void handlePreprocessor();
+//void handlePreprocessor();
 
 static int getLine(std::istream &__is, std::string &__str){
   if (!getline(__is, __str)){
@@ -72,6 +72,9 @@ static void goToNextLine(std::istream &__is, std::string &__str){
   getLine(__is, __str);
   Comp_context->line = __str;
   file_log << "line size : " << __str.size() << "\n";
+  while (__str.find_first_not_of(" \t\n\0\r") == std::string::npos){
+    goToNextLine(__is, __str);
+  }
   pos = 0;
 }
 
@@ -88,8 +91,8 @@ static void init_line(){
 
 static void handleEmptyLine();
 
-void handlePreprocessor(){
-  while (true){
+static void handlePreprocessor(){
+  /*while (true){
     if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){  
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
       preprocess_instruction(line);
@@ -99,13 +102,13 @@ void handlePreprocessor(){
       preprocess_replace_variable(line);
       break;
     }
-  }
+  }*/
 }
 
 static void handleEmptyLine(){
   if (line.size() == 0){
     goToNextLine(file_in, line);
-    handlePreprocessor();
+    //handlePreprocessor();
   }
 }
 
@@ -146,7 +149,8 @@ static int getCharLine(){
 #endif
   if (line == "<empty line>"){
     init_line();
-    handlePreprocessor();
+    //handlePreprocessor();
+    handleEmptyLine();
   }
   int c = line[pos];
   if (c == '\0'){
@@ -159,7 +163,8 @@ static int getCharLine(){
   }
   if (c == '\n' || c == '\r' || pos + 1 >= strlen(line.c_str())){
     goToNextLine(file_in, line);
-    handlePreprocessor();
+    //handlePreprocessor();
+    handleEmptyLine();
     //pos = 0;
     file_log << "next char in line : " << line[pos] << "\n";
   } else if (c == '\\'){

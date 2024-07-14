@@ -608,6 +608,12 @@ int main(int argc, char **argv){
       }
     }
     init_context_preprocessor();
+    if (target_triplet_found_bool){
+    TargetTriple = target_triplet_found;
+    } else {
+    TargetTriple = llvm_default_target_triple;
+    }
+    setup_preprocessor(TargetTriple);
     Comp_context->filename = filename;
     std::string temp_filename = filename;
     temp_filename.append(".temp");
@@ -638,15 +644,10 @@ int main(int argc, char **argv){
     
 
     //legacy::PassManager pass;
-    if (target_triplet_found_bool){
-    TargetTriple = target_triplet_found;
-    } else {
-    TargetTriple = llvm_default_target_triple;
-    }
     std::string os_name = get_os(TargetTriple);
     TripleLLVM = Triple(TargetTriple);
     Log::Info() << "os from target triplet : " << os_name << "\n";
-    setup_preprocessor(TargetTriple);
+    //setup_preprocessor(TargetTriple);
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
     getNextToken();
     InitializeModule(first_filename);

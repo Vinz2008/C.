@@ -224,7 +224,7 @@ static std::string interpret_func(std::string line, int& pos, int nb_line, int& 
     return declar;
 }
 
-void find_patterns(std::string line, int nb_line, int& pos_line);
+void find_patterns(std::string line, int nb_line, int& pos_line, std::ifstream& file_code);
 
 int nb_of_opened_braces_struct;
 
@@ -395,7 +395,7 @@ void interpret_type(std::string line, int& pos_line){
 int nb_of_opened_braces;
 bool first_mod_opened = false;
 
-void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
+void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line, std::ifstream &file_code){
     out_file << '\n' << line;
     pos_line++;
     if (!first_mod_opened){
@@ -419,14 +419,14 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line){
             out_file << '\n' << line;
             break;
         }
-        find_patterns(line, nb_line, pos_line);
+        find_patterns(line, nb_line, pos_line, file_code);
     }
 }
 
 bool first_members_opened = false;
 int nb_of_opened_braces_members;
 
-void interpret_members(std::string line, int& pos, int nb_line, int& pos_line){
+void interpret_members(std::string line, int& pos, int nb_line, int& pos_line, std::ifstream &file_code){
     out_file << '\n' << line;
     pos_line++;
     if (!first_members_opened){
@@ -450,16 +450,18 @@ void interpret_members(std::string line, int& pos, int nb_line, int& pos_line){
             out_file << '\n' << line;
             break;
         }
-        find_patterns(line, nb_line, pos_line);
+        find_patterns(line, nb_line, pos_line, file_code);
     }
 }
 
 // find funcs, structs, etc
-void find_patterns(std::string line, int nb_line, int& pos_line){
+void find_patterns(std::string line, int nb_line, int& pos_line, std::ifstream& file_code){
     int pos = 0;
+    // TODO : Why is it needed ? Remove it ?
     if (line.find("?[") != std::string::npos){
         if (line.find("define") != std::string::npos){
-        out_file << line << "\n";
+        preprocess_instruction(line, file_code, pos_line_file);
+        //out_file << line << "\n";
         pos_line++;
         }
         return;
@@ -479,9 +481,9 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
     } else if (IdentifierStr == "extern"){
         interpret_extern(line, pos_line);
     } else if (IdentifierStr == "mod"){
-        interpret_mod(line, pos, nb_line, pos_line);
+        interpret_mod(line, pos, nb_line, pos_line, file_code);
     } else if (IdentifierStr == "members"){
-        interpret_members(line, pos, nb_line, pos_line);
+        interpret_members(line, pos, nb_line, pos_line, file_code);
     } else if (IdentifierStr == "type"){
         interpret_type(line, pos_line);
     }
@@ -498,7 +500,8 @@ void import_file(std::string Path, bool is_special_path){
         int pos_line = 0;
         while (std::getline(imported_file, line)){
             Log::Imports_Info() << line << "\n";
-            find_patterns(line, nb_line, pos_line);
+            
+            find_patterns(line, nb_line, pos_line, imported_file);
             pos_line++;
         }
     }
@@ -532,11 +535,20 @@ void interpret_include(std::string line, int& pos_src){
     if (included_file.is_open()){
         int pos_line = 0;
         while (std::getline(included_file, line)){
+            bool contains_non_whitespace_or_new_line = line.find_first_not_of(" \t\n\r\0") != std::string::npos;
+            if (!contains_non_whitespace_or_new_line){
+                continue;
+            }
             Log::Imports_Info() << line << "\n";
             Log::Imports_Info() << "pos_line : " << pos_line << "\n";
+            preprocess_replace_variable(line);
+            if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
+                preprocess_instruction(line, included_file, pos_line);
+            } else {
             out_file << line;
             if (pos_line != nb_line - 1){
                 out_file << "\n";
+            }
             }
             pos_line++;
         }
@@ -556,7 +568,7 @@ int find_import_or_include(std::string line){
         interpret_include(line, pos_src);
         return 1;
     } else {
-
+        // TODO ?
     }
     return 0;
 }
@@ -574,15 +586,31 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
     }
     if (file_code.is_open()){
         //int pos_line = 0;
+        bool last_line_macro = false;
+        bool last_line_import_or_include = false;
         while (std::getline(file_code, line)){
-            if (pos_line_file != nb_line && pos_line_file != 0){
+            if (!last_line_macro && pos_line_file != nb_line && pos_line_file != 0){
                 out_file << "\n";
             }
+            bool contains_non_whitespace_or_new_line = line.find_first_not_of(" \t\n\0\r") != std::string::npos;
+            if (last_line_import_or_include && !contains_non_whitespace_or_new_line){
+                continue;
+            }
+            last_line_macro = false;
+            last_line_import_or_include = false;
             Log::Imports_Info() << "line : " << line << "\n";
+            if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){
+                Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
+                preprocess_instruction(line, file_code, pos_line_file);
+                last_line_macro = true;
+            } else {
+            preprocess_replace_variable(line);
             if (find_import_or_include(line) == 0){
                 out_file << line;
             } else {
                 nb_imports++;
+                last_line_import_or_include = true;
+            }
             }
             pos_line_file++;
         }
