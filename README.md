@@ -42,7 +42,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add a syntax to import every cpoint files in package
 - [ ] Add chained struct members
 - [x] Add chained else if
-- [ ] Add unions support in import
+- [x] Add unions support in import
 - [x] Add enum support in import
 - [x] Add automatically when calling panic the file and line number to panic call
 - [x] Work on imports of template structs (for now in single file project you could include them) ( a way to fix problems with linking problems when generating the template would be to namespace the template with the filename)
@@ -98,13 +98,12 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add "-backend" flag to select the backend (for also adding a libgccjit flag)
 - [x] Add help flag (-h) to cpoint and cpoint-build
 - [x] Implement a eprintln equivalent (writing to stderr)
-- [ ] Work on adding the sret attribute when needed to follow the x86 abi calling convention
+- [x] Work on adding the sret attribute when needed to follow the x86 abi calling convention
 - [x] Add folder selection in cpoint-build (like in make -C)
 - [x] Add running test in cpoint-build
 - [ ] Run automatically clang and create a out.o file for the c translator
 - [ ] Replace sret store instruction with llvm.memcpy
 - [x] Move everything about the abi (valist, sret, byval) in an abi.cpp file
-- [ ] Add attributes to functions (ex : noreturn)
 - [ ] ENABLE CLANG-FORMAT
 - [ ] Implement a format macro (like the format! macro in rust)
 - [ ] Add REPL  
@@ -119,19 +118,19 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Refactor JIT code
 - [ ] Work on an arena allocator 
 - [x] Work on defer (to have memory management like in zig ?)
-- [ ] Make scopes expressions so you can declare scopes anywhere (ex : let a = { printd(2); var b = 2;  b + 1})
+- [x] Make scopes expressions so you can declare scopes anywhere (ex : let a = { printd(2); var b = 2;  b + 1})
 - [ ] Make variable work with scopes
 - [x] Finish making all expression containing Body (vectors of ExprAST) using only an expression that can be a scope expression
-- [ ] Fix cpoint-run which run an old version of the code
+- [ ] Fix cpoint-run which runs an old version of the code
 - [ ] add const ptr and const types (const should be in type system)
 - [ ] fix the bug with bindgen that makes const ptr args not be written in prototypes
 - [ ] Remove int because it already exists ?  (and create an alias in core so you can use the alias but there would not be int_type and i32_type in the compiler, only i32_type)
 - [x] Replace all ExprAST->clone()->codegen()->getType() with just ExprAST->get_type()
 - [ ] Add noalias/align/dereferenceable/nonnull to function arguments and return values
 - [ ] Detect when a reordering of struct members (like does rust automatically is necessary) and do an informative warning about that
-- [ ] Fix bug with global variable in custom sectionwith no default initializer
+- [ ] Fix bug with global variable in custom section with no default initializer
 - [ ] Create a way to cross-compile easily the compiler (target prefix on gcc ? clang when cross compiling ? clang by default ?)
-- [ ] Make closure private to file (like static functions in c)
+- [x] Make closure private to file (like static functions in c)
 - [ ] Split codegen.cpp (and ast.cpp ?) in match.cpp, closures.cpp, etc
 - [ ] Make every string translated in french (and other languages ?) with gettext
 - [ ] Refactor big functions in ast.cpp and codegen.cpp as smaller functions
@@ -141,11 +140,12 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add cc and ar like zig cc 
 - [x] Add thread sanitizer (https://github.com/ziglang/zig/blob/master/src/zig_llvm.cpp#L307)
 - [ ] Add thread sanitizer to cpoint-build
-- [ ] Add noreturn return value (return void and add the noreturn attribute to the function)
-- [ ] Remove protos for not existent functions from FunctionProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it)
-- [ ] Make it possible to link llvm statically to the compiler
-- [ ] Fix bug when returning from function in if and else branch
-- [ ] Add lld to the compiler (like in zig)
+- [x] Add noreturn return value (return void and add the noreturn attribute to the function)
+- [x] Remove protos for not existent functions from FunctionProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it) 
+- [ ] Make it possible to link llvm statically to the compiler 
+- [ ] Fix bug when returning from function in if and else branch 
+- [ ] Add lld to the compiler (like in zig) 
+- [ ] Force default values to variables (maybe have in the future a default trait/function member like in rust) 
 
 ## Benchmarks compared to other languages
 

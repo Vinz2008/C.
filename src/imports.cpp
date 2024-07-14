@@ -225,7 +225,6 @@ static std::string interpret_func(std::string line, int& pos, int nb_line, int& 
 }
 
 void find_patterns(std::string line, int nb_line, int& pos_line);
-void interpret_extern(std::string line, int& pos_line);
 
 int nb_of_opened_braces_struct;
 
@@ -258,6 +257,11 @@ static std::string interpret_struct_generics(std::string line, int& pos, int nb_
         }
     }
     return declar;
+}
+
+static void interpret_extern(std::string line, int& pos_line){
+    out_file << line << "\n";
+    pos_line++;
 }
 
 static void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
@@ -357,8 +361,29 @@ after_while:
     pos_line++;
 }
 
-void interpret_extern(std::string line, int& pos_line){
-    out_file << line << "\n";
+static void interpret_union(std::string line, int& pos, int nb_line, int& pos_line){
+    std::string union_declar = "";
+    while (true){
+        for (int i = pos; i < line.size(); i++){
+        if (line.at(i) != '}'){
+            union_declar += line.at(i);
+        } else {
+            union_declar += line.at(i);
+            goto after_while;
+        }
+        }
+        pos = 0;
+        if (!std::getline(imported_file, line)){
+            break;
+        } else {
+            union_declar += '\n';
+        }
+    }
+after_while:
+    if (pos_line != 0 && pos_line != nb_line){
+        out_file << "\n";
+    }
+    out_file << "union " << union_declar;
     pos_line++;
 }
 
@@ -449,6 +474,8 @@ void find_patterns(std::string line, int nb_line, int& pos_line){
         interpret_struct(line, pos, nb_line, pos_line);
     } else if (IdentifierStr == "enum"){
         interpret_enum(line, pos, nb_line, pos_line);
+    } else if (IdentifierStr == "union"){
+        interpret_union(line, pos, nb_line, pos_line);
     } else if (IdentifierStr == "extern"){
         interpret_extern(line, pos_line);
     } else if (IdentifierStr == "mod"){
