@@ -573,12 +573,17 @@ int find_import_or_include(std::string line){
     return 0;
 }
 
+// TODO : rename to preprocess_file
 int generate_file_with_imports(std::string file_path, std::string out_path){
     std::ifstream file_code;
     std::string line;
     int nb_line = get_nb_lines(file_code, file_path);
     file_code.open(file_path);
-    out_file.open(out_path);
+    if (out_path == ""){
+        out_file.open("temp_stdout.txt");
+    } else {
+        out_file.open(out_path);
+    }
     int nb_imports = 0;
     if (Comp_context->std_mode){ // TODO : add a way to include core with no-std (explicit folder ?)
         include_prelude(std_path);
@@ -617,6 +622,13 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
     }
     file_code.close();
     out_file.close();
+    if (out_path == ""){
+        std::ifstream out_file_ifs("temp_stdout.txt");
+        std::string stdout_content((std::istreambuf_iterator<char>(out_file_ifs)),(std::istreambuf_iterator<char>()));
+        std::cout << stdout_content << std::endl;
+        out_file_ifs.close();
+        std::remove("temp_stdout.txt");
+    }
     return nb_imports;
 }
 

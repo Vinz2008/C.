@@ -67,6 +67,12 @@ using namespace llvm::sys;
 #include "windows.h"
 #endif
 
+#ifndef _WIN32
+#define STDOUT_PATH "/dev/stdout"
+#else
+#define STDOUT_PATH ""
+#endif
+
 int return_status = 0;
 
 extern std::unique_ptr<DIBuilder> DBuilder;
@@ -423,6 +429,7 @@ int main(int argc, char **argv){
     // use native target even if -target is used. Needed for now in windows
     bool use_native_target = false;
     bool thread_sanitizer = false;
+    bool only_preprocess = false;
     std::string linker_additional_flags = "";
     std::string run_args = "";
     std::string llvm_default_target_triple = sys::getDefaultTargetTriple();
@@ -555,6 +562,8 @@ int main(int argc, char **argv){
           time_report = true;
         } else if (arg.compare("-thread-sanitizer") == 0){
           thread_sanitizer = true;
+        } else if (arg.compare("-E") == 0){
+          only_preprocess = true;
         } else if (arg.compare(0, 2, "-O") == 0){
           size_t pos = arg.find("O");
           std::string temp = arg.substr(pos+1, arg.size());
@@ -617,6 +626,11 @@ int main(int argc, char **argv){
     Comp_context->filename = filename;
     std::string temp_filename = filename;
     temp_filename.append(".temp");
+    if (only_preprocess){
+        temp_filename = STDOUT_PATH;
+        generate_file_with_imports(filename, temp_filename);
+        return 0;
+    }
     if (import_mode){
     int nb_imports = 0;
     nb_imports = generate_file_with_imports(filename, temp_filename);
