@@ -2318,7 +2318,8 @@ Value* ReturnAST::codegen(){
   }
   //return Builder->CreateRet(value_returned);
   Builder->CreateRet(value_returned);
-  return value_returned;
+  //return value_returned;
+  return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
 Value* GotoExprAST::codegen(){
