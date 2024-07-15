@@ -1,4 +1,5 @@
 #include "llvm/IR/Instructions.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 #include "types.h"
 #include "ast.h"
 #include <memory>
@@ -61,11 +62,12 @@ public:
 class StructDeclaration {
 public:
     llvm::Type* struct_type;
+    llvm::DIType* struct_debuginfos_type;
     std::vector<std::pair<std::string,Cpoint_Type>> members;
     std::vector<std::string> functions;
-    StructDeclaration(llvm::Type* struct_type, std::vector<std::pair<std::string,Cpoint_Type>> members, std::vector<std::string> functions) : struct_type(struct_type), members(std::move(members)), functions(std::move(functions)) {}
+    StructDeclaration(llvm::Type* struct_type, llvm::DIType* struct_debuginfos_type, std::vector<std::pair<std::string,Cpoint_Type>> members, std::vector<std::string> functions) : struct_type(struct_type), struct_debuginfos_type(struct_debuginfos_type), members(std::move(members)), functions(std::move(functions)) {}
     std::unique_ptr<StructDeclaration> clone(){
-        return std::make_unique<StructDeclaration>(struct_type, members, functions);
+        return std::make_unique<StructDeclaration>(struct_type, struct_debuginfos_type, members, functions);
     }
 };
 

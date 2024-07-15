@@ -333,6 +333,7 @@ Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
 
 Value* ScopeExprAST::codegen(){
     //Value* ret = nullptr;
+    // TODO : add debuginfos for scopes ?
     createScope();
     Log::Info() << "Scope size : " << Body.size() << "\n";
     /*bool should_break = false;
@@ -374,22 +375,30 @@ Type* StructDeclarAST::codegen(){
     Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     dataTypes.push_back(var_type);
     std::string VarName = VarExpr->VarNames.at(0).first;
-    if (is_in_struct_templates_codegen){
+    //if (is_in_struct_templates_codegen){
         members_for_template.push_back(std::make_pair(VarName, VarExpr->cpoint_type)); // already done in ast.cpp
-    }
+    //}
   }
   structType->setBody(dataTypes);
   Log::Info() << "adding struct declaration name " << Name << " to StructDeclarations" << "\n";
+  // TODO for debuginfos
+  DIType* structDebugInfosType = nullptr;
   if (!is_in_struct_templates_codegen){
     //auto functions = StructDeclarations[Name]->functions;
-    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, StructDeclarations[Name]->members, /*functions*/  StructDeclarations[Name]->functions);
+    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, structDebugInfosType, StructDeclarations[Name]->members, /*functions*/  StructDeclarations[Name]->functions);
   } else {
         std::string structName = Name.substr(0, Name.find("____"));
         StructDeclarations[Name] = StructDeclarations[structName]->clone();
         StructDeclarations[Name]->struct_type = structType;
   }
  if (is_in_struct_templates_codegen){
-    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, std::move(members_for_template), StructDeclarations[Name]->functions);
+    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, structDebugInfosType, std::move(members_for_template), StructDeclarations[Name]->functions);
+  }
+  if (debug_info_mode){
+    Cpoint_Type struct_type = Cpoint_Type(other_type, false, 0, false, 0, true, Name);
+    std::vector<std::pair<std::string, Cpoint_Type>> Members = members_for_template;
+    structDebugInfosType = DebugInfoCreateStructType(struct_type, Members, 0); // TODO : get LineNo
+    StructDeclarations[Name]->struct_debuginfos_type = structDebugInfosType;
   }
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = Functions.at(i)->clone();
@@ -435,7 +444,7 @@ Type* StructDeclarAST::codegen(){
   }
   // TODO : for now, enable it after just for templates, see later if there is another solution
   if (is_in_struct_templates_codegen){
-    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, /*std::move(members_for_template)*/ StructDeclarations[Name]->members, std::move(functions_for_template));
+    StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, structDebugInfosType, /*std::move(members_for_template)*/ StructDeclarations[Name]->members, std::move(functions_for_template));
   }
   Log::Info() << "appending to StructDeclarations struct " << Name << "\n";
   return structType;

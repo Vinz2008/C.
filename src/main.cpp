@@ -84,6 +84,7 @@ std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
 string filename = "";
 extern std::string IdentifierStr;
+// TODO : move debug_info_mode, silent_mode, etc to Comp_Context
 bool debug_info_mode = false;
 bool silent_mode = false;
 
@@ -673,6 +674,7 @@ int main(int argc, char **argv){
       TheModule->addModuleFlag(llvm::Module::Warning, "Dwarf Version", 2);
     }
     DBuilder = std::make_unique<DIBuilder>((*TheModule));
+    CpointDebugInfo = DebugInfo(TripleLLVM.isArch64Bit() ? 64 : 32);
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", is_optimised, "", 0);

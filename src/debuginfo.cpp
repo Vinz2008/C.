@@ -1,6 +1,7 @@
 #include "llvm/IR/DIBuilder.h"
 #include "debuginfo.h"
 #include "errors.h"
+#include "codegen.h"
 #include "log.h"
 
 using namespace llvm;
@@ -14,52 +15,109 @@ extern struct DebugInfo CpointDebugInfo;
 
 extern bool debug_info_mode;
 
-DIType *DebugInfo::getDoubleTy() {
-  if (DblTy)
-    return DblTy;
-  DblTy = DBuilder->createBasicType("double", 64, dwarf::DW_ATE_float);
-  return DblTy;
+DIType* DebugInfo::getVoidTy() {
+  if (VoidTy)
+    return VoidTy;
+  VoidTy = nullptr;
+  return VoidTy;
 }
 
-DIType *DebugInfo::getIntTy() {
-  if (IntTy)
-    return IntTy;
-  IntTy = DBuilder->createBasicType("int", 32, dwarf::DW_ATE_signed);
+DIType* DebugInfo::getDoubleTy() {
+  if (DoubleTy)
+    return DoubleTy;
+  DoubleTy = DBuilder->createBasicType("double", 64, dwarf::DW_ATE_float);
+  return DoubleTy;
+}
+
+DIType* DebugInfo::getFloatTy() {
+  if (FloatTy)
+    return FloatTy;
+  FloatTy = DBuilder->createBasicType("float", 32, dwarf::DW_ATE_float);
+  return FloatTy;
+}
+
+// size is in bits
+DIType* DebugInfo::getIntTy(int size) {
+  DIType* IntTy = DBuilder->createBasicType("i" + std::to_string(size), size, dwarf::DW_ATE_signed);
   return IntTy;
 }
 
-DIType *DebugInfo::getI8Ty() {
-  if (I8Ty)
-    return I8Ty;
-  I8Ty = DBuilder->createBasicType("i8", 8, dwarf::DW_ATE_signed_char);
-  return I8Ty;
+DIType* DebugInfo::getPtrTy(DIType* baseDiType){
+    if (!baseDiType){
+        return DBuilder->createBasicType("void*", pointer_width, dwarf::DW_TAG_pointer_type);
+    }
+    DIType* PtrTy = DBuilder->createPointerType(baseDiType, pointer_width);
+    return PtrTy;
 }
 
+extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+
 static DIType* get_debuginfo_type(Cpoint_Type type){
-  switch (type.type){
-  case i32_type:
-    return CpointDebugInfo.getIntTy();
-  case i8_type:
-    return CpointDebugInfo.getI8Ty();  
-  default:
-  case double_type:
-    return CpointDebugInfo.getDoubleTy();
+  DIType* ret_type = nullptr;
+  if (type.is_struct){
+    std::string structName = type.struct_name;
+    ret_type = StructDeclarations[structName]->struct_debuginfos_type;
+  } else {
+    if (type.is_signed() || type.is_unsigned()){
+    ret_type = CpointDebugInfo.getIntTy(type.get_number_of_bits());
+    } else {
+    switch (type.type){
+    case void_type:
+        ret_type = CpointDebugInfo.getVoidTy();
+        break;
+    case float_type:
+        ret_type = CpointDebugInfo.getFloatTy();
+        break;
+    default:
+    case double_type:
+        ret_type = CpointDebugInfo.getDoubleTy();
+        break;
+    }
+    }
   }
+  if (type.is_ptr){
+    /*if (type.type == void_type){
+        return CpointDebugInfo.getPtrTy(nullptr);
+    }*/
+    //Cpoint_Type base_type = type.deref_type();
+    return CpointDebugInfo.getPtrTy(ret_type);
+  }
+  return ret_type;
 }
 
 DISubroutineType *DebugInfoCreateFunctionType(Cpoint_Type type, std::vector<std::pair<std::string, Cpoint_Type>> Args) {
   SmallVector<Metadata *, 8> EltTys;
-  DIType *DblTy = get_debuginfo_type(type);
+  DIType* return_type = get_debuginfo_type(type);
 
   // Add the result type.
-  EltTys.push_back(DblTy);
+  EltTys.push_back(return_type);
 
   for (unsigned i = 0; i < Args.size(); ++i){
     EltTys.push_back(get_debuginfo_type(Args.at(i).second));
-    //EltTys.push_back(DblTy);
   }
 
   return DBuilder->createSubroutineType(DBuilder->getOrCreateTypeArray(EltTys));
+}
+
+DICompositeType* DebugInfoCreateStructType(Cpoint_Type struct_type, std::vector<std::pair<std::string, Cpoint_Type>> Members, int LineNo) {
+    // TODO : move this in a get_scope function
+    DIScope *Scope;
+    if (CpointDebugInfo.LexicalBlocks.empty()){
+        Scope = CpointDebugInfo.TheCU;
+    } else {
+        Scope = CpointDebugInfo.LexicalBlocks.back();
+    }
+    DIFile* File = CpointDebugInfo.TheCU->getFile();
+    SmallVector<Metadata *, 8> MemberTys;
+    for (int i = 0; i < Members.size(); i++){
+        std::string struct_member_name = Members.at(i).first;
+        Cpoint_Type member_cpoint_type = Members.at(i).second;
+        DIType* member_type = get_debuginfo_type(member_cpoint_type);
+        int size_in_bits = get_type_size(member_cpoint_type)*8;
+        MemberTys.push_back(DBuilder->createMemberType(Scope, struct_member_name, File, LineNo,  size_in_bits, 0, 0, DINode::DIFlags::FlagPublic, member_type));
+    }
+    DITypeRefArray all_member_types = DBuilder->getOrCreateTypeArray(MemberTys);
+    return DBuilder->createStructType(Scope, struct_type.struct_name, File, LineNo, get_type_size(struct_type)*8, get_type_size(struct_type)*8, DINode::DIFlags::FlagPublic, nullptr, all_member_types.get());
 }
 
 

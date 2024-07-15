@@ -233,7 +233,7 @@ extern llvm::Triple TripleLLVM;
 
 int get_type_size(Cpoint_Type cpoint_type){
     int size = 0;
-    if (cpoint_type.is_struct){
+    if (cpoint_type.is_just_struct()){
         size += find_struct_type_size(cpoint_type);
     } else if (cpoint_type.is_ptr){
         size += (TripleLLVM.isArch64Bit()) ? 64 : 32;

@@ -1,12 +1,14 @@
 #include "closure.h"
+#include "llvm/TargetParser/Triple.h"
 #include "types.h"
 #include "codegen.h"
-#include "llvm/TargetParser/Triple.h"
+#include "debuginfo.h"
 
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<Module> TheModule;
 extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+extern bool debug_info_mode;
 
 static int closure_number = 0;
 
@@ -23,13 +25,20 @@ StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_v
         structElements.push_back(get_type_llvm(*temp_type));
     }
     auto structType = StructType::get(*TheContext, structElements);
-    structType->setName("closure_struct" + std::to_string(closure_number)); // TODO : remove this ?
+    std::string struct_name = "closure_struct" + std::to_string(closure_number);
+    structType->setName(struct_name); // TODO : remove this ?
+    DIType* structDebugInfosType = nullptr;
     std::vector<std::string> functions;
     std::vector<std::pair<std::string,Cpoint_Type>> captured_vars_with_type;
     for (int i = 0; i < captured_vars.size(); i++){
         captured_vars_with_type.push_back(std::make_pair(captured_vars.at(i), *get_variable_type(captured_vars.at(i))));
     }
-    StructDeclarations["closure_struct" + std::to_string(closure_number)] = std::make_unique<StructDeclaration>(dyn_cast<Type>(structType), captured_vars_with_type, functions);
+
+    if (debug_info_mode){
+        Cpoint_Type struct_type = Cpoint_Type(other_type, false, 0, false, 0, true, struct_name);
+        structDebugInfosType = DebugInfoCreateStructType(struct_type, captured_vars_with_type, 0); // TODO : get LineNo/Pass LineNo to this function for debuginfos
+    }
+    StructDeclarations["closure_struct" + std::to_string(closure_number)] = std::make_unique<StructDeclaration>(dyn_cast<Type>(structType), structDebugInfosType, captured_vars_with_type, functions);
     return structType;
 }
 
