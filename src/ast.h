@@ -40,6 +40,7 @@ enum ExprType {
     Break = 0,
     Return = 1,
     Unreachable = 2,
+    NeverFunctionCall = 3,
 };
 
 template <class T>
@@ -656,6 +657,7 @@ public:
     if (Callee == "cpoint_internal_unreachable" /*|| Callee == "panicx" || Callee == "panic"*/){
         return Cpoint_Type(never_type);
     }
+    // TODO : replace this block of code in every file by a get_function_return_type
     if (FunctionProtos[Callee]){
         return FunctionProtos[Callee]->cpoint_type;
     } else {
@@ -668,6 +670,13 @@ public:
     if (exprType == ExprType::Unreachable){
         if (Callee == "cpoint_internal_unreachable"){
             return true;
+        }
+    }
+    if (exprType == ExprType::NeverFunctionCall){
+        if (FunctionProtos[Callee]){
+            return FunctionProtos[Callee]->cpoint_type.type == never_type;
+        } else {
+        // TODO : implement this for function pointers in local vars
         }
     }
     return false;

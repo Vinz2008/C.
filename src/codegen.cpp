@@ -2201,6 +2201,8 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(ThenBB);
   bool has_then_return = /*Then->contains_return()*/ Then->contains_expr(ExprType::Return);
   bool has_then_break = Then->contains_expr(ExprType::Break);
+  bool has_then_unreachable = Then->contains_expr(ExprType::Unreachable);
+  bool has_then_never_function_call = Then->contains_expr(ExprType::NeverFunctionCall);;
   Value *ThenV = Then->codegen();
   /*createScope();
   Value *ThenV = nullptr;
@@ -2216,7 +2218,7 @@ Value *IfExprAST::codegen() {
   /*if (ThenV->getType() != Type::getVoidTy(*TheContext) && ThenV->getType() != phiType){
     convert_to_type(get_cpoint_type_from_llvm(ThenV->getType()), phiType, ThenV);
   }*/
-  if (!has_then_break /*!break_found*/ && !has_then_return){
+  if (!has_then_break /*!break_found*/ && !has_then_return && !has_then_unreachable && !has_then_never_function_call){
     Builder->CreateBr(MergeBB);
   } else {
     has_one_branch_if = true;
@@ -2232,9 +2234,13 @@ Value *IfExprAST::codegen() {
   Value *ElseV = nullptr;
   bool has_else_return = false;
   bool has_else_break = false;
+  bool has_else_unreachable = false;
+  bool has_else_never_function_call = false;
   if (Else){
     has_else_return = /*Else->contains_return()*/ Else->contains_expr(ExprType::Return);
     has_else_break = Else->contains_expr(ExprType::Break);
+    has_else_unreachable = Else->contains_expr(ExprType::Unreachable);
+    has_then_never_function_call = Else->contains_expr(ExprType::NeverFunctionCall);
     ElseV = Else->codegen();
     if (!ElseV){
         return nullptr;
@@ -2255,7 +2261,7 @@ Value *IfExprAST::codegen() {
   }
   }
  
-  if (/*!break_found*/ !has_else_break && !has_else_return){ // TODO : add has_else unreachable ?
+  if (/*!break_found*/ !has_else_break && !has_else_return && !has_else_unreachable && !has_else_never_function_call){ // TODO : add has_else unreachable ?
     Builder->CreateBr(MergeBB);
   } else {
     has_one_branch_if = true;

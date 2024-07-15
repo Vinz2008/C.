@@ -227,6 +227,15 @@ bool is_of_expr_type(ExprAST* expr, enum ExprType exprType){
             }
         }
         return false;
+    } else if (exprType == ExprType::NeverFunctionCall){
+        if (dynamic_cast<CallExprAST*>(expr)){
+            CallExprAST* call_expr = dynamic_cast<CallExprAST*>(expr);
+            if (FunctionProtos[call_expr->Callee]){
+                return FunctionProtos[call_expr->Callee]->cpoint_type.type == never_type; 
+            } else {
+                // TODO for local vars calls
+            }
+        }
     }
     return false;
 }
