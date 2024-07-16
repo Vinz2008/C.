@@ -27,7 +27,7 @@ std::vector<std::string> buildFileEachThreadPathList;
 void buildFileEachThread(int index, std::string target, std::string sysroot, std::string arguments){
     std::string path = buildFileEachThreadPathList.at(index);
     std::cout << path << ' ';
-    compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
+    compileFile(target, arguments, path, sysroot);
 }
 
 void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number, std::vector<std::string> localPathList, std::string arguments){
@@ -68,7 +68,7 @@ void buildFolder(std::string src_folder, toml::v3::table& config, std::string_vi
     for (auto const& path : localPathList){
         if (shouldCompileFile(path)){
             std::cout << path << ' ';
-            compileFile(target, /*"-no-gc" +*/ arguments, path, sysroot);
+            compileFile(target, arguments, path, sysroot);
         }
     }
     }

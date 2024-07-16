@@ -4,11 +4,6 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/MC/TargetRegistry.h"
-/*#if LLVM_VERSION_MAJOR <= 17
-#include "llvm/Support/Host.h"
-#else 
-#include "llvm/TargetParser/Host.h"
-#endif*/
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"

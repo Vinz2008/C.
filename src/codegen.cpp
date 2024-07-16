@@ -180,23 +180,19 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::read_register;
   } else if (Callee == "bitreverse"){
     intrisicId = Intrinsic::bitreverse;
-    /*Type* arg_type = Args.at(0)->clone()->codegen()->getType(); // TODO : replace this
-    Cpoint_Type arg_cpoint_type = get_cpoint_type_from_llvm(arg_type);*/
     Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
     Log::Info() << "type : " << arg_cpoint_type << "\n";
-    if (/*arg_type->isFloatingPointTy()*/ arg_cpoint_type.is_decimal_number_type()){
+    if (arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the bitreverse intrisic on a floating point type arg"); 
     }
-    Tys = ArrayRef<Type*>(/*arg_type*/ get_type_llvm(arg_cpoint_type));
+    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));
   } else if (Callee == "ctpop"){
     intrisicId = Intrinsic::ctpop;
-    //Type* arg_type = Args.at(0)->clone()->codegen()->getType();
-    //Type* arg_type = get_type_llvm(Cpoint_Type(i32_type));
     Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
-    if (/*arg_type->isFloatingPointTy()*/ arg_cpoint_type.is_decimal_number_type()){
+    if (arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
     }
-    Tys = ArrayRef<Type*>(/*arg_type*/ get_type_llvm(arg_cpoint_type));
+    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));
     // TODO : refactor this into a real template ?
   }
   Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId, Tys);
@@ -212,7 +208,7 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     ArgsV.push_back(BoolExprAST(false).codegen()); // the bool is if it is volatile
   }
   if (Callee == "abs"){
-    ArgsV.push_back(BoolExprAST(false).codegen());  // the bool is if it is a poison value
+    ArgsV.push_back(BoolExprAST(false).codegen()); // the bool is if it is a poison value
   }
   std::string call_instruction_name = "calltmp";
   if (CalleeF->getReturnType()->isVoidTy()){
@@ -266,13 +262,13 @@ Value *VariableExprAST::codegen() {
   if (FunctionProtos[Name] != nullptr){
     return GeneratedFunctions[Name];
   }
-  if (/*type == Cpoint_Type() &&*/ !var_exists(Name) /*NamedValues[Name] == nullptr*/) {
+  if (!var_exists(Name)) {
     return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
   }
   Value* ptr = get_var_allocation(Name);
   Cpoint_Type var_type = *get_variable_type(Name); 
   Log::Info() << "loading var " << Name << " of type " << type << "\n";
-  return Builder->CreateLoad(/*A->getAllocatedType()*/ /*get_type_llvm(type)*/ get_type_llvm(var_type), ptr, Name.c_str());
+  return Builder->CreateLoad(get_type_llvm(var_type), ptr, Name.c_str());
 }
 
 Value* ConstantArrayExprAST::codegen(){
@@ -296,7 +292,7 @@ Value* ConstantStructExprAST::codegen(){
         Cpoint_Type structMemberType = StructMembers.at(i)->get_type();
         Value* Vtemp = StructMembers.at(i)->codegen();
         if (get_type_llvm(StructDeclarations[struct_name]->members.at(i).second) != Vtemp->getType()){
-            convert_to_type(/*get_cpoint_type_from_llvm(Vtemp->getType())*/ structMemberType, get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), Vtemp);
+            convert_to_type(structMemberType, get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), Vtemp);
         }
         Constant* constant;
         if (! (constant = dyn_cast<Constant>(Vtemp))){
@@ -332,25 +328,10 @@ Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
 }
 
 Value* ScopeExprAST::codegen(){
-    //Value* ret = nullptr;
     // TODO : add debuginfos for scopes ?
     createScope();
     Log::Info() << "Scope size : " << Body.size() << "\n";
-    /*bool should_break = false;
-    for (int i = 0; i < Body.size(); i++){
-        //if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
-        if (Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::Unreachable)){
-          should_break = true;
-        }
-        ret = Body.at(i)->codegen();
-        if (!ret){
-            return nullptr;
-        }
-        if (should_break){
-          break;
-        }
-    }*/
-   Value* ret = codegenBody(Body);
+    Value* ret = codegenBody(Body);
     endScope();
     return ret;
 }
@@ -411,11 +392,6 @@ Type* StructDeclarAST::codegen(){
     }
 
     std::string mangled_name_function = struct_function_mangling(Name, function_name);
-    /*if (is_in_struct_templates_codegen){
-        mangled_name_function += "____" + create_mangled_name_from_type(TypeTemplateCallCodegen.second);
-    }*/
-    /*Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(structType->getPointerTo());
-    self_pointer_type = Cpoint_Type(other_type, true, 0, false, 0, true, Name);*/
     Cpoint_Type self_pointer_type = Cpoint_Type(other_type, true, 0, false, 0, true, Name);
     FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_pointer_type));
     FunctionExpr->Proto->Name = mangled_name_function;
@@ -651,9 +627,6 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             } else {
                 return LogErrorV(emptyLoc, "In an equal operator, another expression than a variable name is used ");
             }
-            /*std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(BinExpr->LHS));
-            auto arrayPtr = get_var_allocation(VarExpr->Name);*/
-            //Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
             Cpoint_Type member_type = cpoint_type;
             Log::Info() << "member type : " << member_type << "\n";
             if (member_type.is_ptr && !member_type.is_array){
@@ -702,12 +675,6 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
             }
             Builder->CreateStore(ValDeclared, ptr);
-            // TODO : verify if this code is needed and remove it in all the code if not
-            /*if (is_var_local(VariableName)){
-                NamedValues[VariableName] = std::make_unique<NamedValue>(static_cast<AllocaInst*>(structPtr), cpoint_type);
-            } else {
-                GlobalVariables[VariableName] = std::make_unique<GlobalVariableValue>(cpoint_type, static_cast<GlobalVariable*>(structPtr));
-            }*/
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
         } else {
             return LogErrorV(emptyLoc, "Using as a rvalue a bin expr that is not an array member or a array member operator");
@@ -847,45 +814,8 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         Log::Info() << "index : " << temp_pair->second << "\n";
         int pos = temp_pair->second;
         if (structType.is_union){
-            /*auto members = UnionDeclarations[structType.union_name]->members;
-            int pos = -1;
-            for (int i = 0; i < members.size(); i++){
-            Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
-            if (members.at(i).first == MemberName){
-                pos = i;
-                break;
-            }
-            }
-            if (pos == -1){
-            return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
-            }
-            member_type = members.at(pos).second;*/
             return Alloca;
         } else {
-        /*if (!StructDeclarations[structType.struct_name]){
-            return LogErrorV(emptyLoc, "Can't find struct type : %s", structType.struct_name.c_str());
-        }*/
-        /*std::vector<std::pair<std::string, Cpoint_Type>> members;
-        if (structType.struct_template_type_passed){
-            Log::Info() << "is template" << "\n";
-            members = StructDeclarations[get_struct_template_name(structType.struct_name, *structType.struct_template_type_passed)]->members;
-        } else {
-            members = StructDeclarations[structType.struct_name]->members;
-        }
-        Log::Info() << "members.size() : " << members.size() << "\n";
-        int pos = -1;
-        for (int i = 0; i < members.size(); i++){
-        Log::Info() << "members.at(i).first : " << members.at(i).first << " MemberName : " << MemberName << "\n";
-            if (members.at(i).first == MemberName){
-                pos = i;
-                break;
-            }
-        }
-        Log::Info() << "Pos for GEP struct member " << pos << "\n";
-        if (pos == -1){
-            return LogErrorV(emptyLoc, "Unknown member %s in struct member", MemberName.c_str());
-        }
-        member_type = members.at(pos).second;*/
         auto index = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos, true));
         if (structType.is_ptr){
             structType.is_ptr = false;
@@ -896,7 +826,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
         Log::Info() << "cpoint_type struct : " << structType << "\n";
         auto structTypeLLVM = get_type_llvm(structType);
-        Value* ptr = Builder->CreateGEP(/*get_type_llvm(structType)*/ structTypeLLVM, Alloca, { zero, index}, "", true);
+        Value* ptr = Builder->CreateGEP(structTypeLLVM, Alloca, { zero, index}, "", true);
         return ptr;
         }
     } else if (dynamic_cast<BinaryExprAST*>(struct_expr.get())){
@@ -904,7 +834,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         if (structBinExpr->Op != "."){
             return LogErrorV(emptyLoc, "Trying to use the struct member operator with an operator expression which it is not implemented for");
         }
-        Cpoint_Type objectType = /*structBinExpr->RHS->get_type()*/ structBinExpr->get_type();
+        Cpoint_Type objectType = structBinExpr->get_type();
         //Log::Info() << "objectType : " << objectType << "\n";
         auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(std::move(member));
         if (!varExprMember){
@@ -950,47 +880,6 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
     Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, StructName);
     return value;
 }
-
-// TODO : maybe move this to the ast part to make work the get_type (IMPORTANT)
-// returns either a CallExprAST or a StructMemberCallExprAST
-/*std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_expr, std::vector<std::unique_ptr<ExprAST>> Args, Cpoint_Type template_passed_type){
-    Log::Info() << "NEWCallExprAST codegen" << "\n";
-    if (dynamic_cast<VariableExprAST*>(function_expr.get())){
-        Log::Info() << "Args size" << Args.size() << "\n";
-        std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
-        return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type);
-    } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){
-        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
-        Log::Info() << "Doing call on binaryExpr : " << BinExpr->Op << "\n";
-        if (BinExpr->Op == "."){
-            return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args));
-        } else {
-            return LogError("Unknown operator before call () operator");
-        }
-    }
-    return LogError("Trying to call an expression which it is not implemented for");
-}*/
-
-// TODO : rename OPCallExprAST
-//Value* NEWCallExprAST::codegen(){
-//    return nullptr;
-    //return getASTNewCallExprAST(std::move(function_expr), std::move(Args), template_passed_type)->codegen();
-    /*Log::Info() << "NEWCallExprAST codegen" << "\n";
-    if (dynamic_cast<VariableExprAST*>(function_expr.get())){
-        Log::Info() << "Args size" << Args.size() << "\n";
-        std::unique_ptr<VariableExprAST> functionNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(function_expr));
-        return std::make_unique<CallExprAST>(emptyLoc, functionNameExpr->Name, std::move(Args), template_passed_type)->codegen();
-    } else if (dynamic_cast<BinaryExprAST*>(function_expr.get())){
-        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(function_expr));
-        Log::Info() << "Doing call on binaryExpr : " << BinExpr->Op << "\n";
-        if (BinExpr->Op == "."){
-            return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args))->codegen();
-        } else {
-            return LogErrorV(emptyLoc, "Unknown operator before call () operator");
-        }
-    }
-    return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");*/
-//}
 
 Value* StructMemberCallExprAST::codegen(){
     if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
@@ -1445,17 +1334,17 @@ Value *CallExprAST::codegen() {
   Log::Info() << "Args.size : " << Args.size() << "\n";
   bool has_sret = function_return_type.is_just_struct() && should_return_struct_with_ptr(function_return_type);
   bool has_byval = false;
-  if (/*FunctionProtos[Callee]->is_variable_number_args*/ is_variable_number_args){
+  if (is_variable_number_args){
     Log::Info() << "Variable number of args" << "\n";
-    if (Args.size() < /*CalleeF->arg_size()*/ real_args_size){
+    if (Args.size() < real_args_size){
       return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), /*CalleeF->arg_size()*/ args_size);
     }
   } else if (has_sret){
-    if (/*CalleeF->arg_size()*/ real_args_size != Args.size()+1)
+    if (real_args_size != Args.size()+1)
         return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
   } else {
     // If argument mismatch error.
-  if (/*CalleeF->arg_size()*/ real_args_size != Args.size())
+  if (real_args_size != Args.size())
     return LogErrorV(this->loc, "Incorrect number of arguments passed for %s : %d args but %d expected", Callee.c_str(), Args.size(), CalleeF->arg_size());
   }
   Log::Info() << "has_sret : " << has_sret << "\n";
@@ -1486,15 +1375,10 @@ Value *CallExprAST::codegen() {
     } else {
     Value* temp_val;
     Cpoint_Type arg_type = Cpoint_Type(double_type);
-    if (i < /*FunctionProtos[Callee]->Args.size()*/ args_size){
+    if (i < args_size){
         arg_type = callexpr_get_arg_type_function(Callee, i);
-        /*if (CalleeF){
-            arg_type = FunctionProtos[Callee]->Args.at(i).second;
-        } else {
-            arg_type = NamedValues[Callee]->type.args.at(i);
-        }*/
     }
-    bool is_additional_arg = /*FunctionProtos[Callee]->is_variable_number_args*/ is_variable_number_args && i >= /*FunctionProtos[Callee]->Args.size()*/ args_size;
+    bool is_additional_arg = is_variable_number_args && i >= args_size;
     bool is_arg_passed_an_array = Args[i]->get_type().is_array;
     if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         temp_val = AddrExprAST(Args[i]->clone()).codegen();
@@ -1510,11 +1394,11 @@ Value *CallExprAST::codegen() {
     if (!temp_val){
       return nullptr;
     }
-    if (i < /*FunctionProtos[Callee]->Args.size()*/ args_size){
-    if (temp_val->getType() != get_type_llvm(/*FunctionProtos[Callee]->Args.at(i).second*/ arg_type)){
+    if (i < args_size){
+    if (temp_val->getType() != get_type_llvm(arg_type)){
       Log::Info() << "name of arg converting in call expr : " << ((FunctionProtos[Callee]) ? FunctionProtos[Callee]->Args.at(i).first : (std::string)"(couldn't be found because it is a function pointer)") << "\n"; // TODO : fix this ?
       //return LogErrorV(this->loc, "Arg %s type is wrong in the call of %s\n Expected type : %s, got type : %s\n", FunctionProtos[Callee]->Args.at(i).second, Callee, create_pretty_name_for_type(get_cpoint_type_from_llvm(temp_val->getType())), create_pretty_name_for_type(FunctionProtos[Callee]->Args.at(i).second));
-        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(/*FunctionProtos[Callee]->Args.at(i).second*/ arg_type), temp_val);
+        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(arg_type), temp_val);
     }
     }
     ArgsV.push_back(temp_val);
@@ -1525,8 +1409,8 @@ Value *CallExprAST::codegen() {
   std::vector<int> pos_byval;
   std::vector<int> pos_signext;
   std::vector<int> pos_zeroext;
-  for (int i = 0; i < /*FunctionProtos[Callee]->Args.size()*/  args_size; i++){
-    Cpoint_Type arg_type = /*FunctionProtos[Callee]->Args.at(i).second*/ callexpr_get_arg_type_function(Callee, i);
+  for (int i = 0; i < args_size; i++){
+    Cpoint_Type arg_type = callexpr_get_arg_type_function(Callee, i);
     if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
         has_byval = true;
         pos_byval.push_back(i);
@@ -1540,7 +1424,7 @@ Value *CallExprAST::codegen() {
     }
   }
   std::string NameCallTmp = "calltmp";
-  if (/*CalleeF->getReturnType()*/ function_return_type.type  == /*get_type_llvm(*/void_type/*)*/ || function_return_type.type == never_type || has_sret){
+  if (function_return_type.type  == void_type || function_return_type.type == never_type || has_sret){
     NameCallTmp = "";
   }
   CallInst* call = nullptr;
@@ -1552,7 +1436,7 @@ Value *CallExprAST::codegen() {
     for (int i = 0; i < NamedValues[Callee]->type.args.size(); i++){
         args_llvm_types.push_back(get_type_llvm(NamedValues[Callee]->type.args.at(i)));
     }
-    call = Builder->CreateCall(FunctionCallee(/*dyn_cast<FunctionType>(function_ptr_from_local_var->getType())*/ FunctionType::get(get_type_llvm(*NamedValues[Callee]->type.return_type), args_llvm_types, false), function_ptr_from_local_var), ArgsV, NameCallTmp);
+    call = Builder->CreateCall(FunctionCallee(FunctionType::get(get_type_llvm(*NamedValues[Callee]->type.return_type), args_llvm_types, false), function_ptr_from_local_var), ArgsV, NameCallTmp);
   }
   if (has_sret){
     call->addParamAttr(0, Attribute::getWithStructRetType(*TheContext, SretArgAlloca->getAllocatedType()));
@@ -1866,16 +1750,13 @@ Function *PrototypeAST::codegen() {
   for (auto &Arg : F->args()){
     //if (Args[Idx++].first != "..."){
     if (has_sret && Idx == 0 && !has_added_sret){
-    //Arg.addAttrs(AttrBuilder(*TheContext).addStructRetAttr(get_type_llvm(cpoint_type)).addAlignmentAttr(8));
-    /*Arg.addAttr(Attribute::getWithStructRetType(*TheContext, get_type_llvm(cpoint_type)));
-    Arg.addAttr(Attribute::getWithAlignment(Align(8)));*/
     addArgSretAttribute(Arg, get_type_llvm(cpoint_type));
     Arg.setName("sret_arg");
     Idx = 0;
     has_added_sret = true;
     } else if (Args.at(Idx).second.is_just_struct() && should_pass_struct_byval(Args.at(Idx).second)){
         Log::Info() << "should_pass_struct_byval arg " << Args.at(Idx).first << " : " << Args.at(Idx).second << "\n";
-        Cpoint_Type arg_type = get_cpoint_type_from_llvm(/*Arg.getType()*/ get_type_llvm(Args.at(Idx).second));
+        Cpoint_Type arg_type = get_cpoint_type_from_llvm(get_type_llvm(Args.at(Idx).second));
         Cpoint_Type by_val_ptr_type = arg_type;
         by_val_ptr_type.is_ptr = true;
         by_val_ptr_type.nb_ptr++;
@@ -2070,7 +1951,7 @@ Function *FunctionAST::codegen() {
         Builder->CreateRetVoid();
         goto after_ret;
     }
-    if (/*RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) ||*/ TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
+    if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
         // void is represented by nullptr
         RetVal = nullptr;
         goto before_ret;
@@ -2145,8 +2026,6 @@ GlobalVariable* GlobalVariableAST::codegen(){
   if (!is_extern) {
   InitVal = get_default_constant(cpoint_type);
   if (Init){
-    //InitVal = dyn_cast<ConstantFP>(Init->codegen());
-    //InitVal = from_val_to_constant_infer(Init->codegen());
     InitVal = from_val_to_constant(Init->codegen(), cpoint_type);
     if (!InitVal){
         return LogErrorGLLVM("The constant initialization of the global variable couldn't be converted to a constant");
@@ -2204,14 +2083,6 @@ Value *IfExprAST::codegen() {
   bool has_then_unreachable = Then->contains_expr(ExprType::Unreachable);
   bool has_then_never_function_call = Then->contains_expr(ExprType::NeverFunctionCall);;
   Value *ThenV = Then->codegen();
-  /*createScope();
-  Value *ThenV = nullptr;
-  for (int i = 0; i < Then.size(); i++){
-    ThenV = Then.at(i)->codegen();
-    if (!ThenV)
-      return nullptr;
-  }
-  endScope();*/
   if (ThenV->getType() != Type::getVoidTy(*TheContext)){
   phiType = ThenV->getType();
   }
@@ -2226,9 +2097,6 @@ Value *IfExprAST::codegen() {
   //break_found = false;
   // Codegen of 'Then' can change the current block, update ThenBB for the PHI.
   ThenBB = Builder->GetInsertBlock();
-  //Value *ElseV = nullptr;
-  // Emit else block.
-  //TheFunction->getBasicBlockList().push_back(ElseBB);
   TheFunction->insert(TheFunction->end(), ElseBB);
   Builder->SetInsertPoint(ElseBB);
   Value *ElseV = nullptr;
@@ -2245,15 +2113,6 @@ Value *IfExprAST::codegen() {
     if (!ElseV){
         return nullptr;
     }
-  //bool is_else_empty = Else.empty();
-  //if (!Else.empty()){
-  /*createScope();
-  for (int i = 0; i < Else.size(); i++){
-    ElseV = Else.at(i)->codegen();
-    if (!ElseV)
-      return nullptr;
-  }
-  endScope();*/
   if (ElseV->getType() != Type::getVoidTy(*TheContext) && ElseV->getType() != phiType){
     if (!convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV)){
         return LogErrorV(this->loc, "Mismatch, expected : %s, got : %s", get_cpoint_type_from_llvm(phiType).c_stringify(), get_cpoint_type_from_llvm(ElseV->getType()).c_stringify());
@@ -2261,7 +2120,7 @@ Value *IfExprAST::codegen() {
   }
   }
  
-  if (/*!break_found*/ !has_else_break && !has_else_return && !has_else_unreachable && !has_else_never_function_call){ // TODO : add has_else unreachable ?
+  if (!has_else_break && !has_else_return && !has_else_unreachable && !has_else_never_function_call){ // TODO : add has_else unreachable ?
     Builder->CreateBr(MergeBB);
   } else {
     has_one_branch_if = true;

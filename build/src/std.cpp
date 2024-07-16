@@ -20,9 +20,6 @@ bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc){
             return true;
         }
         std::string last_target = last_build_toml["target"].value_or("");
-        /*if (last_target == ""){
-            return true;
-        }*/
         bool last_is_gc = last_build_toml["is_gc"].value_or(true);
         return (last_target != target || last_is_gc != is_gc);
     }

@@ -171,30 +171,12 @@ Commands : \n\
     install_path : Print the path where binaries are installed\n\
 ");
     std::cout << print_help << std::endl;
-    /*std::cout << "Usage : cpoint-build [options] [command]" << std::endl;
-    std::cout << "Options : " << std::endl;
-    std::cout << "    -f : Select the toml config file for the project" << std::endl;
-    std::cout << "    -j : Select the number of threads to use (use it like in Make, ex : \"-j8\")" << std::endl;
-    std::cout << "    -h : Print this page (You wan also use --help)" << std::endl;
-    std::cout << std::endl;
-    std::cout << "Commands : " << std::endl;
-    std::cout << "    build : Build the project in the folder" << std::endl;
-    std::cout << "    clean : Clean the project" << std::endl;
-    std::cout << "    info : Print infos of the project" << std::endl;
-    std::cout << "    download/update : Update dependencies" << std::endl;
-    std::cout << "    add : Add a dependency to the project" << std::endl;
-    std::cout << "    new : Create a new project in a new folder" << std::endl;
-    std::cout << "    open-page : Open the website of the project" << std::endl;
-    std::cout << "    init : Init a project in the folder" << std::endl;
-    std::cout << "    cross-compile : Cross-compile the project" << std::endl;
-    std::cout << "    install : Install the binary" << std::endl;
-    std::cout << "    install_path : Print the path where binaries are installed" << std::endl;*/
 }
 
 int main(int argc, char** argv){
 #ifndef _WIN32
     setlocale(LC_ALL, "");
-    bindtextdomain("cpoint-build", "/usr/share/locale/" /*"./locales/"*/ /*NULL*/);
+    bindtextdomain("cpoint-build", "/usr/share/locale/");
     textdomain("cpoint-build");
 #endif
     std::vector<std::string> needed_exes = {"clang"};
@@ -330,7 +312,7 @@ int main(int argc, char** argv){
         installBinary(repo_path + "/" + outfile, install_outfile);
         }
         std::string username_or_nothing = (username != "") ? username + "/" : (std::string)"";
-        std::cout << _("Installed successfully the ") << username_or_nothing << /*repo_name*/ package_name << _(" repo to ") << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
+        std::cout << _("Installed successfully the ") << username_or_nothing << package_name << _(" repo to ") << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
         auto subprojects = config["subfolders"]["projects"];
         if (toml::array* arr = subprojects.as_array()){
         arr->for_each([&config, repo_path, username, repo_name](auto&& sub){

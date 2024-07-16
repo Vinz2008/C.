@@ -33,12 +33,12 @@ extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDec
 //extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types_list;
-extern std::vector</*std::string*/ Cpoint_Type> typeDefTable;
+extern std::vector<Cpoint_Type> typeDefTable;
 
 extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 extern std::vector<std::string> modulesNamesContext;
-extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
+extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
@@ -78,10 +78,6 @@ std::vector<std::unique_ptr<T>> make_unique_ptr_static_vector(Ptrs&& ... ptrs){
 std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
     return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
 }
-
-/*std::unique_ptr<ExprAST> NEWCallExprAST::clone(){
-    return std::make_unique<NEWCallExprAST>(function_expr->clone(), clone_vector<ExprAST>(Args), template_passed_type);
-}*/
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
     return std::make_unique<ConstantArrayExprAST>(clone_vector<ExprAST>(ArrayMembers));
@@ -838,7 +834,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_struct_template, /*struct_template_name*/ struct_template_type_passed, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_struct_template, struct_template_type_passed, is_function, args, return_type);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -1080,14 +1076,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
         VarList.push_back(std::move(declar));
     } else if (CurTok == tok_extern){
         getNextToken();
-        std::unique_ptr<PrototypeAST> /*protoExpr*/ Proto = ParsePrototype();
-        /*PrototypeAST* protoPtr = dynamic_cast<PrototypeAST*>(protoExpr.get());
-        if (protoPtr == nullptr){
-            return LogErrorS("Error in struct declaration externs");
-        }
-        std::unique_ptr<PrototypeAST> Proto;
-        protoExpr.release();
-        Proto.reset(protoPtr);*/
+        std::unique_ptr<PrototypeAST> Proto = ParsePrototype();
         if (Proto == nullptr){ return nullptr; }
         std::string function_name;
         if (Proto->Name == structName){
@@ -1104,15 +1093,8 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
       Log::Info() << "function found in struct" << "\n";
       Cpoint_Type self_type = Cpoint_Type(other_type, true, 1, false, 0, true, structName);
       NamedValues["self"] = std::make_unique<NamedValue>(nullptr, self_type);
-      std::unique_ptr<FunctionAST> /*funcAST*/ declar = ParseDefinition();
+      std::unique_ptr<FunctionAST> declar = ParseDefinition();
       Log::Info() << "AFTER ParseDefinition" << "\n";
-      /*FunctionAST* functionAST = dynamic_cast<FunctionAST*>(funcAST.get());
-      if (functionAST == nullptr){
-      return LogErrorS("Error in struct declaration funcs");
-      }
-      std::unique_ptr<FunctionAST> declar;
-      funcAST.release();
-      declar.reset(functionAST);*/
       if (declar == nullptr){return nullptr;}
       std::string function_name;
       if (declar->Proto->Name == structName){

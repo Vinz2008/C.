@@ -45,7 +45,7 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     if (is_gc){
         cmd += " " DEFAULT_STD_PATH "/../bdwgc_prefix/lib/libgc.a";
     }
-    if (/*target != ""*/ shouldRebuildSTD(DEFAULT_STD_PATH, target, is_gc)){
+    if (shouldRebuildSTD(DEFAULT_STD_PATH, target, is_gc)){
         std::string path = DEFAULT_STD_PATH;
         //std::cout << "Rebuilding std ..." << std::endl;
         rebuildSTD(target, path, is_gc);
