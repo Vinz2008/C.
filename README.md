@@ -149,6 +149,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Extend preprocessor functionalities (default vars, operators, else, etc)
 - [x] Add a flag to only preprocess (-E ?)
 - [ ] Create website for the programming language (use cssg ? svelte ?)
+- [ ] Replace LogError with assert in verification that are garanteed to be true unless there is a bug in the compiler 
+- [ ] Replace the globals variables by contexts (lexer context, compiler context that are global or passed to functions) 
 
 ## Benchmarks compared to other languages
 

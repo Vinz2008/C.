@@ -575,7 +575,7 @@ struct StructMemberCallExprAST : public ExprAST {
 
 // TODO : rename NexCallExprAST to generalCallExpr (which includes normal call, member call, etc)
 // TODO : not needed anymore, remove it ?
-struct NEWCallExprAST : public ExprAST {
+/*struct NEWCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> function_expr;
     std::vector<std::unique_ptr<ExprAST>> Args;
     Cpoint_Type template_passed_type;
@@ -600,7 +600,7 @@ struct NEWCallExprAST : public ExprAST {
     }
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
-};
+};*/
 
 class CallExprAST : public ExprAST {
 public:

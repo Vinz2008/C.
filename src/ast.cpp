@@ -79,9 +79,9 @@ std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
     return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
 }
 
-std::unique_ptr<ExprAST> NEWCallExprAST::clone(){
+/*std::unique_ptr<ExprAST> NEWCallExprAST::clone(){
     return std::make_unique<NEWCallExprAST>(function_expr->clone(), clone_vector<ExprAST>(Args), template_passed_type);
-}
+}*/
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
     return std::make_unique<ConstantArrayExprAST>(clone_vector<ExprAST>(ArrayMembers));

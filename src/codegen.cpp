@@ -972,8 +972,8 @@ Value* getStructMember(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<Exp
 }*/
 
 // TODO : rename OPCallExprAST
-Value* NEWCallExprAST::codegen(){
-    return nullptr;
+//Value* NEWCallExprAST::codegen(){
+//    return nullptr;
     //return getASTNewCallExprAST(std::move(function_expr), std::move(Args), template_passed_type)->codegen();
     /*Log::Info() << "NEWCallExprAST codegen" << "\n";
     if (dynamic_cast<VariableExprAST*>(function_expr.get())){
@@ -990,7 +990,7 @@ Value* NEWCallExprAST::codegen(){
         }
     }
     return LogErrorV(emptyLoc, "Trying to call an expression which it is not implemented for");*/
-}
+//}
 
 Value* StructMemberCallExprAST::codegen(){
     if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){

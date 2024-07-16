@@ -6,18 +6,19 @@
 #include <filesystem>
 //#include <libintl.h>
 #include <locale.h>
-#include "llvm/IR/Module.h"
+/*#include "llvm/IR/Module.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/MC/TargetRegistry.h"
+#include "llvm/MC/TargetRegistry.h"*/
+#include "llvm/Config/llvm-config.h"
 #if LLVM_VERSION_MAJOR <= 17
 #include "llvm/Support/Host.h"
 #else 
 #include "llvm/TargetParser/Host.h"
 #endif
-#include "llvm/Support/FileSystem.h"
+/*#include "llvm/Support/FileSystem.h"
 #include "llvm/IR/DIBuilder.h"
 #include "llvm/Transforms/InstCombine/InstCombine.h"
 #include "llvm/Transforms/Scalar.h"
@@ -27,7 +28,7 @@
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Support/Process.h"
-#include <llvm/Transforms/Instrumentation/ThreadSanitizer.h>
+#include <llvm/Transforms/Instrumentation/ThreadSanitizer.h>*/
 #include "config.h"
 #include "lexer.h"
 #include "ast.h"
@@ -46,16 +47,18 @@
 #include "c_translator.h"
 #include "templates.h"
 #include "tests.h"
-#include "lto.h"
+//#include "lto.h"
 #include "jit.h"
 #include "operators.h"
 #include "cli_infos.h"
 #include "clang.h"
 #include "ar.h"
+#include "llvm.h"
 
 using namespace std;
-using namespace llvm;
-using namespace llvm::sys;
+
+/*using namespace llvm;
+using namespace llvm::sys;*/
 
 #ifdef _WIN32
 #define DLLEXPORT __declspec(dllexport)
@@ -80,6 +83,8 @@ extern std::vector<std::string> PackagesAdded;
 extern bool is_template_parsing_definition;
 extern bool is_template_parsing_struct;
 struct DebugInfo CpointDebugInfo;
+
+// TODO : replace the unique_ptr by just the class
 std::unique_ptr<Compiler_context> Comp_context;
 string std_path = DEFAULT_STD_PATH;
 string filename = "";
@@ -162,7 +167,7 @@ static void add_default_typedefs(){
 
 
 // also stolen from zig
-struct TimeTracerRAII {
+/*struct TimeTracerRAII {
   // Granularity in ms
   unsigned TimeTraceGranularity;
   StringRef TimeTraceFile, OutputFilename;
@@ -192,7 +197,7 @@ struct TimeTracerRAII {
       timeTraceProfilerCleanup();
     }
   }
-};
+};*/
 
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
@@ -433,7 +438,7 @@ int main(int argc, char **argv){
     bool only_preprocess = false;
     std::string linker_additional_flags = "";
     std::string run_args = "";
-    std::string llvm_default_target_triple = sys::getDefaultTargetTriple();
+    std::string llvm_default_target_triple = llvm::sys::getDefaultTargetTriple();
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
@@ -443,6 +448,7 @@ int main(int argc, char **argv){
 #endif
     }
     bool filename_found = false;
+    // TODO : put all of this in a parse_args function where a compiler context is passed and move it to a args.cpp file
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
 #ifdef ENABLE_CLANG_EMBEDDED_COMPILER
@@ -654,8 +660,9 @@ int main(int argc, char **argv){
     }
     file_out_ostream = new raw_fd_ostream(llvm::StringRef("out.ll"), ec);
     file_in.open(filename);
-    
-    c_translator::init_context();
+    if (Comp_context->c_translator){
+        c_translator::init_context();
+    }
     
 
     //legacy::PassManager pass;
@@ -670,7 +677,7 @@ int main(int argc, char **argv){
     if (debug_info_mode){
     TheModule->addModuleFlag(Module::Warning, "Debug Info Version",
                            DEBUG_METADATA_VERSION);
-    if (Triple(sys::getProcessTriple()).isOSDarwin()){
+    if (/*Triple(sys::getProcessTriple())*/ TripleLLVM.isOSDarwin()){
       TheModule->addModuleFlag(llvm::Module::Warning, "Dwarf Version", 2);
     }
     DBuilder = std::make_unique<DIBuilder>((*TheModule));
@@ -710,7 +717,11 @@ int main(int argc, char **argv){
     if (Comp_context->c_translator){
         c_translator::generate_c_code("out.c");
     } else {
-    InitializeAllTargetInfos();
+    int ret = generate_llvm_object_file(object_filename, TripleLLVM, TargetTriple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level);
+    if (ret == 1){
+        return 1;
+    }
+    /*InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
     std::string Error;
@@ -846,7 +857,7 @@ int main(int argc, char **argv){
     }
 
     dest.flush();
-    delete TheTargetMachine; // call the TargetMachine destructor to not leak memory
+    delete TheTargetMachine;*/ // call the TargetMachine destructor to not leak memory
     //}
     std::string gc_path = DEFAULT_GC_PATH;
     Log::Print() << _("Wrote ") << object_filename << "\n";
