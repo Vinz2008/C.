@@ -50,7 +50,7 @@ void buildDependency(std::string path){
     buildProject(path);
 }
 
-void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot, std::string out_path){
+std::string getCpointCompiler(){
     std::string compiler = "cpoint";
     if (fs::exists("../cpoint")){
         compiler = "../cpoint";
@@ -58,6 +58,11 @@ void compileFile(std::string target, std::string arguments, std::string path, st
     if (fs::exists("../../cpoint")){
         compiler = "../../cpoint";
     }
+    return compiler;
+}
+
+void compileFile(std::string target, std::string arguments, std::string path, std::string sysroot, std::string out_path){
+    std::string compiler = getCpointCompiler();
     std::string cmd = compiler + " -c " + arguments + " " + path + " ";
     fs::path path_fs{ path };
     if (out_path == ""){

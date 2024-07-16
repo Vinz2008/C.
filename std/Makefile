@@ -69,6 +69,9 @@ ifeq ($(NO_GC),TRUE)
 # TODO ?
 endif
 
+#AR ?= llvm-ar
+AR ?= $(CCPOINT) ar
+
 all: libstd.a
 
 debug: CPOINTFLAGS += -g
@@ -79,7 +82,7 @@ set_test_flag:
 	$(eval CPOINTFLAGS += -test)
 
 libstd.a: $(OBJECTS) capi core_lib
-	llvm-ar -rc $@ $(OBJECTS) $(OBJECTS_C) $(OBJECTS_CORE)
+	$(AR) -rc $@ $(OBJECTS) $(OBJECTS_C) $(OBJECTS_CORE)
 
 capi:
 	+TARGET=$(TARGET) NO_GC=$(NO_GC) make $(MAKETARGET) -C c_api

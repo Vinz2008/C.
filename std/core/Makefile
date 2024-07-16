@@ -16,6 +16,7 @@ ifeq ($(DEBUG),TRUE)
 	CPOINTFLAGS += -d
 endif
 
+AR ?= $(CCPOINT) ar
 
 all: libcore.a
 
@@ -26,7 +27,7 @@ debug: libcore.a
 	$(CCPOINT) $(CPOINTFLAGS) $< -o $@
 
 libcore.a: $(OBJECTS)
-	llvm-ar -rc $@ $(OBJECTS)
+	$(AR) -rc $@ $(OBJECTS)
 
 clean-objects:
 	rm -f ./*.o

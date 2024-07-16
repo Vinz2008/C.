@@ -15,3 +15,4 @@ void openWebPage(std::string url);
 void buildDependency(std::string path /*dependency*/);
 bool doesExeExist(std::string filename);
 void rebuildSTD(std::string target, std::string path, bool is_gc);
+std::string getCpointCompiler();
