@@ -60,10 +60,6 @@ ifeq ($(DEBUG),TRUE)
 	CPOINTFLAGS += -d
 endif
 
-ifeq ($(DEBUGINFOS),TRUE)
-	CPOINTFLAGS += -g
-endif
-
 ifeq ($(NO_GC),TRUE)
 #	CPOINTFLAGS += -DNO_STD
 # TODO ?
