@@ -36,22 +36,6 @@ namespace lld {
                 llvm::raw_ostream &stderrOS, bool exitEarly, bool disableOutput);
     }
 }
-
-/*static bool LLDLinkCOFF(int argc, const char **argv, bool can_exit_early, bool disable_output) {
-    std::vector<const char *> args(argv, argv + argc);
-    return lld::coff::link(args, llvm::outs(), llvm::errs(), can_exit_early, disable_output);
-}
-
-static bool LLDLinkELF(int argc, const char **argv, bool can_exit_early, bool disable_output) {
-    std::vector<const char *> args(argv, argv + argc);
-    return lld::elf::link(args, llvm::outs(), llvm::errs(), can_exit_early, disable_output);
-}
-
-static bool LLDLinkWasm(int argc, const char **argv, bool can_exit_early, bool disable_output) {
-    std::vector<const char *> args(argv, argv + argc);
-    return lld::wasm::link(args, llvm::outs(), llvm::errs(), can_exit_early, disable_output);
-}*/
-
 bool can_use_internal_lld(Triple TripleLLVM){
     return TripleLLVM.isOSBinFormatELF() || TripleLLVM.isOSBinFormatWasm() || TripleLLVM.isOSBinFormatCOFF();
 }
@@ -78,20 +62,5 @@ int LLDLink(Triple TripleLLVM, int argc, const char **argv, bool can_exit_early,
     Result ret = lldMain(args, llvm::outs(), llvm::errs(), LLD_ALL_DRIVERS);
     return ret.retCode;
 }
-
-/*bool LLDLink(Triple TripleLLVM, int argc, const char **argv, bool can_exit_early, bool disable_output){
-    if (!can_use_internal_lld(TripleLLVM)){
-        return false;
-    }
-    if (TripleLLVM.isOSBinFormatELF()){
-        return LLDLinkELF(argc, argv, can_exit_early, disable_output);
-    } else if (TripleLLVM.isOSBinFormatWasm()){
-        return LLDLinkWasm(argc, argv, can_exit_early, disable_output);
-    } else if (TripleLLVM.isOSBinFormatCOFF()){
-        return LLDLinkCOFF(argc, argv, can_exit_early, disable_output);
-    }
-    // unreachable
-    return false;
-}*/
 
 #endif
