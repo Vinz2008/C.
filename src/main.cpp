@@ -483,6 +483,7 @@ int main(int argc, char **argv){
                 call_from_clang_driver = true;
                 //i += 2;
             }
+            clang_args.push_back("cc");
             while (i < argc){
                 clang_args.push_back(argv[i]);
                 //printf("CLANG ARG added : %s\n", clang_args.back());
