@@ -91,8 +91,8 @@ static void init_line(){
 
 static void handleEmptyLine();
 
-static void handlePreprocessor(){
-  /*while (true){
+/*static void handlePreprocessor(){
+  while (true){
     if (line.size() >= 2 && line.at(0) == '?' && line.at(1) == '['){  
       Log::Info() << "FOUND PREPROCESSOR INSTRUCTION" << "\n";
       preprocess_instruction(line);
@@ -102,8 +102,8 @@ static void handlePreprocessor(){
       preprocess_replace_variable(line);
       break;
     }
-  }*/
-}
+  }
+}*/
 
 static void handleEmptyLine(){
   if (line.size() == 0){

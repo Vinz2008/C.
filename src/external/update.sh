@@ -14,3 +14,5 @@ $DOWNLOAD_PROGRAM https://raw.githubusercontent.com/llvm/llvm-project/release/$L
 $DOWNLOAD_PROGRAM https://raw.githubusercontent.com/llvm/llvm-project/release/$LLVM_VERSION/clang/tools/driver/driver.cpp -o driver.cpp
 
 $DOWNLOAD_PROGRAM https://raw.githubusercontent.com/llvm/llvm-project/release/$LLVM_VERSION/llvm/tools/llvm-ar/llvm-ar.cpp -o llvm-ar.cpp
+
+git apply driver.patch

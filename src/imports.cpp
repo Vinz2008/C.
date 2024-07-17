@@ -31,12 +31,12 @@ int modifier_for_line_count = 0;
 
 bool is_in_mod = false;
 
-class ArgVarImport {
+/*class ArgVarImport {
     std::string name;
     int type;
 public:
     ArgVarImport(const std::string &name, int type) : name(name), type(type) {}
-};
+};*/
 
 static void import_error(const char* format, ...){
     std::va_list args;

@@ -51,7 +51,7 @@ void codegenStructTemplates(){
         /*std::string templateStructName = StructTemplatesToGenerate.at(i)->structDeclarAST->Name;
         std::string structName = templateStructName.substr(0, templateStructName.find("____"));
         Log::Info() << "StructDeclarations[structName]->structType : " << StructDeclarations[structName]->struct_type << "\n";
-        StructDeclarations[structName] = StructDeclarations[structName]->clone();*:
+        StructDeclarations[structName] = StructDeclarations[structName]->clone();*/
         Log::Info()  << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.size() : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size() << "\n";
         /*for (int j = 0; j < StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size(); j++){
             Log::Info() << "Struct Named " << StructTemplatesToGenerate.at(i)->structDeclarAST->Name << "\n";

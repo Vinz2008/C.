@@ -50,7 +50,7 @@ void cleanFilesFolder(std::string folder){
 void cleanObjectFilesSubprojects(toml::v3::table& config){
     auto subfolders = config["subfolders"]["projects"];
     if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config](auto&& sub){
+        arr->for_each([/*&config*/](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
                 std::cout << "sub : " << sub << std::endl;
                 cleanFilesFolder((std::string)sub);
@@ -70,7 +70,7 @@ void cleanFiles(toml::v3::table& config, std::string src_folder, std::string typ
     }
     auto subfolders = config["subfolders"]["folders"];
     if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config](auto&& sub){
+        arr->for_each([/*&config*/](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
                 cleanFilesFolder((std::string)sub);
                 //cleanObjectFilesFolder((std::string)sub);

@@ -105,7 +105,7 @@ void buildSubprojects(toml::v3::table& config){
     std::vector<std::string> gc_subprojects;
     auto subfolders = config["subfolders"]["projects"];
     if (toml::array* arr = subfolders.as_array()){
-        arr->for_each([&config, &gc_subprojects, &no_gc_subprojects](auto&& sub){
+        arr->for_each([/*&config,*/ &gc_subprojects, &no_gc_subprojects](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
                 //std::cout << "sub : " << sub << std::endl;
                 //buildSubproject((std::string)sub);

@@ -432,7 +432,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
   Log::Info() << "ExprPrec : " << ExprPrec << "\n";
   // If this is a binop, find its precedence.
   if (dynamic_cast<SemicolonExprAST*>(LHS.get())){
-    return std::move(LHS);
+    return LHS;
   }
   while (true) {
     int TokPrec = 0;
@@ -1518,7 +1518,8 @@ std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){
   std::string section_name = "";
   if (CurTok == tok_identifier && IdentifierStr == "section"){
     getNextToken();
-    auto section_name_expression = static_cast<StringExprAST*>(ParseStrExpr().get());
+    auto str_expr = ParseStrExpr();
+    auto section_name_expression = static_cast<StringExprAST*>(str_expr.get());
     section_name = section_name_expression->str;
   }
   return std::make_unique<GlobalVariableAST>(Name, is_const, is_extern, cpoint_type, std::move(Init), is_array, std::move(Index), section_name);

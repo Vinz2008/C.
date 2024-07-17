@@ -477,7 +477,7 @@ Type* EnumDeclarAST::codegen(){
     }
     dataType.push_back(get_type_llvm(biggest_type));
     enumStructType->setBody(dataType);
-    EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumStructType, std::move(this->clone()));
+    EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumStructType, this->clone());
     return enumStructType;
 }
 
@@ -718,7 +718,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         Builder->CreateStore(ValDeclared, ptr);
         return Constant::getNullValue(Type::getDoubleTy(*TheContext));
     }
-    Log::Info() << "Expr type : " << typeid(*lvalue.get()).name() << "\n";
+    //Log::Info() << "Expr type : " << typeid(*lvalue.get()).name() << "\n";
     return LogErrorV(emptyLoc, "Trying to use the equal operator with an expression which it is not implemented for");
 }
 
@@ -1305,15 +1305,15 @@ Value *CallExprAST::codegen() {
   // including hidden struct args
   size_t real_args_size = 0;
   // if the functions is a struct member call
-  bool contains_hidden_struct_arg = false;
+  //bool contains_hidden_struct_arg = false;
   if (CalleeF){
     function_return_type = FunctionProtos[Callee]->cpoint_type;
     is_variable_number_args = FunctionProtos[Callee]->is_variable_number_args;
     real_args_size = CalleeF->arg_size();
     args_size = FunctionProtos[Callee]->Args.size();
-    if (args_size != FunctionProtos[Callee]->Args.size()){
+    /*if (args_size != FunctionProtos[Callee]->Args.size()){
         contains_hidden_struct_arg = true;
-    }
+    }*/
   } else if (NamedValues[Callee] && NamedValues[Callee]->type.is_function){
     function_ptr_from_local_var = Builder->CreateLoad(get_type_llvm(NamedValues[Callee]->type), NamedValues[Callee]->alloca_inst, "load_func_ptr");
     is_variable_number_args = false; // TODO : add variable number of args for function pointers ?
@@ -1321,7 +1321,7 @@ Value *CallExprAST::codegen() {
     function_return_type = *NamedValues[Callee]->type.return_type;
     Cpoint_Type first_arg_type = NamedValues[Callee]->type.args.at(0).type;
     if (Callee.find("__") != std::string::npos && first_arg_type.is_struct && first_arg_type.is_ptr){
-        contains_hidden_struct_arg = true;
+        //contains_hidden_struct_arg = true;
         real_args_size--;
     }
   }

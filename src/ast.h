@@ -103,7 +103,7 @@ public:
   : returned_expr(std::move(returned_expr)) {}
   //ReturnAST(double val) : Val(val) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone(){
+  std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<ReturnAST>(returned_expr->clone());
   }
   std::string to_string() override {
@@ -666,7 +666,7 @@ public:
     return Cpoint_Type(); // TODO : create a function in another file that will do it
   }
   std::string generate_c() override;
-  virtual bool contains_expr(enum ExprType exprType){
+  bool contains_expr(enum ExprType exprType) override {
     if (exprType == ExprType::Unreachable){
         if (Callee == "cpoint_internal_unreachable"){
             return true;
@@ -735,7 +735,7 @@ public:
     Cpoint_Type type;
     CastExprAST(std::unique_ptr<ExprAST> ValToCast, Cpoint_Type type) : ValToCast(std::move(ValToCast)), type(type) {}
     Value *codegen() override;
-    std::unique_ptr<ExprAST> clone(){
+    std::unique_ptr<ExprAST> clone() override {
         return std::make_unique<CastExprAST>(ValToCast->clone(), type);
     }
     std::string to_string() override {
@@ -751,7 +751,7 @@ class NullExprAST : public ExprAST {
 public:
     NullExprAST() {}
     Value *codegen() override;
-    std::unique_ptr<ExprAST> clone(){
+    std::unique_ptr<ExprAST> clone() override {
         return std::make_unique<NullExprAST>();
     }
     std::string to_string() override {
@@ -771,19 +771,19 @@ class LLVMASTValueWrapper : public ExprAST {
 public:
     Value* val;
     LLVMASTValueWrapper(Value* val) : val(val){}
-    Value* codegen() {
+    Value* codegen() override {
         return val;
     }
-    std::unique_ptr<ExprAST> clone(){
+    std::unique_ptr<ExprAST> clone() override{
         return std::make_unique<LLVMASTValueWrapper>(val);
     }
-    std::string to_string() {
+    std::string to_string() override {
         return "";
     }
     Cpoint_Type get_type() override {
         return Cpoint_Type();
     }
-    std::string generate_c(){
+    std::string generate_c() override {
         return ""; // How will we fucking use this with the c backend ?? No idea, will figure this out
     }
 };
@@ -808,7 +808,7 @@ public:
     std::vector<std::unique_ptr<matchCase>> matchCases;
     MatchExprAST(const std::string& matchVar, std::vector<std::unique_ptr<matchCase>> matchCases) : matchVar(matchVar), matchCases(std::move(matchCases)) {}
     Value *codegen() override;
-    std::unique_ptr<ExprAST> clone();
+    std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
         std::string match_body = "match " + matchVar + "{\n";
         for (int i = 0; i < matchCases.size(); i++){
@@ -841,7 +841,7 @@ class ClosureAST : public ExprAST {
 public:
     ClosureAST(std::vector<std::unique_ptr<ExprAST>> Body, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, Cpoint_Type return_type, std::vector<std::string> captured_vars) : Body(std::move(Body)), ArgNames(ArgNames), return_type(return_type), captured_vars(captured_vars) {}
     Value *codegen() override;
-    std::unique_ptr<ExprAST> clone();
+    std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
         // TODO
         return "";
@@ -973,7 +973,7 @@ public:
 class CommentExprAST : public ExprAST {
 public:
     CommentExprAST() {}
-    Value* codegen();
+    Value* codegen() override ;
     std::unique_ptr<ExprAST> clone() override {
         return std::make_unique<CommentExprAST>();
     }
@@ -1033,7 +1033,7 @@ class BreakExprAST : public ExprAST {
 public:
   BreakExprAST() {}
   Value* codegen() override;
-  std::unique_ptr<ExprAST> clone(){
+  std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<BreakExprAST>();
   }
   std::string to_string() override {
@@ -1044,7 +1044,7 @@ public:
     return Cpoint_Type(never_type);
   }
   std::string generate_c() override;
-  virtual bool contains_expr(enum ExprType exprType){
+  virtual bool contains_expr(enum ExprType exprType) override {
     return exprType == ExprType::Break;
   }
 };
@@ -1054,7 +1054,7 @@ class GotoExprAST : public ExprAST {
 public:
   GotoExprAST(const std::string& label_name) : label_name(label_name) {}
   Value* codegen() override;
-  std::unique_ptr<ExprAST> clone(){
+  std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<GotoExprAST>(label_name);
   }
   std::string to_string() override {
@@ -1071,7 +1071,7 @@ class LabelExprAST : public ExprAST {
 public:
   LabelExprAST(const std::string& label_name) : label_name(label_name) {}
   Value* codegen() override;
-  std::unique_ptr<ExprAST> clone(){
+  std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<LabelExprAST>(label_name);
   }
   std::string to_string() override {
@@ -1098,7 +1098,7 @@ public:
       Step(std::move(Step)), Body(std::move(Body)) {}
 
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone();
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string for_body = "";
     for_body += Body->to_string();
@@ -1120,7 +1120,7 @@ class WhileExprAST : public ExprAST {
 public:
   WhileExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Body) : Cond(std::move(Cond)), Body(std::move(Body)) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone();
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string while_body = "";
     while_body += Body->to_string();
@@ -1147,7 +1147,7 @@ class LoopExprAST : public ExprAST {
 public:
   LoopExprAST(std::string VarName, std::unique_ptr<ExprAST> Array, std::vector<std::unique_ptr<ExprAST>> Body, bool is_infinite_loop = false) : VarName(VarName), Array(std::move(Array)), Body(std::move(Body)), is_infinite_loop(is_infinite_loop) {}
   Value *codegen() override;
-  std::unique_ptr<ExprAST> clone();
+  std::unique_ptr<ExprAST> clone() override;
   std::string to_string() override {
     std::string loop_expr = "";
     if (!is_infinite_loop){
@@ -1180,7 +1180,7 @@ public:
 class SemicolonExprAST : public ExprAST {
 public:
   SemicolonExprAST(){}
-  std::unique_ptr<ExprAST> clone(){
+  std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<SemicolonExprAST>();
   }
   Value* codegen() override;
@@ -1200,7 +1200,7 @@ public:
     std::unique_ptr<ExprAST> Expr;
     DeferExprAST(std::unique_ptr<ExprAST> Expr) : Expr(std::move(Expr)){}
     Value* codegen() override;
-    std::unique_ptr<ExprAST> clone(){
+    std::unique_ptr<ExprAST> clone() override {
         return std::make_unique<DeferExprAST>(Expr->clone());
     }
     std::string to_string() override {

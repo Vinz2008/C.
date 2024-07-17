@@ -379,7 +379,8 @@ int clang_main(int Argc, char **Argv, const llvm::ToolContext &ToolContext) {
   llvm::setBugReportMsg("PLEASE submit a bug report to " BUG_REPORT_URL
                         " and include the crash backtrace, preprocessed "
                         "source, and associated run script.\n");
-  SmallVector<const char *, 256> Args(Argv, Argv + Argc);
+  size_t argv_offset = (strcmp(Argv[1], "-cc1") == 0 || strcmp(Argv[1], "-cc1as") == 0) ? 0 : 1;
+  SmallVector<const char *, 256> Args(Argv + argv_offset, Argv + Argc);
 
   if (llvm::sys::Process::FixupStandardFileDescriptors())
     return 1;

@@ -198,7 +198,7 @@ Cpoint_Type BinaryExprAST::get_type(){
             return Cpoint_Type();
         }
         std::string MemberName = varExprMember->Name;
-        Log::Info() << "LHS name struct member : " << typeid(*LHS.get()).name() << "\n";
+        //Log::Info() << "LHS name struct member : " << typeid(*LHS.get()).name() << "\n";
         Cpoint_Type LHS_type = LHS->get_type();
         return get_member_type_and_pos_object(LHS_type, MemberName)->first;
     }

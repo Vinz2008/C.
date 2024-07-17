@@ -473,21 +473,21 @@ int main(int argc, char **argv){
         string arg = argv[i];
 #ifdef ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER
         if (arg.compare("cc") == 0 || arg.compare("c++") == 0 || arg.compare("-cc1") == 0 || arg.compare("-cc1as") == 0){
-            printf("argc : %d\n", argc);
+            //printf("argc : %d\n", argc);
             std::vector<char*> clang_args;
             std::vector<std::string> args_vector(argv, argv+argc);
             // means that we are in the second process called from the clang driver
-            bool call_from_clang_driver = false;
+            //bool call_from_clang_driver = false;
             if (std::find(args_vector.begin(), args_vector.end(), "-cc1") != args_vector.end() || std::find(args_vector.begin(), args_vector.end(), "-cc1ass") != args_vector.end()){
-                printf("call_from_clang_driver\n");
-                call_from_clang_driver = true;
+                Log::Info() << "call_from_clang_driver" << "\n";
+                //call_from_clang_driver = true;
                 //i += 2;
             }
-            clang_args.push_back("cc");
+            clang_args.push_back((char*)/*"cc"*/ arg.c_str());
             while (i < argc){
                 clang_args.push_back(argv[i]);
                 //printf("CLANG ARG added : %s\n", clang_args.back());
-                printf("%s ", clang_args.back());
+                //printf("%s ", clang_args.back());
                 i++;    
             }
             clang_args.push_back(nullptr);
@@ -513,11 +513,11 @@ int main(int argc, char **argv){
                 i++;    
             }
             lld_args.push_back(nullptr);
-            std::cout << "args : ";
+            Log::Info() << "args : ";
             for (int i = 0; i < lld_args.size()-1; i++){
-                std::cout << lld_args.at(i) << " ";
+                Log::Info() << lld_args.at(i) << " ";
             }
-            std::cout << std::endl;
+            Log::Info() << "\n";
             return LLDLink(Triple(lld_target_triplet), lld_args.size()-1, lld_args.data(), false /*can_exit_early : should it ? (TODO ?)*/, silent_mode);
         } else if (arg.compare("-internal-lld") == 0){
             should_use_internal_lld = true;

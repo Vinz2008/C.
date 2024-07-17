@@ -7,7 +7,7 @@
 extern int clang_main(int Argc, char **Argv, const llvm::ToolContext &ToolContext);
 
 int launch_clang(int argc, char** argv){
-    return clang_main(argc-1, ++argv, {argv[0], nullptr, false});
+    return clang_main(argc, argv, {argv[0], nullptr, false});
 }
 
 #endif

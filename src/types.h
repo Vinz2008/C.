@@ -75,9 +75,9 @@ public:
     friend bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
         return !(lhs == rhs);
     }
-    const char* c_stringify(){
+    char* c_stringify(){
         std::string str = create_pretty_name_for_type(*this);
-        return str.c_str();
+        return strdup(str.c_str());
     }
     int get_number_of_bits();
     std::string to_printf_format();

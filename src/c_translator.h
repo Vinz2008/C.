@@ -62,7 +62,7 @@ public:
         is_ptr = cpoint_type.is_ptr;
         nb_ptr = cpoint_type.nb_ptr;
         is_struct = cpoint_type.is_struct;
-        struct_name = struct_name;
+        struct_name = cpoint_type.struct_name;
     } 
 };
 

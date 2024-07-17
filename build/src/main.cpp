@@ -315,7 +315,7 @@ int main(int argc, char** argv){
         std::cout << _("Installed successfully the ") << username_or_nothing << package_name << _(" repo to ") << DEFAULT_BUILD_INSTALL_PATH "/" + install_outfile << "\n";
         auto subprojects = config["subfolders"]["projects"];
         if (toml::array* arr = subprojects.as_array()){
-        arr->for_each([&config, repo_path, username, repo_name](auto&& sub){
+        arr->for_each([/*&config,*/ repo_path, username, repo_name](auto&& sub){
             if constexpr (toml::is_string<decltype(sub)>){
                 std::string sub_path = repo_path + "/" + (std::string)sub;
                 auto sub_config = toml::parse_file(sub_path + "/build.toml");
