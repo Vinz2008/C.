@@ -78,7 +78,7 @@ int build_gc(string path, string target_triplet){
     return 0;
 }
 
-void link_files(vector<string> list_files, string filename_out, string target_triplet, std::string linker_additional_flags){
+void link_files(vector<string> list_files, string filename_out, string target_triplet, std::string linker_additional_flags, bool should_use_internal_lld, std::string cpoint_path){
     int retcode = -1;
     string cmd = "clang -o " + filename_out + " -target " + target_triplet;
     if (target_triplet.find("wasm") != string::npos){
@@ -88,6 +88,8 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
     }
     if (doesExeExist("mold") && !Comp_context->lto_mode){
         cmd += " -fuse-ld=mold ";
+    } else if (should_use_internal_lld){
+        cmd += " --ld-path=" + cpoint_path + " -Wl,lld,-target-triplet," + target_triplet;
     }
     cmd += linker_additional_flags;
     for (int i = 0; i < list_files.size(); i++){

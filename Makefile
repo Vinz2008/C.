@@ -26,10 +26,10 @@ CXXFLAGS = -c -g -Wall -Wno-sign-compare -DTARGET="\"$(TARGET)\""
 WINDOWS_CXXFLAGS = -std=c++17 -fno-exceptions -D_GNU_SOURCE -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS
 
 # TODO : replace all lowercases false and trues by TRUE and FALSE  
-CLANG_EMBEDDED_COMPILER = false
+LLVM_TOOLS_EMBEDDED_COMPILER = false
 
-ifneq ($(shell $(CC) -dM -E src/config.h | grep ENABLE_CLANG_EMBEDDED_COMPILER),)
-CLANG_EMBEDDED_COMPILER = true
+ifneq ($(shell $(CC) -dM -E src/config.h | grep ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER),)
+LLVM_TOOLS_EMBEDDED_COMPILER = true
 endif
 
 # ifeq ($(OS),Windows_NT)
@@ -86,11 +86,11 @@ SRCDIR=src
 
 SRCS := $(wildcard $(SRCDIR)/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
-ifeq ($(CLANG_EMBEDDED_COMPILER),true)
-CLANG_EXTERNAL_SRCS := $(wildcard $(SRCDIR)/external/*.cpp)
-CLANG_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(CLANG_EXTERNAL_SRCS))
-OBJS += $(CLANG_EXTERNAL_OBJS)
-LDFLAGS += -lclang-cpp
+ifeq ($(LLVM_TOOLS_EMBEDDED_COMPILER),true)
+LLVM_TOOLS_EXTERNAL_SRCS := $(wildcard $(SRCDIR)/external/*.cpp)
+LLVM_TOOLS_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(LLVM_TOOLS_EXTERNAL_SRCS))
+OBJS += $(LLVM_TOOLS_EXTERNAL_OBJS)
+LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
 endif
 
 #DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))

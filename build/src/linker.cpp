@@ -9,7 +9,7 @@ namespace fs = std::filesystem;
 bool shouldRebuildSTD(std::string std_path, std::string target, bool is_gc);
 void writeLastBuildToml(std::string std_path, std::string target, bool is_gc);
 
-void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc, bool is_strip_mode, std::string linker_path){
+void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::string target, std::string args, std::string sysroot, bool is_gc, bool is_strip_mode, std::string linker_path, bool should_use_internal_lld){
     if  (outfilename == ""){
         outfilename = "a.out";
     }
@@ -22,9 +22,10 @@ void linkFiles(std::vector<std::string> PathList, std::string outfilename, std::
     }
     if (linker_path != ""){
         cmd.append(" -fuse-ld=" + linker_path + " ");
-    }
-    if (doesExeExist("mold")){
+    } else if (doesExeExist("mold")){
         cmd.append(" -fuse-ld=mold ");
+    } else if (should_use_internal_lld) {
+        cmd.append(" -fuse-ld=\"" + getCpointCompiler() + "\" -Wl,lld,-target-triplet " + target);
     }
     if (args != ""){
         cmd.append(" " + args + " ");

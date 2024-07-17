@@ -51,9 +51,13 @@
 #include "jit.h"
 #include "operators.h"
 #include "cli_infos.h"
+#include "llvm.h"
+
+#ifdef ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER
 #include "clang.h"
 #include "ar.h"
-#include "llvm.h"
+#include "lld.h"
+#endif
 
 using namespace std;
 
@@ -436,9 +440,11 @@ int main(int argc, char **argv){
     bool use_native_target = false;
     bool thread_sanitizer = false;
     bool only_preprocess = false;
+    bool should_use_internal_lld = true; // TODO : set this by default to true
     std::string linker_additional_flags = "";
     std::string run_args = "";
     std::string llvm_default_target_triple = llvm::sys::getDefaultTargetTriple();
+    TripleLLVM = Triple(llvm_default_target_triple); // default target triplet only for lld
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
@@ -447,11 +453,25 @@ int main(int argc, char **argv){
         exit(1);
 #endif
     }
+    bool ignore_invalid_flags = false;
+#ifdef ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER
+    std::string lld_target_triplet = llvm_default_target_triple;
+    for (int i = 1; i < argc; i++){
+        std::string arg_temp = (std::string)argv[i];
+        if (arg_temp.compare("lld") == 0){
+            ignore_invalid_flags = true;
+        } else if (arg_temp.compare("-target-triplet") == 0){
+            lld_target_triplet = argv[i+1];
+            i++;
+            std::cout << "lld_target_triplet : " << lld_target_triplet << std::endl; 
+        }
+    }
+#endif
     bool filename_found = false;
     // TODO : put all of this in a parse_args function where a compiler context is passed and move it to a args.cpp file
     for (int i = 1; i < argc; i++){
         string arg = argv[i];
-#ifdef ENABLE_CLANG_EMBEDDED_COMPILER
+#ifdef ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER
         if (arg.compare("cc") == 0 || arg.compare("c++") == 0 || arg.compare("-cc1") == 0 || arg.compare("-cc1as") == 0){
             printf("argc : %d\n", argc);
             std::vector<char*> clang_args;
@@ -479,7 +499,30 @@ int main(int argc, char **argv){
             }
             ar_args.push_back(nullptr);
             return launch_ar(ar_args.size()-1, ar_args.data());
-        }
+        } else if (arg.compare("lld") == 0 || arg.compare("ld.lld") == 0 || arg.compare("lld-link") == 0 || arg.compare("wasm-ld") == 0){
+            std::vector<const char*> lld_args;
+            i = 1;
+            while (i < argc){
+                std::string arg_temp = argv[i];
+                if (arg_temp.compare("-target-triplet") == 0){
+                    i++; // ignore the -target-triplet information for setting the lld flavor
+                } else if (arg_temp.compare("lld") != 0 && arg_temp.compare("ld.lld") != 0 && arg_temp.compare("lld-link") != 0 && arg_temp.compare("wasm-ld") != 0){
+                    lld_args.push_back((const char*)argv[i]);
+                }
+                i++;    
+            }
+            lld_args.push_back(nullptr);
+            std::cout << "args : ";
+            for (int i = 0; i < lld_args.size()-1; i++){
+                std::cout << lld_args.at(i) << " ";
+            }
+            std::cout << std::endl;
+            return LLDLink(Triple(lld_target_triplet), lld_args.size()-1, lld_args.data(), false /*can_exit_early : should it ? (TODO ?)*/, silent_mode);
+        } else if (arg.compare("-internal-lld") == 0){
+            should_use_internal_lld = true;
+        } else if (arg.compare("-disable-internal-lld") == 0) {
+            should_use_internal_lld = false;
+        } else
 #endif
         if (arg.compare("-d") == 0){
             cout << "debug mode" << endl;
@@ -587,9 +630,11 @@ int main(int argc, char **argv){
           run_args += arg.substr(pos+1, arg.size());
           run_args += ' ';
         } else if (arg.at(0) == '-'){
-            fprintf(stderr, "Unknown flag : %s\n", arg.c_str());
-            return 1;
-        } else {
+            if (!ignore_invalid_flags){
+                fprintf(stderr, "Unknown flag : %s\n", arg.c_str());
+                return 1;
+            }
+        } else if (!ignore_invalid_flags) {
           filename_found = true;
           Log::Print() << _("filename : ") << arg << "\n";
           filename = arg;
@@ -924,7 +969,7 @@ int main(int argc, char **argv){
       if (thread_sanitizer){
         linker_additional_flags += " -ltsan ";
       }
-      link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags);
+      link_files(vect_obj_files, exe_filename, TargetTriple, linker_additional_flags, should_use_internal_lld, (std::string)argv[0]);
       Log::Print() << _("Linked the executable") << "\n";
     }
     if (Comp_context->strip_mode){

@@ -348,6 +348,7 @@ int main(int argc, char** argv){
     std::string sysroot_cross = (std::string)config["cross-compile"]["sysroot"].value_or("");   
     is_gc = config["build"]["gc"].value_or(true);
     bool is_strip_mode = config["build"]["strip"].value_or(false);
+    bool internal_lld = config["build"]["internal_lld"].value_or(false); // TODO : set this by default to true
     std::string linker_path = (std::string)config["build"]["linker_path"].value_or("");
     if (src_folder_temp != ""){
         src_folder = src_folder_temp;
@@ -409,7 +410,7 @@ int main(int argc, char** argv){
         linker_args += c_libraries_linker_args;
         if (src_folder_exists){
         if (type == "exe"){
-            linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc, is_strip_mode, linker_path);
+            linkFiles(PathList, outfilename, target, linker_args, sysroot, is_gc, is_strip_mode, linker_path, internal_lld);
         } else if (type == "library"){
             linkLibrary(PathList, outfilename, target, linker_args, sysroot);
         } else if (type == "dynlib"){
