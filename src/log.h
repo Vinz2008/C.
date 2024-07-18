@@ -128,9 +128,9 @@ namespace Log {
         }
     };
     struct Warning {
+        Source_location loc;
         struct WarningHead head;
         struct WarningContent content;
-        Source_location loc;
         template< class T >
         WarningHead &operator<<(const T& val){
             head << val;

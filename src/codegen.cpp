@@ -1971,7 +1971,11 @@ Function *FunctionAST::codegen() {
     }
     if (RetVal->getType() != TheFunction->getReturnType()){
         //return LogErrorF(emptyLoc, "Return type is wrong in the %s function", P.getName().c_str());
-        Log::Warning(emptyLoc) << "Return type is wrong in the " << P.getName() << " function" << "\n" << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
+        auto wrong_return_type_warning = Log::Warning(emptyLoc);
+        wrong_return_type_warning.head << "Return type is wrong in the " << P.getName() << " function" << "\n";
+        wrong_return_type_warning.head.end();
+        wrong_return_type_warning.content << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
+        wrong_return_type_warning.content.end();
     }
 before_ret:
     if (!contains_return_or_unreachable && !is_return_never_type){
@@ -1984,10 +1988,13 @@ before_ret:
 after_ret:
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
-    // TODO : maybe enable this only in somes cases and/or add a LLVM error warning before it (need to output to string before to stdout)
-    auto& out = outs();
-    if (llvm::verifyFunction(*TheFunction, &out)){
-        std::cout << "\n";
+    // TODO : maybe enable this only in somes cases
+    std::string error_str;    
+    raw_string_ostream string_ostream(error_str);
+    if (llvm::verifyFunction(*TheFunction, &string_ostream)){
+        LogErrorV(emptyLoc, "LLVM ERROR : %s\n", error_str.c_str());
+
+        //std::cout << "\n";
         return nullptr;
     }
     return TheFunction;

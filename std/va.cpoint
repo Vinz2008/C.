@@ -1,4 +1,4 @@
-struct va_list {
+struct va_list repr "C" {
     var gp_offset : i32
     var fp_offset : i32
     var overflow_arg_area : i8 ptr

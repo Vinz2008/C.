@@ -902,12 +902,22 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
       auto E = ParseExpression();
       if (!E)
         return nullptr;
+      if (return_found){
+        continue;
+      }
       if (is_func_body && dynamic_cast<ReturnAST*>(E.get())){
         return_found = true;
       }
-      if (!return_found){
+      Body.push_back(std::move(E));
+      /*if (!return_found){
         Body.push_back(std::move(E));
-      }
+      }*/
+    }
+    // if the last expressions is a return, replace it with just the expressions because otherwise it would return a never type 
+    if (is_func_body && dynamic_cast<ReturnAST*>(Body.back().get())){
+        auto return_expr = std::move(Body.back());
+        Body.pop_back();
+        Body.push_back(std::move(dynamic_cast<ReturnAST*>(return_expr.get())->returned_expr));
     }
     return std::make_unique<EmptyExprAST>(); 
 }
@@ -1034,6 +1044,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   getNextToken(); // eat struct
   std::string structName = IdentifierStr;
   Log::Info() << "Struct Name : " << structName << "\n";
+  bool is_repr_c = false;
   getNextToken();
   if (CurTok == '~'){
     getNextToken();
@@ -1047,11 +1058,24 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     has_template = true;
     TypeTemplateCallAst = template_name;
   }
+  if (CurTok == tok_identifier && IdentifierStr == "repr"){
+    getNextToken();
+    if (CurTok != tok_string){
+        struct_parsing = false;
+        return LogErrorS("Expected a repr name (as a string) after 'repr' in Struct");
+    }
+    // TODO : add other reprs : (the by default with warnings : cpoint, the reorder one with auto reordering)
+    if (strStatic == "C"){
+        is_repr_c = true;
+    }
+    getNextToken();
+  }
   if (CurTok != '{'){
     struct_parsing = false;
     return LogErrorS("Expected '{' in Struct");
   }
   getNextToken();
+
   /*std::vector<std::pair<std::string,Cpoint_Type>> members;
   std::vector<std::string> functions;*/
   StructDeclarations[structName] = std::make_unique<StructDeclaration>(nullptr, nullptr, std::vector<std::pair<std::string,Cpoint_Type>>(), std::vector<std::string>());
@@ -1119,7 +1143,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   if (!has_template){
     std::vector<std::pair<std::string, Cpoint_Type>> members_reordered;
     bool is_reordering_needed = reorder_struct(StructDeclarations[structName].get(), structName, members_reordered);
-    if (is_reordering_needed){
+    if (is_reordering_needed && !is_repr_c){
         // TODO : add warning (add a Big warning to have the comparison between the new and the old order)
         // TODO : move this warning in a separate function (and in another file ?)
         std::string old_struct = "\tstruct " + structName + " {\n";
@@ -1573,7 +1597,7 @@ else_start:
       return nullptr;
     }
     if (Else){
-    Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(Else), std::move(else_if_expr)));
+        Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(Else), std::move(else_if_expr)));
     } else {
         Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(else_if_expr)));
     }

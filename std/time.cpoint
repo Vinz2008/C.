@@ -1,11 +1,11 @@
 import ./print.cpoint
 
-struct __timeval {
+struct __timeval repr "C" {
     var tv_sec : i64
     var tv_usec : i64
 }
 
-struct __tm {
+struct __tm repr "C" {
     var tm_sec : i32
     var tm_min : i32
     var tm_hour : i32

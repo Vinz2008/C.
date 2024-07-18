@@ -96,9 +96,9 @@ public:
 };
 
 class ReturnAST : public ExprAST {
-  std::unique_ptr<ExprAST> returned_expr;
   //double Val;
 public:
+  std::unique_ptr<ExprAST> returned_expr;
   ReturnAST(std::unique_ptr<ExprAST> returned_expr)
   : returned_expr(std::move(returned_expr)) {}
   //ReturnAST(double val) : Val(val) {}
