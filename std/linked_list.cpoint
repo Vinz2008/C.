@@ -1,8 +1,8 @@
 import print.cpoint
 
 struct node_linked_list {
-    var data : i32
     var next : struct node_linked_list ptr
+    var data : i32
 }
 
 struct linked_list {
