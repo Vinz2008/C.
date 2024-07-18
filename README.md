@@ -8,7 +8,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - simple C-like language
 - blazingly fast compile times
 - predictable name-mangling
-- compiler less than 670KB stripped, ≈31MB not stripped
+- compiler less than 1.5MB stripped, ≈46MB not stripped
 - classes support
 - goto support
 - automatic casting
@@ -16,6 +16,7 @@ A programming language compiler written in C++ which is definitely not finished.
 - rust-like pattern matching 
 - gc and manual memory management
 - extremely fast linking (mold used by default)
+- includes a clang-based C compiler, an ar-like archiver and the lld linker (like zig)
 
 ## Cloning the git repo
 
