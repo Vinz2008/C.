@@ -151,6 +151,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Create website for the programming language (use cssg ? svelte ?)
 - [ ] Replace LogError with assert in verification that are garanteed to be true unless there is a bug in the compiler 
 - [ ] Replace the globals variables by contexts (lexer context, compiler context that are global or passed to functions) 
+- [ ] Get the target data layout from llvm (create functions for that) to get the alignement to calculate the reordering needed for struct members
 
 ## Benchmarks compared to other languages
 
