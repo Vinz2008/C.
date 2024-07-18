@@ -127,7 +127,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Remove int because it already exists ?  (and create an alias in core so you can use the alias but there would not be int_type and i32_type in the compiler, only i32_type)
 - [x] Replace all ExprAST->clone()->codegen()->getType() with just ExprAST->get_type()
 - [ ] Add noalias/align/dereferenceable/nonnull to function arguments and return values
-- [ ] Detect when a reordering of struct members (like does rust automatically is necessary) and do an informative warning about that
+- [x] Detect when a reordering of struct members (like does rust automatically is necessary) and do an informative warning about that
 - [ ] Fix bug with global variable in custom section with no default initializer
 - [ ] Create a way to cross-compile easily the compiler (target prefix on gcc ? clang when cross compiling ? clang by default ?)
 - [x] Make closure private to file (like static functions in c)
@@ -152,6 +152,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Replace LogError with assert in verification that are garanteed to be true unless there is a bug in the compiler 
 - [ ] Replace the globals variables by contexts (lexer context, compiler context that are global or passed to functions) 
 - [ ] Get the target data layout from llvm (create functions for that) to get the alignement to calculate the reordering needed for struct members
+- [ ] Desactivate the warning for the struct reordering (especially in the std with struct that are accessible to C) (add extern before the struct or repr C after the struct keyword)
 
 ## Benchmarks compared to other languages
 

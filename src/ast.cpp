@@ -15,6 +15,7 @@
 #include "config.h"
 #include "preprocessor.h"
 #include "macros.h"
+#include "abi.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -1115,6 +1116,31 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     return LogErrorS("Expected '}' in struct");
   }
   getNextToken();  // eat '}'.
+  if (!has_template){
+    std::vector<std::pair<std::string, Cpoint_Type>> members_reordered;
+    bool is_reordering_needed = reorder_struct(StructDeclarations[structName].get(), structName, members_reordered);
+    if (is_reordering_needed){
+        // TODO : add warning (add a Big warning to have the comparison between the new and the old order)
+        // TODO : move this warning in a separate function (and in another file ?)
+        std::string old_struct = "\tstruct " + structName + " {\n";
+        for (int i = 0; i < StructDeclarations[structName]->members.size(); i++){
+            old_struct += "\t\tvar " + StructDeclarations[structName]->members.at(i).first + " : " + create_pretty_name_for_type(StructDeclarations[structName]->members.at(i).second) + "\n";
+        }
+        old_struct += "\t}";
+        std::string new_struct = "\tstruct " + structName + " {\n";
+        for (int i = 0; i < members_reordered.size(); i++){
+            new_struct += "\t\tvar " + members_reordered.at(i).first + " : " + create_pretty_name_for_type(members_reordered.at(i).second) + "\n";
+        }
+        new_struct += "\t}";
+        auto reorder_struct_warning = Log::Warning();
+        reorder_struct_warning.head << "The " << structName << " fields could be reordered to optimize its size : \n";
+        reorder_struct_warning.head.end();
+        reorder_struct_warning.content << "Current struct : \n" << old_struct << "\n"
+                                       << "Reordered struct : \n" << new_struct << "\n";
+        reorder_struct_warning.content.end();
+
+    }
+  }
   /*std::vector<std::pair<std::string,Cpoint_Type>> members;
   for (int i = 0; i < VarList.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(VarList.at(i)->clone());

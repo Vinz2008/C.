@@ -1,0 +1,9 @@
+struct S {
+    var a : i32
+    var b : i64
+    var c : i32
+}
+
+func test_func() void {
+    var s : struct S = S { 2, 3, 4 }
+} 

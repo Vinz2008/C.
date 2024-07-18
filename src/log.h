@@ -88,8 +88,56 @@ namespace Log {
             return *this;
         }
     };
+    // first part of the warning that is in red
+    struct WarningHead {
+        WarningHead(Source_location loc){
+            Color::Modifier red(Color::FG_RED);
+            std::cout << red;
+            if (loc != emptyLoc){
+                std::cout << "[Warning] at " << Comp_context->filename << ":" << loc.line_nb << ":" << ((loc.col_nb > 0) ? loc.col_nb-1 : loc.col_nb) << " ";
+            } else {
+                std::cout << "[Warning] ";
+            }
+        }
+        template< class T >
+        WarningHead &operator<<(const T& val){
+            std::cout << val;
+            return *this;
+        }
+        void end(){
+            Color::Modifier def(Color::FG_DEFAULT);
+            std::cout << def;
+        }
+        ~WarningHead(){
+            Color::Modifier def(Color::FG_DEFAULT);
+            std::cout << def;
+        }
+    };
+    // the optional content that is in the normal color
+    struct WarningContent {
+        template< class T >
+        WarningContent &operator<<(const T& val){
+            std::cout << val;
+            return *this;
+        }
+        void end(){
+            std::cout << "----\n";
+        }
+        ~WarningContent(){
+            std::flush(std::cout);
+        }
+    };
     struct Warning {
-        Warning(Source_location loc = emptyLoc){
+        struct WarningHead head;
+        struct WarningContent content;
+        Source_location loc;
+        template< class T >
+        WarningHead &operator<<(const T& val){
+            head << val;
+            return head;
+        }
+        Warning(Source_location loc = emptyLoc) : loc(loc), head(loc) {}
+        /*Warning(Source_location loc = emptyLoc){
             Color::Modifier red(Color::FG_RED);
             std::cout<<red;
             if (loc != emptyLoc){
@@ -107,7 +155,7 @@ namespace Log {
             Color::Modifier def(Color::FG_DEFAULT);
             std::cout<<def;
             std::flush(std::cout);
-        }
+        }*/
     };
     struct Preprocessor_Info {
         Preprocessor_Info(){
