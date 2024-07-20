@@ -3,7 +3,7 @@ import @std/operators.cpoint
 import @std/math.cpoint
 
 func main() void {
-    printd(!1)
+    printd(!true)
     printd(math::cos(180))
     printd(math::sqrt(9))
 }

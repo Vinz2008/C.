@@ -898,15 +898,29 @@ std::unique_ptr<ExprAST> ParseFunctionArgsTyped(std::vector<std::pair<std::strin
 
 std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body){
     bool return_found = false;
+    bool goto_found = false;
+    bool infinite_loop_found = false;
     while (CurTok != '}'){
       auto E = ParseExpression();
       if (!E)
         return nullptr;
-      if (return_found){
+      if (return_found || goto_found || infinite_loop_found){
         continue;
       }
-      if (is_func_body && dynamic_cast<ReturnAST*>(E.get())){
-        return_found = true;
+      if (dynamic_cast<LoopExprAST*>(E.get())){
+        auto loopExpr = dynamic_cast<LoopExprAST*>(E.get());
+        if (loopExpr->is_infinite_loop){
+            infinite_loop_found = true;
+        }
+      }
+      if (is_func_body){ // TODO : is this if necessary
+        if (dynamic_cast<ReturnAST*>(E.get())){
+            return_found = true;
+        }
+        // TODO : should it be activated
+        /*if (dynamic_cast<GotoExprAST*>(E.get())){
+            goto_found = true;
+        }*/
       }
       Body.push_back(std::move(E));
       /*if (!return_found){
@@ -919,6 +933,21 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
         Body.pop_back();
         Body.push_back(std::move(dynamic_cast<ReturnAST*>(return_expr.get())->returned_expr));
     }
+
+    // TODO : is if necessary ?
+    // there could be labels in the expression, so verify if there is a goto before any label starting by the end 
+    /*int pos = -1;
+    for (int i = Body.size()-1; i >= 0; i--){
+        if (dynamic_cast<LabelExprAST*>(Body.at(i).get())){
+            break;
+        }
+        if (dynamic_cast<GotoExprAST*>(Body.at(i).get())){
+            pos = i;
+        }
+    }
+    if (pos != -1){
+        Body.resize(pos+1);
+    }*/
     return std::make_unique<EmptyExprAST>(); 
 }
 

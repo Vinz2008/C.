@@ -463,7 +463,7 @@ int main(int argc, char **argv){
         } else if (arg_temp.compare("-target-triplet") == 0){
             lld_target_triplet = argv[i+1];
             i++;
-            std::cout << "lld_target_triplet : " << lld_target_triplet << std::endl; 
+            Log::Info() << "lld_target_triplet : " << lld_target_triplet << "\n"; 
         }
     }
 #endif

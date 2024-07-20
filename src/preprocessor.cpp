@@ -38,7 +38,6 @@ namespace Preprocessor {
     }
     void Context::replace_variable_preprocessor(std::string& str){
         std::string variable_name;
-        Log::Preprocessor_Info() << "REPLACING VARIABLES" << "\n";
         for (int i = 0; i < variables.size(); i++){
             if (variables.at(i) != nullptr){
             variable_name = variables.at(i)->getName();
@@ -46,6 +45,7 @@ namespace Preprocessor {
             while (pos != std::string::npos){
                 pos = str.find(variable_name, pos);
                 if (pos != std::string::npos){
+                    Log::Preprocessor_Info() << "REPLACING VARIABLE" << "\n";
                     str.replace(pos, variable_name.length(), variables.at(i)->getValue());
                 }
             }

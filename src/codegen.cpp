@@ -246,7 +246,7 @@ Value *NumberExprAST::codegen() {
 }
 
 Value* StringExprAST::codegen() {
-  Log::Info() << "Before Codegen " << str << '\n';
+  //Log::Info() << "Before Codegen string" << str << '\n';
   Value* string;
   if (StringsGenerated[str]){
     string = StringsGenerated[str];
@@ -937,7 +937,11 @@ Value* StructMemberCallExprAST::codegen(){
             Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName) << "\n";
             return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
         }
-        return Builder->CreateCall(F, CallArgs, "calltmp_struct"); 
+        std::string call_name = "calltmp_struct";
+        if (F->getReturnType()->isVoidTy()){
+            call_name = "";
+        }
+        return Builder->CreateCall(F, CallArgs, call_name); 
     }
     return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
@@ -1067,9 +1071,10 @@ Value* AsmExprAST::codegen(){
     bool contains_out = false;
     bool contains_in = false;
     auto asm_type = Cpoint_Type(void_type);
-    Value* in_value_loaded = nullptr;
+    //std::vector<Value*> in_values_loaded;
     Value* out_var_allocation = nullptr;
     std::vector<Value*> AsmArgs;
+    std::vector<Type*> AsmArgsTypes;
     for (int i = 0; i < Args->InputOutputArgs.size(); i++){
         if (dynamic_cast<VariableExprAST*>(Args->InputOutputArgs.at(i)->ArgExpr.get())){
             auto expr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Args->InputOutputArgs.at(i)->ArgExpr));
@@ -1082,7 +1087,8 @@ Value* AsmExprAST::codegen(){
                 out_var_allocation = get_var_allocation(expr->Name);
             } else if (Args->InputOutputArgs.at(i)->argType == ArgInlineAsm::ArgType::input){
                 contains_in = true;
-                in_value_loaded = Builder->CreateLoad(get_type_llvm(expr->type), get_var_allocation(expr->Name));
+                /*in_values_loaded*/ AsmArgs.push_back(Builder->CreateLoad(get_type_llvm(expr->type), get_var_allocation(expr->Name)));
+                AsmArgsTypes.push_back(get_type_llvm(expr->type));
             }
         } else {
             return LogErrorV(this->loc, "Unknown expression for \"in\" in asm macro");
@@ -1090,25 +1096,40 @@ Value* AsmExprAST::codegen(){
     }
     std::string assembly_code = Args->assembly_code->str;
     std::string generated_assembly_code = "";
+    std::string constraints = ""; 
+    int arg_nb = 0;
+    int arg_in_nb = 0;
     for (int i = 0; i < assembly_code.size(); i++){
         if (assembly_code.at(i) == '{' && assembly_code.at(i+1) && '}'){
-            if (contains_out){
-                generated_assembly_code += "${0:q}";
+            if (Args->InputOutputArgs.size() > arg_nb){
+                generated_assembly_code += "${" + std::to_string(arg_nb) + ":q}";
+                if (Args->InputOutputArgs.at(arg_nb)->argType == ArgInlineAsm::ArgType::input){
+                    constraints += "r,";
+                    //AsmArgs.push_back(in_values_loaded.at(arg_in_nb));
+                    arg_in_nb++;
+                } else if (Args->InputOutputArgs.at(arg_nb)->argType == ArgInlineAsm::ArgType::output){
+                    constraints += "=&r,";
+                }
+                arg_nb++;
+            } else {
+                return LogErrorV(emptyLoc, "Too much format args in inline asm block");
             }
+            /*if (contains_out){
+                generated_assembly_code += "${0:q}";
+            }*/
             i++;
         } else {
             generated_assembly_code += assembly_code.at(i);
         }
     }
-    std::string constraints = ""; 
-    if (contains_out){
+    /*if (contains_out){
         constraints += "=&r,";
     } else if (contains_in){
         constraints += "r,";
         AsmArgs.push_back(in_value_loaded);
-    }
-    constraints += "~{dirflag},~{fpsr},~{flags},~{memory}";
-    auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(asm_type), false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
+    }*/
+    constraints += "~{dirflag},~{fpsr},~{flags},~{memory}"; // TODO : set constraints only when needed
+    auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(asm_type), AsmArgsTypes, false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
     if (contains_out){
         auto asmCalled = Builder->CreateCall(inlineAsm, AsmArgs); 
         return Builder->CreateStore(asmCalled, out_var_allocation);
@@ -1324,6 +1345,8 @@ Value *CallExprAST::codegen() {
         //contains_hidden_struct_arg = true;
         real_args_size--;
     }
+  } else {
+    return LogErrorV(emptyLoc, "Unknown function %s", Callee.c_str());
   }
 
   if (!CalleeF && !is_function_template && !function_ptr_from_local_var)
@@ -1461,7 +1484,7 @@ Value *CallExprAST::codegen() {
   }
   }
   if (FunctionProtos[Callee] && FunctionProtos[Callee]->cpoint_type.type == never_type){
-    Builder->CreateUnreachable();
+    return Builder->CreateUnreachable();
   }
   return call;
 }
@@ -1824,10 +1847,10 @@ Function *FunctionAST::codegen() {
   CpointDebugInfo.LexicalBlocks.push_back(SP);
   CpointDebugInfo.emitLocation(nullptr);
   }
-  bool contains_return_or_unreachable = false;
+  bool contains_return_or_unreachable_or_never_call = false;
   for (int i = 0; i < Body.size(); i++){
-    if (Body.at(i)->contains_expr(ExprType::Unreachable) || Body.at(i)->contains_expr(ExprType::Return)){
-        contains_return_or_unreachable = true;
+    if (Body.at(i)->contains_expr(ExprType::Unreachable) || Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::NeverFunctionCall)){
+        contains_return_or_unreachable_or_never_call = true;
     }
   }
   bool is_return_never_type = false;
@@ -1914,6 +1937,12 @@ Function *FunctionAST::codegen() {
   createScope();
   //Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
+  bool is_last_expr_a_goto = dynamic_cast<GotoExprAST*>(Body.back().get());
+  bool is_last_expr_an_infinite_loop = false;
+  if (dynamic_cast<LoopExprAST*>(Body.back().get())){
+    is_last_expr_an_infinite_loop = dynamic_cast<LoopExprAST*>(Body.back().get())->is_infinite_loop;
+  }
+  
   Value *RetVal = codegenBody(Body);
   /*for (int i = 0; i < Body.size(); i++){
     RetVal = Body.at(i)->codegen();
@@ -1978,11 +2007,14 @@ Function *FunctionAST::codegen() {
         wrong_return_type_warning.content.end();
     }
 before_ret:
-    if (!contains_return_or_unreachable && !is_return_never_type){
-    if (RetVal){
-    Builder->CreateRet(RetVal);
-    } else {
-    Builder->CreateRetVoid();
+    if (!contains_return_or_unreachable_or_never_call && !is_return_never_type){
+    // only verify if the last expr is a goto if the function is main (because it will create a ret by default)
+    if ((!is_last_expr_a_goto && !is_last_expr_an_infinite_loop) || P.getName() != "main"){
+        if (RetVal){
+            Builder->CreateRet(RetVal);
+        } else {
+            Builder->CreateRetVoid();
+        }
     }
     }
 after_ret:
@@ -1992,9 +2024,10 @@ after_ret:
     std::string error_str;    
     raw_string_ostream string_ostream(error_str);
     if (llvm::verifyFunction(*TheFunction, &string_ostream)){
+        std::error_code EC;
+        auto dump_file = raw_fd_ostream(StringRef("dump_" + P.getName() + ".ll"), EC);
+        TheFunction->print(dump_file);
         LogErrorV(emptyLoc, "LLVM ERROR : %s\n", error_str.c_str());
-
-        //std::cout << "\n";
         return nullptr;
     }
     return TheFunction;
@@ -2594,7 +2627,11 @@ Value *VarExprAST::codegen() {
       //Value* thisClass = Builder->CreateLoad(PointerType::get(A->getAllocatedType(), A->getAddressSpace()), A, VarName.c_str());
       Value* thisClass = A;
       ArgsV.push_back(thisClass);
-      Builder->CreateCall(constructorF, ArgsV, "calltmp");
+      std::string name_constructor_call = "auto_constructor_calltmp";
+      if (constructorF->getReturnType()->isVoidTy()){
+        name_constructor_call = "";
+      }
+      Builder->CreateCall(constructorF, ArgsV, name_constructor_call);
       }
     }
   }

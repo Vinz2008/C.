@@ -2,6 +2,7 @@
 #include "llvm/IR/IRBuilder.h"
 #include "codegen.h"
 #include "operators.h"
+#include "types.h"
 
 extern std::unordered_map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 
@@ -24,6 +25,7 @@ static void string_vector_erase(std::vector<std::string>& strings, std::string s
 
 Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction){
     // For now consider by default it will compare ints
+    // TODO : make this work with global vars
     AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
     Cpoint_Type var_type = NamedValues[matchVar]->type;
     Value* val_from_var = Builder->CreateLoad(Alloca->getAllocatedType(), Alloca, "load_match_const");
@@ -39,6 +41,25 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
         convert_to_type(var_type, Cpoint_Type(i32_type), val_from_var);
     }
 
+
+    Cpoint_Type match_return_type = Cpoint_Type(void_type);
+    int number_returning_value_branch = 0;
+    for (int i = 0; i < matchCases.size(); i++){
+        Cpoint_Type matchCaseType = matchCases.at(i)->Body->get_type();
+        if (matchCaseType.type != void_type && matchCaseType.type != never_type && match_return_type.type == void_type){
+            // found first non void or never type in match branches
+            match_return_type = matchCaseType;
+        }
+        if (match_return_type.type != void_type && match_return_type != matchCaseType && matchCaseType.type != never_type){
+            return LogErrorV(emptyLoc, "Match case %s returned type %s instead of %s type", matchCases.at(i)->expr->to_string().c_str(), create_pretty_name_for_type(matchCaseType).c_str(), create_pretty_name_for_type(match_return_type).c_str());
+        }
+        if (matchCaseType.type != void_type && matchCaseType.type != never_type  && match_return_type.type != void_type){
+            number_returning_value_branch++;
+        }
+    }
+
+    Log::Info() << "match_return_type" << match_return_type << "\n";
+
     // for testing
     //std::vector<Value*> Args;
     //Args.push_back(val_from_var);
@@ -47,27 +68,39 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     auto switch_inst = Builder->CreateSwitch(val_from_var, nullptr, matchCases.size());
     BasicBlock* defaultDestBB;
     BasicBlock* AfterBB = BasicBlock::Create(*TheContext, "After_match");
+    std::vector<std::pair<Value*, BasicBlock*>> phi_members;
     bool found_underscore = false;
     for (int i = 0; i < matchCases.size(); i++){
         std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
+        bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
+        bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
+        Cpoint_Type matchCaseType = matchCaseTemp->Body->get_type();
+        bool does_body_return_never = matchCaseType.type == never_type;
         if (matchCaseTemp->is_underscore){
             found_underscore = true;
             defaultDestBB = BasicBlock::Create(*TheContext, "default_dest", TheFunction);
             Builder->SetInsertPoint(defaultDestBB);
-            matchCaseTemp->Body->codegen();
+            //Cpoint_Type matchCaseType = matchCaseTemp->Body->get_type();
+            auto body_return = matchCaseTemp->Body->codegen();
             //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
             //    matchCaseTemp->Body.at(j)->codegen();
             //}
-            Builder->CreateBr(AfterBB);
+            if (matchCaseType.type != void_type && matchCaseType.type != never_type  && match_return_type.type != void_type){
+                phi_members.push_back(std::make_pair(body_return, defaultDestBB));
+            }
+            if (!has_match_return && !has_match_unreachable && !does_body_return_never){
+                Builder->CreateBr(AfterBB);
+            }
             switch_inst->setDefaultDest(defaultDestBB);
         } else {
             BasicBlock* thenBB = BasicBlock::Create(*TheContext, "then_match_const", TheFunction);
             Builder->SetInsertPoint(thenBB);
-            auto valExpr = matchCaseTemp->expr->clone(); 
+            auto valExpr = std::move(matchCaseTemp->expr); 
             Value* val = nullptr;
-            if (dynamic_cast<NumberExprAST*>(valExpr.get())){
+            /*if (dynamic_cast<NumberExprAST*>(valExpr.get())){
                 val = valExpr->codegen();
-            } else if (dynamic_cast<UnaryExprAST*>(valExpr.get())){
+            } else*/ 
+            if (dynamic_cast<UnaryExprAST*>(valExpr.get())){
                 Log::Info() << "TEST UNARY" << "\n";
                 auto unExpr = get_Expr_from_ExprAST<UnaryExprAST>(std::move(valExpr));
                 if (unExpr->Opcode == '-'){
@@ -98,16 +131,23 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
                 convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(i32_type), val);
             }
             Log::Info() << "match val after converting : " << get_cpoint_type_from_llvm(val->getType()) << "\n";
-            bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
+            /*bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
             bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
-            bool does_body_return_never = matchCaseTemp->Body->get_type().type == never_type;
-            matchCaseTemp->Body->codegen();
+            Cpoint_Type matchCaseType = matchCaseTemp->Body->get_type();
+            bool does_body_return_never = matchCaseType.type == never_type;*/
+            auto body_return = matchCaseTemp->Body->codegen();
             //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
             //    matchCaseTemp->Body.at(j)->codegen();
             //}
+            if (matchCaseType.type != void_type && matchCaseType.type != never_type  && match_return_type.type != void_type){
+                phi_members.push_back(std::make_pair(body_return, thenBB));
+            }
             if (!has_match_return && !has_match_unreachable && !does_body_return_never){
                 Builder->CreateBr(AfterBB);
             }
+            /*if (does_body_return_never){
+                Builder->CreateUnreachable();
+            }*/
             ConstantInt* constint_val = nullptr;
             Log::Info() << "value id : " << val->getValueID() << "\n";
             if (dyn_cast<ConstantInt>(val)){
@@ -134,6 +174,20 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     TheFunction->insert(TheFunction->end(), AfterBB);
     Builder->SetInsertPoint(AfterBB);
 
+    if (match_return_type.type != void_type){
+        // if only a branch returns a value, there is no need to create a phi node
+        Log::Info() << "phi_members.size() : " << phi_members.size() << "\n";
+        if (phi_members.size() == 1){
+            return phi_members.at(0).first;
+        }
+        PHINode *Phi = Builder->CreatePHI(get_type_llvm(match_return_type), number_returning_value_branch, "match_phi");
+        for (int i = 0; i < phi_members.size(); i++){
+            Phi->addIncoming(phi_members.at(i).first, phi_members.at(i).second);
+        }
+        //Phi->addIncoming()
+        Log::Info() << "match return phi" << "\n";
+        return Phi;
+    }
     return Constant::getNullValue(get_type_llvm(double_type));
 }
 

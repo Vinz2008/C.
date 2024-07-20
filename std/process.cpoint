@@ -11,7 +11,7 @@ mod process {
         match pid {
             -1 => #panic("creating process failed in fork"),
             0 => execvp(args[0], args),
-            _ => {}
+            _ => #panic("Unknown Pid"),
         }
     }
     func abort() never {

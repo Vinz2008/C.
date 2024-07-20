@@ -819,17 +819,29 @@ public:
         return match_body;
     }
     Cpoint_Type get_type() override {
-        return matchCases.at(0)->Body->get_type();
+        Cpoint_Type match_return_type = Cpoint_Type(void_type);
+        for (int i = 0; i < matchCases.size(); i++){
+            Cpoint_Type matchCaseType = matchCases.at(i)->Body->get_type();
+            if (matchCaseType.type != void_type && matchCaseType.type != never_type && match_return_type.type == void_type){
+                // found first non void or never type in match branches
+                match_return_type = matchCaseType;
+            }
+        }
+        Log::Info() << "match_return_type in get_type : " << match_return_type << "\n";
+        return match_return_type;
+        //return matchCases.at(0)->Body->get_type();
     }
     std::string generate_c() override { return ""; }
     bool contains_expr(enum ExprType exprType) override {
+      int branches_containing_expr = 0;
       for (int i = 0; i < matchCases.size(); i++){
         //if (matchCases.at(i)->Body->contains_return()){
         if (matchCases.at(i)->Body->contains_expr(exprType)){
-          return true;
+          //return true;
+          branches_containing_expr++;
         }
       }
-      return false;
+      return branches_containing_expr == matchCases.size();
     }
 };
 
@@ -1143,8 +1155,8 @@ class LoopExprAST : public ExprAST {
   std::string VarName;
   std::unique_ptr<ExprAST> Array;
   std::vector<std::unique_ptr<ExprAST>> Body; // keep this a vector of exprs because it is needed to differenciate infinite and not loops
-  bool is_infinite_loop;
 public:
+  bool is_infinite_loop;
   LoopExprAST(std::string VarName, std::unique_ptr<ExprAST> Array, std::vector<std::unique_ptr<ExprAST>> Body, bool is_infinite_loop = false) : VarName(VarName), Array(std::move(Array)), Body(std::move(Body)), is_infinite_loop(is_infinite_loop) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override;

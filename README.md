@@ -157,7 +157,10 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add warnings for unused labels (and unused functions ?) 
 - [ ] Make warnings longer (for example the warnings about the types not being the same in operators)
 - [ ] Replace some verification for identifiers by keywords verification
-- [ ] Add a custom cli flag for default repr for structs
+- [ ] Add a custom cli flag for default repr for structs 
+- [ ] Add vector types for simd
+- [ ] Add inout in inline asm args
+- [ ] Make functions that are not static static if needed
 
 ## Benchmarks compared to other languages
 
