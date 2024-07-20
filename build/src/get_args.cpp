@@ -4,13 +4,13 @@
 #include "cli.h"
 #include "../../src/gettext.h"
 
-std::string get_pkg_config_linker_args(std::string library_name){
+static std::string get_pkg_config_linker_args(std::string library_name){
     std::string cmd = "pkg-config --libs " + library_name;
     auto cmd_out = runCommand(cmd);
     return cmd_out->buffer;
 }
 
-std::string get_llvm_config_linker_args(){
+static std::string get_llvm_config_linker_args(){
     std::string cmd = "llvm-config --ldflags --system-libs --libs core";
     auto cmd_out = runCommand(cmd);
     std::string ret = cmd_out->buffer;
@@ -19,11 +19,11 @@ std::string get_llvm_config_linker_args(){
     return ret;
 }
 
-std::string get_pkg_config_cflags_args(std::string library_name){
+/*static std::string get_pkg_config_cflags_args(std::string library_name){
     std::string cmd = "pkg-config --cflags " + library_name;
     auto cmd_out = runCommand(cmd);
     return cmd_out->buffer;
-}
+}*/
 
 void handle_library_name(std::string library, std::string& linker_args){
     if (library == "pthread"){

@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-void updateGitRepo(std::string folder){
+static void updateGitRepo(std::string folder){
     std::string cmd = "git -C ";
     cmd += folder;
     cmd += " pull";
@@ -39,14 +39,14 @@ void cloneGithub(std::string username, std::string repo_name, std::string folder
 
 extern std::vector<std::string> DependencyPathList;
 
-void addDependencyToTempLinkableFiles(std::string dependency){
+static void addDependencyToTempLinkableFiles(std::string dependency){
     std::string lib_path = DEFAULT_PACKAGE_PATH "/" + dependency + "/lib.a";
     DependencyPathList.push_back(lib_path);
 }
 
 extern std::vector<std::string> LibrariesList;
 
-void downloadSubDependencies(std::string username, std::string repo_name){
+static void downloadSubDependencies(std::string username, std::string repo_name){
     std::string root_build_toml_path = DEFAULT_PACKAGE_PATH "/" + repo_name + "/build.toml";
     if (!fs::exists(fs::path(root_build_toml_path))){
         return;

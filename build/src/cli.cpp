@@ -42,7 +42,7 @@ bool doesExeExist(std::string filename){
     return false;
 }
 
-void buildProject(std::string path){
+static void buildProject(std::string path){
     runCommand("cd " + path + " && cpoint-build");
 }
 

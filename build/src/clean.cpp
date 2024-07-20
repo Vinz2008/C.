@@ -6,7 +6,7 @@
 
 namespace fs = std::filesystem;
 
-void runCustomCleanCommands(toml::v3::table& config){
+static void runCustomCleanCommands(toml::v3::table& config){
     auto commands = config["custom"]["clean_commands"];
     if (toml::array* arr = commands.as_array()){
         arr->for_each([](auto&& cmd){
@@ -19,7 +19,7 @@ void runCustomCleanCommands(toml::v3::table& config){
     }
 }
 
-void cleanObjectFilesFolder(std::string folder){
+static void cleanObjectFilesFolder(std::string folder){
     std::vector<std::string> PathList = getFilenamesWithExtension(".cpoint", folder);
     for (auto const& path : PathList){
         fs::path path_fs{ path };
@@ -31,7 +31,7 @@ void cleanObjectFilesFolder(std::string folder){
     std::cout << std::endl;
 }
 
-void cleanFilesFolderExtension(std::string folder, std::string extension){
+static void cleanFilesFolderExtension(std::string folder, std::string extension){
     std::vector<std::string> PathList = getFilenamesWithExtension(extension, folder);
     for (auto const& path : PathList){
         std::string path_temp = path;
@@ -39,7 +39,7 @@ void cleanFilesFolderExtension(std::string folder, std::string extension){
     }
 }
 
-void cleanFilesFolder(std::string folder){
+static void cleanFilesFolder(std::string folder){
     cleanFilesFolderExtension(folder, ".ll");
     cleanFilesFolderExtension(folder, ".test.o");
     cleanFilesFolderExtension(folder, ".test");
@@ -47,7 +47,7 @@ void cleanFilesFolder(std::string folder){
 }
 
 
-void cleanObjectFilesSubprojects(toml::v3::table& config){
+static void cleanObjectFilesSubprojects(toml::v3::table& config){
     auto subfolders = config["subfolders"]["projects"];
     if (toml::array* arr = subfolders.as_array()){
         arr->for_each([/*&config*/](auto&& sub){

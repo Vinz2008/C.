@@ -8,7 +8,7 @@
 
 namespace fs = std::filesystem;
 
-bool file_contains_test(std::string path){
+static bool file_contains_test(std::string path){
     std::ifstream file(path);
     std::string line;
     while(getline(file, line)){
@@ -47,7 +47,7 @@ void buildTest(std::vector<std::string>& PathList, int pos, std::vector<std::str
     linkFiles(linkTestPathList, exe_name, "", "", "", is_gc, is_strip_mode, "", should_link_internal_lld);
 }
 
-void buildTestObjectFiles(std::vector<std::string>& PathList){
+static void buildTestObjectFiles(std::vector<std::string>& PathList){
     for (int i = 0; i < PathList.size(); i++){
         compileFile("", "", PathList.at(i), "");
     }
@@ -62,7 +62,7 @@ void buildTests(std::vector<std::string> PathList, std::vector<std::string> Link
     }
 }
 
-void runTest(std::string path){
+static void runTest(std::string path){
     std::string exe_name = fs::path(path).replace_extension(".test").string();
     std::cout << runCommand(exe_name)->buffer;
     std::flush(std::cout);

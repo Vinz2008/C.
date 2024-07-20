@@ -9,7 +9,7 @@
 namespace fs = std::filesystem;
 
 
-bool shouldCompileFile(std::string file){
+static bool shouldCompileFile(std::string file){
     fs::path path{file};
     path.replace_extension("o");
     if (!fs::exists(path)){
@@ -24,13 +24,13 @@ bool shouldCompileFile(std::string file){
 
 std::vector<std::string> buildFileEachThreadPathList;
 
-void buildFileEachThread(int index, std::string target, std::string sysroot, std::string arguments){
+static void buildFileEachThread(int index, std::string target, std::string sysroot, std::string arguments){
     std::string path = buildFileEachThreadPathList.at(index);
     std::cout << path << ' ';
     compileFile(target, arguments, path, sysroot);
 }
 
-void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number, std::vector<std::string> localPathList, std::string arguments){
+static void buildFolderMultiThreaded(std::string src_folder, toml::v3::table& config, std::string_view type, std::string target, std::string sysroot, bool is_gc, int thread_number, std::vector<std::string> localPathList, std::string arguments){
     std::cout << _("Multi threaded with ") << thread_number << " threads" << std::endl;
     std::vector<std::thread> threads;
     buildFileEachThreadPathList = localPathList;
@@ -88,7 +88,7 @@ void buildSubfolders(toml::v3::table& config, std::string_view type, std::string
     }
 }
 
-bool isSubprojectGC(std::string path){
+static bool isSubprojectGC(std::string path){
     //std::cout << "project gc path : " << path + "/build.toml" << std::endl;
     auto subproject_config = toml::parse_file(path + "/build.toml");
     bool is_gc = subproject_config["build"]["gc"].value_or(true);
@@ -96,7 +96,7 @@ bool isSubprojectGC(std::string path){
     return is_gc;
 }
 
-void buildSubproject(std::string path){
+static void buildSubproject(std::string path){
     runCommand("cd " + path + " && cpoint-build");
 }
 
