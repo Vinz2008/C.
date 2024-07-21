@@ -54,6 +54,7 @@ enum Token {
   tok_deref = -42,
   tok_defer = -43,
   tok_never = -44,
+  tok_vector = -45,
 };
 
 int getNextToken();

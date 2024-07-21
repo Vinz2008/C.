@@ -4,6 +4,6 @@ struct S {
     var c : i32
 }
 
-func test_func() void {
+func main() void {
     var s : struct S = S { 2, 3, 4 }
 } 

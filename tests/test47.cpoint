@@ -13,7 +13,7 @@ func main() i32 {
     l[0] = 2
     printi(l[0])
     if l[0] == 2 {
-        var l_if = gc_malloc(2 * sizeof i32)
+        var l_if = cast i32 ptr gc_malloc(2 * sizeof i32)
         defer gc_free(l_if)
         printstr("test")
         l_if[0] = 10

@@ -284,6 +284,8 @@ static int gettok() {
         return tok_defer;
     if (IdentifierStr == "never")
         return tok_never;
+    if (IdentifierStr == "Vector")
+        return tok_vector;
     if (IdentifierStr == "import"){
       go_to_next_line();
       return getNextToken();

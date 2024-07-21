@@ -88,6 +88,10 @@ std::unique_ptr<ExprAST> ConstantStructExprAST::clone(){
     return std::make_unique<ConstantStructExprAST>(struct_name, clone_vector<ExprAST>(StructMembers));
 }
 
+std::unique_ptr<ExprAST> ConstantVectorExprAST::clone(){
+    return std::make_unique<ConstantVectorExprAST>(vector_element_type, vector_size, clone_vector<ExprAST>(VectorMembers));
+}
+
 std::unique_ptr<ExprAST> EnumCreation::clone(){
     std::unique_ptr<ExprAST> valueCloned = nullptr;
     if (value){
@@ -294,6 +298,8 @@ std::unique_ptr<ExprAST> ParseConstantArray(){
   }
   return std::make_unique<ConstantArrayExprAST>(std::move(ArrayMembers));
 }
+
+int ParseTypeDeclarationVector(bool& is_vector, Cpoint_Type& vector_element_type, int& vector_element_number);
 
 static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   std::string IdName = IdentifierStr;
@@ -589,9 +595,47 @@ std::unique_ptr<ExprAST> ParsePrimary() {
     return ParseDefer();
   case tok_func:
     return ParseClosure();
+  case tok_vector:
+    return ParseConstantVector();
   }
 }
 
+std::unique_ptr<ExprAST> ParseConstantVector(){
+    Log::Info() << "PARSE CONSTANT VECTOR" << "\n";
+    bool is_vector = false;
+    Cpoint_Type vector_element_type;
+    int vector_element_number = 0;
+    if (ParseTypeDeclarationVector(is_vector, vector_element_type, vector_element_number) == 1){
+        return nullptr;
+    }
+    std::vector<std::unique_ptr<ExprAST>> VectorMembers;
+    int member_nb = 0;
+
+    if (CurTok != '{'){
+        return LogError("Missing '{' in Vector constant expr");
+    }
+    getNextToken();
+    while (true){
+        if (CurTok == '}'){
+            getNextToken();
+            break;
+        }
+        if (member_nb > 0){
+            if (CurTok != ','){
+            return LogError("missing \',\' in constant array");
+            }
+            getNextToken();
+        }
+        auto E = ParseExpression();
+        if (!E){
+            return LogError("Error when parsing constant vector member");
+            //return nullptr;
+        }
+        VectorMembers.push_back(std::move(E));
+        member_nb++;
+    }
+    return std::make_unique<ConstantVectorExprAST>(vector_element_type, vector_element_number, std::move(VectorMembers));
+}
 
 std::unique_ptr<ExprAST> ParseInlineAsm(){
     std::unique_ptr<StringExprAST> asm_code = get_Expr_from_ExprAST<StringExprAST>(ParseStrExpr());
@@ -697,6 +741,44 @@ std::unique_ptr<ExprAST> ParseSemiColon(){
     return std::make_unique<SemicolonExprAST>();
 }
 
+int ParseTypeDeclarationVector(bool& is_vector, Cpoint_Type& vector_element_type, int& vector_element_number){
+    is_vector = true;
+    getNextToken();
+    
+    if (CurTok != '~'){
+        LogError("Missing opening '~' in Vector type declaration");
+        return -1;
+    }
+    getNextToken();
+
+    if (CurTok != tok_identifier || !is_type(IdentifierStr)){
+        LogError("Missing type in Vector type");
+        return -1;
+    }
+    vector_element_type = Cpoint_Type(get_type(IdentifierStr));
+    getNextToken();
+    if (CurTok != ','){
+        LogError("Missing number of Vector element in type declaration");
+        return -1;
+    }
+    getNextToken();
+
+    auto number_expr = ParseNumberExpr();
+    if (!number_expr){
+        LogError("Missing number of Vector element in type declaration");
+        return -1;
+    }
+    vector_element_number = (int)dynamic_cast<NumberExprAST*>(number_expr.get())->Val;
+
+    if (CurTok != '~'){
+        LogError("Missing closing '~' in Vector type declaration");
+        return -1;
+    }
+    getNextToken();
+    //Log::Info() << "token end of vector type parsing : " << CurTok << "\n";
+    return 0;
+}
+
 Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= false*/){
   int type = double_type; 
   bool is_ptr = false;
@@ -711,6 +793,9 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
   Cpoint_Type default_type = Cpoint_Type(double_type);
   bool is_struct_template = false;
   Cpoint_Type* struct_template_type_passed = nullptr;
+  bool is_vector = false;
+  int vector_element_number = 0;
+  Cpoint_Type vector_element_type;
   if (eat_token){
   getNextToken(); // eat the ':'
   }
@@ -722,7 +807,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     getNextToken();
     return Cpoint_Type(never_type);
   }
-  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union && CurTok != tok_enum){
+  if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union && CurTok != tok_enum && CurTok != tok_vector){
     LogError("expected identifier after var in type declaration");
     return default_type;
   }
@@ -764,7 +849,11 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     return_type = new Cpoint_Type(return_type_temp);
     goto before_gen_cpoint_type;
   }
-  if (CurTok == tok_struct || CurTok == tok_class){
+  if (CurTok == tok_vector){
+    if (ParseTypeDeclarationVector(is_vector, vector_element_type, vector_element_number) == -1){
+        return default_type;
+    }
+  } else if (CurTok == tok_struct || CurTok == tok_class){
     getNextToken();
     struct_Name = IdentifierStr;
     type = other_type;
@@ -835,7 +924,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_struct_template, struct_template_type_passed, is_function, args, return_type);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_struct_template, struct_template_type_passed, is_function, args, return_type, is_vector, new Cpoint_Type(vector_element_type), vector_element_number);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -1926,6 +2015,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   // At least one variable name is required.
   if (CurTok != tok_identifier)
     return LogError("expected identifier after var");
+  // TODO : maybe verify the multiple var code and make it register all vars
   while (true) {
     std::string Name = IdentifierStr;
     getNextToken(); // eat identifier.
@@ -1981,5 +2071,5 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
 
   cpoint_type.is_struct = cpoint_type.struct_name != "";
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, cpoint_type);
-  return std::make_unique<VarExprAST>(std::move(VarNames)/*, std::move(Body)*/, cpoint_type, std::move(index), infer_type);
+  return std::make_unique<VarExprAST>(std::move(VarNames), cpoint_type, std::move(index), infer_type);
 }

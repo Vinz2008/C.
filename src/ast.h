@@ -471,6 +471,27 @@ public:
     std::string generate_c() override { return ""; }
 };
 
+class ConstantVectorExprAST : public ExprAST {
+public:
+    Cpoint_Type vector_element_type;
+    int vector_size;
+    std::vector<std::unique_ptr<ExprAST>> VectorMembers;
+    ConstantVectorExprAST(Cpoint_Type vector_element_type, int vector_size, std::vector<std::unique_ptr<ExprAST>> VectorMembers) : vector_element_type(vector_element_type), vector_size(vector_size), VectorMembers(std::move(VectorMembers)) {}
+    Value* codegen() override;
+    std::unique_ptr<ExprAST> clone() override;
+    std::string to_string() override {
+        std::string vector_members_str = "";
+        for (int i = 0; i < VectorMembers.size(); i++){
+            vector_members_str += VectorMembers.at(i)->to_string();
+        }
+        return "Vector { " + vector_members_str + " }";
+    }
+    Cpoint_Type get_type() override {
+        return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, new Cpoint_Type(vector_element_type), vector_size);
+    }
+    std::string generate_c() override { return ""; }
+};
+
 class EnumCreation : public ExprAST {
 public:
     std::string EnumVarName;
@@ -652,11 +673,39 @@ public:
     // TODO maybe add the template type to the string expression (add a bool in this class to identify if a type is passed in the template)
     return function_name + template_type + args;
   }
+  static const std::string get_internal_func_prefix(){ 
+    return "cpoint_internal_"; 
+  }
   Cpoint_Type get_type() override {
-    // return FunctionProtos[Callee]->cpoint_type;
-    if (Callee == "cpoint_internal_unreachable" /*|| Callee == "panicx" || Callee == "panic"*/){
-        return Cpoint_Type(never_type);
+    // TODO : move getting the type and calling the internal functions in another file where it would be next to each other so it would be simple when adding a new one
+    std::string internal_func_prefix = get_internal_func_prefix();
+    if (Callee.rfind(internal_func_prefix, 0) == 0){
+        std::string Callee_without_prefix = Callee.substr(internal_func_prefix.size(), Callee.size());
+        if (Callee_without_prefix == "unreachable"){
+            return Cpoint_Type(never_type);
+        }
+        if (Callee_without_prefix == "get_filename" || Callee_without_prefix == "get_function_name"){
+            return Cpoint_Type(i8_type, true);
+        }
+        if (Callee_without_prefix == "dbg" || Callee_without_prefix == "print"){
+            // it technically returns int because it calls printf, but we will consider that it will not be needed (maybe even not return it from DbgMacroCodegen : TODO ?)
+            return Cpoint_Type(void_type);
+        }
+
+        if (Callee_without_prefix == "get_va_adress_systemv"){
+            // is technically an opaque pointer ?
+            return Cpoint_Type(i8_type, true);
+        }
+        if (Callee_without_prefix == "assume"){
+            return Cpoint_Type(void_type);
+        }
+        
+        // TODO : add LLVM Intrisics
     }
+    // return FunctionProtos[Callee]->cpoint_type;
+    /*if (Callee == "cpoint_internal_unreachable"){
+        return Cpoint_Type(never_type);
+    }*/
     // TODO : replace this block of code in every file by a get_function_return_type
     if (FunctionProtos[Callee]){
         return FunctionProtos[Callee]->cpoint_type;
@@ -1268,6 +1317,7 @@ std::unique_ptr<ExprAST> ParseClosure();
 std::unique_ptr<ExprAST> ParseSemiColon();
 std::unique_ptr<ExprAST> ParseDefer();
 std::unique_ptr<ExprAST> ParseScope();
+std::unique_ptr<ExprAST> ParseConstantVector();
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
 std::unique_ptr<ExprAST> LogError(const char *Str, ...);

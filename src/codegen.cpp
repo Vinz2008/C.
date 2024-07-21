@@ -308,6 +308,28 @@ Value* ConstantStructExprAST::codegen(){
     return ConstantStruct::get(dyn_cast<StructType>(structType), structMembersVal);
 }
 
+Value* ConstantVectorExprAST::codegen(){
+    std::vector<Constant*> VectorMembersVal;
+    for (int i = 0; i < VectorMembers.size(); i++){
+        Cpoint_Type structMemberType = VectorMembers.at(i)->get_type();
+        Value* Vtemp = VectorMembers.at(i)->codegen();
+        if (get_type_llvm(vector_element_type) != Vtemp->getType()){
+            convert_to_type(structMemberType, get_type_llvm(vector_element_type), Vtemp);
+        }
+        Constant* constant;
+        if (! (constant = dyn_cast<Constant>(Vtemp))){
+            return LogErrorV(this->loc, "The %d value of constant array is not a constant", i);
+        }
+        // convert type
+        /*if (get_type_llvm(StructDeclarations[struct_name]->members.at(i).second) != constant->getType()){
+            convert_to_type(get_cpoint_type_from_llvm(constant->getType()), get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), constant);
+        }*/
+        VectorMembersVal.push_back(constant);
+    }
+    //auto vectorType = VectorType::get(get_type_llvm(vector_element_type), vector_size, false);
+    return ConstantVector::get(VectorMembersVal);
+}
+
 Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
     bool should_break = false;
     Value* ret = nullptr;
@@ -1254,7 +1276,8 @@ Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   Function* TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "function called " << Callee << "\n";
-  std::string internal_func_prefix = "cpoint_internal_";
+  //std::string internal_func_prefix = "cpoint_internal_";
+  std::string internal_func_prefix = CallExprAST::get_internal_func_prefix();
   bool is_internal = false;
   CpointDebugInfo.emitLocation(this);
   if (StructDeclarations[Callee] != nullptr){
@@ -2482,7 +2505,8 @@ Value *VarExprAST::codegen() {
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
   // Register all variables and emit their initializer.
-  for (unsigned i = 0, e = VarNames.size(); i != e; ++i) {
+  for (int i = 0; i < VarNames.size(); i++){
+  //for (unsigned i = 0, e = VarNames.size(); i != e; ++i) {
     const std::string &VarName = VarNames[i].first;
     
     ExprAST *Init = VarNames[i].second.get();
@@ -2495,6 +2519,7 @@ Value *VarExprAST::codegen() {
     Value *InitVal;
     bool no_explicit_init_val = false;
     if (Init) {
+      Log::Info() << "Has init" << "\n";
       if (dynamic_cast<EnumCreation*>(Init)){
         Log::Info() << "init val EnumCreation" << "\n";
         AllocaInst* Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
@@ -2559,9 +2584,9 @@ Value *VarExprAST::codegen() {
       if (!InitVal)
         return nullptr;
       // TODO : remove it because it is already done in the ast part
-      if (infer_type){
+      /*if (infer_type){
         cpoint_type = Cpoint_Type(get_cpoint_type_from_llvm(InitVal->getType()));
-      }
+      }*/
     } else { // If not specified, use 0.0.
       no_explicit_init_val = true;
       InitVal = get_default_value(cpoint_type);

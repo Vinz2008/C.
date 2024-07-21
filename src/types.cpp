@@ -37,7 +37,9 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         return get_type_llvm(typeDefTable.at(cpoint_type.type));
     }
     //Log::Info() << "cpoint_type.is_struct : " << cpoint_type.is_struct << "\n";
-    if (cpoint_type.is_struct){
+    if (cpoint_type.is_vector_type){
+        type = VectorType::get(get_type_llvm(*cpoint_type.vector_element_type), cpoint_type.vector_size, false); // should it be scalable
+    } else if (cpoint_type.is_struct){
         Log::Info() << "cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
         std::string structName = cpoint_type.struct_name;
         if (cpoint_type.is_struct_template){
@@ -142,6 +144,9 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     bool is_function = false;
     std::string struct_name = "";
     int nb_element = 0;
+    bool is_vector_type = false;
+    Cpoint_Type* vector_element_type = nullptr;
+    int vector_size = 0;
     if (llvm_type->isPointerTy()){
         is_ptr = true;
     }
@@ -166,6 +171,14 @@ Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
         is_function = true;
     }
 
+    if (llvm_type->isVectorTy()){
+        is_vector_type = true;
+        auto vector_type = dyn_cast<VectorType>(llvm_type);
+        vector_element_type = new Cpoint_Type(get_cpoint_type_from_llvm(vector_type->getElementType()));
+        ElementCount element_count = vector_type->getElementCount();
+        vector_size = element_count.getFixedValue();
+    }
+
 finding_type:
     if (llvm_type == Type::getDoubleTy(*TheContext)){
         type = double_type;
@@ -187,7 +200,7 @@ finding_type:
         if (is_ptr){
             type = i32_type;
         } else {
-        if (!is_struct && !is_array && !is_function){
+        if (!is_struct && !is_array && !is_function && !is_vector_type){
         Log::Warning(emptyLoc) << "Unknown Type" << "\n";
         }
         }
@@ -326,6 +339,15 @@ Constant* get_default_constant(Cpoint_Type type){
         return ConstantFP::get(*TheContext, APFloat(0.0));
     }
 
+    if (type.is_vector_type){
+        std::vector<Constant*> vectorConstants;
+        Constant* constant = get_default_constant(*type.vector_element_type);
+        for (int i = 0; i < type.vector_size; i++){
+            vectorConstants.push_back(constant);
+        }
+        return ConstantVector::get(vectorConstants);
+    }
+
     switch (type.type){
         case bool_type:
         case i32_type:
@@ -418,6 +440,9 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
   Log::Info() << "Creating cast" << "\n";
   Log::Info() << "typeFrom : " << typeFrom << "\n";
   Log::Info() << "typeTo : " << typeTo_cpoint << "\n";
+  if (typeFrom.is_vector_type || typeTo_cpoint.is_vector_type){
+    return false;
+  }
   //Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";
   if (typeFrom.is_array && typeTo_cpoint.is_ptr){
     auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
