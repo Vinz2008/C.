@@ -37,11 +37,12 @@ Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoin
     std::vector<std::pair<std::string, Cpoint_Type>> PanicArgs;
     PanicArgs.push_back(std::make_pair("message", Cpoint_Type(i8_type, true)));
     add_manually_extern("panic", Cpoint_Type(void_type), std::move(PanicArgs), 0, 30, false, false, "");
-    Value* nbElement = ConstantFP::get(*TheContext, APFloat((double) cpoint_type.nb_element));
+    //Value* nbElement = ConstantFP::get(*TheContext, APFloat((double) cpoint_type.nb_element));
+    Value* nbElement = ConstantInt::get(get_type_llvm(Cpoint_Type(i32_type)), APInt(32, (uint64_t)cpoint_type.nb_element, false));
     if (index->getType() != nbElement->getType()){
-      convert_to_type(get_cpoint_type_from_llvm(nbElement->getType()), index->getType(), nbElement);
+      convert_to_type(/*get_cpoint_type_from_llvm(nbElement->getType())*/ Cpoint_Type(i32_type), index->getType(), nbElement);
     }
-    Value* CondV = operators::LLVMCreateGreaterOrEqualThan(index, nbElement);
+    Value* CondV = operators::LLVMCreateGreaterOrEqualThan(index, nbElement, get_cpoint_type_from_llvm(index->getType()));
     if (!CondV)
       return nullptr;
     Function *TheFunction = Builder->GetInsertBlock()->getParent();

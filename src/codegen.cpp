@@ -141,11 +141,11 @@ BasicBlock* get_basic_block(Function* TheFunction, std::string name){
 }
 
 // TODO : change name of these function to be with underscodes ?
-Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
+Value* callLLVMIntrisic(std::string Callee, std::vector<Value*> ArgsV, std::vector<Type*> Tys){
   Callee = Callee.substr(5, Callee.size());
   Log::Info() << "llvm intrisic called " << Callee << "\n";
   llvm::Intrinsic::IndependentIntrinsics intrisicId = llvm::Intrinsic::not_intrinsic;
-  llvm::ArrayRef<llvm::Type *> Tys = std::nullopt;
+  //std::vector<Type*> Tys;
   if (Callee == "va_start"){
     intrisicId = Intrinsic::vastart;
   } else if (Callee == "va_end"){
@@ -178,31 +178,33 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     intrisicId = Intrinsic::trunc;
   } else if (Callee == "read_register"){
     intrisicId = Intrinsic::read_register;
+  } else if (Callee == "vp.add"){
+    intrisicId = Intrinsic::vp_add;
   } else if (Callee == "bitreverse"){
     intrisicId = Intrinsic::bitreverse;
-    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+    /*Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
     Log::Info() << "type : " << arg_cpoint_type << "\n";
     if (arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the bitreverse intrisic on a floating point type arg"); 
     }
-    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));
+    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));*/
   } else if (Callee == "ctpop"){
     intrisicId = Intrinsic::ctpop;
-    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+    /*Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
     if (arg_cpoint_type.is_decimal_number_type()){
         return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
     }
-    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));
+    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));*/
     // TODO : refactor this into a real template ?
   }
   Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId, Tys);
-  std::vector<Value *> ArgsV;
+  /*std::vector<Value *> ArgsV;
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     Value* temp_val = Args[i]->codegen();
     ArgsV.push_back(temp_val);
     if (!ArgsV.back())
       return nullptr;
-  }
+  }*/
   // add additional args for intrisics
   if (Callee == "memcpy" || Callee == "memset" || Callee == "memmove") {
     ArgsV.push_back(BoolExprAST(false).codegen()); // the bool is if it is volatile
@@ -215,6 +217,41 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
     call_instruction_name = "";
   }
   return Builder->CreateCall(CalleeF, ArgsV, call_instruction_name);
+}
+
+Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
+  std::vector<Type*> Tys;
+  std::string CalleeWithoutPrefix = Callee.substr(5, Callee.size());
+  // TODO : refactor these into a real template ?
+  if (CalleeWithoutPrefix == "bitreverse" || CalleeWithoutPrefix == "ctpop"){
+    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+    Log::Info() << "type : " << arg_cpoint_type << "\n";
+    if (arg_cpoint_type.is_decimal_number_type()){
+        return LogErrorV(emptyLoc, "Can't use the %s intrisic on a floating point type arg", Callee.c_str()); 
+    }
+    Tys.push_back(get_type_llvm(arg_cpoint_type));
+  } /*else if (CalleeWithoutPrefix == "ctpop"){
+    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+    if (arg_cpoint_type.is_decimal_number_type()){
+        return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
+    }
+    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));
+    // TODO : refactor this into a real template ?
+  }*/ else if (CalleeWithoutPrefix == "vp.add"){
+    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+    if (!arg_cpoint_type.is_decimal_number_type() && !arg_cpoint_type.is_signed() && !arg_cpoint_type.is_unsigned()){
+        return LogErrorV(emptyLoc, "Can't use the %s intrisic on an arg that is not a number", Callee.c_str()); 
+    }
+    Tys.push_back(get_type_llvm(arg_cpoint_type));
+  }
+  std::vector<Value *> ArgsV;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    Value* temp_val = Args[i]->codegen();
+    ArgsV.push_back(temp_val);
+    if (!ArgsV.back())
+      return nullptr;
+  }
+  return callLLVMIntrisic(Callee, ArgsV, Tys);
 }
 
 Value* getSizeOfStruct(Value *A){
@@ -268,7 +305,7 @@ Value *VariableExprAST::codegen() {
   Value* ptr = get_var_allocation(Name);
   Cpoint_Type var_type = *get_variable_type(Name); 
   Log::Info() << "loading var " << Name << " of type " << type << "\n";
-  return Builder->CreateLoad(get_type_llvm(var_type), ptr, Name.c_str());
+  return Builder->CreateLoad(get_type_llvm(var_type), ptr, (Name + ".load").c_str());
 }
 
 Value* ConstantArrayExprAST::codegen(){
@@ -613,7 +650,7 @@ void endScope(){
 
 void assignUnionMember(Value* union_ptr, Value* val, Cpoint_Type member_type){
     if (val->getType() != get_type_llvm(member_type)){
-        convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(member_type), val);
+        convert_to_type(get_cpoint_type_from_llvm(val->getType()), member_type, val);
     }
     Builder->CreateStore(val, union_ptr);
 }
@@ -669,7 +706,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             Cpoint_Type index_type = index->get_type();
             auto indexVal = index->codegen();
             if (indexVal->getType() != get_type_llvm(i64_type)){
-                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), get_type_llvm(i64_type), indexVal) ; // TODO : replace the get_cpoint_type_from_llvm to index_type
+                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), Cpoint_Type(i64_type), indexVal) ; // TODO : replace the get_cpoint_type_from_llvm to index_type
             }
             Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
             std::vector<Value*> indexes = { zero, indexVal};
@@ -684,7 +721,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);
             Log::Info() << "Create GEP" << "\n";
             if (ValDeclared->getType() != get_type_llvm(member_type)){
-            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
+            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), member_type, ValDeclared);
             }
             Builder->CreateStore(ValDeclared, ptr);
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -694,7 +731,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             Value* ptr = getStructMemberGEP(std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type);
                 
             if (ValDeclared->getType() != get_type_llvm(member_type)){
-                convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(member_type), ValDeclared);
+                convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), member_type, ValDeclared);
             }
             Builder->CreateStore(ValDeclared, ptr);
             return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -710,7 +747,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         }
         Cpoint_Type cpoint_type = *get_variable_type(VarExpr->Name);
         if (ValDeclared->getType() != get_type_llvm(cpoint_type)){
-            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), get_type_llvm(cpoint_type), ValDeclared);
+            convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), cpoint_type, ValDeclared);
         }
         if (is_global){
             Builder->CreateStore(ValDeclared, GlobalVariables[VarExpr->Name]->globalVar);
@@ -995,7 +1032,7 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         }
 
         if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){
-            convert_to_type(get_cpoint_type_from_llvm(IndexV->getType()), get_type_llvm(Cpoint_Type(i64_type)), IndexV);
+            convert_to_type(get_cpoint_type_from_llvm(IndexV->getType()), Cpoint_Type(i64_type), IndexV);
         }
   
         if (!is_llvm_type_number(IndexV->getType())){
@@ -1047,7 +1084,7 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         return ptr;
     } else if (dynamic_cast<BinaryExprAST*>(array.get())){
         if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){
-            convert_to_type(get_cpoint_type_from_llvm(IndexV->getType()), get_type_llvm(Cpoint_Type(i64_type)), IndexV);
+            convert_to_type(get_cpoint_type_from_llvm(IndexV->getType()), Cpoint_Type(i64_type), IndexV);
         }
   
         if (!is_llvm_type_number(IndexV->getType())){
@@ -1182,16 +1219,16 @@ Value *BinaryExprAST::codegen() {
     return nullptr;
   if (Op == "+"){
     if (L->getType()->isPointerTy()){
-        convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(i64_type)), L);
+        convert_to_type(get_cpoint_type_from_llvm(L->getType()), Cpoint_Type(i64_type), L);
     }
     if (R->getType()->isPointerTy()){
-        convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(i64_type)), R);
+        convert_to_type(get_cpoint_type_from_llvm(R->getType()), Cpoint_Type(i64_type), R);
     }
   }
   if (L->getType() == get_type_llvm(Cpoint_Type(i8_type)) || L->getType() == get_type_llvm(Cpoint_Type(i16_type))){
-    convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(i32_type)), L);
+    convert_to_type(get_cpoint_type_from_llvm(L->getType()), Cpoint_Type(i32_type), L);
   } else if (R->getType() == get_type_llvm(Cpoint_Type(i8_type)) || R->getType() == get_type_llvm(Cpoint_Type(i16_type))){
-    convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(i32_type)), R);
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()), Cpoint_Type(i32_type), R);
   }
   if (L->getType() != R->getType()){
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
@@ -1200,15 +1237,15 @@ Value *BinaryExprAST::codegen() {
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
   if (Op == "&&"){
     if (get_cpoint_type_from_llvm(L->getType()).is_decimal_number_type()){
-        convert_to_type(get_cpoint_type_from_llvm(L->getType()), get_type_llvm(Cpoint_Type(i32_type)), L);
+        convert_to_type(get_cpoint_type_from_llvm(L->getType()), Cpoint_Type(i32_type), L);
     }
     if (get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
-        convert_to_type(get_cpoint_type_from_llvm(R->getType()), get_type_llvm(Cpoint_Type(i32_type)), R);
+        convert_to_type(get_cpoint_type_from_llvm(R->getType()), Cpoint_Type(i32_type), R);
     }
   }
   // TODO : make every operators compatibles with ints and other types. Possibly also refactor this in multiple function in maybe a dedicated operators.cpp file
   if (Op == "=="){
-    return operators::LLVMCreateCmp(L, R);
+    return operators::LLVMCreateCmp(L, R, LHS_type);
   }
   if (Op == "||"){
     return operators::LLVMCreateLogicalOr(L, R);
@@ -1217,13 +1254,13 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateLogicalAnd(L, R);
   }
   if (Op == "!="){
-    return operators::LLVMCreateNotEqualCmp(L, R);
+    return operators::LLVMCreateNotEqualCmp(L, R, LHS_type);
   }
   if (Op == "<="){
-    return operators::LLVMCreateSmallerOrEqualThan(L, R);
+    return operators::LLVMCreateSmallerOrEqualThan(L, R, LHS_type);
   }
   if (Op == ">="){
-    return operators::LLVMCreateGreaterOrEqualThan(L, R);
+    return operators::LLVMCreateGreaterOrEqualThan(L, R, LHS_type);
   }
   if (Op == ">>"){
     return Builder->CreateLShr(L, R, "shiftrtmp");
@@ -1233,19 +1270,19 @@ Value *BinaryExprAST::codegen() {
   }
   switch (Op.at(0)) {
   case '+':
-    return operators::LLVMCreateAdd(L, R);
+    return operators::LLVMCreateAdd(L, R, LHS_type);
   case '-':
-    return operators::LLVMCreateSub(L, R);
+    return operators::LLVMCreateSub(L, R, LHS_type);
   case '*':
-    return operators::LLVMCreateMul(L, R);
+    return operators::LLVMCreateMul(L, R, LHS_type);
   case '%':
     return operators::LLVMCreateRem(L, R/*, RHS_type*/);
   case '<':
-    return operators::LLVMCreateSmallerThan(L, R);
+    return operators::LLVMCreateSmallerThan(L, R, LHS_type);
   case '/':
     return operators::LLVMCreateDiv(L, R, LHS_type);
   case '>':
-    return operators::LLVMCreateGreaterThan(L, R);
+    return operators::LLVMCreateGreaterThan(L, R, LHS_type);
   case '^':
     L = Builder->CreateXor(L, R, "xortmp");
     return L;
@@ -1444,7 +1481,7 @@ Value *CallExprAST::codegen() {
     if (temp_val->getType() != get_type_llvm(arg_type)){
       Log::Info() << "name of arg converting in call expr : " << ((FunctionProtos[Callee]) ? FunctionProtos[Callee]->Args.at(i).first : (std::string)"(couldn't be found because it is a function pointer)") << "\n"; // TODO : fix this ?
       //return LogErrorV(this->loc, "Arg %s type is wrong in the call of %s\n Expected type : %s, got type : %s\n", FunctionProtos[Callee]->Args.at(i).second, Callee, create_pretty_name_for_type(get_cpoint_type_from_llvm(temp_val->getType())), create_pretty_name_for_type(FunctionProtos[Callee]->Args.at(i).second));
-        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , get_type_llvm(arg_type), temp_val);
+        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , arg_type, temp_val);
     }
     }
     ArgsV.push_back(temp_val);
@@ -1651,7 +1688,7 @@ Value* TypeidExprAST::codegen(){
 
 Value* CastExprAST::codegen(){
     Value* val = ValToCast->codegen();
-    convert_to_type(get_cpoint_type_from_llvm(val->getType()), get_type_llvm(type), val);
+    convert_to_type(get_cpoint_type_from_llvm(val->getType()), type, val);
     return val;
 }
 
@@ -2116,13 +2153,17 @@ GlobalVariable* GlobalVariableAST::codegen(){
 Value *IfExprAST::codegen() {
   Log::Info() << "IfExprAST codegen" << "\n";
   CpointDebugInfo.emitLocation(this);
+  Cpoint_Type cond_type = Cond->get_type();
+  Log::Info() << "cond_type : " << cond_type << "\n";
   Value *CondV = Cond->codegen();
   if (!CondV)
     return nullptr;
-  if (CondV->getType() != get_type_llvm(Cpoint_Type(bool_type))){
+  // TODO : use the cond_type instead of 
+  //if (CondV->getType() /*cond_type.type*/ != get_type_llvm(Cpoint_Type(bool_type))){
+  if (cond_type.type != bool_type || cond_type.is_vector_type){
     // TODO : create default comparisons : if is pointer, compare to null, if number compare to 1, etc
-    Log::Info() << "Got bool i1 to if" << "\n";
-    convert_to_type(get_cpoint_type_from_llvm(CondV->getType()), get_type_llvm(Cpoint_Type(bool_type)), CondV);
+    Log::Info() << "Not got bool i1 to if, got : " << cond_type << " (llvm : " << get_cpoint_type_from_llvm(CondV->getType()) << ")" << "\n";
+    convert_to_type(/*get_cpoint_type_from_llvm(CondV->getType())*/ cond_type, Cpoint_Type(bool_type), CondV);
   }
 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();

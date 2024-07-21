@@ -115,5 +115,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
 AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Cpoint_Type type);
 Function *getFunction(std::string Name);
 std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectType, std::string MemberName);
+Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args);
+Value* callLLVMIntrisic(std::string Callee, std::vector<Value*> ArgsV, std::vector<Type*> Tys);
 
 #endif

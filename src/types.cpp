@@ -441,6 +441,21 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
   Log::Info() << "typeFrom : " << typeFrom << "\n";
   Log::Info() << "typeTo : " << typeTo_cpoint << "\n";
   if (typeFrom.is_vector_type || typeTo_cpoint.is_vector_type){
+    if (!typeFrom.is_vector_type){
+        LogError("Trying to cast something that is not of a vector type to a vector");
+    }
+    if (typeTo_cpoint.type == bool_type && typeFrom.vector_element_type && typeFrom.vector_element_type->type == bool_type){
+        // TODO : optimize this -> if the vector can be bitcast to a scalar type (for example a vector of 8 i8 which can be casted to an an i64), cast it to the scalar type and compare it to -1 (the minus is because when casting if everything is true, the sign bit will be 1)
+        val = Builder->CreateAndReduce(val);
+        return true;
+    }
+    if (!typeTo_cpoint.is_vector_type){
+        LogError("Trying to cast something that is of vector type to a not vector type");
+    }
+    if (typeFrom.vector_size != typeTo_cpoint.vector_size){
+        LogError("Trying to cast to a vector type with a different size");
+    }
+    // automatically transforms a vector of bool to a bool
     return false;
   }
   //Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";

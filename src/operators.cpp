@@ -13,31 +13,51 @@ extern std::unordered_map<std::string, int> BinopPrecedence;
 
 namespace operators {
 
-Value* LLVMCreateAdd(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateAdd(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        /*Cpoint_Type vector_element_type = *arg_type.vector_element_type;
+        if (vector_element_type.is_signed() || vector_element_type.is_unsigned()){
+            std::vector<llvm::Value *> ArgsV = { L, R};
+            std::vector<Type*> Tys = { get_type_llvm(arg_type) };
+            std::vector<Constant*> vector_mask_constants;
+            Constant* true_constant = ConstantInt::get(get_type_llvm(bool_type), APInt(1, (uint64_t)1, false));
+            for (int i = 0; i < arg_type.vector_size; i++){
+                vector_mask_constants.push_back(true_constant);
+            }
+            auto vector_mask = ConstantVector::get(vector_mask_constants);
+            ArgsV.push_back(vector_mask);
+            auto constant_vector_length = ConstantInt::get(get_type_llvm(i32_type), APInt(32, (uint64_t)arg_type.vector_size, false));
+            ArgsV.push_back(constant_vector_length);
+            return callLLVMIntrisic("llvm.vp.add", ArgsV, Tys);
+        }*/
+    }
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type() || arg_type.is_vector_type){
       return Builder->CreateAdd(L, R, "addtmp");
     }
     return Builder->CreateFAdd(L, R, "faddtmp");
 }
 
-Value* LLVMCreateSub(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateSub(Value* L, Value* R, Cpoint_Type arg_type){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type() || arg_type.is_vector_type){
       return Builder->CreateSub(L, R, "subtmp");
     }
     return Builder->CreateFSub(L, R, "fsubtmp");
 }
 
-Value* LLVMCreateMul(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateMul(Value* L, Value* R, Cpoint_Type arg_type){
+    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type() || arg_type.is_vector_type){
       return Builder->CreateMul(L, R, "multmp");
     }
     return Builder->CreateFMul(L, R, "fmultmp");
 }
 
-Value* LLVMCreateDiv(Value* L, Value* R, Cpoint_Type type){
+Value* LLVMCreateDiv(Value* L, Value* R, Cpoint_Type arg_type){
     //Cpoint_Type type = get_cpoint_type_from_llvm(R->getType());
-    if (!type.is_decimal_number_type()){
-      if (type.is_signed()){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
+      if (arg_type.is_signed()){
         return Builder->CreateSDiv(L, R, "sdivtmp");
       } else {
         return Builder->CreateUDiv(L, R, "udivtmp");
@@ -58,8 +78,11 @@ Value* LLVMCreateRem(Value* L, Value* R/*, Cpoint_Type type*/){ // TODO : uncomm
     return Builder->CreateFRem(L, R, "fremtmp");
 }
 
-Value* LLVMCreateCmp(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateCmp(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
       L = Builder->CreateICmpEQ(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
@@ -67,8 +90,11 @@ Value* LLVMCreateCmp(Value* L, Value* R){
     return L;
 }
 
-Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateNotEqualCmp(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
         L = Builder->CreateICmpNE(L, R, "notequalcmptmp");
     } else {
         L = Builder->CreateFCmpUNE(L, R, "notequalfcmptmp");
@@ -76,8 +102,11 @@ Value* LLVMCreateNotEqualCmp(Value* L, Value* R){
     return L;
 }
 
-Value* LLVMCreateGreaterThan(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateGreaterThan(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
       L = Builder->CreateICmpSGT(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpOGT(L, R, "cmptmp");
@@ -85,8 +114,11 @@ Value* LLVMCreateGreaterThan(Value* L, Value* R){
     return L;
 }
 
-Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
         L = Builder->CreateICmpSGE(L, R, "cmptmp");
     } else {
         L = Builder->CreateFCmpOGE(L, R, "cmptmp");
@@ -94,18 +126,23 @@ Value* LLVMCreateGreaterOrEqualThan(Value* L, Value* R){
     return L;
 }
 
-Value* LLVMCreateSmallerThan(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateSmallerThan(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
       L = Builder->CreateICmpSLT(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpOLT(L, R, "cmptmp");
     }
-    // Convert bool 0/1 to double 0.0 or 1.0
     return L;
 }
 
-Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R){
-    if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type()){
+Value* LLVMCreateSmallerOrEqualThan(Value* L, Value* R, Cpoint_Type arg_type){
+    if (arg_type.is_vector_type){
+        arg_type = *arg_type.vector_element_type;
+    }
+    if (!arg_type.is_decimal_number_type()){
         L = Builder->CreateICmpSLE(L, R, "cmptmp");
     } else {
         L = Builder->CreateFCmpOLE(L, R, "cmptmp");
@@ -186,6 +223,10 @@ Cpoint_Type BinaryExprAST::get_type(){
         return LHS->get_type();
     }
     if (Op == "||" || Op == "&&" || Op == "==" || Op == "!=" || Op == "<" || Op == "<=" || Op == ">" || Op == ">="){
+        Cpoint_Type LHS_type = LHS->get_type();
+        if (LHS_type.is_vector_type && Op == "=="){
+            return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, new Cpoint_Type(bool_type), LHS_type.vector_size);
+        }
         return Cpoint_Type(bool_type);
     }
     if (Op == "["){
