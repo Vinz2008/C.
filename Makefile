@@ -11,6 +11,10 @@ TARGET ?= $(shell $(CC) -dumpmachine)
 export CC
 export CXX
 
+#LLVM_CONFIG ?= llvm-config
+LLVM_PREFIX ?= /usr
+
+STATIC_LLVM ?= false
 
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint.exe
@@ -38,7 +42,7 @@ endif
 ifneq (,$(findstring mingw,$(CXX)))
 CXXFLAGS += $(WINDOWS_CXXFLAGS)
 else
-CXXFLAGS += $(shell llvm-config --cxxflags)
+CXXFLAGS += $(shell $(LLVM_PREFIX)/bin/llvm-config --cxxflags)
 endif
 #endif
 
@@ -64,7 +68,15 @@ ifneq (,$(findstring mingw,$(CXX)))
 LDFLAGS = -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-17 -lstdc++ 
 #LDFLAGS += -lintl
 else
-LDFLAGS = $(shell llvm-config --ldflags --system-libs --libs core)
+ifeq ($(STATIC_LLVM), true)
+CLANG_STATIC_LIBS=$(shell ls $(LLVM_PREFIX)/lib/libclang*.a)
+CLANG_STATIC_LDFLAGS = $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(CLANG_STATIC_LIBS)))))
+LLD_STATIC_LIBS=$(shell ls $(LLVM_PREFIX)/lib/liblld*.a)
+LLD_STATIC_LDFLAGS = $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(LLD_STATIC_LIBS)))))
+LDFLAGS = $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs all) $(CLANG_STATIC_LDFLAGS)  $(LLD_STATIC_LDFLAGS)
+else
+LDFLAGS = $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs core)
+endif
 endif
 endif
 
@@ -90,7 +102,12 @@ ifeq ($(LLVM_TOOLS_EMBEDDED_COMPILER),true)
 LLVM_TOOLS_EXTERNAL_SRCS := $(wildcard $(SRCDIR)/external/*.cpp)
 LLVM_TOOLS_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(LLVM_TOOLS_EXTERNAL_SRCS))
 OBJS += $(LLVM_TOOLS_EXTERNAL_OBJS)
+
+
+ifeq ($(STATIC_LLVM), false)
 LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
+endif
+
 endif
 
 #DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))
