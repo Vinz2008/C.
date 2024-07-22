@@ -247,7 +247,15 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
     }
     PrintfArgs.push_back(std::make_unique<StringExprAST>(generated_printf_format));
     for (int i = format_pos+1; i < Args.size(); i++){
-        PrintfArgs.push_back(std::move(Args.at(i)));
+        Cpoint_Type arg_cpoint_type = Args.at(i)->get_type();
+        if (arg_cpoint_type.is_vector_type){
+            for (int j = 0; j < arg_cpoint_type.vector_size; j++){
+                auto index_expr = std::make_unique<NumberExprAST>(j);
+                PrintfArgs.push_back(std::make_unique<BinaryExprAST>(emptyLoc, "[", Args.at(i)->clone(), std::move(index_expr)));
+            }
+        } else {
+            PrintfArgs.push_back(std::move(Args.at(i)));
+        }
     }
 
     auto call = std::make_unique<CallExprAST>(emptyLoc, is_error ? "fprintf" : "printf", std::move(PrintfArgs), Cpoint_Type());

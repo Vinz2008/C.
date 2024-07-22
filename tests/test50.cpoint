@@ -1,12 +1,14 @@
 func main() i32 {
     var v : Vector~i32, 8~ = Vector~i32, 8~ { 1, 2, 3, 4, 5, 6, 7, 8}
     var v2 = Vector~i32, 8~ { 8, 7, 6, 5, 4, 3, 2, 1}
-    var v_6 = Vector~i32, 6~ { 1, 2, 3, 4, 5, 6}
+    var v_6 = Vector~i32, 6~ { 1, 2, 3, 4, 5, 6} 
+    #println("last element of v_6 : {}", v_6[5] )
     var v3 = v + v2
+    var v4 = v3 - v
     if v == v {
-        #println("v and v vectors are equal")
+        #println("v ({}) and v vectors are equal", v)
     } else {
-        #println("v and v vectors are not equal")
+        #println("v ({}) and v vectors are not equal", v)
     }
     if v == v2 {
         #println("v and v2 vectors are equal")

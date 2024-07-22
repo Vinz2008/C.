@@ -164,6 +164,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add '...' to Constant Vectors exprs so the other numbers in the vectors would be the same as the last
 - [ ] Add selecting functionalities of cpu in cli (ex : avx)
 - [ ] Add a way to select the real linkname of a function in a string (like in rust) (it will help with intrisics : insted of hardcoding them, we could define them with another name in a file in core, ex : llvm.va_start) (even if we do that, we will still need to detect llvm intrisics because apparently it can't be called directly)
+- [ ] Permit casting a vector from and to an array  
+- [ ] Add support for struct and arrays to println
 
 ## Benchmarks compared to other languages
 

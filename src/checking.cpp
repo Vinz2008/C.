@@ -26,8 +26,11 @@ Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_T
       indexd = IndexConstInt->getValue().roundToDouble();
     }
     if (indexd != -INFINITY){
-      if (indexd > cpoint_type.nb_element){
-        return LogErrorV(loc, "Index too big for array");
+      if (cpoint_type.is_array && indexd > cpoint_type.nb_element){
+        return LogErrorV(loc, "Index too big for the array");
+      }
+      if (cpoint_type.is_vector_type && indexd > cpoint_type.vector_size){
+        return LogErrorV(loc, "Index too big for the vector");
       }
     }
     return ConstantFP::get(*TheContext, APFloat((double)0)); // to differenciate from nullptr (TODO : fix this ?)

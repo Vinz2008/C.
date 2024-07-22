@@ -1005,8 +1005,10 @@ Value* StructMemberCallExprAST::codegen(){
     return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
 
-// TODO : refactor this code to be more efficient (for example a lot of the code from variableExprASt should be a function that is called after getting the struct member)
-Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index, Cpoint_Type& member_type){
+// TODO : refactor this code to be more efficient (for example a lot of the code from variableExprAST should be a function that is called after getting the struct member)
+// should load : if the value returned is a ptr (so we should load it)
+Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index, Cpoint_Type& member_type, bool& should_load){
+    should_load = true;
     Value* IndexV = index->codegen();
     if (!IndexV){
         return LogErrorV(emptyLoc, "error in array index");
@@ -1020,10 +1022,14 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
             return LogErrorV(emptyLoc, "Tried to get a member of an array that doesn't exist : %s", ArrayName.c_str());
         }
         Cpoint_Type cpoint_type = *get_variable_type(ArrayName);
+        if (!cpoint_type.is_array && !cpoint_type.is_vector_type && !cpoint_type.is_ptr){
+            Log::Info() << "indexing expr type : " << cpoint_type << "\n";
+            return LogErrorV(emptyLoc, "Trying to index on an expr that is neither an array, a vector or a pointer");
+        }
         Cpoint_Type cpoint_type_not_modified = cpoint_type;
         Value* firstIndex = IndexV;
         bool is_constant = false;
-        if (dyn_cast<Constant>(IndexV) && cpoint_type.nb_element > 0){
+        if (dyn_cast<Constant>(IndexV) && (cpoint_type.nb_element > 0 || cpoint_type.vector_size > 0)){
             is_constant = true;
             Constant* indexConst = dyn_cast<Constant>(IndexV);
             if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, emptyLoc)){
@@ -1038,11 +1044,16 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         if (!is_llvm_type_number(IndexV->getType())){
             return LogErrorV(emptyLoc, "index for array is not a number\n");
         }
+        if (cpoint_type.is_vector_type){
+            should_load = false;
+            return Builder->CreateExtractElement(VariableExpr->codegen(), IndexV);
+        }
   
         Value* allocated_value = get_var_allocation(ArrayName);
         if (!allocated_value){
             return LogErrorV(emptyLoc, "Trying to get the array member from an unknown variable");
         }
+
         std::vector<Value*> indexes = { zero, IndexV};
         Log::Info() << "Cpoint_type for array member before : " << cpoint_type << "\n";
         // TODO : WHY SOME TYPES HAVE NB_PTR > 0 BUT IS_PTR FALSE ? IT IS NOT SUPPOSED TO BE POSSIBLE, BUT WE STILL NEED THIS CHECK FOR NOW. FIX IT!!
@@ -1074,7 +1085,6 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
         member_type.nb_element = 0;
   
         Type* type_llvm = get_type_llvm(cpoint_type);
-
         Value* array_or_ptr = allocated_value;
         // To make argv[0] work
         if (cpoint_type_not_modified.is_ptr /*&& cpoint_type_not_modified.nb_ptr > 1*/){
@@ -1120,9 +1130,13 @@ Value* getArrayMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST
 
 Value* getArrayMember(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
     Cpoint_Type member_type;
-    Value* ptr = getArrayMemberGEP(std::move(array), std::move(index), member_type);
+    bool should_load_val = true;
+    Value* ptr_or_value = getArrayOrVectorMemberGEP(std::move(array), std::move(index), member_type, should_load_val);
     std::string ArrayName = ""; // TODO
-    Value* value = Builder->CreateLoad(get_type_llvm(member_type), ptr, ArrayName);
+    Value* value = ptr_or_value;
+    if (should_load_val){
+        value = Builder->CreateLoad(get_type_llvm(member_type), ptr_or_value, ArrayName);
+    }
     return value;
 }
 
@@ -1573,7 +1587,8 @@ Value* AddrExprAST::codegen(){
         return ptr;
     } else if (binOpMember->Op == "["){
         Cpoint_Type temp;
-        Value* ptr = getArrayMemberGEP(std::move(binOpMember->LHS), std::move(binOpMember->RHS), temp);
+        bool should_load_val;
+        Value* ptr = getArrayOrVectorMemberGEP(std::move(binOpMember->LHS), std::move(binOpMember->RHS), temp, should_load_val);
         return ptr;
     } else {
         return LogErrorV(this->loc, "Unknown operator expression for addr");

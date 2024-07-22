@@ -551,6 +551,11 @@ Cpoint_Type Cpoint_Type::deref_type(){
     Cpoint_Type new_type = *this;
     if (new_type.is_array){
         new_type.is_array = false;
+    } else if (new_type.is_vector_type){
+        /*new_type.is_vector_type = false;
+        new_type.vector_size = 0;
+        new_type.vector_element_type = nullptr;*/
+        new_type = *new_type.vector_element_type;
     } else {
         if (new_type.is_ptr){
             new_type.nb_ptr--;
@@ -564,7 +569,14 @@ Cpoint_Type Cpoint_Type::deref_type(){
 
 std::string Cpoint_Type::to_printf_format(){
     std::string format;
-    if (is_ptr){
+    // TODO : maybe move this to a Print trait like in rust
+    if (is_vector_type){
+        format = "{";
+        for (int i = 0; i < vector_size; i++){
+            format += " " + vector_element_type->to_printf_format() + "";
+        }
+        format += "}";
+    } else if (is_ptr){
         if (type == i8_type){
             format = "%s";
         } else {

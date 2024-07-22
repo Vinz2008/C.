@@ -425,6 +425,10 @@ public:
     }
     return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, true, args, new Cpoint_Type(FunctionProtos[Name]->cpoint_type));
    }
+   if (!get_variable_type(Name)){
+    LogError("Unknown variable");
+    return Cpoint_Type();
+   }
    return *get_variable_type(Name);
    //return type;
   }
