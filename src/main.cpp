@@ -37,7 +37,7 @@
 #include "errors.h"
 #include "debuginfo.h"
 #include "linker.h"
-#include "target-triplet.h"
+#include "targets/target-triplet.h"
 #include "cli.h"
 #include "imports.h"
 #include "log.h"
@@ -52,6 +52,7 @@
 #include "operators.h"
 #include "cli_infos.h"
 #include "llvm.h"
+#include "targets/targets.h"
 
 #ifdef ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER
 #include "clang.h"
@@ -142,8 +143,9 @@ void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vecto
   is_in_extern = false;
 }
 
-string TargetTriple;
+//string TargetTriple;
 
+TargetInfo targetInfos;
 Triple TripleLLVM;
 
 static void add_externs_for_gc(){
@@ -445,6 +447,7 @@ int main(int argc, char **argv){
     std::string run_args = "";
     std::string llvm_default_target_triple = llvm::sys::getDefaultTargetTriple();
     TripleLLVM = Triple(llvm_default_target_triple); // default target triplet only for lld
+    std::string TargetTriple = "";
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
@@ -518,7 +521,7 @@ int main(int argc, char **argv){
                 Log::Info() << lld_args.at(i) << " ";
             }
             Log::Info() << "\n";
-            return LLDLink(Triple(lld_target_triplet), lld_args.size()-1, lld_args.data(), false /*can_exit_early : should it ? (TODO ?)*/, silent_mode);
+            return LLDLink(llvm::Triple(lld_target_triplet), lld_args.size()-1, lld_args.data(), false /*can_exit_early : should it ? (TODO ?)*/, silent_mode);
         } else if (arg.compare("-internal-lld") == 0){
             should_use_internal_lld = true;
         } else if (arg.compare("-disable-internal-lld") == 0) {
@@ -674,8 +677,9 @@ int main(int argc, char **argv){
     TargetTriple = target_triplet_found;
     } else {
     TargetTriple = llvm_default_target_triple;
-    }
+    } 
     setup_preprocessor(TargetTriple);
+    targetInfos = get_target_infos(TargetTriple);
     Comp_context->filename = filename;
     std::string temp_filename = filename;
     temp_filename.append(".temp");
@@ -713,7 +717,7 @@ int main(int argc, char **argv){
 
     //legacy::PassManager pass;
     std::string os_name = get_os(TargetTriple);
-    TripleLLVM = Triple(TargetTriple);
+    TripleLLVM = llvm::Triple(/*TargetTriple*/ targetInfos.llvm_target_triple);
     Log::Info() << "os from target triplet : " << os_name << "\n";
     //setup_preprocessor(TargetTriple);
     Log::Info() << "TEST AFTER PREPROCESSOR" << "\n";
@@ -763,7 +767,7 @@ int main(int argc, char **argv){
     if (Comp_context->c_translator){
         c_translator::generate_c_code("out.c");
     } else {
-    int ret = generate_llvm_object_file(object_filename, TripleLLVM, TargetTriple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level);
+    int ret = generate_llvm_object_file(object_filename, TripleLLVM, /*TargetTriple*/ targetInfos.llvm_target_triple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.features);
     if (ret == 1){
         return 1;
     }

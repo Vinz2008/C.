@@ -1,7 +1,7 @@
 #include "preprocessor.h"
 //#include <bits/stdc++.h>
 #include <sstream>
-#include "target-triplet.h"
+#include "targets/target-triplet.h"
 #include "lexer.h"
 #include "log.h"
 

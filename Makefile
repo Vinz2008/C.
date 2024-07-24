@@ -96,7 +96,7 @@ endif
 
 SRCDIR=src
 
-SRCS := $(wildcard $(SRCDIR)/*.cpp)
+SRCS := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/targets/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 ifeq ($(LLVM_TOOLS_EMBEDDED_COMPILER),true)
 LLVM_TOOLS_EXTERNAL_SRCS := $(wildcard $(SRCDIR)/external/*.cpp)

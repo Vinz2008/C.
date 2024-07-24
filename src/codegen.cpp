@@ -34,6 +34,7 @@
 #include "vars.h"
 #include "macros.h"
 #include "match.h"
+#include "targets/targets.h"
 
 #include <typeinfo>
 #include <cxxabi.h>
@@ -89,7 +90,8 @@ extern bool debug_info_mode;
 
 extern bool is_in_struct_templates_codegen;
 
-extern std::string TargetTriple;
+//extern std::string TargetTriple;
+extern TargetInfo targetInfos;
 
 extern bool is_in_extern;
 
@@ -1638,7 +1640,7 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         return LogErrorV(loc, "For now, compile time sizeof of array is not implemented");
     }
     if (sizeof_type.is_ptr){
-        auto triple = Triple(TargetTriple);
+        auto triple = Triple(/*TargetTriple*/ targetInfos.llvm_target_triple);
         if (triple.isArch64Bit()){
             return ConstantInt::get(*TheContext, APInt(32, (uint64_t)64/8, false));
         } else if (triple.isArch32Bit()){

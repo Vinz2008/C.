@@ -57,19 +57,19 @@ struct TimeTracerRAII {
 extern std::unique_ptr<Module> TheModule;
 extern std::unique_ptr<Compiler_context> Comp_context;
 
-int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, std::string TargetTriple, llvm::raw_ostream* file_out_ostream, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level){
+int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, std::string LLVMTargetTriple, llvm::raw_ostream* file_out_ostream, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level, std::string cpu_features){
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
     std::string Error;
-    auto Target = TargetRegistry::lookupTarget(TargetTriple, Error);
+    auto Target = TargetRegistry::lookupTarget(LLVMTargetTriple, Error);
     if (!Target) {
         errs() << Error << "\n";
         return 1;
     }
 
-    auto CPU = "generic";
-    auto Features = "";
+    std::string CPU = "generic";
+    //std::string Features = "";
     TargetOptions opt;
     std::optional<llvm::Reloc::Model> RM;
     if (PICmode){
@@ -77,11 +77,11 @@ int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, st
     } else {
       RM = std::optional<Reloc::Model>(Reloc::Model::DynamicNoPIC);
     }
-    TargetMachine* TheTargetMachine = Target->createTargetMachine(TargetTriple, CPU, Features, opt, RM);
+    TargetMachine* TheTargetMachine = Target->createTargetMachine(LLVMTargetTriple, CPU, /*Features*/ cpu_features, opt, RM);
     TheModule->setDataLayout(TheTargetMachine->createDataLayout());
     InitializeAllAsmParsers();
     InitializeAllAsmPrinters();
-    TheModule->setTargetTriple(TargetTriple);
+    TheModule->setTargetTriple(LLVMTargetTriple);
     std::error_code EC;
     raw_fd_ostream dest(llvm::StringRef(object_filename), EC, sys::fs::OF_None);
     if (EC) {

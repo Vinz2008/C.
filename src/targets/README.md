@@ -1,0 +1,1 @@
+I stole most of these target infos from the Rust codebase (see https://github.com/rust-lang/rust/tree/master/compiler/rustc_target/src/spec/targets)

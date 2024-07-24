@@ -166,6 +166,12 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add a way to select the real linkname of a function in a string (like in rust) (it will help with intrisics : insted of hardcoding them, we could define them with another name in a file in core, ex : llvm.va_start) (even if we do that, we will still need to detect llvm intrisics because apparently it can't be called directly)
 - [ ] Permit casting a vector from and to an array  
 - [ ] Add support for struct and arrays to println
+- [ ] Implement features like in rust
+- [ ] Make the compiler less dependent on LLVM, so more backend agnostic which would enable the c backend and the custom asm backend (for this, for example see the targets.h TODO) 
+- [ ] Make it possible to use the compiler with a non-clang linker (invoking the linker directly instead of a c compiler) (for example replace -Wl flags with normal flags. See the rustc_target in the rust project to see how they do it)
+- [ ] Make a base file for each group of target in a base folder in the targets folder (like rust)
+- [ ] If the cpu type is native, make llvm add the cpu features needed (https://github.com/rust-lang/rust/blob/2ccafed862f6906707a390caf180449dd64cad2e/compiler/rustc_codegen_llvm/src/llvm_util.rs#L517)
+- [ ] Add an option for cpu types and features
 
 ## Benchmarks compared to other languages
 
