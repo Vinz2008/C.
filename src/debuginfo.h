@@ -32,3 +32,6 @@ DISubroutineType *DebugInfoCreateFunctionType(Cpoint_Type type, std::vector<std:
 DICompositeType* DebugInfoCreateStructType(Cpoint_Type struct_type, std::vector<std::pair<std::string, Cpoint_Type>> Members, int LineNo);
 
 void debugInfoCreateParameterVariable(DISubprogram *SP, DIFile *Unit, AllocaInst *Alloca, Cpoint_Type type, Argument& Arg, unsigned& ArgIdx, unsigned LineNo);
+
+void debugInfoCreateLocalVariable(DIScope *SP, DIFile *Unit, AllocaInst *Alloca, Cpoint_Type type, unsigned LineNo);
+void debugInfoCreateNamespace(std::string name);

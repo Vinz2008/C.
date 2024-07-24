@@ -637,7 +637,14 @@ Value* DeferExprAST::codegen(){
 }
 
 void createScope(){
-    Scope new_scope = Scope(std::deque<std::unique_ptr<ExprAST>>());
+    DIScope* debuginfos_scope = nullptr;
+    if (debug_info_mode){
+        //debuginfos_scope = DBuilder->
+        Function* TheFunction = Builder->GetInsertBlock()->getParent();
+        int lineNo = 0; // TODO
+        debuginfos_scope = DBuilder->createLexicalBlock(TheFunction->getSubprogram(), CpointDebugInfo.TheCU->getFile(), lineNo, 0);
+    }
+    Scope new_scope = Scope(std::deque<std::unique_ptr<ExprAST>>(), debuginfos_scope);
     Scopes.push_back(std::move(new_scope));
 }
 
@@ -682,7 +689,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
                 if (ValDeclared->getType()->isArrayTy()){
                     AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
                     Builder->CreateStore(ValDeclared, Alloca);
-                    NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+                    //NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
                     return Constant::getNullValue(Type::getDoubleTy(*TheContext));
                 }
             } else {
@@ -759,8 +766,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             return LogErrorV(emptyLoc, "Assigning to a variable a void value");
         }
         Builder->CreateStore(ValDeclared, Alloca);
-        // TODO : remove all the NamedValues redeclaration
-        NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+        //NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         }
         // TODO : maybe replace all the null values returned to the lvalue
         return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -1910,6 +1916,7 @@ Function *FunctionAST::codegen() {
   LineNo = P.getLine();
   Log::Info() << "LineNo after P.getLine : " << LineNo << "\n";
   if (debug_info_mode){
+  // TODO : move this to debuginfo.cpp
   Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(),
                                       CpointDebugInfo.TheCU->getDirectory());
   FContext = Unit;
@@ -1991,7 +1998,9 @@ Function *FunctionAST::codegen() {
     }
     Log::Info() << "cpoint_type_arg : " << cpoint_type_arg << "\n";
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, Arg.getName(), cpoint_type_arg);
-    debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
+    if (debug_info_mode){
+        debugInfoCreateParameterVariable(SP, Unit, Alloca, cpoint_type_arg, Arg, ArgIdx, LineNo);
+    }
     if (has_by_val){
         // TODO ?
         //Builder->CreateMemCpy(Alloca, Alloca->getAlign(), &Arg, Arg.getParamAlign(), /*SizeofExprAST(get_cpoint_type_from_llvm(Alloca->getAllocatedType()), false, "").codegen()*/ find_struct_type_size(cpoint_type_arg)/8 * 2 /*IS A HACK : TODO find how to make it work, advice : look at clang generated ir*/);
@@ -2473,6 +2482,10 @@ Value *ForExprAST::codegen(){
   Builder->SetInsertPoint(LoopBB);
   blocksForBreak.push(AfterBB);
   createScope();
+  if (debug_info_mode){
+    DIFile *Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(), CpointDebugInfo.TheCU->getDirectory());
+    debugInfoCreateLocalVariable(Scopes.back().debuginfos_scope, Unit, Alloca, VarType, this->getLine());
+  }
   Value* lastVal = Body->codegen();
   if (!lastVal){
     return nullptr;
@@ -2559,7 +2572,7 @@ Value *UnaryExprAST::codegen() {
 
 Value *VarExprAST::codegen() {
   Log::Info() << "VAR CODEGEN " << VarNames.at(0).first << "\n";
-  std::vector<AllocaInst *> OldBindings;
+  //std::vector<AllocaInst *> OldBindings;
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
   // Register all variables and emit their initializer.
@@ -2624,7 +2637,7 @@ Value *VarExprAST::codegen() {
         ptr_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_tag}, "get_struct", true);
         value_tag = Builder->CreateGEP(get_type_llvm(cpoint_type), Alloca, {zero, index_val}, "get_struct", true);
         Builder->CreateStore(llvm::ConstantInt::get(*TheContext, llvm::APInt(32, pos_member, true)), ptr_tag);
-        NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+        //NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         if (enumCreation->value){
             //Value* val = enumCreation->value->clone()->codegen();
             Cpoint_Type val_type = enumCreation->value->get_type();
@@ -2633,7 +2646,7 @@ Value *VarExprAST::codegen() {
                 convert_to_type(val_type, get_type_llvm(*enumMember->Type), val);
             }
             Builder->CreateStore(val, value_tag);
-            NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
+            //NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         }
         goto after_storing; 
         // TODO : write code here to initalize the enum without codegen
@@ -2663,28 +2676,30 @@ Value *VarExprAST::codegen() {
     /*if (!get_type_llvm(cpoint_type)->isPointerTy()){
     Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";
     }*/
-    if (index == nullptr){
-    if (InitVal->getType() != get_type_llvm(cpoint_type)){
+    if (!index && InitVal->getType() != get_type_llvm(cpoint_type)){
       convert_to_type(get_cpoint_type_from_llvm(InitVal->getType()), get_type_llvm(cpoint_type), InitVal);
-    }
     }
     if (InitVal->getType() == get_type_llvm(Cpoint_Type(void_type))){
        return LogErrorV(this->loc, "Assigning to a variable as default value a void value");
     }
-    if (!cpoint_type.is_struct || !no_explicit_init_val){
+    if (!cpoint_type.is_struct /*TODO : remove this ?*/ || !no_explicit_init_val){
         Builder->CreateStore(InitVal, Alloca);
     }
+    if (debug_info_mode){
+        DIFile *Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(), CpointDebugInfo.TheCU->getDirectory());
+        debugInfoCreateLocalVariable(/*TheFunction->getSubprogram()*/ Scopes.back().debuginfos_scope , Unit, Alloca, cpoint_type, this->getLine());
+    }
+
 
     // Remember the old variable binding so that we can restore the binding when
     // we unrecurse.
-    if (NamedValues[VarName] == nullptr){
+    /*if (NamedValues[VarName] == nullptr){
 
       OldBindings.push_back(nullptr);
     } else {
     OldBindings.push_back(NamedValues[VarName]->alloca_inst);
-    }
+    }*/
 
-    // Remember this binding.
     Type* struct_type_temp = get_type_llvm(Cpoint_Type(double_type));
     std::string struct_declaration_name_temp = "";
     if (cpoint_type.is_struct){

@@ -16,6 +16,7 @@
 #include "preprocessor.h"
 #include "macros.h"
 #include "abi.h"
+#include "debuginfo.h"
 
 extern double NumVal;
 extern int CurTok;
@@ -1635,6 +1636,9 @@ std::unique_ptr<TypeDefAST> ParseTypeDef(){
   return std::make_unique<TypeDefAST>(new_type, value_type);
 }
 
+
+extern bool debug_info_mode;
+
 std::unique_ptr<ModAST> ParseMod(){
   getNextToken();
   std::string mod_name = IdentifierStr;
@@ -1644,6 +1648,9 @@ std::unique_ptr<ModAST> ParseMod(){
   }
   getNextToken();
   modulesNamesContext.push_back(mod_name);
+  if (debug_info_mode){
+    debugInfoCreateNamespace(mod_name);
+  }
   return std::make_unique<ModAST>(mod_name);
 }
 

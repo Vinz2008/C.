@@ -76,15 +76,16 @@ public:
 
 class Scope {
 public:
-    Scope(std::deque<std::unique_ptr<ExprAST>> deferExprs) : deferExprs(std::move(deferExprs)) {}
+    Scope(std::deque<std::unique_ptr<ExprAST>> deferExprs, DIScope* debuginfos_scope) : deferExprs(std::move(deferExprs)), debuginfos_scope(debuginfos_scope) {}
     //Scope(Scope&&) noexcept(false) = default;
     std::deque<std::unique_ptr<ExprAST>> deferExprs;
+    DIScope* debuginfos_scope;
     Scope clone() const {
         std::deque<std::unique_ptr<ExprAST>> deferExprsCloned;
         for (auto it = deferExprs.begin(); it != deferExprs.end(); ++it) {
             deferExprsCloned.push_back((*it)->clone());
         }
-        return Scope(std::move(deferExprsCloned));
+        return Scope(std::move(deferExprsCloned), debuginfos_scope);
     }
     std::string to_string(){
         std::string body = "";

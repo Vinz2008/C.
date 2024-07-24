@@ -170,7 +170,6 @@ void debugInfoCreateFunction(PrototypeAST &P, Function *TheFunction){
 
 
 void debugInfoCreateParameterVariable(DISubprogram *SP, DIFile *Unit, AllocaInst *Alloca, Cpoint_Type type, Argument& Arg, unsigned& ArgIdx, unsigned LineNo){
-  if (debug_info_mode){
   DILocalVariable *D = DBuilder->createParameterVariable(
       SP, Arg.getName(), ++ArgIdx, Unit, LineNo, get_debuginfo_type(type),
       true);
@@ -178,5 +177,32 @@ void debugInfoCreateParameterVariable(DISubprogram *SP, DIFile *Unit, AllocaInst
   DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(),
                         DILocation::get(SP->getContext(), LineNo, 0, SP),
                         Builder->GetInsertBlock());
-  }
+}
+
+static BasicBlock* getEntryBlock(BasicBlock* insertBlock){
+    if (insertBlock->isEntryBlock()){
+        return insertBlock;
+    } else {
+    Function* TheFunction = insertBlock->getParent();
+    for (auto b = TheFunction->begin(), be = TheFunction->end(); b != be; ++b){
+        BasicBlock* bb = dyn_cast<BasicBlock>(&*b);
+        if (bb->isEntryBlock()){
+            return bb;
+        }
+    }
+    }
+    return nullptr;
+}
+
+void debugInfoCreateLocalVariable(DIScope *SP, DIFile *Unit, AllocaInst *Alloca, Cpoint_Type type, unsigned LineNo){
+    DILocalVariable *D = DBuilder->createAutoVariable(SP, Alloca->getName(), Unit, LineNo, get_debuginfo_type(type));
+    BasicBlock* insertBlock = Builder->GetInsertBlock();
+    BasicBlock* firstBasicBlock = getEntryBlock(insertBlock);
+    DBuilder->insertDeclare(Alloca, D, DBuilder->createExpression(), DILocation::get(SP->getContext(), LineNo, 0, SP), firstBasicBlock);
+}
+
+void debugInfoCreateNamespace(std::string name){
+    DIFile *Unit = DBuilder->createFile(CpointDebugInfo.TheCU->getFilename(), CpointDebugInfo.TheCU->getDirectory());
+    DINamespace* namespace_scope = DBuilder->createNameSpace(Unit, name, false);
+    // TODO : add this to a queue so we can set the scope to the namespace of functions 
 }

@@ -172,6 +172,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make a base file for each group of target in a base folder in the targets folder (like rust)
 - [ ] If the cpu type is native, make llvm add the cpu features needed (https://github.com/rust-lang/rust/blob/2ccafed862f6906707a390caf180449dd64cad2e/compiler/rustc_codegen_llvm/src/llvm_util.rs#L517)
 - [ ] Add an option for cpu types and features
+- [ ] Add column number to debuginfos
 
 ## Benchmarks compared to other languages
 
