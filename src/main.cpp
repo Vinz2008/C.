@@ -711,7 +711,7 @@ int main(int argc, char **argv){
     if (Comp_context->c_translator){
         c_translator::generate_c_code("out.c");
     } else {
-    int ret = generate_llvm_object_file(object_filename, TripleLLVM, /*TargetTriple*/ targetInfos.llvm_target_triple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.features);
+    int ret = generate_llvm_object_file(object_filename, TripleLLVM, /*TargetTriple*/ targetInfos.llvm_target_triple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.cpu, targetInfos.features);
     if (ret == 1){
         return 1;
     }

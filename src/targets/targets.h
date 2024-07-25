@@ -4,6 +4,8 @@ struct TargetInfo {
     std::string llvm_target_triple;
     // the size is in bits
     int pointer_size;
+    // the default cpu for the target
+    std::string cpu;
     std::string features;
     // TODO : add data layout and the pointer width so it will be needed to ask llvm for them
 };

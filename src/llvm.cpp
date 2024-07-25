@@ -57,7 +57,8 @@ struct TimeTracerRAII {
 extern std::unique_ptr<Module> TheModule;
 extern std::unique_ptr<Compiler_context> Comp_context;
 
-int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, std::string LLVMTargetTriple, llvm::raw_ostream* file_out_ostream, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level, std::string cpu_features){
+// TODO : just pass a TargetInfo insted of CPU, LLVMTargetTriple and cpu_features
+int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, std::string LLVMTargetTriple, llvm::raw_ostream* file_out_ostream, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level, std::string CPU, std::string cpu_features){
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();
@@ -68,7 +69,7 @@ int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, st
         return 1;
     }
 
-    std::string CPU = "generic";
+    //std::string CPU = "generic";
     //std::string Features = "";
     TargetOptions opt;
     std::optional<llvm::Reloc::Model> RM;

@@ -1,10 +1,16 @@
 #include "targets.h"
 
-struct TargetInfo get_target_infos(std::string targetTriplet){
-    struct TargetInfo targetInfo;
-    targetInfo.llvm_target_triple = "";
+TargetInfo get_target_infos(std::string targetTriplet){
+   TargetInfo targetInfo = TargetInfo {
+        .llvm_target_triple = "",
+        .pointer_size = 0,
+        .cpu = "",
+        .features = "",
+    };
+    /*targetInfo.llvm_target_triple = "";
     targetInfo.features = "";
-    targetInfo.pointer_size = 0;
+    targetInfo.cpu = "generic";
+    targetInfo.pointer_size = 0;*/
     if (targetTriplet == "aarch64-linux-android"){
         targetInfo = aarch64_linux_android_get_target_infos();
     } else if (targetTriplet == "aarch64-unknown-none-softfloat"){
@@ -32,6 +38,9 @@ struct TargetInfo get_target_infos(std::string targetTriplet){
     }
     if (targetInfo.llvm_target_triple == ""){
         targetInfo.llvm_target_triple = targetTriplet;
+    }
+    if (targetInfo.cpu == ""){
+        targetInfo.cpu = "generic";
     }
     return targetInfo;
 }
