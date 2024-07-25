@@ -45,7 +45,7 @@ void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...)
 
 #include "ast.h"
 
-void vlogErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, std::va_list args, Source_location astLoc);
+void vlogErrorExit(/*std::unique_ptr<*/Compiler_context/*>*/ cc, const char* format, std::va_list args, Source_location astLoc);
 int stringDistance(std::string s1, std::string s2);
 
 

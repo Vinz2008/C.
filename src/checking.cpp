@@ -16,6 +16,7 @@ extern Source_location emptyLoc;
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
+// TODO : return a bool instead of Value*
 Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_Type cpoint_type, Source_location loc){
     double indexd = -INFINITY;
     if (indexConst->getType() == get_type_llvm(double_type) || indexConst->getType() == get_type_llvm(float_type)){

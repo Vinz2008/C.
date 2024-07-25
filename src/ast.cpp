@@ -132,9 +132,8 @@ std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
     if (!Vars.empty()){
       for (int i = 0; i < Vars.size(); i++){
         std::unique_ptr<VarExprAST> VarTemp = get_Expr_from_ExprAST<VarExprAST>(Vars.at(i)->clone());
-        if (!VarTemp){
-            return LogErrorS("Vars in struct is not a var and is an other type exprAST");
-        }
+        assert(VarTemp != nullptr);
+
         VarsCloned.push_back(std::move(VarTemp));
       }
     }
@@ -629,8 +628,7 @@ std::unique_ptr<ExprAST> ParseConstantVector(){
         }
         auto E = ParseExpression();
         if (!E){
-            return LogError("Error when parsing constant vector member");
-            //return nullptr;
+            return nullptr;
         }
         VectorMembers.push_back(std::move(E));
         member_nb++;
@@ -734,7 +732,7 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return generate_assume_macro(ArgsMacro);
     }
     }
-    return LogError("unknown function macro called : %s", function_name.c_str());
+    return LogError("Unknown function macro called : %s", function_name.c_str());
 }
 
 std::unique_ptr<ExprAST> ParseSemiColon(){
@@ -921,7 +919,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     }
   } else {
     Log::Info() << "TypeTemplatCallAst : " << TypeTemplateCallAst << "\n";
-    LogError("wrong type %s found", IdentifierStr.c_str());
+    LogError("Wrong type %s found", IdentifierStr.c_str());
     return default_type;
   }
 before_gen_cpoint_type:
@@ -1563,6 +1561,7 @@ std::unique_ptr<ExprAST> ParseSizeofExpr(){
   } else {
     return LogError("Neither a type or a variable in sizeof expr");
   }
+  // TODO : Just pass a parsed expr to sizeof and then use get_type in codegen
   auto Sizeof = std::make_unique<SizeofExprAST>(type, is_variable, Name);
   Log::Info() << "after sizeof : " << Name << "\n";
   //getNextToken();
@@ -1884,6 +1883,9 @@ std::unique_ptr<ExprAST> ParseClosure(){
     if (CurTok == '|'){
         getNextToken();
         while (1){
+            if (!var_exists(IdentifierStr)){
+                return LogError("Variable %s captured by closure doesn't exist", IdentifierStr.c_str());
+            }
             captured_vars.push_back(IdentifierStr);
             getNextToken();
             if (CurTok == '|'){

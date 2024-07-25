@@ -19,10 +19,7 @@ StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_v
     std::vector<Type*> structElements;
     for (int i = 0; i < captured_vars.size(); i++){
         Cpoint_Type* temp_type = get_variable_type(captured_vars.at(i));
-        if (!temp_type){
-            LogErrorV(emptyLoc, "Variable captured by closure doesn't exist");
-            return nullptr;
-        }
+        assert(temp_type != nullptr);
         structElements.push_back(get_type_llvm(*temp_type));
     }
     auto structType = StructType::get(*TheContext, structElements);

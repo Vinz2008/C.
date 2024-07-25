@@ -7,7 +7,7 @@ extern Source_location emptyLoc;
 extern int CurTok;
 
 std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc){
-  vlogErrorExit(std::make_unique<Compiler_context>(*Comp_context), Str, args, astLoc); // copy comp_context and not move it because it will be used multiple times
+  vlogErrorExit(*Comp_context, Str, args, astLoc); // copy comp_context and not move it because it will be used multiple times
   return_status = 1;
   return nullptr;
 }

@@ -232,7 +232,8 @@ Value* PrintMacroCodegen(std::vector<std::unique_ptr<ExprAST>> Args){
             Cpoint_Type arg_cpoint_type = Args.at(arg_nb)->get_type();
             std::string temp_format = arg_cpoint_type.to_printf_format();
             if (temp_format == ""){
-                return LogErrorV(emptyLoc, "Not Printable type in print macro");
+                //return LogErrorV(emptyLoc, "Not Printable type in print macro");
+                return nullptr;
             }
             generated_printf_format += temp_format; 
             }

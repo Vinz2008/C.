@@ -597,7 +597,7 @@ std::string Cpoint_Type::to_printf_format(){
     } else if (is_decimal_number_type()) {
         format = "%f";
     } else {
-        //return LogErrorV(emptyLoc, "Not Printable type in debug macro");
+        LogErrorV(emptyLoc, "Not Printable type in debug macro");
         return "";
     }
     return format;
