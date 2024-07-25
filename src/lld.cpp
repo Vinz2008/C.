@@ -37,7 +37,7 @@ namespace lld {
     }
 }
 bool can_use_internal_lld(Triple TripleLLVM){
-    return TripleLLVM.isOSBinFormatELF() || TripleLLVM.isOSBinFormatWasm() || TripleLLVM.isOSBinFormatCOFF();
+    return TripleLLVM.isOSBinFormatELF() || TripleLLVM.isOSBinFormatWasm() || TripleLLVM.isOSBinFormatCOFF() || TripleLLVM.isOSBinFormatMachO();
 }
 
 int LLDLink(Triple TripleLLVM, int argc, const char **argv, bool can_exit_early, bool disable_output){

@@ -6,11 +6,15 @@ extern std::unique_ptr<IRBuilder<>> Builder;
 extern std::unique_ptr<LLVMContext> TheContext;
 extern Triple TripleLLVM;
 
+
+// the size is in bits
 int get_pointer_size(){ // TODO : remove this (it is not used)
-    if (TripleLLVM.isArch32Bit()){
-        return 32;
-    } else if (TripleLLVM.isArch64Bit()){
+    if (TripleLLVM.isArch64Bit()){
         return 64;
+    } else  if (TripleLLVM.isArch32Bit()){
+        return 32;
+    } else if (TripleLLVM.isArch16Bit()){
+        return 16;
     }
     return 64;
 }
@@ -50,9 +54,10 @@ bool should_pass_struct_byval(Cpoint_Type cpoint_type){
         }
     }
     int max_size = 8; // 64 bit = 8 byte
-    if (TripleLLVM.isArch32Bit()){
+    int pointer_size = get_pointer_size();
+    if (pointer_size == 32){
         max_size = 4; // 32 bit
-    } else if (TripleLLVM.isArch64Bit()){
+    } else if (pointer_size == 64){
         max_size = 8;
     }
     int size_struct = find_struct_type_size(cpoint_type);

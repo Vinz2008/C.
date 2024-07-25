@@ -4,6 +4,7 @@
 #include "codegen.h"
 #include "debuginfo.h"
 #include "targets/targets.h"
+#include "abi.h"
 
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<Module> TheModule;
@@ -66,8 +67,9 @@ void generateClosures(){
     }
 }
 
-//extern std::string TargetTriple;
 extern TargetInfo targetInfos;
+
+extern Triple TripleLLVM;
 
 Value* ClosureAST::codegen(){
     std::string closure_name = "closure" + std::to_string(closure_number);
@@ -93,17 +95,17 @@ Value* ClosureAST::codegen(){
         Value* closureArgs = getClosureCapturedVarsStruct(captured_vars, structType);
         Function *TheFunction = Builder->GetInsertBlock()->getParent();
         auto trampAlloca = CreateEntryBlockAlloca(TheFunction, "tramp", Cpoint_Type(i8_type, false, 0, true, 72));
-        auto triple = Triple(/*TargetTriple*/ targetInfos.llvm_target_triple);
         // trampoline of 72 bytes  should be enough for all platforms : https://stackoverflow.com/questions/15509341/how-much-space-for-a-llvm-trampoline
         // Is it needed ? (according to the gcc codebase, some 64 bit platforms like aarch64 needs an alignement of 64, sparc needs 128, and nvptx 256)
-        if (triple.isNVPTX()){
+        int pointer_size = get_pointer_size();
+        if (TripleLLVM.isNVPTX()){
             trampAlloca->setAlignment(Align::Constant<256/8>());
-        } else if (triple.isSPARC()){
+        } else if (TripleLLVM.isSPARC()){
             trampAlloca->setAlignment(Align::Constant<128/8>());
-        } else if (triple.isArch32Bit()){
+        } else if (pointer_size == 32){
             trampAlloca->setAlignment(Align::Constant<32/8>());
         } else {
-            trampAlloca->setAlignment(Align::Constant<64/8>()); // Is it needed ? (according to the gcc codebase, some 64 bit platforms like aarch64 needs 64, sparc needs 128, and nvptx 256)
+            trampAlloca->setAlignment(Align::Constant<64/8>());
         }
         std::vector<Value*> ArgsInitTrampoline;
         ArgsInitTrampoline.push_back(trampAlloca);

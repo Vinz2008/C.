@@ -1646,14 +1646,8 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         return LogErrorV(loc, "For now, compile time sizeof of array is not implemented");
     }
     if (sizeof_type.is_ptr){
-        auto triple = Triple(/*TargetTriple*/ targetInfos.llvm_target_triple);
-        if (triple.isArch64Bit()){
-            return ConstantInt::get(*TheContext, APInt(32, (uint64_t)64/8, false));
-        } else if (triple.isArch32Bit()){
-            return ConstantInt::get(*TheContext, APInt(32, (uint64_t)32/8, false));
-        } else {
-            return LogErrorV(loc, "16 bits targets are not supported with compile time sizeof on pointers");
-        }
+        int pointer_size = get_pointer_size();
+        return ConstantInt::get(*TheContext, APInt(32, (uint64_t)get_pointer_size()/8, false));
     }
     int size_type = type.get_number_of_bits();
     return ConstantInt::get(*TheContext, APInt(32, (uint64_t)size_type/8, false));
