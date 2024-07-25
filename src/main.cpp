@@ -675,7 +675,7 @@ int main(int argc, char **argv){
       TheModule->addModuleFlag(llvm::Module::Warning, "Dwarf Version", 2);
     }
     DBuilder = std::make_unique<DIBuilder>((*TheModule));
-    CpointDebugInfo = DebugInfo(/*TripleLLVM.isArch64Bit() ? 64 : 32*/ get_pointer_size());
+    CpointDebugInfo = DebugInfo(get_pointer_size());
     CpointDebugInfo.TheCU = DBuilder->createCompileUnit(
       dwarf::DW_LANG_C, DBuilder->createFile(first_filename, "."),
       "Cpoint Compiler", is_optimised, "", 0);

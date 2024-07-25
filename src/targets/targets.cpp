@@ -4,6 +4,7 @@ struct TargetInfo get_target_infos(std::string targetTriplet){
     struct TargetInfo targetInfo;
     targetInfo.llvm_target_triple = "";
     targetInfo.features = "";
+    targetInfo.pointer_size = 0;
     if (targetTriplet == "aarch64-linux-android"){
         targetInfo = aarch64_linux_android_get_target_infos();
     } else if (targetTriplet == "aarch64-unknown-none-softfloat"){
