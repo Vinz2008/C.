@@ -1,6 +1,6 @@
 #include "targets.h"
 
-struct TargetInfo aarch64_linux_android_get_target_infos(){
+TargetInfo aarch64_linux_android_get_target_infos(){
     return TargetInfo {
         .llvm_target_triple = "", // default target triple
         .pointer_size = 64,
