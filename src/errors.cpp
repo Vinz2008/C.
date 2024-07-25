@@ -46,19 +46,19 @@ int stringDistance(std::string s1, std::string s2) {
     return dp[s1.length()][s2.length()];
 }
 
-void vlogErrorExit(/*std::unique_ptr<*/Compiler_context/*>*/ cc, const char* format, std::va_list args, Source_location astLoc){
+void vlogErrorExit(Source_location cc_lexloc, std::string line, std::string filename, const char* format, std::va_list args, Source_location astLoc){
     Source_location loc;
     if (!astLoc.is_empty){
         loc = astLoc;
-        loc.line = cc.line; // TODO : remove this and fix line printing. Remove line from Comp_context and put it in source_location ?
+        //loc.line = cc.line; // TODO : remove this and fix line printing. Remove line from Comp_context and put it in source_location ?
     } else {
-        loc = cc.lexloc;
+        loc = cc_lexloc;
     }
-   fprintf(stderr, RED "Error in %s:%d:%d\n" CRESET, cc.filename.c_str(), loc.line_nb, loc.col_nb > 0 ? loc.col_nb-1 : loc.col_nb);
+   fprintf(stderr, RED "Error in %s:%d:%d\n" CRESET, filename.c_str(), loc.line_nb, loc.col_nb > 0 ? loc.col_nb-1 : loc.col_nb);
    vfprintf(stderr, format, args);
    fprintf(stderr, "\n\t%s\n", loc.line.c_str());
    fprintf(stderr, "\t");
-   for (int i = 0; i < cc.lexloc.col_nb-2; i++){
+   for (int i = 0; i < loc.col_nb-2; i++){
    fprintf(stderr, " ");
    }
    fprintf(stderr, "^\n");
@@ -71,6 +71,7 @@ void vlogErrorExit(/*std::unique_ptr<*/Compiler_context/*>*/ cc, const char* for
 void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...){
    std::va_list args;
    va_start(args, format);
-   vlogErrorExit(*cc, format, args, {});
+   assert(cc != nullptr);
+   vlogErrorExit(cc->lexloc, cc->line, cc->filename, format, args, {});
    va_end(args);
 }

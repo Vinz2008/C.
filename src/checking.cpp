@@ -17,7 +17,7 @@ extern Source_location emptyLoc;
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
 // TODO : return a bool instead of Value*
-Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_Type cpoint_type, Source_location loc){
+int bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_Type cpoint_type, Source_location loc){
     double indexd = -INFINITY;
     if (indexConst->getType() == get_type_llvm(double_type) || indexConst->getType() == get_type_llvm(float_type)){
       ConstantFP* indexConstFP = dyn_cast<ConstantFP>(indexConst);
@@ -28,16 +28,18 @@ Value* bound_checking_constant_index_array_member(Constant* indexConst, Cpoint_T
     }
     if (indexd != -INFINITY){
       if (cpoint_type.is_array && indexd > cpoint_type.nb_element){
-        return LogErrorV(loc, "Index too big for the array");
+        LogErrorV(loc, "Index too big for the array");
+        return -1;
       }
       if (cpoint_type.is_vector_type && indexd > cpoint_type.vector_size){
-        return LogErrorV(loc, "Index too big for the vector");
+        LogErrorV(loc, "Index too big for the vector");
+        return -1;
       }
     }
-    return ConstantFP::get(*TheContext, APFloat((double)0)); // to differenciate from nullptr (TODO : fix this ?)
+    return 0;
 }
 
-Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoint_type){
+int bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoint_type){
     std::vector<std::pair<std::string, Cpoint_Type>> PanicArgs;
     PanicArgs.push_back(std::make_pair("message", Cpoint_Type(i8_type, true)));
     add_manually_extern("panic", Cpoint_Type(void_type), std::move(PanicArgs), 0, 30, false, false, "");
@@ -48,7 +50,7 @@ Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoin
     }
     Value* CondV = operators::LLVMCreateGreaterOrEqualThan(index, nbElement, get_cpoint_type_from_llvm(index->getType()));
     if (!CondV)
-      return nullptr;
+      return -1;
     Function *TheFunction = Builder->GetInsertBlock()->getParent();
     BasicBlock *ThenBB = BasicBlock::Create(*TheContext, "bound_checking_then", TheFunction);
     BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "bound_checking_after", TheFunction);
@@ -59,5 +61,5 @@ Value* bound_checking_dynamic_index_array_member(Value* index, Cpoint_Type cpoin
     std::make_unique<CallExprAST>(emptyLoc, "panic", std::move(Args), Cpoint_Type(double_type))->codegen();
     Builder->CreateBr(AfterBB);
     Builder->SetInsertPoint(AfterBB);
-    return ConstantFP::get(*TheContext, APFloat((double)0)); // to differenciate from nullptr
+    return 0;
 }

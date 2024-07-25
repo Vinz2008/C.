@@ -231,11 +231,8 @@ bool is_of_expr_type(ExprAST* expr, enum ExprType exprType){
     } else if (exprType == ExprType::NeverFunctionCall){
         if (dynamic_cast<CallExprAST*>(expr)){
             CallExprAST* call_expr = dynamic_cast<CallExprAST*>(expr);
-            if (FunctionProtos[call_expr->Callee]){
-                return FunctionProtos[call_expr->Callee]->cpoint_type.type == never_type; 
-            } else {
-                // TODO for local vars calls
-            }
+            Log::Info() << "call_expr->Callee : " << call_expr->Callee << "\n";
+            return call_expr->get_type().type == never_type;
         }
     }
     return false;
@@ -986,13 +983,12 @@ std::unique_ptr<ExprAST> ParseFunctionArgsTyped(std::vector<std::pair<std::strin
 
 std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body){
     bool return_found = false;
-    bool goto_found = false;
     bool infinite_loop_found = false;
     while (CurTok != '}'){
       auto E = ParseExpression();
       if (!E)
         return nullptr;
-      if (return_found || goto_found || infinite_loop_found){
+      if (return_found || infinite_loop_found){
         continue;
       }
       if (dynamic_cast<LoopExprAST*>(E.get())){
@@ -1005,15 +1001,8 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
         if (dynamic_cast<ReturnAST*>(E.get())){
             return_found = true;
         }
-        // TODO : should it be activated
-        /*if (dynamic_cast<GotoExprAST*>(E.get())){
-            goto_found = true;
-        }*/
       }
       Body.push_back(std::move(E));
-      /*if (!return_found){
-        Body.push_back(std::move(E));
-      }*/
     }
     // if the last expressions is a return, replace it with just the expressions because otherwise it would return a never type 
     if (is_func_body && dynamic_cast<ReturnAST*>(Body.back().get())){
@@ -1021,21 +1010,6 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
         Body.pop_back();
         Body.push_back(std::move(dynamic_cast<ReturnAST*>(return_expr.get())->returned_expr));
     }
-
-    // TODO : is if necessary ?
-    // there could be labels in the expression, so verify if there is a goto before any label starting by the end 
-    /*int pos = -1;
-    for (int i = Body.size()-1; i >= 0; i--){
-        if (dynamic_cast<LabelExprAST*>(Body.at(i).get())){
-            break;
-        }
-        if (dynamic_cast<GotoExprAST*>(Body.at(i).get())){
-            pos = i;
-        }
-    }
-    if (pos != -1){
-        Body.resize(pos+1);
-    }*/
     return std::make_unique<EmptyExprAST>(); 
 }
 
@@ -1152,7 +1126,6 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
 
 std::unique_ptr<StructDeclarAST> ParseStruct(){
   struct_parsing = true;
-  //int i = 0;
   std::string template_name = "";
   bool has_template = false;
   std::vector<std::unique_ptr<VarExprAST>> VarList;
@@ -1193,8 +1166,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   }
   getNextToken();
 
-  /*std::vector<std::pair<std::string,Cpoint_Type>> members;
-  std::vector<std::string> functions;*/
   StructDeclarations[structName] = std::make_unique<StructDeclaration>(nullptr, nullptr, std::vector<std::pair<std::string,Cpoint_Type>>(), std::vector<std::string>());
   while ((CurTok == tok_var || CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
     Log::Info() << "Curtok in struct parsing : " << CurTok << "\n";
@@ -1209,10 +1180,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
             struct_parsing = false;
             return LogErrorS("Error in struct declaration vars");
         }
-        /*if (declar->cpoint_type.struct_name == structName && declar->cpoint_type.is_ptr){ // TODO : fix this ? 
-        declar->cpoint_type.is_struct = false;
-        declar->cpoint_type.struct_name = "";
-        }*/
         std::string VarName = declar->VarNames.at(0).first;
         StructDeclarations[structName]->members.push_back(std::make_pair(VarName, declar->cpoint_type));
         VarList.push_back(std::move(declar));
@@ -1247,8 +1214,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
       }
       StructDeclarations[structName]->functions.push_back(function_name);
       Functions.push_back(std::move(declar));
-      /*Log::Info() << "Function Number in struct : " << i+1 << "\n";
-      i++;*/
     }
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
@@ -1282,41 +1247,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
 
     }
   }
-  /*std::vector<std::pair<std::string,Cpoint_Type>> members;
-  for (int i = 0; i < VarList.size(); i++){
-    std::unique_ptr<VarExprAST> VarExpr = get_Expr_from_ExprAST<VarExprAST>(VarList.at(i)->clone());
-    if (!VarExpr){
-        Log::Info() << "VarExpr is nullptr" << "\n";
-    }
-    Log::Info() << "Var StructDeclar type codegen : " << VarExpr->cpoint_type << "\n";
-    if (VarExpr->cpoint_type.struct_name == structName && VarExpr->cpoint_type.is_ptr){ // TODO : fix this ? 
-        VarExpr->cpoint_type.is_struct = false;
-        VarExpr->cpoint_type.struct_name = "";
-    }
-    std::string VarName = VarExpr->VarNames.at(0).first;
-    members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
-  }
-  std::vector<std::string> functions;
-  for (int i = 0; i < Functions.size(); i++){
-    std::string function_name;
-    if (Functions.at(i)->Proto->Name == structName){
-        // Constructor
-        function_name = "Constructor__Default";
-    } else {
-        function_name = Functions.at(i)->Proto->Name;
-    }
-    functions.push_back(function_name);
-  }
-  for (int i = 0; i < ExternFunctions.size(); i++){
-    std::string function_name;
-    if (ExternFunctions.at(i)->Name == structName){
-        // Constructor
-        function_name = "Constructor__Default";
-    } else {
-        function_name = ExternFunctions.at(i)->Name;
-    }
-    functions.push_back(function_name);
-  }*/
   auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);
   struct_parsing = false;
   if (has_template){
@@ -1325,7 +1255,6 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     is_template_parsing_struct = true;
     return nullptr;
   }
-  //StructDeclarations[structName] = std::make_unique<StructDeclaration>(nullptr, members, functions);
   return structDeclar;
 }
 

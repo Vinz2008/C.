@@ -192,21 +192,8 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<Value*> ArgsV, std::vect
     Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));*/
   } else if (Callee == "ctpop"){
     intrisicId = Intrinsic::ctpop;
-    /*Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
-    if (arg_cpoint_type.is_decimal_number_type()){
-        return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
-    }
-    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));*/
-    // TODO : refactor this into a real template ?
   }
   Function *CalleeF = Intrinsic::getDeclaration(TheModule.get(), intrisicId, Tys);
-  /*std::vector<Value *> ArgsV;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-    Value* temp_val = Args[i]->codegen();
-    ArgsV.push_back(temp_val);
-    if (!ArgsV.back())
-      return nullptr;
-  }*/
   // add additional args for intrisics
   if (Callee == "memcpy" || Callee == "memset" || Callee == "memmove") {
     ArgsV.push_back(BoolExprAST(false).codegen()); // the bool is if it is volatile
@@ -218,40 +205,51 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<Value*> ArgsV, std::vect
   if (CalleeF->getReturnType()->isVoidTy()){
     call_instruction_name = "";
   }
+  for (int i = 0; i < ArgsV.size(); i++){
+    if (ArgsV.at(i)->getType() != CalleeF->getArg(i)->getType()){
+        convert_to_type(get_cpoint_type_from_llvm(ArgsV.at(i)->getType()), get_cpoint_type_from_llvm(CalleeF->getArg(i)->getType()), ArgsV.at(i)); // the types passed should probably trivial to find the Cpoint_Type from the llvm one (number types or vector types) so it is okay to use get_cpoint_type_from_llvm
+    }
+  }
   return Builder->CreateCall(CalleeF, ArgsV, call_instruction_name);
 }
 
-Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args){
+int get_arg_pos_intrisic_infer_overload_type(std::string CalleeWithoutPrefix){
+    if (CalleeWithoutPrefix == "memcpy" || CalleeWithoutPrefix == "memmove"){
+        return 2;
+    }
+    return 0;
+}
+
+Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args, Cpoint_Type template_passed_type){
   std::vector<Type*> Tys;
   std::string CalleeWithoutPrefix = Callee.substr(5, Callee.size());
-  // TODO : refactor these into a real template ?
-  if (CalleeWithoutPrefix == "bitreverse" || CalleeWithoutPrefix == "ctpop"){
-    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
+  Cpoint_Type overloading_type;
+  if (CalleeWithoutPrefix == "bitreverse" || CalleeWithoutPrefix == "ctpop" || CalleeWithoutPrefix == "vp.add" || CalleeWithoutPrefix == "memcpy"){
+    Cpoint_Type arg_cpoint_type = Args.at(get_arg_pos_intrisic_infer_overload_type(CalleeWithoutPrefix))->get_type();
+    overloading_type = arg_cpoint_type;
+    if (!template_passed_type.is_empty){
+        overloading_type = template_passed_type;
+    }
     Log::Info() << "type : " << arg_cpoint_type << "\n";
-    if (arg_cpoint_type.is_decimal_number_type()){
-        return LogErrorV(emptyLoc, "Can't use the %s intrisic on a floating point type arg", Callee.c_str()); 
+    if (CalleeWithoutPrefix == "bitreverse" || CalleeWithoutPrefix == "ctpop"){
+        if (overloading_type.is_decimal_number_type()){
+            return LogErrorV(emptyLoc, "Can't use the %s intrisic on a floating point type arg", Callee.c_str()); 
+        }
+    } else if (CalleeWithoutPrefix == "vp.add"){
+        if (!overloading_type.is_decimal_number_type() && !overloading_type.is_signed() && !overloading_type.is_unsigned()){
+            return LogErrorV(emptyLoc, "Can't use the %s intrisic on an arg that is not a number", Callee.c_str()); 
+        }
     }
-    Tys.push_back(get_type_llvm(arg_cpoint_type));
-  } /*else if (CalleeWithoutPrefix == "ctpop"){
-    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
-    if (arg_cpoint_type.is_decimal_number_type()){
-        return LogErrorV(emptyLoc, "Can't use the ctpop intrisic on a floating point type arg"); 
-    }
-    Tys = ArrayRef<Type*>(get_type_llvm(arg_cpoint_type));
-    // TODO : refactor this into a real template ?
-  }*/ else if (CalleeWithoutPrefix == "vp.add"){
-    Cpoint_Type arg_cpoint_type = Args.at(0)->get_type();
-    if (!arg_cpoint_type.is_decimal_number_type() && !arg_cpoint_type.is_signed() && !arg_cpoint_type.is_unsigned()){
-        return LogErrorV(emptyLoc, "Can't use the %s intrisic on an arg that is not a number", Callee.c_str()); 
-    }
-    Tys.push_back(get_type_llvm(arg_cpoint_type));
+    Tys.push_back(get_type_llvm(overloading_type));
   }
   std::vector<Value *> ArgsV;
-  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+  for (int i = 0; i < Args.size(); i++) {
     Value* temp_val = Args[i]->codegen();
+    if (!temp_val){
+        return nullptr;
+    }
+
     ArgsV.push_back(temp_val);
-    if (!ArgsV.back())
-      return nullptr;
   }
   return callLLVMIntrisic(Callee, ArgsV, Tys);
 }
@@ -627,13 +625,12 @@ Value* EnumCreation::codegen(){
 }
 
 Value* DeferExprAST::codegen(){
-    //deferExprs.push(std::move(Expr));
     // modify the last scope so pop it then repush it
     Scope back = std::move(Scopes.back());
     Scopes.pop_back();
     back.deferExprs.push_back(std::move(Expr));
     Scopes.push_back(std::move(back));
-    return Constant::getNullValue(get_type_llvm(void_type)); // TODO : return void type when returning null values
+    return Constant::getNullValue(get_type_llvm(void_type));
 }
 
 void createScope(){
@@ -664,6 +661,8 @@ void assignUnionMember(Value* union_ptr, Value* val, Cpoint_Type member_type){
     Builder->CreateStore(val, union_ptr);
 }
 
+Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index, Cpoint_Type& member_type, bool& should_load);
+
 Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
     Log::Info() << "EQUAL OP " << lvalue->to_string() << " = " << rvalue->to_string() << "\n";
     Value* ValDeclared = rvalue->codegen();
@@ -673,14 +672,21 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         Log::Info() << "op : " << BinExpr->Op << "\n";
         if (BinExpr->Op.at(0) == '['){
             // TODO : make work using other things than variables
-            Cpoint_Type cpoint_type;
-            Value* arrayPtr = nullptr;
-            if (dynamic_cast<BinaryExprAST*>(BinExpr->LHS.get())){
+            //Cpoint_Type cpoint_type;
+            Cpoint_Type member_type;
+            //Value* arrayPtr = nullptr;
+            bool should_load;
+            Value* ptr = getArrayOrVectorMemberGEP(std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type, should_load);
+            /*if (dynamic_cast<BinaryExprAST*>(BinExpr->LHS.get())){
                 std::unique_ptr<BinaryExprAST> BinExprBeforeArrayIndex = get_Expr_from_ExprAST<BinaryExprAST>(BinExpr->LHS->clone());
                 if (BinExprBeforeArrayIndex->Op != "."){
+                    arrayPtr = getStructMemberGEP(std::move(BinExprBeforeArrayIndex->LHS), std::move(BinExprBeforeArrayIndex->RHS), cpoint_type);
+                } else if (BinExprBeforeArrayIndex->Op != "["){
+                    bool should_load;
+                    arrayPtr = getArrayOrVectorMemberGEP(std::move(BinExprBeforeArrayIndex->LHS), std::move(BinExprBeforeArrayIndex->RHS), cpoint_type, should_load);
+                } else {
                     return LogErrorV(emptyLoc, "Not supported operator in array indexing in equal operator");
                 }
-                arrayPtr = getStructMemberGEP(std::move(BinExprBeforeArrayIndex->LHS), std::move(BinExprBeforeArrayIndex->RHS), cpoint_type);
             } else if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
                 std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(BinExpr->LHS->clone());
                 arrayPtr = get_var_allocation(VarExpr->Name);
@@ -727,7 +733,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             }
             Type* llvm_type = get_type_llvm(cpoint_type);
             Log::Info() << "Get LLVM TYPE" << "\n";
-            auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);
+            auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);*/
             Log::Info() << "Create GEP" << "\n";
             if (ValDeclared->getType() != get_type_llvm(member_type)){
             convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), member_type, ValDeclared);
@@ -898,6 +904,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
     } else if (dynamic_cast<BinaryExprAST*>(struct_expr.get())){
         std::unique_ptr<BinaryExprAST> structBinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(struct_expr));
+        // TODO : support array op here
         if (structBinExpr->Op != "."){
             return LogErrorV(emptyLoc, "Trying to use the struct member operator with an operator expression which it is not implemented for");
         }
@@ -958,8 +965,8 @@ Value* StructMemberCallExprAST::codegen(){
             return refletionInstruction(MemberName, std::move(Args));
         }
     }
-    Cpoint_Type temp_type = StructMember->LHS->get_type();
-    if (!temp_type.is_struct && !temp_type.is_ptr){
+    Cpoint_Type lhs_type = StructMember->LHS->get_type();
+    if (!lhs_type.is_struct && !lhs_type.is_ptr){
         // not struct member call
         // will handle the special name mangling in this function
         std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
@@ -967,7 +974,52 @@ Value* StructMemberCallExprAST::codegen(){
         return not_struct_member_call(std::move(StructMember->LHS), functionCall, std::move(Args));
     }
     // is struct
-    if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
+    // TODO : refactor this with just get_type
+
+    std::string struct_type_name = lhs_type.struct_name;
+
+    if (lhs_type.is_struct_template){
+        struct_type_name = get_struct_template_name(struct_type_name, *lhs_type.struct_template_type_passed);
+        Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
+    }
+
+    auto functions =  StructDeclarations[struct_type_name]->functions;
+    std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
+    std::string MemberName = structMemberExpr->Name;
+    bool found_function = false;
+    for (int i = 0; i < functions.size(); i++){
+        Log::Info() << "functions.at(i) : " << functions.at(i) << "\n";
+        if (functions.at(i) == MemberName){
+            found_function = true;
+            Log::Info() << "Is function Call" << "\n";
+        }
+    }
+    if (!found_function){
+        return LogErrorV(this->loc, "Unknown struct function member called : %s\n", MemberName.c_str());
+    }
+    std::vector<llvm::Value*> CallArgs;
+    Value* struct_ptr = nullptr;
+    if (lhs_type.is_ptr){
+        struct_ptr = StructMember->LHS->codegen();
+    } else {
+        struct_ptr = AddrExprAST(std::move(StructMember->LHS)).codegen();
+    }
+    CallArgs.push_back(struct_ptr);
+    for (int i = 0; i < Args.size(); i++){
+        CallArgs.push_back(Args.at(i)->codegen());
+    }
+    Function *F = getFunction(struct_function_mangling(struct_type_name, MemberName));
+    if (!F){
+        Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(lhs_type.struct_name, MemberName) << "\n";
+        return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
+    }
+    std::string call_name = "calltmp_struct";
+    if (F->getReturnType()->isVoidTy()){
+        call_name = "";
+    }
+    return Builder->CreateCall(F, CallArgs, call_name); 
+
+    /*if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
         std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->LHS));
         std::string StructName = structNameExpr->Name;
         if (!dynamic_cast<VariableExprAST*>(StructMember->RHS.get())){
@@ -1009,7 +1061,8 @@ Value* StructMemberCallExprAST::codegen(){
             call_name = "";
         }
         return Builder->CreateCall(F, CallArgs, call_name); 
-    }
+    }*/
+    
     return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
 }
 
@@ -1040,8 +1093,8 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
         if (dyn_cast<Constant>(IndexV) && (cpoint_type.nb_element > 0 || cpoint_type.vector_size > 0)){
             is_constant = true;
             Constant* indexConst = dyn_cast<Constant>(IndexV);
-            if (!bound_checking_constant_index_array_member(indexConst, cpoint_type, emptyLoc)){
-            return nullptr;
+            if (bound_checking_constant_index_array_member(indexConst, cpoint_type, emptyLoc) == -1){
+                return nullptr;
             }
         }
 
@@ -1084,8 +1137,8 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
 
         Log::Info() << "Cpoint_type for array member : " << cpoint_type << "\n";
         if (!is_constant && cpoint_type.nb_element > 0 && !Comp_context->is_release_mode && Comp_context->std_mode && index){
-            if (!bound_checking_dynamic_index_array_member(firstIndex, cpoint_type)){
-            return nullptr;
+            if (bound_checking_dynamic_index_array_member(firstIndex, cpoint_type) == -1){
+                return nullptr;
             }
         }
         member_type = cpoint_type;
@@ -1109,24 +1162,29 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
             return LogErrorV(emptyLoc, "index for array is not a number\n");
         }
         std::unique_ptr<BinaryExprAST> BinOp = get_Expr_from_ExprAST<BinaryExprAST>(std::move(array));
-        if (BinOp->Op != "."){
-            return LogErrorV(emptyLoc, "Indexing an array is only implemented for struct member binary operators expression\n");
-        }
         // TODO : uncomment this, will need to modify the structMember operator to be able to return only the gep ptr for any expressions it support
         //std::string StructName =  BinOp->LHS;
         //Value* Allocation = get_var_allocation(StructMemberExpr->StructName);
         //Cpoint_Type struct_type = *get_variable_type(StructMemberExpr->StructName);
-        Cpoint_Type struct_member_type;
-        Value* ptr = getStructMemberGEP(std::move(BinOp->LHS), std::move(BinOp->RHS), struct_member_type);
+        Value* ptr = nullptr;
+        Cpoint_Type binop_member_type;
+        if (BinOp->Op == "."){
+            ptr = getStructMemberGEP(std::move(BinOp->LHS), std::move(BinOp->RHS), binop_member_type);
+        } else if (BinOp->Op == "["){
+            bool should_load;
+            ptr = getArrayOrVectorMemberGEP(std::move(BinOp->LHS), std::move(BinOp->RHS), binop_member_type, should_load);
+        } else {
+            return LogErrorV(emptyLoc, "Indexing an array is only implemented for struct member binary operators expression\n");
+        }
         //Value* ptr = StructMemberGEP(StructMemberExpr->MemberName, Allocation, struct_type, struct_member_type);
         std::vector<Value*> indexes = { zero, IndexV};
-        if (struct_member_type.is_ptr && !struct_member_type.is_array){
+        if (binop_member_type.is_ptr && !binop_member_type.is_array){
             indexes = { IndexV };
         }
-        member_type = struct_member_type;
-        member_type.is_array = false;
+        member_type = binop_member_type;
+        member_type.is_array = false; // TODO : just deref the type ?
         member_type.nb_element = 0;
-        Type* type_llvm = get_type_llvm(struct_member_type);
+        Type* type_llvm = get_type_llvm(binop_member_type);
         Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes, "", true);
         // TODO : finish the load Name with the IndexV in string form
         return member_ptr;
@@ -1336,6 +1394,7 @@ Value *CallExprAST::codegen() {
   Function* TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "function called " << Callee << "\n";
   //std::string internal_func_prefix = "cpoint_internal_";
+  // TODO : instead of using an internal func prefix, use namespace (which will be the same logic, just with a different number of underscore)
   std::string internal_func_prefix = CallExprAST::get_internal_func_prefix();
   bool is_internal = false;
   CpointDebugInfo.emitLocation(this);
@@ -1364,7 +1423,7 @@ Value *CallExprAST::codegen() {
     Callee = Callee.substr(internal_func_prefix.size(), Callee.size());
     Log::Info() << "internal function called " << Callee << "\n";
     if (Callee.rfind("llvm_", 0) == 0){
-      return callLLVMIntrisic(Callee, Args);
+      return callLLVMIntrisic(Callee, Args, template_passed_type);
     }
     if (Callee == "get_filename"){
       std::string filename_without_temp = filename;
@@ -1634,11 +1693,6 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
         sizeof_type = NamedValues[Name]->type;
     }
     if (sizeof_type.is_just_struct() && should_pass_struct_byval(sizeof_type)){
-        /*int struct_size = 0;
-        for (int i = 0; i < StructDeclarations[sizeof_type.struct_name]->members.size(); i++){
-            StructDeclarations[sizeof_type.struct_name]->members.at(i).second
-        }
-        return ConstantInt::get(*TheContext, APInt(32, (uint64_t)struct_size, false));*/
         return LogErrorV(loc, "For now, compile time sizeof of structs is not implemented"); // TODO
         // for now can't find the size because of padding. Take just the size without padding ? find a way to calculate the padding ? Juste x2 the size to be safe ?
     }
@@ -1647,7 +1701,7 @@ Value* compile_time_sizeof(Cpoint_Type type, std::string Name, bool is_variable,
     }
     if (sizeof_type.is_ptr){
         int pointer_size = get_pointer_size();
-        return ConstantInt::get(*TheContext, APInt(32, (uint64_t)get_pointer_size()/8, false));
+        return ConstantInt::get(*TheContext, APInt(32, (uint64_t)pointer_size/8, false));
     }
     int size_type = type.get_number_of_bits();
     return ConstantInt::get(*TheContext, APInt(32, (uint64_t)size_type/8, false));

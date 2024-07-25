@@ -25,7 +25,7 @@ StructType* getClosureCapturedVarsStructType(std::vector<std::string> captured_v
     }
     auto structType = StructType::get(*TheContext, structElements);
     std::string struct_name = "closure_struct" + std::to_string(closure_number);
-    structType->setName(struct_name); // TODO : remove this ?
+    structType->setName(struct_name);
     DIType* structDebugInfosType = nullptr;
     std::vector<std::string> functions;
     std::vector<std::pair<std::string,Cpoint_Type>> captured_vars_with_type;

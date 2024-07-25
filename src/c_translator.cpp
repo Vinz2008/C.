@@ -298,28 +298,11 @@ std::string CharExprAST::generate_c(){
 }
 
 std::string IfExprAST::generate_c(){
-    /*std::string body_if = "";
-    body_if += generate_body_c(Then);
-    for (int i = 0; i < Then.size(); i++){
-        body_if += Then.at(i)->generate_c() + ";\n";
-    }
-    std::string body_else = "";
-    body_else += generate_body_c(Else);
-    for (int i = 0; i < Else.size(); i++){
-        body_else += Else.at(i)->generate_c() + ";\n";
-    }
-    return "if (" + Cond->generate_c() + "){\n" + body_if + "} else {\n" + body_else + "}\n";*/
-    return ""; // TODO : fix this
+    return "";
 }
 
 std::string WhileExprAST::generate_c(){
-    /*std::string body_while = "";
-    body_while += generate_body_c(Body);
-    for (int i = 0; i < Body.size(); i++){
-        body_while += Body.at(i)->generate_c() + ";\n";
-    }
-    return "while (" + Cond->generate_c() + "){\n" + body_while + "}";*/
-    return ""; // TODO : fix this
+    return "";
 }
 
 std::string BoolExprAST::generate_c(){

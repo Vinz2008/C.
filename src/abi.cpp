@@ -105,7 +105,6 @@ bool reorder_struct(StructDeclaration* structDeclaration, std::string structName
             return false;
         }
     }
-    //Cpoint_Type last_type; // starts as empty
     std::vector<std::pair<std::string,Cpoint_Type>> tempMembers = structDeclaration->members;
     std::sort(tempMembers.begin(), tempMembers.end(), &reorder_struct_sorter);
     bool should_reorder = false;

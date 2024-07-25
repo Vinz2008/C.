@@ -14,8 +14,8 @@ extern std::unordered_map<std::string, int> BinopPrecedence;
 namespace operators {
 
 Value* LLVMCreateAdd(Value* L, Value* R, Cpoint_Type arg_type){
-    if (arg_type.is_vector_type){
-        /*Cpoint_Type vector_element_type = *arg_type.vector_element_type;
+    /*if (arg_type.is_vector_type){
+        Cpoint_Type vector_element_type = *arg_type.vector_element_type;
         if (vector_element_type.is_signed() || vector_element_type.is_unsigned()){
             std::vector<llvm::Value *> ArgsV = { L, R};
             std::vector<Type*> Tys = { get_type_llvm(arg_type) };
@@ -29,8 +29,8 @@ Value* LLVMCreateAdd(Value* L, Value* R, Cpoint_Type arg_type){
             auto constant_vector_length = ConstantInt::get(get_type_llvm(i32_type), APInt(32, (uint64_t)arg_type.vector_size, false));
             ArgsV.push_back(constant_vector_length);
             return callLLVMIntrisic("llvm.vp.add", ArgsV, Tys);
-        }*/
-    }
+        }
+    }*/
     if (!get_cpoint_type_from_llvm(R->getType()).is_decimal_number_type() || arg_type.is_vector_type){
       return Builder->CreateAdd(L, R, "addtmp");
     }
