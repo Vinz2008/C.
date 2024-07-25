@@ -117,7 +117,6 @@ Value* ClosureAST::codegen(){
         ArgsAdjustTrampoline.push_back(trampAlloca);
         Function* adjust_trampoline_func = Intrinsic::getDeclaration(TheModule.get(), Intrinsic::adjust_trampoline);
         Value* function_with_trampoline = Builder->CreateCall(adjust_trampoline_func, ArgsAdjustTrampoline, "trampoline_closure_adjust");
-        //function_with_trampoline = Builder->CreateBitCast(function_with_trampoline, f->getFunctionType());
         return function_with_trampoline;
     }
     return f;

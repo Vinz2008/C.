@@ -90,12 +90,6 @@ static bool reorder_struct_sorter(const std::pair<std::string,Cpoint_Type>& lhs,
     return type_size(lhs.second) > type_size(rhs.second);
 }
 
-/*struct reorder_struct_sorter{
-    inline bool operator() (const std::pair<std::string,Cpoint_Type>& lhs, const std::pair<std::string,Cpoint_Type>& rhs){
-        return type_size(lhs.second) < type_size(rhs.second);
-    }
-};*/
-
 // return value is if the struct should be reordered
 bool reorder_struct(StructDeclaration* structDeclaration, std::string structName, std::vector<std::pair<std::string,Cpoint_Type>>& return_members){
     // for now only have a reorder warning for structs without complex types in it (TODO)

@@ -4,7 +4,6 @@
 #include <iostream>
 #include "ast.h"
 #include "codegen.h"
-//#include "log.h"
 
 std::unique_ptr<c_translator::Context> c_translator_context;
 

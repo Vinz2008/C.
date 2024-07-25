@@ -90,7 +90,6 @@ extern bool debug_info_mode;
 
 extern bool is_in_struct_templates_codegen;
 
-//extern std::string TargetTriple;
 extern TargetInfo targetInfos;
 
 extern bool is_in_extern;
@@ -147,7 +146,6 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<Value*> ArgsV, std::vect
   Callee = Callee.substr(5, Callee.size());
   Log::Info() << "llvm intrisic called " << Callee << "\n";
   llvm::Intrinsic::IndependentIntrinsics intrisicId = llvm::Intrinsic::not_intrinsic;
-  //std::vector<Type*> Tys;
   if (Callee == "va_start"){
     intrisicId = Intrinsic::vastart;
   } else if (Callee == "va_end"){
@@ -276,14 +274,11 @@ Value *NumberExprAST::codegen() {
   if (trunc(Val) == Val){
     return ConstantInt::get(*TheContext, APInt(32, (int)Val, true));
   } else {
-    //return ConstantFP::get(*TheContext, APFloat(Val));
     return ConstantFP::get(get_type_llvm(double_type), APFloat(Val));
   }
-  //return ConstantFP::get(*TheContext, APFloat(Val));
 }
 
 Value* StringExprAST::codegen() {
-  //Log::Info() << "Before Codegen string" << str << '\n';
   Value* string;
   if (StringsGenerated[str]){
     string = StringsGenerated[str];
@@ -357,13 +352,8 @@ Value* ConstantVectorExprAST::codegen(){
         if (! (constant = dyn_cast<Constant>(Vtemp))){
             return LogErrorV(this->loc, "The %d value of constant array is not a constant", i);
         }
-        // convert type
-        /*if (get_type_llvm(StructDeclarations[struct_name]->members.at(i).second) != constant->getType()){
-            convert_to_type(get_cpoint_type_from_llvm(constant->getType()), get_type_llvm(StructDeclarations[struct_name]->members.at(i).second), constant);
-        }*/
         VectorMembersVal.push_back(constant);
     }
-    //auto vectorType = VectorType::get(get_type_llvm(vector_element_type), vector_size, false);
     return ConstantVector::get(VectorMembersVal);
 }
 
@@ -371,7 +361,6 @@ Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
     bool should_break = false;
     Value* ret = nullptr;
     for (int i = 0; i < Body.size(); i++){
-        //if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
         if (Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::Unreachable)){
           should_break = true;
         }
@@ -415,16 +404,13 @@ Type* StructDeclarAST::codegen(){
     Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     dataTypes.push_back(var_type);
     std::string VarName = VarExpr->VarNames.at(0).first;
-    //if (is_in_struct_templates_codegen){
-        members_for_template.push_back(std::make_pair(VarName, VarExpr->cpoint_type)); // already done in ast.cpp
-    //}
+    members_for_template.push_back(std::make_pair(VarName, VarExpr->cpoint_type)); // already done in ast.cpp
   }
   structType->setBody(dataTypes);
   Log::Info() << "adding struct declaration name " << Name << " to StructDeclarations" << "\n";
   // TODO for debuginfos
   DIType* structDebugInfosType = nullptr;
   if (!is_in_struct_templates_codegen){
-    //auto functions = StructDeclarations[Name]->functions;
     StructDeclarations[Name] = std::make_unique<StructDeclaration>(structType, structDebugInfosType, StructDeclarations[Name]->members, /*functions*/  StructDeclarations[Name]->functions);
   } else {
         std::string structName = Name.substr(0, Name.find("____"));
@@ -501,7 +487,6 @@ Type* UnionDeclarAST::codegen(){
   }
   for (int i = 0; i < Vars.size(); i++){
     std::unique_ptr<VarExprAST> VarExpr = std::move(Vars.at(i));
-    //Type* var_type = get_type_llvm(VarExpr->cpoint_type);
     std::string VarName = VarExpr->VarNames.at(0).first;
     members.push_back(std::make_pair(VarName, VarExpr->cpoint_type));
   }
@@ -544,7 +529,7 @@ Cpoint_Type MembersDeclarAST::get_self_type(){
     if (!is_type(members_for)){
         return Cpoint_Type(other_type, true, 0, false, 0, true, members_for);;
     } else {
-        return Cpoint_Type(get_type(members_for));;
+        return Cpoint_Type(get_type(members_for));
     }
 }
 
@@ -560,16 +545,12 @@ void MembersDeclarAST::codegen(){
         std::unique_ptr<FunctionAST> FunctionExpr = std::move(Functions.at(i));
         std::string function_name = FunctionExpr->Proto->getName();
         std::string mangled_name_function = "";
-        //Cpoint_Type self_type;
         if (!is_builtin_type){
             StructDeclarations[members_for]->functions.push_back(function_name);
             mangled_name_function = struct_function_mangling(members_for, function_name);
-            //self_type = Cpoint_Type(other_type, true, 0, false, 0, true, members_for);
         } else {
-            //self_type = Cpoint_Type(get_type(members_for));
             mangled_name_function = self_type.create_mangled_name() + "__" + function_name;;
         }
-        //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
         FunctionExpr->Proto->Args.insert(FunctionExpr->Proto->Args.begin(), std::make_pair("self", self_type));
         FunctionExpr->Proto->Name = mangled_name_function;
         FunctionExpr->codegen();
@@ -579,16 +560,12 @@ void MembersDeclarAST::codegen(){
         std::unique_ptr<PrototypeAST> Proto = std::move(Externs.at(i));
         std::string function_name = Proto->getName();
         std::string mangled_name_function = "";
-        //Cpoint_Type self_type;
         if (!is_builtin_type){
             StructDeclarations[members_for]->functions.push_back(function_name);
             mangled_name_function = struct_function_mangling(members_for, function_name);
-            //self_type = Cpoint_Type(other_type, true, 0, false, 0, true, members_for);
         } else {
-            //self_type = Cpoint_Type(get_type(members_for));
             mangled_name_function = self_type.create_mangled_name() + "__" + function_name;;
         }
-        //Cpoint_Type self_pointer_type = get_cpoint_type_from_llvm(StructDeclarations[members_for]->struct_type->getPointerTo());
         Proto->Args.insert(Proto->Args.begin(), std::make_pair("self", self_type));
         Proto->Name = mangled_name_function;
         Proto->codegen();
@@ -636,7 +613,6 @@ Value* DeferExprAST::codegen(){
 void createScope(){
     DIScope* debuginfos_scope = nullptr;
     if (debug_info_mode){
-        //debuginfos_scope = DBuilder->
         Function* TheFunction = Builder->GetInsertBlock()->getParent();
         int lineNo = 0; // TODO
         debuginfos_scope = DBuilder->createLexicalBlock(TheFunction->getSubprogram(), CpointDebugInfo.TheCU->getFile(), lineNo, 0);
@@ -672,68 +648,9 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
         Log::Info() << "op : " << BinExpr->Op << "\n";
         if (BinExpr->Op.at(0) == '['){
             // TODO : make work using other things than variables
-            //Cpoint_Type cpoint_type;
             Cpoint_Type member_type;
-            //Value* arrayPtr = nullptr;
             bool should_load;
             Value* ptr = getArrayOrVectorMemberGEP(std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type, should_load);
-            /*if (dynamic_cast<BinaryExprAST*>(BinExpr->LHS.get())){
-                std::unique_ptr<BinaryExprAST> BinExprBeforeArrayIndex = get_Expr_from_ExprAST<BinaryExprAST>(BinExpr->LHS->clone());
-                if (BinExprBeforeArrayIndex->Op != "."){
-                    arrayPtr = getStructMemberGEP(std::move(BinExprBeforeArrayIndex->LHS), std::move(BinExprBeforeArrayIndex->RHS), cpoint_type);
-                } else if (BinExprBeforeArrayIndex->Op != "["){
-                    bool should_load;
-                    arrayPtr = getArrayOrVectorMemberGEP(std::move(BinExprBeforeArrayIndex->LHS), std::move(BinExprBeforeArrayIndex->RHS), cpoint_type, should_load);
-                } else {
-                    return LogErrorV(emptyLoc, "Not supported operator in array indexing in equal operator");
-                }
-            } else if (dynamic_cast<VariableExprAST*>(BinExpr->LHS.get())){
-                std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(BinExpr->LHS->clone());
-                arrayPtr = get_var_allocation(VarExpr->Name);
-                cpoint_type = *get_variable_type(VarExpr->Name);
-                Log::Info() << "ArrayName : " << VarExpr->Name << "\n";
-                if (ValDeclared->getType()->isArrayTy()){
-                    AllocaInst *Alloca = NamedValues[VarExpr->Name]->alloca_inst;
-                    Builder->CreateStore(ValDeclared, Alloca);
-                    //NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
-                    return Constant::getNullValue(Type::getDoubleTy(*TheContext));
-                }
-            } else {
-                return LogErrorV(emptyLoc, "In an equal operator, another expression than a variable name is used ");
-            }
-            Cpoint_Type member_type = cpoint_type;
-            Log::Info() << "member type : " << member_type << "\n";
-            if (member_type.is_ptr && !member_type.is_array){
-                Log::Info() << "is member" << "\n";
-                member_type.is_ptr = false;
-                member_type.nb_ptr = 0;
-                member_type.nb_element = 0;
-            } else {
-                member_type.is_array = false;
-                member_type.nb_element = 0;
-            }
-            //Log::Info() << "Pos for GEP : " << pos_array << "\n";
-            auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 0, true));
-            auto index = std::move(BinExpr->RHS);
-            if (!index){
-                return LogErrorV(emptyLoc, "couldn't find index for array %s", BinExpr->LHS->to_string().c_str());
-            }
-            Cpoint_Type index_type = index->get_type();
-            auto indexVal = index->codegen();
-            if (indexVal->getType() != get_type_llvm(i64_type)){
-                convert_to_type(get_cpoint_type_from_llvm(indexVal->getType()), Cpoint_Type(i64_type), indexVal) ; // TODO : replace the get_cpoint_type_from_llvm to index_type
-            }
-            Log::Info() << "Number of member in array : " << cpoint_type.nb_element << "\n";
-            std::vector<Value*> indexes = { zero, indexVal};
-            if (cpoint_type.is_ptr && !cpoint_type.is_array){
-                Log::Info() << "array for array member is ptr" << "\n";
-                cpoint_type.is_ptr = false;
-                indexes = {indexVal};
-                arrayPtr = Builder->CreateLoad(arrayPtr->getType(), arrayPtr);
-            }
-            Type* llvm_type = get_type_llvm(cpoint_type);
-            Log::Info() << "Get LLVM TYPE" << "\n";
-            auto ptr = Builder->CreateGEP(llvm_type, arrayPtr, indexes, "get_array", true);*/
             Log::Info() << "Create GEP" << "\n";
             if (ValDeclared->getType() != get_type_llvm(member_type)){
             convert_to_type(get_cpoint_type_from_llvm(ValDeclared->getType()), member_type, ValDeclared);
@@ -772,7 +689,6 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             return LogErrorV(emptyLoc, "Assigning to a variable a void value");
         }
         Builder->CreateStore(ValDeclared, Alloca);
-        //NamedValues[VarExpr->Name] = std::make_unique<NamedValue>(Alloca, cpoint_type);
         }
         // TODO : maybe replace all the null values returned to the lvalue
         return Constant::getNullValue(Type::getDoubleTy(*TheContext));
@@ -937,7 +853,6 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         Log::Info() << "member_type_binop_struct : " << member_type_binop_struct << "\n";
         Value* ptr = Builder->CreateGEP(get_type_llvm(member_type_binop_struct), lStruct, { zero, index}, "", true);
         return ptr;
-        //return lStruct;
     }
     return LogErrorV(emptyLoc, "Trying to use the struct member operator with an expression which it is not implemented for");
 }
@@ -974,7 +889,6 @@ Value* StructMemberCallExprAST::codegen(){
         return not_struct_member_call(std::move(StructMember->LHS), functionCall, std::move(Args));
     }
     // is struct
-    // TODO : refactor this with just get_type
 
     std::string struct_type_name = lhs_type.struct_name;
 
@@ -1017,53 +931,7 @@ Value* StructMemberCallExprAST::codegen(){
     if (F->getReturnType()->isVoidTy()){
         call_name = "";
     }
-    return Builder->CreateCall(F, CallArgs, call_name); 
-
-    /*if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
-        std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->LHS));
-        std::string StructName = structNameExpr->Name;
-        if (!dynamic_cast<VariableExprAST*>(StructMember->RHS.get())){
-            return LogErrorV(emptyLoc, "Expected an identifier when calling a member of a struct");
-        }
-        std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(StructMember->RHS));
-        std::string MemberName = structMemberExpr->Name;
-        bool found_function = false;
-        std::string struct_type_name = NamedValues[StructName]->type.struct_name;
-        Log::Info() << "StructName call struct function : " << struct_type_name << "\n";
-        if (NamedValues[StructName]->type.is_struct_template){
-            struct_type_name = get_struct_template_name(struct_type_name, *NamedValues[StructName]->type.struct_template_type_passed);
-            Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
-        }
-        auto functions =  StructDeclarations[struct_type_name]->functions;
-        for (int i = 0; i < functions.size(); i++){
-        Log::Info() << "functions.at(i) : " << functions.at(i) << "\n";
-        if (functions.at(i) == MemberName){
-            //is_function_call = true;
-            found_function = true;
-            Log::Info() << "Is function Call" << "\n";
-        }
-        }
-        if (!found_function){
-            return LogErrorV(this->loc, "Unknown struct function member called : %s\n", MemberName.c_str());
-        }
-        std::vector<llvm::Value*> CallArgs;
-        CallArgs.push_back(NamedValues[StructName]->alloca_inst);
-        for (int i = 0; i < Args.size(); i++){
-            CallArgs.push_back(Args.at(i)->codegen());
-        }
-        Function *F = getFunction(struct_function_mangling(struct_type_name, MemberName));
-        if (!F){
-            Log::Info() << "struct_function_mangling(StructName, MemberName) : " << struct_function_mangling(NamedValues[StructName]->type.struct_name, MemberName) << "\n";
-            return LogErrorV(this->loc, "The function member %s called doesn't exist mangled in the scope", MemberName.c_str());
-        }
-        std::string call_name = "calltmp_struct";
-        if (F->getReturnType()->isVoidTy()){
-            call_name = "";
-        }
-        return Builder->CreateCall(F, CallArgs, call_name); 
-    }*/
-    
-    return LogErrorV(emptyLoc, "Trying to call a struct member operator with an expression which it is not implemented for");
+    return Builder->CreateCall(F, CallArgs, call_name);
 }
 
 // TODO : refactor this code to be more efficient (for example a lot of the code from variableExprAST should be a function that is called after getting the struct member)
@@ -1163,9 +1031,6 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
         }
         std::unique_ptr<BinaryExprAST> BinOp = get_Expr_from_ExprAST<BinaryExprAST>(std::move(array));
         // TODO : uncomment this, will need to modify the structMember operator to be able to return only the gep ptr for any expressions it support
-        //std::string StructName =  BinOp->LHS;
-        //Value* Allocation = get_var_allocation(StructMemberExpr->StructName);
-        //Cpoint_Type struct_type = *get_variable_type(StructMemberExpr->StructName);
         Value* ptr = nullptr;
         Cpoint_Type binop_member_type;
         if (BinOp->Op == "."){
@@ -1176,7 +1041,6 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
         } else {
             return LogErrorV(emptyLoc, "Indexing an array is only implemented for struct member binary operators expression\n");
         }
-        //Value* ptr = StructMemberGEP(StructMemberExpr->MemberName, Allocation, struct_type, struct_member_type);
         std::vector<Value*> indexes = { zero, IndexV};
         if (binop_member_type.is_ptr && !binop_member_type.is_array){
             indexes = { IndexV };
@@ -1244,7 +1108,6 @@ Value* AsmExprAST::codegen(){
                 generated_assembly_code += "${" + std::to_string(arg_nb) + ":q}";
                 if (Args->InputOutputArgs.at(arg_nb)->argType == ArgInlineAsm::ArgType::input){
                     constraints += "r,";
-                    //AsmArgs.push_back(in_values_loaded.at(arg_in_nb));
                     arg_in_nb++;
                 } else if (Args->InputOutputArgs.at(arg_nb)->argType == ArgInlineAsm::ArgType::output){
                     constraints += "=&r,";
@@ -1253,20 +1116,11 @@ Value* AsmExprAST::codegen(){
             } else {
                 return LogErrorV(emptyLoc, "Too much format args in inline asm block");
             }
-            /*if (contains_out){
-                generated_assembly_code += "${0:q}";
-            }*/
             i++;
         } else {
             generated_assembly_code += assembly_code.at(i);
         }
     }
-    /*if (contains_out){
-        constraints += "=&r,";
-    } else if (contains_in){
-        constraints += "r,";
-        AsmArgs.push_back(in_value_loaded);
-    }*/
     constraints += "~{dirflag},~{fpsr},~{flags},~{memory}"; // TODO : set constraints only when needed
     auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(asm_type), AsmArgsTypes, false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
     if (contains_out){
@@ -1393,7 +1247,6 @@ Value *CallExprAST::codegen() {
   // Look up the name in the global module table.
   Function* TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "function called " << Callee << "\n";
-  //std::string internal_func_prefix = "cpoint_internal_";
   // TODO : instead of using an internal func prefix, use namespace (which will be the same logic, just with a different number of underscore)
   std::string internal_func_prefix = CallExprAST::get_internal_func_prefix();
   bool is_internal = false;
@@ -1405,7 +1258,6 @@ Value *CallExprAST::codegen() {
     if (FunctionProtos[constructor_name] != nullptr){
         Callee = constructor_name;
     } else {
-        //std::make_unique<GlobalVariableAST>("__const_struct_" + Callee, true, false, Cpoint_Type(double_type, false, 0, false, 0, true, Callee), );
         std::vector<Constant*> constantArgs;
         for (int i = 0; i < Args.size(); i++){
             auto Val = Args.at(i)->codegen();
@@ -1466,16 +1318,11 @@ Value *CallExprAST::codegen() {
   size_t args_size = 0;
   // including hidden struct args
   size_t real_args_size = 0;
-  // if the functions is a struct member call
-  //bool contains_hidden_struct_arg = false;
   if (CalleeF){
     function_return_type = FunctionProtos[Callee]->cpoint_type;
     is_variable_number_args = FunctionProtos[Callee]->is_variable_number_args;
     real_args_size = CalleeF->arg_size();
     args_size = FunctionProtos[Callee]->Args.size();
-    /*if (args_size != FunctionProtos[Callee]->Args.size()){
-        contains_hidden_struct_arg = true;
-    }*/
   } else if (NamedValues[Callee] && NamedValues[Callee]->type.is_function){
     function_ptr_from_local_var = Builder->CreateLoad(get_type_llvm(NamedValues[Callee]->type), NamedValues[Callee]->alloca_inst, "load_func_ptr");
     is_variable_number_args = false; // TODO : add variable number of args for function pointers ?
@@ -1483,7 +1330,6 @@ Value *CallExprAST::codegen() {
     function_return_type = *NamedValues[Callee]->type.return_type;
     Cpoint_Type first_arg_type = NamedValues[Callee]->type.args.at(0).type;
     if (Callee.find("__") != std::string::npos && first_arg_type.is_struct && first_arg_type.is_ptr){
-        //contains_hidden_struct_arg = true;
         real_args_size--;
     }
   } else {
@@ -1562,7 +1408,7 @@ Value *CallExprAST::codegen() {
     if (temp_val->getType() != get_type_llvm(arg_type)){
       Log::Info() << "name of arg converting in call expr : " << ((FunctionProtos[Callee]) ? FunctionProtos[Callee]->Args.at(i).first : (std::string)"(couldn't be found because it is a function pointer)") << "\n"; // TODO : fix this ?
       //return LogErrorV(this->loc, "Arg %s type is wrong in the call of %s\n Expected type : %s, got type : %s\n", FunctionProtos[Callee]->Args.at(i).second, Callee, create_pretty_name_for_type(get_cpoint_type_from_llvm(temp_val->getType())), create_pretty_name_for_type(FunctionProtos[Callee]->Args.at(i).second));
-        convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , arg_type, temp_val);
+      convert_to_type(get_cpoint_type_from_llvm(temp_val->getType()) , arg_type, temp_val);
     }
     }
     ArgsV.push_back(temp_val);
@@ -1716,9 +1562,9 @@ Value* SizeofExprAST::codegen(){
   if (!is_variable){
     Log::Info() << "codegen sizeof is type" << "\n";
     Cpoint_Type cpoint_type = type;
-    if (cpoint_type.is_struct){
-        //return getSizeOfStruct(temp_alloca);
-    }
+    /*if (cpoint_type.is_struct){
+        return getSizeOfStruct(temp_alloca);
+    }*/
     Type* llvm_type = get_type_llvm(cpoint_type);
     Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
     size =  Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));

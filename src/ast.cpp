@@ -1,4 +1,3 @@
-//#include <map>
 #include <unordered_map>
 #include <iostream>
 #include <utility>
@@ -31,8 +30,6 @@ extern std::unique_ptr<Compiler_context> Comp_context;
 extern std::unordered_map<std::string, std::unique_ptr<NamedValue>> NamedValues;
 extern std::unordered_map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
 extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
-//extern bool std_mode;
-//extern bool gc_mode;
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types_list;
 extern std::vector<Cpoint_Type> typeDefTable;
@@ -426,7 +423,6 @@ std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool 
         return LogError("Expected ) in call args");
     }
     getNextToken(); // eat ')'
-    //return std::make_unique<NEWCallExprAST>(std::move(LHS), std::move(Args), template_passed_type);
     return getASTNewCallExprAST(std::move(LHS), std::move(Args), template_passed_type);
 }
 
@@ -1394,8 +1390,6 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken();  // eat func.
   auto Proto = ParsePrototype();
   if (!Proto) return nullptr;
-  //auto argsCopy(Proto->Args);
-  //auto ProtoCopy = Proto->clone();
   if (CurTok != '{'){
     LogErrorF("Expected '{' in function definition");
   }
@@ -1418,7 +1412,6 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   Log::Info() << "end of function" << "\n";
   bool has_template = Proto->has_template;
   std::string FunctionName = Proto->Name;
-  //FunctionProtos[Proto->getName()] = Proto->clone();
   std::unique_ptr<FunctionAST> functionAST = std::make_unique<FunctionAST>(std::move(Proto), std::move(Body));
   if (has_template){
     std::string template_name = functionAST->Proto->template_name;

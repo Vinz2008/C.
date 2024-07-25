@@ -431,12 +431,9 @@ bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){
     return convert_to_type(typeFrom, typeTo_cpoint, val);
 }
 
-// TODO : have multiple version of this function with args : Cpoint_Type and Cpoint_Type, Type* and Type*, Cpoint_type and Type*, just with differences like :
-// Cpoint_Type and Type* is just calling the Cpoint_Type and Cpoint_Type one after calling get_cpoint_type_from_llvm on the Type*
-// it will make the function more optimised in a lot of cases 
+
+// TODO : make it return false only when there is a problem when converting (when the conversion is a noop, return true instead of false) and verify the return to see if the conversion failed (and if it failed, call LogError)
 bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &val){
-    // TODO : typeFrom is detected from a Value* Type so there needs to be another way to detect if it is unsigned because llvm types don't contain them. For example by getting the name of the Value* and searching it in NamedValues
-  //Cpoint_Type typeTo_cpoint = get_cpoint_type_from_llvm(typeTo);
   Log::Info() << "Creating cast" << "\n";
   Log::Info() << "typeFrom : " << typeFrom << "\n";
   Log::Info() << "typeTo : " << typeTo_cpoint << "\n";
@@ -444,6 +441,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
     if (!typeFrom.is_vector_type){
         LogError("Trying to cast something that is not of a vector type to a vector");
     }
+    // automatically transforms a vector of bool to a bool
     if (typeTo_cpoint.type == bool_type && typeFrom.vector_element_type && typeFrom.vector_element_type->type == bool_type){
         // TODO : optimize this -> if the vector can be bitcast to a scalar type (for example a vector of 8 i8 which can be casted to an an i64), cast it to the scalar type and compare it to -1 (the minus is because when casting if everything is true, the sign bit will be 1)
         val = Builder->CreateAndReduce(val);
@@ -455,7 +453,6 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
     if (typeFrom.vector_size != typeTo_cpoint.vector_size){
         LogError("Trying to cast to a vector type with a different size");
     }
-    // automatically transforms a vector of bool to a bool
     return false;
   }
   //Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";
