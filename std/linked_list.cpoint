@@ -14,7 +14,7 @@ struct linked_list {
         self.tail = null
     }
     func append(data : i32) i32 {
-        var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list * 2)
+        var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list)
         if temp == null {
             #panic("failed allocation in linked list")
         }
