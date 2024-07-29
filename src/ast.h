@@ -318,7 +318,12 @@ public:
     return std::make_unique<SizeofExprAST>(is_type, type, (expr) ? expr->clone() : nullptr);
   }
   std::string to_string() override {
-    return "sizeof " + (is_type) ? create_pretty_name_for_type(type) : expr->to_string();
+    if (is_type){
+        return "sizeof " + create_pretty_name_for_type(type);
+    } else {
+        return "sizeof " + expr->to_string();
+    }
+    //return "sizeof " + (is_type) ? create_pretty_name_for_type(type.get_real_type()) : expr->to_string();
   }
   Cpoint_Type get_type() override {
     return Cpoint_Type(i32_type);
