@@ -1489,7 +1489,18 @@ std::unique_ptr<ExprAST> ParseSizeofExpr(){
   Log::Info() << "Parsing sizeof" << "\n";
   getNextToken();
   Cpoint_Type type = Cpoint_Type(double_type);
-  bool is_variable = false;
+  std::unique_ptr<ExprAST> expr = nullptr;
+  bool is_sizeof_type = false;
+  if ((CurTok == tok_identifier && is_type(IdentifierStr)) || CurTok == tok_struct || CurTok == tok_class){
+    is_sizeof_type = true;
+    type = ParseTypeDeclaration(false);
+  } else {
+    expr = ParseExpression();
+    if (!expr){
+        return nullptr;
+    }
+  }
+  /*bool is_variable = false;
   std::string Name = "";
   if (NamedValues[IdentifierStr] != nullptr){
     Log::Info() << "sizeof is variable" << "\n";
@@ -1503,10 +1514,9 @@ std::unique_ptr<ExprAST> ParseSizeofExpr(){
     Log::Info() << "sizeof type parsed : " << type << "\n";
   } else {
     return LogError("Neither a type or a variable in sizeof expr");
-  }
-  // TODO : Just pass a parsed expr to sizeof and then use get_type in codegen
-  auto Sizeof = std::make_unique<SizeofExprAST>(type, is_variable, Name);
-  Log::Info() << "after sizeof : " << Name << "\n";
+  }*/
+  auto Sizeof = std::make_unique<SizeofExprAST>(is_sizeof_type, type, std::move(expr));
+  //Log::Info() << "after sizeof : " << Name << "\n";
   //getNextToken();
   return Sizeof;
 }

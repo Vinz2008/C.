@@ -320,8 +320,8 @@ std::string DerefExprAST::generate_c(){
 }
 
 std::string SizeofExprAST::generate_c(){
-    if (is_variable){
-        return "sizeof(" + Name + ")";
+    if (!is_type){
+        return "sizeof(" + expr->to_string() + ")";
     } else {
         C_Type sizeof_type = C_Type(type);
         TYPES_USED(&sizeof_type);

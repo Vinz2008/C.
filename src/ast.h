@@ -297,17 +297,28 @@ public:
 
 // TODO : fix sizeof not being printed in assertions with expect (to_string() return "" ?)
 class SizeofExprAST : public ExprAST {
+  // is either a type or an expr : sizeof int or sizeof a
+  bool is_type;
   Cpoint_Type type;
-  bool is_variable;
-  std::string Name;
+  /*bool is_variable;
+  std::string Name;*/
+  std::unique_ptr<ExprAST> expr;
 public:
-  SizeofExprAST(Cpoint_Type type, bool is_variable, const std::string &Name) : type(type), is_variable(is_variable), Name(Name) {}
+  /*//SizeofExprAST(Cpoint_Type type, bool is_variable, const std::string &Name) : type(type), is_variable(is_variable), Name(Name) {}
   Value* codegen() override;
   std::unique_ptr<ExprAST> clone() override {
     return std::make_unique<SizeofExprAST>(type,is_variable, Name);
   }
   std::string to_string() override {
     return "sizeof " + Name != "" ? Name : create_pretty_name_for_type(type);
+  }*/
+ SizeofExprAST(bool is_type, Cpoint_Type type, std::unique_ptr<ExprAST> expr) : is_type(is_type), type(type), expr(std::move(expr)) {}
+  Value* codegen() override;
+  std::unique_ptr<ExprAST> clone() override {
+    return std::make_unique<SizeofExprAST>(is_type, type, (expr) ? expr->clone() : nullptr);
+  }
+  std::string to_string() override {
+    return "sizeof " + (is_type) ? create_pretty_name_for_type(type) : expr->to_string();
   }
   Cpoint_Type get_type() override {
     return Cpoint_Type(i32_type);
