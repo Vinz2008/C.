@@ -22,6 +22,7 @@ extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern Source_location emptyLoc;
 
 Type* get_type_llvm(Cpoint_Type cpoint_type){
+    assert(!cpoint_type.is_empty);
     Type* type;
     if (cpoint_type.is_template_type){
         Log::Info() << "template type found get_type_llvm " << TypeTemplateCallCodegen.first << " -> " << TypeTemplateCallCodegen.second << "\n";
@@ -566,6 +567,20 @@ Cpoint_Type Cpoint_Type::deref_type(){
         }
     }
     return new_type;
+}
+
+Cpoint_Type Cpoint_Type::get_real_type(){
+    if (is_template_type){
+        Cpoint_Type template_type = TypeTemplateCallCodegen.second;
+        if (is_ptr){
+            template_type.is_ptr = true;
+            template_type.nb_ptr++;
+        }
+        // TODO : add more modifiers to the type (ex : is an array)
+        return template_type;
+    } else {
+        return *this;
+    }
 }
 
 std::string Cpoint_Type::to_printf_format(){

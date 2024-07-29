@@ -2,12 +2,12 @@ import print.cpoint
 
 extern gc_free(s : void ptr) void;
 
-struct list {
-    var list : i32 ptr
+struct list~T~ {
+    var list : T ptr
     var allocated_size : i32
     var length : i32
     func list() void {
-        self.list = gc_malloc(sizeof i32 * 10)
+        self.list = gc_malloc(sizeof T * 10)
         if self.list == null {
             #panic("Error when allocating the list")
         }
@@ -17,12 +17,12 @@ struct list {
     func append(data : i32) void {
         if self.length == self.allocated_size {
             self.allocated_size = self.allocated_size * 2
-            self.list = gc_realloc(self.list, self.allocated_size * sizeof i32)
+            self.list = gc_realloc(self.list, self.allocated_size * sizeof T)
         }
         self.list[self.length] = data
         self.length = self.length + 1
     }
-    func at(pos : i32) i32 {
+    func at(pos : i32) T {
         self.list[pos]
     }
     func print() void {
@@ -35,7 +35,7 @@ struct list {
     func is_empty() bool {
         self.length == 0
     }
-    func c_ptr() i32 ptr {
+    func c_ptr() T ptr {
         self.list
     }
     func destroy() void {

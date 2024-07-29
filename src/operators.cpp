@@ -82,11 +82,16 @@ Value* LLVMCreateCmp(Value* L, Value* R, Cpoint_Type arg_type){
     if (arg_type.is_vector_type){
         arg_type = *arg_type.vector_element_type;
     }
-    if (!arg_type.is_decimal_number_type()){
+    if (arg_type.is_decimal_number_type()){
+        L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
+    } else {
+        L = Builder->CreateICmpEQ(L, R, "cmptmp");
+    }
+    /*if (!arg_type.is_decimal_number_type()){
       L = Builder->CreateICmpEQ(L, R, "cmptmp");
     } else {
       L = Builder->CreateFCmpUEQ(L, R, "cmptmp");
-    }
+    }*/
     return L;
 }
 

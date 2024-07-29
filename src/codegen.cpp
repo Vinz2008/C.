@@ -429,7 +429,11 @@ Type* StructDeclarAST::codegen(){
   for (int i = 0; i < Functions.size(); i++){
     std::unique_ptr<FunctionAST> FunctionExpr = Functions.at(i)->clone();
     std::string function_name;
-    if (FunctionExpr->Proto->Name == Name){
+    std::string structNameWithoutTemplate = Name;
+    if (is_struct_template(Name)){
+        structNameWithoutTemplate = remove_struct_template(Name);
+    }
+    if (FunctionExpr->Proto->Name == structNameWithoutTemplate){
     // Constructor
     function_name = "Constructor__Default";
     } else {
@@ -991,13 +995,14 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
         }
         if (cpoint_type.is_ptr && !cpoint_type.is_array){
             Log::Info() << "array for array member is ptr" << "\n";
-            if (cpoint_type.nb_ptr > 1){
+            cpoint_type = cpoint_type.deref_type();
+            /*if (cpoint_type.nb_ptr > 1){
             cpoint_type.nb_ptr--;
             } else {
             cpoint_type.is_ptr = false;
             cpoint_type.nb_ptr = 0;
             cpoint_type.nb_element = 0;
-            }
+            }*/
             Log::Info() << "Cpoint_type for array member which is ptr : " << cpoint_type << "\n";
             IndexV = Builder->CreateSExt(IndexV, Type::getInt64Ty(*TheContext)); // try to use a i64 for index
             indexes = {IndexV};
@@ -1051,6 +1056,9 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
         member_type.nb_element = 0;*/
         member_type = member_type.deref_type();
         Type* type_llvm = get_type_llvm(binop_member_type);
+        if (binop_member_type.is_ptr){
+            type_llvm = get_type_llvm(member_type);
+        }
         Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes, "", true);
         // TODO : finish the load Name with the IndexV in string form
         return member_ptr;
@@ -1147,7 +1155,7 @@ Value *BinaryExprAST::codegen() {
   if (Op.at(0) == '.'){
     return getStructMember(std::move(LHS), std::move(RHS));
   }
-  Cpoint_Type LHS_type = LHS->get_type();
+  Cpoint_Type LHS_type = LHS->get_type().get_real_type();
   Cpoint_Type RHS_type = RHS->get_type();
   Value *L = LHS->codegen();
   Value *R = RHS->codegen();
@@ -2604,8 +2612,8 @@ Value *VarExprAST::codegen() {
 
     Type* struct_type_temp = get_type_llvm(Cpoint_Type(double_type));
     std::string struct_declaration_name_temp = "";
+    std::string struct_name = cpoint_type.struct_name;
     if (cpoint_type.is_struct){
-      std::string struct_name = cpoint_type.struct_name;
       if (cpoint_type.is_struct_template){
         struct_name = get_struct_template_name(cpoint_type.struct_name, *cpoint_type.struct_template_type_passed);
       }
@@ -2620,7 +2628,8 @@ Value *VarExprAST::codegen() {
     NamedValues[VarName] = std::make_unique<NamedValue>(Alloca, cpoint_type, struct_type_temp, struct_declaration_name_temp);
     //Log::Info() << "NamedValues[VarName]->struct_declaration_name : " <<  NamedValues[VarName]->struct_declaration_name << "\n";
     if (cpoint_type.is_just_struct()){
-      if (Function* constructorF = getFunction(cpoint_type.struct_name + "__Constructor__Default")){
+      //std::cout << struct_name << std::endl;
+      if (Function* constructorF = getFunction(struct_name + "__Constructor__Default")){
       std::vector<Value *> ArgsV;
       
       auto A = NamedValues[VarName]->alloca_inst;

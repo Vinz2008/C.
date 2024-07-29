@@ -44,7 +44,7 @@ extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> Struc
 
 extern std::unique_ptr<Preprocessor::Context> context;
 
-Cpoint_Type ParseTypeDeclaration(bool eat_token = true, bool is_return = false);
+Cpoint_Type ParseTypeDeclaration(bool eat_token = true, bool is_return = false, bool no_default_type = false);
 
 bool is_comment = false;
 
@@ -772,7 +772,7 @@ int ParseTypeDeclarationVector(bool& is_vector, Cpoint_Type& vector_element_type
     return 0;
 }
 
-Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= false*/){
+Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= false*/, bool no_default_type /*=false*/){
   int type = double_type; 
   bool is_ptr = false;
   std::string struct_Name = "";
@@ -784,6 +784,9 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
   std::vector<Cpoint_Type> args;
   Cpoint_Type* return_type = nullptr;
   Cpoint_Type default_type = Cpoint_Type(double_type);
+  if (no_default_type){
+    default_type = Cpoint_Type();
+  }
   bool is_struct_template = false;
   Cpoint_Type* struct_template_type_passed = nullptr;
   bool is_vector = false;
@@ -855,7 +858,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     if (CurTok == '~'){
         Log::Info() << "found templates for struct" << "\n";
         getNextToken();
-        struct_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false));
+        struct_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
         if (!struct_template_type_passed){
             LogError("missing template type for struct");
             return default_type;
@@ -1132,6 +1135,8 @@ static std::unique_ptr<VarExprAST> find_in_vector_of_unique_ptr_varexpr(std::vec
     return nullptr;
 }
 
+std::string struct_parsing_template_name = "";
+
 std::unique_ptr<StructDeclarAST> ParseStruct(){
   struct_parsing = true;
   std::string template_name = "";
@@ -1156,6 +1161,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     has_template = true;
     TypeTemplateCallAst = template_name;
   }
+  struct_parsing_template_name = template_name;
   if (CurTok == tok_identifier && IdentifierStr == "repr"){
     getNextToken();
     if (CurTok != tok_string){
@@ -1211,6 +1217,8 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
       Log::Info() << "AFTER ParseDefinition" << "\n";
       if (declar == nullptr){return nullptr;}
       std::string function_name;
+      //std::cout << structName << "\n";
+      // TODO : maybe remove this because it is done in codegen
       if (declar->Proto->Name == structName){
         // Constructor
         function_name = "Constructor__Default";
@@ -1266,6 +1274,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   }
   auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);
   struct_parsing = false;
+  struct_parsing_template_name = "";
   if (has_template){
     Log::Info() << "Parse struct has template" << "\n";
     TemplateStructDeclars[structName] = std::make_unique<StructDeclar>(std::move(structDeclar), template_name);
@@ -1488,10 +1497,11 @@ std::unique_ptr<ExprAST> ParseDerefExpr(){
 std::unique_ptr<ExprAST> ParseSizeofExpr(){
   Log::Info() << "Parsing sizeof" << "\n";
   getNextToken();
-  Cpoint_Type type = Cpoint_Type(double_type);
+  Cpoint_Type type;
   std::unique_ptr<ExprAST> expr = nullptr;
   bool is_sizeof_type = false;
-  if ((CurTok == tok_identifier && is_type(IdentifierStr)) || CurTok == tok_struct || CurTok == tok_class){
+  // move this to is_type_declaration
+  if ((CurTok == tok_identifier && (is_type(IdentifierStr) || struct_parsing_template_name == IdentifierStr)) || CurTok == tok_struct || CurTok == tok_class){
     is_sizeof_type = true;
     type = ParseTypeDeclaration(false);
   } else {

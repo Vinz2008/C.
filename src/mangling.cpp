@@ -14,3 +14,12 @@ std::string get_struct_template_name(std::string struct_name, /*std::string*/ Cp
     //return struct_name + "____" + type;
     return struct_name + "____" + type.create_mangled_name();
 }
+
+bool is_struct_template(std::string struct_name){
+    return struct_name.find("____") != std::string::npos;
+}
+
+std::string remove_struct_template(std::string struct_name){
+    assert(is_struct_template(struct_name));
+    return struct_name.substr(0, struct_name.find("____"));
+}
