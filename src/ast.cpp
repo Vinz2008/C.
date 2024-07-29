@@ -1120,6 +1120,17 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
   return Proto;
 }
 
+static std::unique_ptr<VarExprAST> find_in_vector_of_unique_ptr_varexpr(std::vector<std::unique_ptr<VarExprAST>>& vec, std::string var_to_find){
+    for (int i = 0; i < vec.size(); i++){
+        // TODO : maybe iterate over all vars in VarNames
+        std::string var_name = vec.at(i)->VarNames.at(0).first;
+        if (var_name == var_to_find){
+            return get_Expr_from_ExprAST<VarExprAST>(vec.at(i)->clone());
+        }
+    }
+    return nullptr;
+}
+
 std::unique_ptr<StructDeclarAST> ParseStruct(){
   struct_parsing = true;
   std::string template_name = "";
@@ -1130,7 +1141,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   getNextToken(); // eat struct
   std::string structName = IdentifierStr;
   Log::Info() << "Struct Name : " << structName << "\n";
-  bool is_repr_c = false;
+  std::string struct_repr = "default";
   getNextToken();
   if (CurTok == '~'){
     getNextToken();
@@ -1150,10 +1161,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
         struct_parsing = false;
         return LogErrorS("Expected a repr name (as a string) after 'repr' in Struct");
     }
-    // TODO : add other reprs : (the by default with warnings : cpoint, the reorder one with auto reordering)
-    if (strStatic == "C"){
-        is_repr_c = true;
-    }
+    struct_repr = strStatic;
     getNextToken();
   }
   if (CurTok != '{'){
@@ -1221,7 +1229,18 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   if (!has_template){
     std::vector<std::pair<std::string, Cpoint_Type>> members_reordered;
     bool is_reordering_needed = reorder_struct(StructDeclarations[structName].get(), structName, members_reordered);
-    if (is_reordering_needed && !is_repr_c){
+    if (is_reordering_needed){
+    if (struct_repr == "auto_reorder"){
+        StructDeclarations[structName]->members = members_reordered;
+        std::vector<std::unique_ptr<VarExprAST>> VarsReordered;
+        for (int i = 0; i < StructDeclarations[structName]->members.size(); i++){
+            std::string var_name_temp = StructDeclarations[structName]->members.at(i).first;
+            std::unique_ptr<VarExprAST> temp_var_expr = find_in_vector_of_unique_ptr_varexpr(VarList, var_name_temp);
+            assert(temp_var_expr != nullptr);
+            VarsReordered.push_back(std::move(temp_var_expr));
+        }
+        VarList = std::move(VarsReordered);
+    } else if (struct_repr != "C"){
         // TODO : add warning (add a Big warning to have the comparison between the new and the old order)
         // TODO : move this warning in a separate function (and in another file ?)
         std::string old_struct = "\tstruct " + structName + " {\n";
@@ -1241,6 +1260,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
                                        << "Reordered struct : \n" << new_struct << "\n";
         reorder_struct_warning.content.end();
 
+    }
     }
   }
   auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);

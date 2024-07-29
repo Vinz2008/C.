@@ -3,7 +3,13 @@ struct S {
     var b : i64
     var c : i32
 }
+struct S_auto_reorder repr "auto_reorder" {
+    var a : i32
+    var b : i64
+    var c : i32
+}
 
 func main() void {
     var s : struct S = S { 2, 3, 4 }
+    var s_reorder : struct S_auto_reorder = S_auto_reorder { 2, 3, 4 }
 } 
