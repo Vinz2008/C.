@@ -2,14 +2,15 @@ import print.cpoint
 
 extern gc_free(s : void ptr) void;
 
-// TODO : reeplace the expect by an if with a panic (for now it creates a bug where a part of the code disappears in the llvm ir)
 struct list {
     var list : i32 ptr
     var allocated_size : i32
     var length : i32
     func list() void {
         self.list = gc_malloc(sizeof i32 * 10)
-        #expect(self.list != null)
+        if self.list == null {
+            #panic("Error when allocating the list")
+        }
         self.allocated_size = 10
         self.length = 0
     }
