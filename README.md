@@ -175,6 +175,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add column number to debuginfos
 - [ ] Add a isize and usize type that would be the same type of a pointer 
 - [ ] Build the std with cpoint-build by default instead of make
+- [ ] Add function members to enums
+- [ ] Add templates to enums
 
 ## Benchmarks compared to other languages
 
