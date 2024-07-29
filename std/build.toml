@@ -7,6 +7,9 @@ src_folder = "."
 arguments = "-with-gc -no-std"
 outfile = "libstd-build.a"
 
+[subfolders]
+folders = ["core"]
+
 [custom]
 prebuild_commands = ["make -C c_api"]
 clean_commands = ["make -C c_api clean"]
