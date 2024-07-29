@@ -212,6 +212,7 @@ void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
     Body.push_back(std::move(E_gc_init));
 }
 
+// not needed ? (TODO : remove this ?)
 bool is_of_expr_type(ExprAST* expr, enum ExprType exprType){
     if (exprType == ExprType::Return){
         return dynamic_cast<ReturnAST*>(expr) != nullptr;
@@ -487,8 +488,8 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     int NextPrec = -1;
     if (CurTok != tok_op_multi_char){
     if (BinOp == "[" && CurTok == ']'){
-        Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
-        Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
+        //Log::Info() << "CurTok ARRAY_MEMBER_OPERATOR_IMPL : " << CurTok << "\n";
+        //Log::Info() << LHS->to_string() << "[" << RHS->to_string() << "]" << "\n";
         // TODO add better verification for end ']'
         getNextToken(); // pass ']'
     }

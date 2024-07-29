@@ -68,6 +68,7 @@ public:
   // find if the expressions contains another expr in a body (ex : break, return or unreachable )
   virtual bool contains_expr(enum ExprType exprType){
     return false;
+    //return is_of_expr_type(this, exprType);
   }
   int getLine() const { return loc.line_nb; }
   int getCol() const { return loc.col_nb; }
@@ -120,6 +121,10 @@ public:
     if (exprType == ExprType::Return){
         return true;
     }
+    if (exprType == ExprType::NeverFunctionCall){
+        //return is_of_expr_type(returned_expr.get(), exprType);
+        return returned_expr->contains_expr(exprType);
+    }
     return false;
   }
 };
@@ -146,9 +151,12 @@ public:
     std::string generate_c() override { return ""; } // TODO
     bool contains_expr(enum ExprType exprType) override {
       for (int i = 0; i < Body.size(); i++){
-        if (is_of_expr_type(Body.at(i).get(), exprType)){
+        /*if (is_of_expr_type(Body.at(i).get(), exprType)){
             return true;
-        }
+        }*/
+       if (Body.at(i)->contains_expr(exprType)){
+        return true;
+       }
         /*if (dynamic_cast<ReturnAST*>(Body.at(i).get())){
           return true;
         }*/

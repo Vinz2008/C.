@@ -6,7 +6,5 @@ func main(){
     l.append(2)
     l.append(3)
     l.append(4)
-    printi(l.at(0))
-    printi(l.at(1))
-    printi(l.at(2))
+    l.print()
 }

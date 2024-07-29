@@ -785,7 +785,7 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
             return LogErrorV(emptyLoc, "Using a member of variable even though it is not a struct or an union");
         }
         Log::Info() << "StructName : " << StructName << "\n";
-        Log::Info() << "StructName len : " << StructName.length() << "\n";
+        //Log::Info() << "StructName len : " << StructName.length() << "\n";
         if (NamedValues[StructName] == nullptr){
             Log::Info() << "NamedValues[StructName] nullptr" << "\n";
         }
@@ -1010,8 +1010,9 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
             }
         }
         member_type = cpoint_type;
-        member_type.is_array = false;
-        member_type.nb_element = 0;
+        /*member_type.is_array = false;
+        member_type.nb_element = 0;*/
+        member_type = member_type.deref_type();
   
         Type* type_llvm = get_type_llvm(cpoint_type);
         Value* array_or_ptr = allocated_value;
@@ -1046,8 +1047,9 @@ Value* getArrayOrVectorMemberGEP(std::unique_ptr<ExprAST> array, std::unique_ptr
             indexes = { IndexV };
         }
         member_type = binop_member_type;
-        member_type.is_array = false; // TODO : just deref the type ?
-        member_type.nb_element = 0;
+        /*member_type.is_array = false; // TODO : just deref the type ?
+        member_type.nb_element = 0;*/
+        member_type = member_type.deref_type();
         Type* type_llvm = get_type_llvm(binop_member_type);
         Value* member_ptr = Builder->CreateGEP(type_llvm, ptr, indexes, "", true);
         // TODO : finish the load Name with the IndexV in string form
@@ -2158,7 +2160,8 @@ Value *IfExprAST::codegen() {
   Builder->SetInsertPoint(MergeBB);
 
   if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
-    return nullptr;
+    //return nullptr;
+    return Constant::getNullValue(get_type_llvm(Cpoint_Type((void_type))));
   }
   if (Else && !has_one_branch_if){
   PHINode* PN = Builder->CreatePHI(phiType, 2, "iftmp");
