@@ -14,7 +14,7 @@ struct list~T~ {
         self.allocated_size = 10
         self.length = 0
     }
-    func append(data : i32) void {
+    func append(data : T) void {
         if self.length == self.allocated_size {
             self.allocated_size = self.allocated_size * 2
             self.list = gc_realloc(self.list, self.allocated_size * sizeof T)
