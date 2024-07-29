@@ -437,6 +437,10 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
   Log::Info() << "Creating cast" << "\n";
   Log::Info() << "typeFrom : " << typeFrom << "\n";
   Log::Info() << "typeTo : " << typeTo_cpoint << "\n";
+  if (typeTo_cpoint == Cpoint_Type(void_type)){
+    val = nullptr;
+    return true;
+  }
   if (typeFrom.is_vector_type || typeTo_cpoint.is_vector_type){
     if (!typeFrom.is_vector_type){
         LogError("Trying to cast something that is not of a vector type to a vector");
@@ -453,7 +457,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
     if (typeFrom.vector_size != typeTo_cpoint.vector_size){
         LogError("Trying to cast to a vector type with a different size");
     }
-    return false;
+    return true;
   }
   //Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";
   if (typeFrom.is_array && typeTo_cpoint.is_ptr){

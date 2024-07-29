@@ -2132,7 +2132,7 @@ Value *IfExprAST::codegen() {
     has_else_return = /*Else->contains_return()*/ Else->contains_expr(ExprType::Return);
     has_else_break = Else->contains_expr(ExprType::Break);
     has_else_unreachable = Else->contains_expr(ExprType::Unreachable);
-    has_then_never_function_call = Else->contains_expr(ExprType::NeverFunctionCall);
+    has_else_never_function_call = Else->contains_expr(ExprType::NeverFunctionCall);
     ElseV = Else->codegen();
     if (!ElseV){
         return nullptr;

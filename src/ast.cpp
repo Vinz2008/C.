@@ -214,9 +214,9 @@ void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
 
 bool is_of_expr_type(ExprAST* expr, enum ExprType exprType){
     if (exprType == ExprType::Return){
-        return dynamic_cast<ReturnAST*>(expr);
+        return dynamic_cast<ReturnAST*>(expr) != nullptr;
     } else if (exprType == ExprType::Break){
-        return dynamic_cast<BreakExprAST*>(expr);
+        return dynamic_cast<BreakExprAST*>(expr) != nullptr;
     } else if (exprType == ExprType::Unreachable){
         if (dynamic_cast<CallExprAST*>(expr)){
             CallExprAST* call_expr = dynamic_cast<CallExprAST*>(expr);
@@ -1653,7 +1653,7 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
   if (!Then){
     return nullptr;
   }
-  std::unique_ptr<ExprAST> Else;
+  std::unique_ptr<ExprAST> Else = nullptr;
 else_start:
   if (CurTok == tok_else){
   getNextToken();

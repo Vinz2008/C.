@@ -1091,7 +1091,11 @@ public:
         return Then->contains_expr(exprType) && Else->contains_expr(exprType); 
     }
     return Then->contains_expr(exprType);*/
-    return  Then->contains_expr(exprType) && Else && Else->contains_expr(exprType);
+    if (!Else){
+        return false;
+    } else {
+        return  Then->contains_expr(exprType) && Else->contains_expr(exprType);
+    }
   }
 };
 

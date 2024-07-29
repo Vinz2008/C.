@@ -5,6 +5,7 @@ struct node_linked_list {
     var data : i32
 }
 
+// TODO : fix this (it breaks when returning void)
 struct linked_list {
     var head : struct node_linked_list ptr 
     var tail : struct node_linked_list ptr
@@ -12,7 +13,7 @@ struct linked_list {
         self.head = null
         self.tail = null
     }
-    func append(data : i32) void {
+    func append(data : i32) i32 {
         var temp : struct node_linked_list ptr = gc_malloc(sizeof struct node_linked_list * 2)
         if temp == null {
             #panic("failed allocation in linked list")
@@ -28,6 +29,7 @@ struct linked_list {
             tail.next = temp
             self.tail = temp
         }
+        0
     }
 
     func remove_first() i32 {
@@ -71,6 +73,7 @@ struct linked_list {
         data
     }
     func print() void {
+        #expect(self.head != null)
         if self.head != null {
             #print("list : ")
             var current : struct node_linked_list ptr = self.head
