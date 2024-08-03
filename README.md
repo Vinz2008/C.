@@ -180,7 +180,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make vars immutable by default
 - [ ] Add c types (like c_type::bool to help interoperatibility with C code)
 - [ ] Make types work with namespaces (structs and typedefs)
-- [ ] Add inlined functions and other optimizations
+- [ ] Add inlined functions and other optimizations (like loop unrolling for for loops when we can know at compile time the number of iterations and it is low)
 
 ## Benchmarks compared to other languages
 
