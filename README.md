@@ -178,6 +178,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add function members to enums
 - [ ] Add templates to enums
 - [ ] Make vars immutable by default
+- [ ] Add c types (like c_type::bool to help interoperatibility with C code)
+- [ ] Make types work with namespaces (structs and typedefs)
 
 ## Benchmarks compared to other languages
 
