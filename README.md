@@ -177,6 +177,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Build the std with cpoint-build by default instead of make
 - [ ] Add function members to enums
 - [ ] Add templates to enums
+- [ ] Make vars immutable by default
 
 ## Benchmarks compared to other languages
 
