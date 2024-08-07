@@ -183,6 +183,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add inlined functions and other optimizations (like loop unrolling for for loops when we can know at compile time the number of iterations and it is low)
 - [ ] Ship mold (optionally ?) so it can call it by default (or just add it as a dependency ?)
 - [ ] Write a list of dependencies in this readme
+- [ ] Add safe macros (like in rust, nim or crystal)
 
 ## Benchmarks compared to other languages
 
