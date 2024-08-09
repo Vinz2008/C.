@@ -184,6 +184,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Ship mold (optionally ?) so it can call it by default (or just add it as a dependency ?)
 - [ ] Write a list of dependencies in this readme
 - [ ] Add safe macros (like in rust, nim or crystal)
+- [ ] Do typechecking before codegen so you can typecheck the template types (add traits to specify for example that you can add the type with the Add trait)
 
 ## Benchmarks compared to other languages
 
