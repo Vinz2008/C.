@@ -191,6 +191,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add a library (shared ? static ?) that would include the shared code for cpoint and cpoint-build (finding shared libraries, linking, etc) (call it libcpoint-utils ?)
 - [ ] Add support for dynamically linking the std
 - [ ] Add support for dynamically linking bdxgc  (or using the host libgc)
+- [ ] (Need to implement privates functions before that) make private functions use the fastcc calling conventions (they will not be called outside, so we don't need to follow the c calling convention)
 
 ## Benchmarks compared to other languages
 
