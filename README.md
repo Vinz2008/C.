@@ -185,6 +185,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Write a list of dependencies in this readme
 - [ ] Add safe macros (like in rust, nim or crystal)
 - [ ] Do typechecking before codegen so you can typecheck the template types (add traits to specify for example that you can add the type with the Add trait)
+- [ ] In the compiler codebase, use enums instead of a lot of bools to simplify reading the code (ex : replace in Cpoint_Type "bool is_ptr" by "enum IsPtr is_ptr" with "enum IsPtr  { IsPtr, NotPtr } "
 
 ## Benchmarks compared to other languages
 
