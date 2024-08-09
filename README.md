@@ -41,7 +41,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add type checking in separate file and remove implicit cast and only have explicit casts with the "cast" keyword
 - [x] Add rust-styled enums with match
 - [x] Add a syntax to import every cpoint files in package
-- [ ] Add chained struct members
+- [x] Add chained struct members
 - [x] Add chained else if
 - [x] Add unions support in import
 - [x] Add enum support in import
@@ -52,7 +52,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Move preprocessing to import stage
 - [x] Deduplicate identical strings when creating them by keeping them in a hashmap when generating them
 - [x] Add the string version of the expression in the expect macro
-- [ ] Add rust-like "traits" for simple types like i32 or float (It will be called "members" and not traits but it will be the same : add methods to types, but it will need to make the '.' an operator)  
+- [x] Add rust-like "traits" for simple types like i32 or float (It will be called "members" and not traits but it will be the same : add methods to types, but it will need to make the '.' an operator)  
 - [x] Add number variable support to match (using it like a switch in c) 
 - [x] Add static struct declaration (like with arrays) like in C ((struct struct_example){val1, val2})
 - [ ] Use precompiled header for the compiler code to speed up compilation (problem : https://stackoverflow.com/questions/9580058/in-gcc-can-precompiled-headers-be-included-from-other-headers)
