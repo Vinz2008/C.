@@ -94,7 +94,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Make multithreaded cpoint-build
 - [ ] Work on from-c translator
 - [x] Cache object files in cpoint-build (compare timestamps of source files and object files to see if the file is needed to be compiled)
-- [ ] Add syntax for input and outputs of variables in inline assembly like in Rust (https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html, https://doc.rust-lang.org/nightly/reference/inline-assembly.html)
+- [x] Add syntax for input and outputs of variables in inline assembly like in Rust (https://doc.rust-lang.org/nightly/rust-by-example/unsafe/asm.html, https://doc.rust-lang.org/nightly/reference/inline-assembly.html)
 - [x] Generate unreachables with unreachable (unreachable macro ?)
 - [ ] Add "-backend" flag to select the backend (for also adding a libgccjit flag)
 - [x] Add help flag (-h) to cpoint and cpoint-build
@@ -103,7 +103,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [x] Add folder selection in cpoint-build (like in make -C)
 - [x] Add running test in cpoint-build
 - [ ] Run automatically clang and create a out.o file for the c translator
-- [ ] Replace sret store instruction with llvm.memcpy
+- [x] Replace sret store instruction with llvm.memcpy
 - [x] Move everything about the abi (valist, sret, byval) in an abi.cpp file
 - [ ] ENABLE CLANG-FORMAT
 - [ ] Implement a format macro (like the format! macro in rust)
@@ -125,7 +125,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix cpoint-run which runs an old version of the code
 - [ ] add const ptr and const types (const should be in type system)
 - [ ] fix the bug with bindgen that makes const ptr args not be written in prototypes
-- [ ] Remove int because it already exists ?  (and create an alias in core so you can use the alias but there would not be int_type and i32_type in the compiler, only i32_type)
+- [x] Remove int because it already exists ?  (and create an alias in core so you can use the alias but there would not be int_type and i32_type in the compiler, only i32_type)
 - [x] Replace all ExprAST->clone()->codegen()->getType() with just ExprAST->get_type()
 - [ ] Add noalias/align/dereferenceable/nonnull to function arguments and return values
 - [x] Detect when a reordering of struct members (like does rust automatically is necessary) and do an informative warning about that
@@ -143,9 +143,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add thread sanitizer to cpoint-build
 - [x] Add noreturn return value (return void and add the noreturn attribute to the function)
 - [x] Remove protos for not existent functions from FunctionProtos (for example if there is a struct s with a member f, there will be the s__f and the f protos in it) 
-- [ ] Make it possible to link llvm statically to the compiler 
+- [x] Make it possible to link llvm statically to the compiler 
 - [ ] Fix bug when returning from function in if and else branch 
-- [ ] Add lld to the compiler (like in zig) 
+- [x] Add lld to the compiler (like in zig) 
 - [ ] Force default values to variables (maybe have in the future a default trait/function member like in rust) 
 - [ ] Extend preprocessor functionalities (default vars, operators, else, etc)
 - [x] Add a flag to only preprocess (-E ?)
@@ -155,10 +155,10 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Get the target data layout from llvm (create functions for that) to get the alignement to calculate the reordering needed for struct members
 - [x] Desactivate the warning for the struct reordering (especially in the std with struct that are accessible to C) (add extern before the struct or repr C after the struct keyword)
 - [ ] Add warnings for unused labels (and unused functions ?) 
-- [ ] Make warnings longer (for example the warnings about the types not being the same in operators)
+- [x] Make warnings longer (for example the warnings about the types not being the same in operators)
 - [ ] Replace some verification for identifiers by keywords verification
 - [ ] Add a custom cli flag for default repr for structs 
-- [ ] Add vector types for simd
+- [x] Add vector types for simd
 - [ ] Add inout in inline asm args
 - [ ] Make functions that are not static static if needed
 - [ ] Add '...' to Constant Vectors exprs so the other numbers in the vectors would be the same as the last
