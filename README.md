@@ -194,6 +194,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] (Need to implement privates functions before that) make private functions use the fastcc calling conventions (they will not be called outside, so we don't need to follow the c calling convention)
 - [ ] Fix bug with multiple empty line
 - [ ] Add better debugging support for the compiler (put all info and warning logs and a textual representation of the ast in the log file 
+- [ ] Rework the AST : make imports AST nodes (that will be ignored like comments AST nodes) (and make the root of the file an AST node so you can pass the entire file to a function that will format the file -> work on a formatter)
 
 ## Benchmarks compared to other languages
 
