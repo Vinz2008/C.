@@ -196,7 +196,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add better debugging support for the compiler (put all info and warning logs and a textual representation of the ast in the log file 
 - [ ] Rework the AST : make imports AST nodes (that will be ignored like comments AST nodes) (and make the root of the file an AST node so you can pass the entire file to a function that will format the file -> work on a formatter)
 - [ ] Make the compiler codebase be consistent for identifiers (function names, var names, etc) types (camelCase, etc)
-- [ ] To make the formatter work, create AST exprs for everything in files (ex : macro calls) then create passes to desugar it to other exprs
+- [ ] To make the formatter work, create AST exprs for everything in files (ex : macro calls) then create passes to desugar it to other exprs (the desugared version of the AST could have a textual representation that would be called Cpoint IR and could be a good way to make optimizations if it is as low level as MIR)
+- [ ] Maybe consider the preprocessed version of the code the equivalent of HIR in rust (move macro calls to this part ? -> probably too complicated, maybe only do it if the lexing and parsing code is refactored to be able to parse just the arg exprs of macros -> pass a context to getNextToken ?)
 
 ## Benchmarks compared to other languages
 
