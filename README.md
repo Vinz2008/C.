@@ -192,6 +192,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add support for dynamically linking the std
 - [ ] Add support for dynamically linking bdxgc  (or using the host libgc)
 - [ ] (Need to implement privates functions before that) make private functions use the fastcc calling conventions (they will not be called outside, so we don't need to follow the c calling convention)
+- [ ] Fix bug with multiple empty line
+- [ ] Add better debugging support for the compiler (put all info and warning logs and a textual representation of the ast in the log file 
 
 ## Benchmarks compared to other languages
 
