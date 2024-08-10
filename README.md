@@ -195,6 +195,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix bug with multiple empty line
 - [ ] Add better debugging support for the compiler (put all info and warning logs and a textual representation of the ast in the log file 
 - [ ] Rework the AST : make imports AST nodes (that will be ignored like comments AST nodes) (and make the root of the file an AST node so you can pass the entire file to a function that will format the file -> work on a formatter)
+- [ ] Make the compiler codebase be consistent for identifiers (function names, var names, etc) types (camelCase, etc)
 
 ## Benchmarks compared to other languages
 
