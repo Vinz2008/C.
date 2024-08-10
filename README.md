@@ -201,6 +201,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add incremental compilation by having a serialized mir (in binary form) that could be loaded from disk if the file hash (md5 is probably enough, the added security of sha-256 is not needed and could hinder performance -> a benchmark will probably be needed on multiple computer/platform because depending on the generation of the cpu, sha256 or even sha512 could be faster than md5) is the same (problem : the file could depend on interfaces from other files that could change, ex the proto of a function from another file changes, solutions : add a compiler flag to force not using the cache and assume 1. that if infos from imports necessary for compilation like function protos change, the use of the code, like function calls in this example will change so we need to do nothing 2. that it is needed to hash all files that are imported but there are disadvantages in performance and in ease of hash storage that could be stored in the filename of the cache file if there is one hash for each cache file)
 - [ ] Use a flattened AST instead of unique_ptr  for exprs : https://www.cs.cornell.edu/~asampson/blog/flattening.html (problems with vector of base class -> big issue because it would need to transform exprs into tagged unions)
 - [ ] Fork compiler explorer (godbolt) make it work with cpoint
+- [ ] Add custom macros like in rust
 
 ## Benchmarks compared to other languages
 
