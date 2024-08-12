@@ -203,6 +203,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Use a flattened AST instead of unique_ptr  for exprs : https://www.cs.cornell.edu/~asampson/blog/flattening.html (problems with vector of base class -> big issue because it would need to transform exprs into tagged unions)
 - [ ] Fork compiler explorer (godbolt) make it work with cpoint
 - [ ] Add custom macros like in rust
+- [ ] Work on better tests (look at the zig and rust codebase) (either make the python test runner have more feature or create a test runner written in cpp) (separate the files testing std functionnalities and the ones testing compiler functionnalities)
 
 ## Benchmarks compared to other languages
 
