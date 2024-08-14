@@ -205,6 +205,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add custom macros like in rust
 - [ ] Work on better tests (look at the zig and rust codebase) (either make the python test runner have more feature or create a test runner written in cpp) (separate the files testing std functionnalities and the ones testing compiler functionnalities) (add expects in tests)
 - [ ] Rename expects asserts ?
+- [ ] Add optional ref counting/replace the gc with ref counting
 
 ## Benchmarks compared to other languages
 
