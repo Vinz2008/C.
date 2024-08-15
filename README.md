@@ -209,6 +209,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add unique ptrs
 - [ ] Maybe replace entirely/make it possible to replace the build.toml with a build.cpoint (see jai lang)
 - [ ] Implement Structures of Arrays
+- [ ] Create an android app which includes the compiler and a code editor
 
 ## Benchmarks compared to other languages
 
