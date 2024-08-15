@@ -26,6 +26,34 @@ To clone the git repo, run
 git clone --recurse-submodules https://github.com/Vinz2008/C.
 ```
 
+## How to Build
+
+### Essential Dependencies
+
+- gcc 
+- make
+- llvm 18.x*
+- clang
+- lld
+- gettext (except in windows)
+- tomlplusplus (for cpoint-build)
+
+### Optional Dependencies
+- tar (for creating tarball releases)
+- pandoc (for man pages)
+- groff (for man pages)
+
+*LLVM version used
+The recommended LLVM version is 18.x. (17.x could work, but it is not garenteed to work without some edits in the code or disabling some flags)
+
+## Build Instructions
+
+```
+make
+sudo make install
+```
+(You can add ```-j$(nproc)``` to make to make it parallel)
+
 ## WASM support
 
 You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi``` option
@@ -184,10 +212,10 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make types work with namespaces (structs and typedefs)
 - [ ] Add inlined functions and other optimizations (like loop unrolling for for loops when we can know at compile time the number of iterations and it is low)
 - [ ] Ship mold (optionally ?) so it can call it by default (or just add it as a dependency ?)
-- [ ] Write a list of dependencies in this readme
+- [x] Write a list of dependencies in this readme
 - [ ] Add safe macros (like in rust, nim or crystal)
 - [ ] Do typechecking before codegen so you can typecheck the template types (add traits to specify for example that you can add the type with the Add trait)
-- [ ] In the compiler codebase, use enums instead of a lot of bools to simplify reading the code (ex : replace in Cpoint_Type "bool is_ptr" by "enum IsPtr is_ptr" with "enum IsPtr  { IsPtr, NotPtr } "
+- [ ] In the compiler codebase, use enums instead of a lot of bools to simplify reading the code (ex : replace in Cpoint_Type "bool is_ptr" by "enum IsPtr is_ptr" with "enum IsPtr  { IsPtr, NotPtr } ")
 - [ ] Refactor generics (rename templates generics ?) to make it more complex (multiple template types, generics over a constant number, etc)
 - [ ] Fix the order of basic blocks so the blocks are in the same order in the ir as the code
 - [ ] Add a library (shared ? static ?) that would include the shared code for cpoint and cpoint-build (finding shared libraries, linking, etc) (call it libcpoint-utils ?)
@@ -227,9 +255,6 @@ Length of benchmarks in seconds, lower is better
 
 C. is pronounced like C point. It was named like it and not C dot or period but C point because I just named the executable cpoint without thinking about it and then remembered that it is not a transparent translation from french and that it should have been name ccomma, but hey I am too lazy to fix it  ¯\\_(ツ)_/¯
 
-## LLVM version used
-
-The recommended LLVM version is 18.x. (17.x could work, but it is not garenteed to work without some edits in the code or disabling some flags)
 
 ## Locales
 
