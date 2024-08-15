@@ -1,0 +1,8 @@
+enum Result~T~ {
+    Ok(T)
+    Err(i32)
+}
+
+func get_result() void {
+    // var r : enum Result~i32~ = Result~i32~::Ok(2)
+}

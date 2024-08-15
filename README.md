@@ -177,6 +177,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Build the std with cpoint-build by default instead of make
 - [ ] Add function members to enums
 - [ ] Add templates to enums
+- [ ] Do type inference for enum templates
+- [ ] instead of using TypeTemplateCallCodegen, have a way to replace all uses of templates types by the real type, returning an FunctionAST, structDeclarAST or a EnumDeclarAST (use a virtual function for exprs that would be called replace_templates_exprs)
 - [ ] Make vars immutable by default
 - [ ] Add c types (like c_type::bool to help interoperatibility with C code)
 - [ ] Make types work with namespaces (structs and typedefs)

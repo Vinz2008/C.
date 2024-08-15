@@ -69,6 +69,7 @@ extern std::unique_ptr<DIBuilder> DBuilder;
 extern std::vector<std::string> PackagesAdded;
 extern bool is_template_parsing_definition;
 extern bool is_template_parsing_struct;
+extern bool is_template_parsing_enum;
 struct DebugInfo CpointDebugInfo;
 
 // TODO : replace the unique_ptr by just the class
@@ -234,7 +235,9 @@ static void HandleEnum(){
     if (auto enumAST = ParseEnum()){
         enumAST->codegen();
     } else {
-        getNextToken();
+        if (!is_template_parsing_enum){
+            getNextToken();
+        }
     }
 }
 

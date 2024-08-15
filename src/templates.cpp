@@ -11,6 +11,7 @@ extern std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::pair<std::string, /*std::string*/ Cpoint_Type> TypeTemplateCallCodegen;
 bool is_in_struct_templates_codegen = false;
+bool is_in_enum_templates_codegen = false;
 
 // TODO : add this declaration to a header file
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
@@ -40,26 +41,30 @@ void callTemplate(std::string& Callee, /*std::string*/ Cpoint_Type template_pass
 
 std::vector<std::pair<std::string, Cpoint_Type>> codegenedStructTemplates;
 
+std::vector<std::pair<std::string, Cpoint_Type>> codegenedEnumTemplates;
 
-// TODO : fix functions in templated structs
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
+
+extern std::vector<std::unique_ptr<TemplateEnumCreation>> EnumTemplatesToGenerate;
+
+void codegenEnumTemplates(){
+    for (int i = 0; i < EnumTemplatesToGenerate.size(); i++){
+        TypeTemplateCallCodegen = std::make_pair(EnumTemplatesToGenerate.at(i)->enumDeclarAST->template_name, EnumTemplatesToGenerate.at(i)->type);
+        bool find_in_codegened_templates = std::find(codegenedEnumTemplates.begin(), codegenedEnumTemplates.end(), TypeTemplateCallCodegen) != codegenedEnumTemplates.end();
+        if (!find_in_codegened_templates){
+            is_in_enum_templates_codegen = true;
+            codegenedEnumTemplates.push_back(TypeTemplateCallCodegen);
+            EnumTemplatesToGenerate.at(i)->enumDeclarAST->codegen();
+            is_in_enum_templates_codegen = false;
+        }
+    }
+}
 
 void codegenStructTemplates(){
     Log::Info() << "CODEGEN STRUCT TEMPLATES (nb : "  << StructTemplatesToGenerate.size() << ")" << "\n";
     for (int i = 0; i < StructTemplatesToGenerate.size(); i++){
         TypeTemplateCallCodegen = std::make_pair(StructTemplatesToGenerate.at(i)->structDeclarAST->template_name, StructTemplatesToGenerate.at(i)->type);
-        /*std::string templateStructName = StructTemplatesToGenerate.at(i)->structDeclarAST->Name;
-        std::string structName = templateStructName.substr(0, templateStructName.find("____"));
-        Log::Info() << "StructDeclarations[structName]->structType : " << StructDeclarations[structName]->struct_type << "\n";
-        StructDeclarations[structName] = StructDeclarations[structName]->clone();*/
         Log::Info()  << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.size() : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size() << "\n";
-        /*for (int j = 0; j < StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.size(); j++){
-            Log::Info() << "Struct Named " << StructTemplatesToGenerate.at(i)->structDeclarAST->Name << "\n";
-            if (StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j) == nullptr){
-                Log::Info() << "StructTemplatesToGenerate.at(" << i << ")->structDeclarAST->Vars.at(" << j <<") is nullptr" << "\n";
-            }
-            //Log::Info() << "StructTemplatesToGenerate.at(" << i << ") : " << StructTemplatesToGenerate.at(i)->structDeclarAST->Vars.at(j)->VarNames.at(0).first << "\n";
-        }*/
         bool find_in_codegened_templates = std::find(codegenedStructTemplates.begin(), codegenedStructTemplates.end(), TypeTemplateCallCodegen) != codegenedStructTemplates.end();
         if (!find_in_codegened_templates){
             is_in_struct_templates_codegen = true;

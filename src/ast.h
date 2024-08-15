@@ -607,8 +607,8 @@ struct StructMemberCallExprAST : public ExprAST {
         Cpoint_Type LHS_type = StructMember->LHS->get_type();
         if (LHS_type.is_struct){
             std::string struct_name = LHS_type.struct_name;
-            if (LHS_type.is_struct_template){
-                struct_name = get_struct_template_name(struct_name, *LHS_type.struct_template_type_passed);
+            if (LHS_type.is_object_template){
+                struct_name = get_object_template_name(struct_name, *LHS_type.object_template_type_passed);
             }
             std::string function_mangled_name = struct_function_mangling(/*StructMember->LHS->get_type().struct_name*/ struct_name, RHS_variable_expr->Name);
             return FunctionProtos[function_mangled_name]->cpoint_type;
@@ -1023,7 +1023,9 @@ public:
     std::string Name;
     bool enum_member_contain_type;
     std::vector<std::unique_ptr<EnumMember>> EnumMembers;
-    EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<std::unique_ptr<EnumMember>> EnumMembers) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)) {}
+    bool has_template;
+    std::string template_name;
+    EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<std::unique_ptr<EnumMember>> EnumMembers, bool has_template, std::string template_name) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)), has_template(has_template), template_name(template_name) {}
     Type* codegen();
     std::unique_ptr<EnumDeclarAST> clone();
 };

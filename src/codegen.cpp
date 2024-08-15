@@ -54,6 +54,8 @@ std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclaratio
 std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 
 std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
+std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
+
 std::vector<std::string> modulesNamesContext;
 
 std::unordered_map<std::string, Function*> GeneratedFunctions;
@@ -63,7 +65,10 @@ std::stack<BasicBlock*> blocksForBreak; // TODO : put this in Compiler_Context
 std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
 std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
+std::vector<std::unique_ptr<TemplateEnumCreation>> EnumTemplatesToGenerate;
 
+
+// TODO : differenciate between the ones with enums, structs and function calls 
 std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen; // contains the type of template in function call
 std::string TypeTemplateCallAst = ""; // TODO : replace this by a vector to have multiple templates in the future ?
 
@@ -89,6 +94,7 @@ extern Source_location emptyLoc;
 extern bool debug_info_mode;
 
 extern bool is_in_struct_templates_codegen;
+extern bool is_in_enum_templates_codegen;
 
 extern TargetInfo targetInfos;
 
@@ -430,7 +436,7 @@ Type* StructDeclarAST::codegen(){
     std::unique_ptr<FunctionAST> FunctionExpr = Functions.at(i)->clone();
     std::string function_name;
     std::string structNameWithoutTemplate = Name;
-    if (is_struct_template(Name)){
+    if (is_object_template(Name)){
         structNameWithoutTemplate = remove_struct_template(Name);
     }
     if (FunctionExpr->Proto->Name == structNameWithoutTemplate){
@@ -734,9 +740,9 @@ std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectTy
         member_type = members.at(pos).second;
     } else {
         std::vector<std::pair<std::string, Cpoint_Type>> members;
-        if (objectType.struct_template_type_passed){
+        if (objectType.object_template_type_passed){
             Log::Info() << "is template" << "\n";
-            members = StructDeclarations[get_struct_template_name(objectType.struct_name, *objectType.struct_template_type_passed)]->members;
+            members = StructDeclarations[get_object_template_name(objectType.struct_name, *objectType.object_template_type_passed)]->members;
         } else {
             if (!StructDeclarations[objectType.struct_name]){
                 LogError("struct not found \"%s\"", objectType.struct_name.c_str());
@@ -795,8 +801,8 @@ Value* getStructMemberGEP(std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<
         }
         //Log::Info() << "struct_declaration_name : " << NamedValues[StructName]->struct_declaration_name << "\n"; // USE FOR NOW STRUCT NAME FROM CPOINT_TYPE
         Log::Info() << "struct_declaration_name : " << structType.struct_name << "\n";
-        if (structType.struct_template_type_passed){
-            Log::Info() << "struct_template_type_passed : " << *structType.struct_template_type_passed << "\n";
+        if (structType.object_template_type_passed){
+            Log::Info() << "object_template_type_passed : " << *structType.object_template_type_passed << "\n";
         }
         //Log::Info() << "struct_declaration_name length : " << structType.struct_name.length() << "\n";
         std::pair<Cpoint_Type, int>* temp_pair = get_member_type_and_pos_object(structType, MemberName);
@@ -896,8 +902,8 @@ Value* StructMemberCallExprAST::codegen(){
 
     std::string struct_type_name = lhs_type.struct_name;
 
-    if (lhs_type.is_struct_template){
-        struct_type_name = get_struct_template_name(struct_type_name, *lhs_type.struct_template_type_passed);
+    if (lhs_type.is_object_template){
+        struct_type_name = get_object_template_name(struct_type_name, *lhs_type.object_template_type_passed);
         Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
     }
 
@@ -1797,6 +1803,7 @@ Function *FunctionAST::codegen() {
   out_debug_ast.close();
   }*/
   codegenStructTemplates();
+  codegenEnumTemplates();
   auto &P = *Proto;
   Log::Info() << "FunctionAST Codegen : " << Proto->getName() << "\n";
   FunctionProtos[Proto->getName()] = Proto->clone(); // TODO : move this assignement and all the others to FunctionProtos from the codegen step to the ast step 
@@ -2614,8 +2621,8 @@ Value *VarExprAST::codegen() {
     std::string struct_declaration_name_temp = "";
     std::string struct_name = cpoint_type.struct_name;
     if (cpoint_type.is_struct){
-      if (cpoint_type.is_struct_template){
-        struct_name = get_struct_template_name(cpoint_type.struct_name, *cpoint_type.struct_template_type_passed);
+      if (cpoint_type.is_object_template){
+        struct_name = get_object_template_name(cpoint_type.struct_name, *cpoint_type.object_template_type_passed);
       }
       if (StructDeclarations[struct_name] == nullptr){
         return LogErrorV(this->loc, "Couldn't find struct declaration %s for created variable", cpoint_type.struct_name.c_str());

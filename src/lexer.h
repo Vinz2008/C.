@@ -62,4 +62,5 @@ int GetTokPrecedence();
 int getTokPrecedenceMultiChar(std::string op);
 void go_to_next_line();
 std::string get_line_returned();
+int peekCharLine(int offset);
 //void handlePreprocessor();

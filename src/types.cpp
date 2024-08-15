@@ -43,8 +43,8 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     } else if (cpoint_type.is_struct){
         Log::Info() << "cpoint_type.struct_name : " << cpoint_type.struct_name << "\n";
         std::string structName = cpoint_type.struct_name;
-        if (cpoint_type.is_struct_template){
-            structName = get_struct_template_name(cpoint_type.struct_name, *cpoint_type.struct_template_type_passed);
+        if (cpoint_type.is_object_template){
+            structName = get_object_template_name(cpoint_type.struct_name, *cpoint_type.object_template_type_passed);
             Log::Info() << "struct type is template : " << structName << "\n";
         }
         if (StructDeclarations[structName] == nullptr){
@@ -56,7 +56,11 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     } else if (cpoint_type.is_union){
         type = UnionDeclarations[cpoint_type.union_name]->union_type;
     } else if (cpoint_type.is_enum){
-        type = EnumDeclarations[cpoint_type.enum_name]->enumType; 
+        std::string enumName = cpoint_type.enum_name;
+        if (cpoint_type.is_object_template){
+            enumName = get_object_template_name(cpoint_type.enum_name, *cpoint_type.object_template_type_passed);
+        }
+        type = EnumDeclarations[enumName]->enumType; 
     } else {
     switch (cpoint_type.type){
         default:

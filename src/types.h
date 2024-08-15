@@ -48,17 +48,17 @@ public:
     bool is_enum;
     std::string enum_name;
     bool is_template_type;
-    bool is_struct_template;
+    bool is_object_template;
     bool is_empty;
-    /*std::string*/ Cpoint_Type* struct_template_type_passed;
+    /*std::string*/ Cpoint_Type* object_template_type_passed;
     bool is_function;
     std::vector<Cpoint_Type> args; // the first is the return type, the other are arguments
     Cpoint_Type* return_type;
     bool is_vector_type;
     Cpoint_Type* vector_element_type;
     int vector_size;
-    Cpoint_Type(int type, bool is_ptr = false, int nb_ptr = 0, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_union = false, const std::string& union_name = "", bool is_enum = false, const std::string& enum_name = "", bool is_template_type = false, bool is_struct_template = false, /*const std::string&*/ Cpoint_Type* struct_template_type_passed = nullptr, bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr, bool is_vector_type = false, Cpoint_Type* vector_element_type = nullptr, int vector_size = 0) 
-                : type(type), is_ptr(is_ptr), nb_ptr(nb_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_union(is_union), union_name(union_name), is_enum(is_enum), enum_name(enum_name), is_template_type(is_template_type), is_struct_template(is_struct_template), struct_template_type_passed(struct_template_type_passed), is_function(is_function), args(args), return_type(return_type), is_vector_type(is_vector_type), vector_element_type(vector_element_type), vector_size(vector_size) {
+    Cpoint_Type(int type, bool is_ptr = false, int nb_ptr = 0, bool is_array = false, int nb_element = 0, bool is_struct = false, const std::string& struct_name = "", bool is_union = false, const std::string& union_name = "", bool is_enum = false, const std::string& enum_name = "", bool is_template_type = false, bool is_object_template = false, /*const std::string&*/ Cpoint_Type* object_template_type_passed = nullptr, bool is_function = false, std::vector<Cpoint_Type> args = {}, Cpoint_Type* return_type = nullptr, bool is_vector_type = false, Cpoint_Type* vector_element_type = nullptr, int vector_size = 0) 
+                : type(type), is_ptr(is_ptr), nb_ptr(nb_ptr), is_array(is_array), nb_element(nb_element), is_struct(is_struct), struct_name(struct_name), is_union(is_union), union_name(union_name), is_enum(is_enum), enum_name(enum_name), is_template_type(is_template_type), is_object_template(is_object_template), object_template_type_passed(object_template_type_passed), is_function(is_function), args(args), return_type(return_type), is_vector_type(is_vector_type), vector_element_type(vector_element_type), vector_size(vector_size) {
                     is_empty = false;
                     if (is_ptr && nb_ptr == 0){
                         nb_ptr = 1;
@@ -73,7 +73,7 @@ public:
         return os;
     }
     friend bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
-        return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_struct_template == rhs.is_struct_template && lhs.is_empty == rhs.is_empty && lhs.struct_template_type_passed == rhs.struct_template_type_passed && lhs.is_function == rhs.is_function && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(), rhs.args.end()) && lhs.return_type == rhs.return_type && lhs.is_vector_type == rhs.is_vector_type && lhs.vector_element_type == rhs.vector_element_type && lhs.vector_size == rhs.vector_size;
+        return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_object_template == rhs.is_object_template && lhs.is_empty == rhs.is_empty && lhs.object_template_type_passed == rhs.object_template_type_passed && lhs.is_function == rhs.is_function && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(), rhs.args.end()) && lhs.return_type == rhs.return_type && lhs.is_vector_type == rhs.is_vector_type && lhs.vector_element_type == rhs.vector_element_type && lhs.vector_size == rhs.vector_size;
     }
     friend bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
         return !(lhs == rhs);

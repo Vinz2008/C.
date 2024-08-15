@@ -133,8 +133,16 @@ static int getCharLineStdin(){
 #endif
 
 static int peekCharLine(){
-    if (pos <= line.size()){
+    if (pos < line.size()){
         return line[pos];
+    } else {
+        return '\0';
+    }
+}
+
+int peekCharLine(int offset){
+    if (pos+offset < line.size()){
+        return line[pos+offset];
     } else {
         return '\0';
     }

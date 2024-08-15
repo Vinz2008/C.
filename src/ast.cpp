@@ -36,9 +36,11 @@ extern std::vector<Cpoint_Type> typeDefTable;
 
 extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
+extern std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
 extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
+extern std::vector<std::unique_ptr<TemplateEnumCreation>> EnumTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
@@ -53,6 +55,7 @@ extern std::string filename;
 
 bool is_template_parsing_definition = false;
 bool is_template_parsing_struct = false;
+bool is_template_parsing_enum = false;
 
 Source_location emptyLoc = {0, 0, true, ""};
 
@@ -159,7 +162,7 @@ std::unique_ptr<EnumMember> EnumMember::clone(){
 }
 
 std::unique_ptr<EnumDeclarAST> EnumDeclarAST::clone(){
-    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, clone_vector<EnumMember>(EnumMembers));
+    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, clone_vector<EnumMember>(EnumMembers), has_template, template_name);
 }
 
 std::unique_ptr<TestAST> TestAST::clone(){
@@ -465,7 +468,7 @@ static std::unique_ptr<ExprAST> ParseBinOpRHS(int ExprPrec,
     std::unique_ptr<ExprAST> RHS;
     std::unique_ptr<ExprAST> FunctionCallExpr;
     bool is_function_call = false;
-    if (BinOp == "(" || BinOp == "~"){
+    if ((BinOp == "(" || BinOp == "~")){
         bool is_template_call = false;
         if (BinOp == "~"){
             is_template_call = true;
@@ -787,8 +790,8 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
   if (no_default_type){
     default_type = Cpoint_Type();
   }
-  bool is_struct_template = false;
-  Cpoint_Type* struct_template_type_passed = nullptr;
+  bool is_object_template = false;
+  Cpoint_Type* object_template_type_passed = nullptr;
   bool is_vector = false;
   int vector_element_number = 0;
   Cpoint_Type vector_element_type;
@@ -858,8 +861,8 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     if (CurTok == '~'){
         Log::Info() << "found templates for struct" << "\n";
         getNextToken();
-        struct_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
-        if (!struct_template_type_passed){
+        object_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
+        if (!object_template_type_passed){
             LogError("missing template type for struct");
             return default_type;
         }
@@ -869,10 +872,10 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         }
         getNextToken();
         auto structDeclar = TemplateStructDeclars[struct_Name]->declarAST->clone();
-        structDeclar->Name = get_struct_template_name(struct_Name, *struct_template_type_passed);
-        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(*struct_template_type_passed, std::move(structDeclar)));
+        structDeclar->Name = get_object_template_name(struct_Name, *object_template_type_passed);
+        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(*object_template_type_passed, std::move(structDeclar)));
         Log::Info() << "added to StructTemplatesToGenerate" << "\n";
-        is_struct_template = true;
+        is_object_template = true;
     }
     while (CurTok == tok_ptr){
       is_ptr = true;
@@ -894,6 +897,24 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     getNextToken();
     enumName = IdentifierStr;
     getNextToken();
+    if (CurTok == '~'){
+        getNextToken();
+        object_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
+        if (!object_template_type_passed){
+            LogError("missing template type for enum");
+            return default_type;
+        }
+        if (CurTok != '~'){
+            LogError("Missing '~' in enum template type usage");
+            return default_type;
+        }
+        getNextToken();
+        auto enumDeclar = TemplateEnumDeclars[enumName]->declarAST->clone();
+        enumDeclar->Name = get_object_template_name(enumName, *object_template_type_passed);
+        EnumTemplatesToGenerate.push_back(std::make_unique<TemplateEnumCreation>(*object_template_type_passed, std::move(enumDeclar)));
+        Log::Info() << "added to EnumTemplatesToGenerate" << "\n";
+        is_object_template = true;
+    }
   } else if (is_type(IdentifierStr)){
     type = get_type(IdentifierStr);
     Log::Info() << "Variable type : " << type << "\n";
@@ -920,7 +941,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     return default_type;
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_struct_template, struct_template_type_passed, is_function, args, return_type, is_vector, new Cpoint_Type(vector_element_type), vector_element_number);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_object_template, object_template_type_passed, is_function, args, return_type, is_vector, new Cpoint_Type(vector_element_type), vector_element_number);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){
@@ -1373,6 +1394,23 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
     std::vector<std::unique_ptr<EnumMember>> EnumMembers;
     Name = IdentifierStr;
     getNextToken();
+    bool has_template = false;
+    std::string template_name = "";
+    if (CurTok == '~'){
+        has_template = true;
+        getNextToken();
+        if (CurTok != tok_identifier){
+            return LogErrorE("Missing template type name in enum declaration");
+        }
+        template_name = IdentifierStr;
+        TypeTemplateCallAst = template_name;
+        getNextToken();
+
+        if (CurTok != '~'){
+            return LogErrorE("Missing '~' in enum declaration");
+        }
+        getNextToken();
+    }
     if (CurTok != '{'){
         return LogErrorE("Expected '{' in Enum");
     }
@@ -1413,7 +1451,13 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
         return LogErrorE("Expected '}' in Enum");
     }
     getNextToken();
-    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembers));
+    auto enumDeclar = std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembers), has_template, template_name);
+    if (has_template){
+        TemplateEnumDeclars[Name] = std::make_unique<EnumDeclar>(std::move(enumDeclar), template_name);
+        is_template_parsing_enum = true;
+        return nullptr;
+    }
+    return enumDeclar;
 }
 
 std::unique_ptr<FunctionAST> ParseDefinition() {
@@ -1572,10 +1616,30 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
   return std::make_unique<TypeidExprAST>(std::move(expr));
 }
 
+static bool is_templated_enum_creation(){
+    std::cout << "Curtok : " << CurTok << std::endl;
+    std::flush(std::cout);
+    if (CurTok != '~'){
+        return false;
+    }
+    int i = 0;
+    int peekChar = peekCharLine(i);
+    std::cout << "peekChar start : " << peekChar << std::endl;
+    while (peekChar != '\0' && peekChar != '('){
+        peekChar = peekCharLine(i);
+         std::cout << "peekChar at " << i << " : " << peekChar << std::endl;
+        if (peekChar == ':'){
+            return true;
+        }
+        i++;
+    }
+    return false;
+}
+
 std::unique_ptr<ExprAST> ParseUnary() {
   Log::Info() << "PARSE UNARY CurTok : " << CurTok << "\n";
   // If the current token is not an operator, it must be a primary expr.
-  if (!isascii(CurTok) || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#' || CurTok == ';')
+  if (!isascii(CurTok) || is_templated_enum_creation() || CurTok == '(' || CurTok == ',' || CurTok == '{' || CurTok == ':' || CurTok == tok_string || CurTok == tok_false || CurTok == tok_true || CurTok == '[' || CurTok == '#' || CurTok == ';')
     return ParsePrimary();
 
   // If this is a unary operator, read it.

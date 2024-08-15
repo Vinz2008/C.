@@ -33,6 +33,13 @@ public:
     StructDeclar(std::unique_ptr<StructDeclarAST> declarAST, const std::string& template_type_name) : declarAST(std::move(declarAST)), template_type_name(template_type_name) {}
 };
 
+class EnumDeclar {
+public:
+    std::unique_ptr<EnumDeclarAST> declarAST;
+    std::string template_type_name;
+    EnumDeclar(std::unique_ptr<EnumDeclarAST> declarAST, const std::string& template_type_name) : declarAST(std::move(declarAST)), template_type_name(template_type_name) {}
+};
+
 class TemplateCall {
 public:
     /*std::string*/ Cpoint_Type type;
@@ -45,6 +52,13 @@ public:
     /*std::string*/ Cpoint_Type type;
     std::unique_ptr<StructDeclarAST> structDeclarAST;
     TemplateStructCreation(Cpoint_Type type, std::unique_ptr<StructDeclarAST> structDeclarAST) : type(type), structDeclarAST(std::move(structDeclarAST)) {}
+};
+
+class TemplateEnumCreation {
+public:
+    /*std::string*/ Cpoint_Type type;
+    std::unique_ptr<EnumDeclarAST> enumDeclarAST;
+    TemplateEnumCreation(Cpoint_Type type, std::unique_ptr<EnumDeclarAST> enumDeclarAST) : type(type), enumDeclarAST(std::move(enumDeclarAST)) {}
 };
 
 class GlobalVariableValue {
