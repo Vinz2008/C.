@@ -208,6 +208,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add optional ref counting/replace the gc with ref counting
 - [ ] Add unique ptrs
 - [ ] Maybe replace entirely/make it possible to replace the build.toml with a build.cpoint (see jai lang)
+- [ ] Implement Structures of Arrays
 
 ## Benchmarks compared to other languages
 
