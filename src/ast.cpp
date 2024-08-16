@@ -1617,7 +1617,7 @@ std::unique_ptr<ExprAST> ParseTypeidExpr(){
 }
 
 static bool is_templated_enum_creation(){
-    std::cout << "Curtok : " << CurTok << std::endl;
+    //std::cout << "Curtok : " << CurTok << std::endl;
     std::flush(std::cout);
     if (CurTok != '~'){
         return false;
