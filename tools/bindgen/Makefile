@@ -1,5 +1,10 @@
-CC ?= gcc
+#DEFAULT_CC_VAL = g++
+DEFAULT_CC_VAL = gcc
+ifeq ($(CC), cc)
+CC = $(DEFAULT_CC_VAL)
+endif
 
+#CC ?= $(DEFAULT_CC_VAL)
 ifeq ($(OS),Windows_NT)
 OUTPUTBIN = cpoint-bindgen.exe
 else
@@ -11,8 +16,25 @@ SRCDIR=src
 SRCS := $(wildcard $(SRCDIR)/*.c)
 OBJS = $(patsubst %.c,%.o,$(SRCS))
 
-CFLAGS = -c -g -Wall -std=gnu17
+CFLAGS = -c -g -Wall
+
+CFLAGS += -std=gnu17
+#CFLAGS += -std=gnu++17
+
+
+STATIC_LLVM ?= FALSE
+
+LLVM_PREFIX ?= /usr
+
+ifeq ($(STATIC_LLVM), FALSE)
 LDFLAGS = -lclang
+else
+CLANG_STATIC_LIBS=$(shell ls $(LLVM_PREFIX)/lib/libclang*.a)
+CLANG_STATIC_LDFLAGS = $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(CLANG_STATIC_LIBS)))))
+LDFLAGS = $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs all) $(CLANG_STATIC_LDFLAGS)
+LDFLAGS += -lclang # TODO : remove this (it links the dynamic lib)
+#LDFLAGS += $(LLVM_PREFIX)/lib/libclang.a
+endif
 
 ifneq ($(OS),Windows_NT)
 UNAME := $(shell uname)

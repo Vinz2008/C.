@@ -54,6 +54,9 @@ sudo make install
 ```
 (You can add ```-j$(nproc)``` to make to make it parallel)
 
+## Build Statically the compiler
+[How to build statically the compiler](https://github.com/Vinz2008/C./blob/master/docs/static.md)
+
 ## WASM support
 
 You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi``` option
@@ -240,6 +243,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Maybe replace entirely/make it possible to replace the build.toml with a build.cpoint (see jai lang)
 - [ ] Implement Structures of Arrays
 - [ ] Create an android app which includes the compiler and a code editor
+- [ ] Fix statically link the bindgen exe
+- [ ] Add the scripts to build the static LLVM in a different git repo
+- [ ] Work on statically linking llvm dependencies when the compiler is built statically
 
 ## Benchmarks compared to other languages
 

@@ -52,7 +52,7 @@ const char* get_type_string_from_type_libclang(CXType type){
             CXType pointee_type = clang_getPointeeType(type);
             const char* pointee_type_str = get_type_string_from_type_libclang(pointee_type);
             char* ptr_str = " ptr";
-            char* pointer_type = malloc((strlen(pointee_type_str) + strlen(ptr_str)) * sizeof(char));
+            char* pointer_type = (char*)malloc((strlen(pointee_type_str) + strlen(ptr_str)) * sizeof(char));
             sprintf(pointer_type, "%s%s", pointee_type_str, ptr_str);
             return pointer_type;
         }
@@ -67,7 +67,7 @@ const char* get_type_string_from_type_libclang(CXType type){
             const char* type_spelling = clang_getCString(clangstr_type_spelling);
             if (is_typedefed_type((char*)type_spelling)){
                 char* struct_str = "struct ";
-                char* typedef_type_with_struct = malloc((strlen(struct_str) + strlen(type_spelling)+1) * sizeof(char));
+                char* typedef_type_with_struct = (char*)malloc((strlen(struct_str) + strlen(type_spelling)+1) * sizeof(char));
                 sprintf(typedef_type_with_struct, "%s%s", struct_str, clang_getCString(clang_getTypeSpelling(type)));
                 return typedef_type_with_struct;
             }
@@ -117,7 +117,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
         case CXCursor_MacroDefinition:
             printf("MACRO DEFINITION\n");
             break;
-        case CXCursor_FunctionDecl:
+        case CXCursor_FunctionDecl: {
             close_previous_blocks();
             if (clang_Cursor_isVariadic(cursor) != 0){
                 is_variable_number_args = true;
@@ -129,7 +129,8 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             in_function_declaration = true;
             clang_disposeString(clangstr_function_name);
             break;
-        case CXCursor_ParmDecl:
+        }
+        case CXCursor_ParmDecl: {
             if (!in_function_declaration){
                 break;
             }
@@ -147,7 +148,8 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             clang_disposeString(clangstr_param_type_name);
             clang_disposeString(clangstr_param_name);
             break;
-        case CXCursor_StructDecl:
+        }
+        case CXCursor_StructDecl: {
             if (is_in_typedef){
                 break;
             }
@@ -166,6 +168,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             in_struct_declaration = true;
             clang_disposeString(clangstr_struct_name);
             break;
+        }
         case CXCursor_FieldDecl: {
             CXType field_type = clang_getCursorType(cursor);
             if (!pass_block && !is_in_typedef){
@@ -178,7 +181,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             }
             break;
         }
-        case CXCursor_TypedefDecl:
+        case CXCursor_TypedefDecl: {
             close_previous_blocks();
             CXString clangstr_new_type_name = clang_getCursorSpelling(cursor);
             const char* new_type_name = clang_getCString(clangstr_new_type_name);
@@ -193,7 +196,8 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             fprintf(outf, "type %s %s;\n", new_type_name, value_type_name);
             clang_disposeString(clangstr_new_type_name);
             break;
-        case CXCursor_EnumDecl:
+        }
+        case CXCursor_EnumDecl: {
             close_previous_blocks();
             CXString clangstr_enum_name = clang_getCursorSpelling(cursor);
             const char* enum_name = clang_getCString(clangstr_enum_name);
@@ -203,7 +207,8 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             in_enum_declaration = true;
             clang_disposeString(clangstr_enum_name);
             break;
-        case CXCursor_EnumConstantDecl:
+        }
+        case CXCursor_EnumConstantDecl: {
             is_custom_enum_value = false;
             CXString clangstr_enum_field = clang_getCursorSpelling(cursor);
             fprintf(outf, "\n\t%s", clang_getCString(clangstr_enum_field));
@@ -212,7 +217,8 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
             }*/
             clang_disposeString(clangstr_enum_field);
             break;
-        case CXCursor_IntegerLiteral:
+        }
+        case CXCursor_IntegerLiteral: {
             if (in_enum_declaration){
                 CXEvalResult res = clang_Cursor_Evaluate(cursor);
                 fprintf(outf, " = %d", clang_EvalResult_getAsInt(res));
@@ -220,6 +226,7 @@ enum CXChildVisitResult cursorVisitor(CXCursor cursor, CXCursor parent, CXClient
                 is_custom_enum_value = true;
             }
             break;
+        }
         default:
             break;
     }
@@ -260,7 +267,7 @@ int main(int argc, char** argv){
         exit(1);
     }
     char* outfile = "bindings.cpoint";
-    char** filenames = malloc(sizeof(char*) * argc-1);
+    char** filenames = (char**)malloc(sizeof(char*) * argc-1);
     int filenames_length = 0;
     bool macro_mode = false;
     for (int i = 1; i < argc; i++){
