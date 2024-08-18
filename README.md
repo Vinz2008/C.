@@ -248,6 +248,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Work on statically linking llvm dependencies when the compiler is built statically
 - [ ] Add better reflection (access struct fields, etc)
 - [ ] Work on serialization (do like serde ? : use traits, add derives ?)
+- [ ] Add (enforce ?) manually defining the self arg and its types in struct members protos (so we can uses refs/ptrs/shared ptrs/unique ptrs for self and so we canhavre static functions that would just be struct members without self )
 
 ## Benchmarks compared to other languages
 
