@@ -2683,6 +2683,25 @@ after_storing:
   return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
+void FileAST::codegen(){
+  // TODO : need to register all function protos from : function definitions, struct members, mods, etc
+  for (int i = 0; i < global_vars.size(); i++){
+    global_vars.at(i)->codegen();
+  }
+  for (int i = 0; i < structs.size(); i++){
+    structs.at(i)->codegen();
+  }
+  for (int i = 0; i < function_protos.size(); i++){
+    function_protos.at(i)->codegen();
+  }
+  for (int i = 0; i < functions.size(); i++){
+    functions.at(i)->codegen();
+  }
+  for (int i = 0; i < mods.size(); i++){
+    mods.at(i)->codegen();
+  }
+}
+
 void InitializeModule(std::string filename) {
   // Open a new context and module.
   TheContext = std::make_unique<LLVMContext>();

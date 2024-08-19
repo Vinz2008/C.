@@ -1318,6 +1318,7 @@ public:
 // TODO : work on encapsulating an entire file AST in this class
 class FileAST {
   FileAST(std::vector<std::unique_ptr<GlobalVariableAST>> global_vars, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<ModAST>> mods) : global_vars(std::move(global_vars)), structs(std::move(structs)), function_protos(std::move(function_protos)), functions(std::move(functions)), mods(std::move(mods)) {}
+  void codegen(); // TODO : error handling ?
   std::vector<std::unique_ptr<GlobalVariableAST>> global_vars;
   std::vector<std::unique_ptr<StructDeclarAST>> structs;
   std::vector<std::unique_ptr<PrototypeAST>> function_protos;
