@@ -1310,6 +1310,16 @@ public:
     }
 };
 
+// TODO : work on encapsulating an entire file AST in this class
+class FileAST {
+  FileAST(std::vector<std::unique_ptr<GlobalVariableAST>> global_vars, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<PrototypeAST>> function_definitions, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<ModAST>> mods) : global_vars(std::move(global_vars)), structs(std::move(structs)), function_definitions(std::move(function_definitions)), functions(std::move(functions)), mods(std::move(mods)) {}
+  std::vector<std::unique_ptr<GlobalVariableAST>> global_vars;
+  std::vector<std::unique_ptr<StructDeclarAST>> structs;
+  std::vector<std::unique_ptr<PrototypeAST>> function_definitions;
+  std::vector<std::unique_ptr<FunctionAST>> functions;
+  std::vector<std::unique_ptr<ModAST>> mods;
+};
+
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
