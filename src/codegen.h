@@ -110,7 +110,7 @@ public:
     ExternToGenerate(std::string Name, llvm::FunctionType* functionType, std::vector<std::pair<std::string, Cpoint_Type>> Args) : Name(Name), functionType(functionType), Args(Args) {}
 };
 
-//std::string module_function_mangling(std::string module_name, std::string function_name);
+//std::string module_mangling(std::string module_name, std::string function_name);
 //void codegenTemplates();
 //void codegenStructTemplates();
 //void generateTests();

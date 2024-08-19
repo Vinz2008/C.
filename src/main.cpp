@@ -101,7 +101,7 @@ bool last_line = false;
 
 extern int modifier_for_line_count;
 
-extern std::vector<std::string> modulesNamesContext;
+//extern std::vector<std::string> modulesNamesContext;
 
 extern Source_location emptyLoc;
 
@@ -327,11 +327,11 @@ void MainLoop(){
       HandleComment();
       break;
     default:
-      bool is_in_module_context = CurTok == '}' && !modulesNamesContext.empty();
-      if (is_in_module_context){
+      //bool is_in_module_context = CurTok == '}' && !modulesNamesContext.empty();
+      /*if (is_in_module_context){
         modulesNamesContext.pop_back();
         getNextToken();
-      } else {
+      } else {*/
       if (CurTok == tok_identifier && IdentifierStr == "test"){
         HandleTest();
         break;
@@ -350,7 +350,7 @@ void MainLoop(){
       Log::Info() << "identifier : " << IdentifierStr << "\n";
       LogError("TOP LEVEL EXPRESSION FORBIDDEN");
       getNextToken();
-      }
+      //}
       break;
     }
   }

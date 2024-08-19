@@ -37,7 +37,7 @@ extern std::vector<Cpoint_Type> typeDefTable;
 extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 extern std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
-extern std::vector<std::string> modulesNamesContext;
+//extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
 extern std::vector<std::unique_ptr<TemplateEnumCreation>> EnumTemplatesToGenerate;
@@ -341,7 +341,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     while (CurTok == tok_identifier){
       std::string second_part = IdentifierStr; 
       getNextToken();
-      module_mangled_function_name = module_function_mangling(module_mangled_function_name, second_part);
+      module_mangled_function_name = module_mangling(module_mangled_function_name, second_part);
       if (CurTok != ':'){
       break;
       }
@@ -1129,14 +1129,14 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     Log::Info() << "type : " << IdentifierStr << "\n";
     cpoint_type = ParseTypeDeclaration(false, true);
   }
-  if (!modulesNamesContext.empty()){
+  /*if (!modulesNamesContext.empty()){
     std::string module_mangled_function_name = FnName;
     for (int i = modulesNamesContext.size()-1; i >= 0; i--){
-      module_mangled_function_name = module_function_mangling(modulesNamesContext.at(i), module_mangled_function_name);
+      module_mangled_function_name = module_mangling(modulesNamesContext.at(i), module_mangled_function_name);
     }
     FnName = module_mangled_function_name;
     Log::Info() << "mangled name is : " << FnName << "\n";
-  }
+  }*/
   Log::Info() << "FnLoc in ast : " << FnLoc << "\n";
   auto Proto = std::make_unique<PrototypeAST>(FnLoc, FnName, ArgNames, cpoint_type, Kind != 0, BinaryPrecedence, is_variable_number_args, has_template, template_name);
   /*if (!struct_parsing){
@@ -1236,7 +1236,9 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
       NamedValues["self"] = std::make_unique<NamedValue>(nullptr, self_type);
       std::unique_ptr<FunctionAST> declar = ParseDefinition();
       Log::Info() << "AFTER ParseDefinition" << "\n";
-      if (declar == nullptr){return nullptr;}
+      if (!declar){
+        return nullptr;
+      }
       std::string function_name;
       //std::cout << structName << "\n";
       // TODO : maybe remove this because it is done in codegen
@@ -1248,6 +1250,8 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
       }
       StructDeclarations[structName]->functions.push_back(function_name);
       Functions.push_back(std::move(declar));
+    } else {
+      return LogErrorS("Unexpected expression in struct declaration");
     }
   }
   Log::Info() << "CurTok : " << CurTok << "\n";
@@ -1666,6 +1670,10 @@ std::unique_ptr<TypeDefAST> ParseTypeDef(){
 extern bool debug_info_mode;
 
 std::unique_ptr<ModAST> ParseMod(){
+  std::vector<std::unique_ptr<FunctionAST>> functions;
+  std::vector<std::unique_ptr<PrototypeAST>> function_protos;
+  std::vector<std::unique_ptr<StructDeclarAST>> structs;
+  std::vector<std::unique_ptr<ModAST>> mods;
   getNextToken();
   std::string mod_name = IdentifierStr;
   getNextToken();
@@ -1673,11 +1681,45 @@ std::unique_ptr<ModAST> ParseMod(){
     return LogErrorM("missing '{' in mod");
   }
   getNextToken();
-  modulesNamesContext.push_back(mod_name);
+  //modulesNamesContext.push_back(mod_name);
   if (debug_info_mode){
     debugInfoCreateNamespace(mod_name);
   }
-  return std::make_unique<ModAST>(mod_name);
+  while (CurTok != '}'){
+    if (CurTok == tok_single_line_comment){
+      HandleComment();
+    } else if (CurTok == ';'){
+      getNextToken();
+    } else if (CurTok == tok_func){
+      std::unique_ptr<FunctionAST> function = ParseDefinition();
+      if (!function){
+        return nullptr;
+      }
+      functions.push_back(std::move(function));
+    } else if (CurTok == tok_extern){
+      std::unique_ptr<PrototypeAST> function_proto = ParseExtern();
+      if (!function_proto){
+        return nullptr;
+      }
+      function_protos.push_back(std::move(function_proto));
+    } else if (CurTok == tok_struct){
+      std::unique_ptr<StructDeclarAST> structDeclar = ParseStruct();
+      if (!structDeclar){
+        return nullptr;
+      }
+      structs.push_back(std::move(structDeclar));
+    } else if (CurTok == tok_mod){
+      std::unique_ptr<ModAST> mod = ParseMod();
+      if (!mod){
+        return nullptr;
+      }
+      mods.push_back(std::move(mod));
+    } else {
+      return LogErrorM("Unexpected tok %d in mod declaration", CurTok);
+    }
+  }
+  getNextToken(); //  eat }
+  return std::make_unique<ModAST>(mod_name, std::move(functions), std::move(function_protos), std::move(structs), std::move(mods));
 }
 
 std::unique_ptr<GlobalVariableAST> ParseGlobalVariable(){

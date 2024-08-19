@@ -14,11 +14,6 @@ func absolute(v : i32 ) i32 {
   }
 }
 }
-
-struct utilstest {
-  var a : i8
-  var b : i8
-}
 }
 
 func test_generic~T~() T {

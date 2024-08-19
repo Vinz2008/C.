@@ -5,8 +5,8 @@ std::string struct_function_mangling(std::string struct_name, std::string name){
   return mangled_name;
 }
 
-std::string module_function_mangling(std::string module_name, std::string function_name){
-  std::string mangled_name = module_name + "___" + function_name;
+std::string module_mangling(std::string module_name, std::string identifier){
+  std::string mangled_name = module_name + "___" + identifier;
   return mangled_name;
 }
 

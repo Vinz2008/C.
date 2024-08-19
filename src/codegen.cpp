@@ -56,7 +56,7 @@ std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
 std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
 
-std::vector<std::string> modulesNamesContext;
+//std::vector<std::string> modulesNamesContext;
 
 std::unordered_map<std::string, Function*> GeneratedFunctions;
 
@@ -2053,6 +2053,32 @@ void TypeDefAST::codegen(){
 }
 
 void ModAST::codegen(){
+  for (int i = 0; i < function_protos.size(); i++){
+    std::unique_ptr<PrototypeAST> function_proto = std::move(function_protos.at(i));
+    std::string mangled_function_name = module_mangling(mod_name, function_proto->Name);
+    function_proto->Name = mangled_function_name;
+    function_proto->codegen();
+    
+    FunctionProtos[mangled_function_name] = function_proto->clone();
+  }
+  for (int i = 0; i < functions.size(); i++){
+    std::unique_ptr<FunctionAST> function = std::move(functions.at(i));
+    std::string mangled_function_name = module_mangling(mod_name, function->Proto->Name);
+    function->Proto->Name = mangled_function_name;
+    function->codegen();
+    
+    // functions.at(i)->Proto
+  }
+  for (int i = 0; i < structs.size(); i++){
+    // TODO
+    fprintf(stderr, "STRUCTS IN MOD NOT IMPLEMENTED YET\n");
+    exit(1);
+  }
+  for (int i = 0; i < mods.size(); i++){
+    std::unique_ptr<ModAST> mod = std::move(mods.at(i));
+    mod->mod_name = module_mangling(mod_name, mod->mod_name);
+    mod->codegen();
+  }
   return;
 }
 

@@ -392,12 +392,20 @@ void interpret_type(std::string line, int& pos_line){
     pos_line++;
 }
 
-int nb_of_opened_braces;
+int nb_of_opened_braces = 0;
 bool first_mod_opened = false;
+
+static inline std::string& ltrim(std::string& s, const char* t = " \t\n\r\f\v"){
+    s.erase(0, s.find_first_not_of(t));
+    return s;
+}
+
 
 void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line, std::ifstream &file_code){
     out_file << '\n' << line;
     pos_line++;
+    int nb_of_opened_braces = 0;
+    //bool is_in_first_mod = first_mod_opened;
     if (!first_mod_opened){
         first_mod_opened = true;
     } else {
@@ -406,6 +414,7 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line, std::
     while (std::getline(imported_file, line)){
         pos_line++;
         Log::Imports_Info() << line << "\n";
+        if (ltrim(line).rfind("mod", 0) != 0){ // line startswith mod
         if (line.find('{') != std::string::npos){
             Log::Imports_Info() << "line mod contains {" << "\n";
             nb_of_opened_braces++;
@@ -414,10 +423,14 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line, std::
             nb_of_opened_braces--;
         }
         Log::Imports_Info() << "nb_of_opened_braces : " << nb_of_opened_braces << "\n";
-        if (line == "}" && nb_of_opened_braces == -1){
+        if (line.find("}") != std::string::npos && nb_of_opened_braces == -1){
             Log::Imports_Info() << "close mod block" << "\n";
-            out_file << '\n' << line;
+            /*if  (!is_in_first_mod){
+                out_file << ""
+            }*/
+            out_file << "\n" << line;
             break;
+        }
         }
         find_patterns(line, nb_line, pos_line, file_code);
     }

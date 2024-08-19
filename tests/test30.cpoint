@@ -1,11 +1,17 @@
 import @std/utils.cpoint
 mod test {
-func function(){
-    0
-}
+    func function(){
+        0
+    }
+    mod test2 {
+        func function2(){
+            0
+        }
+    }
 }
 func main(){
     test::function()
+    test::test2::function2()
     std::utils::absolute(1)
     std::utils::average(1, 2)
 }
