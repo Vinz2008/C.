@@ -220,7 +220,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Do typechecking before codegen so you can typecheck the template types (add traits to specify for example that you can add the type with the Add trait)
 - [ ] In the compiler codebase, use enums instead of a lot of bools to simplify reading the code (ex : replace in Cpoint_Type "bool is_ptr" by "enum IsPtr is_ptr" with "enum IsPtr  { IsPtr, NotPtr } ")
 - [ ] Refactor generics (rename templates generics ?) to make it more complex (multiple template types, generics over a constant number, etc)
-- [ ] Fix the order of basic blocks so the blocks are in the same order in the ir as the code
+- [x] Fix the order of basic blocks so the blocks are in the same order in the ir as the code
 - [ ] Add a library (shared ? static ?) that would include the shared code for cpoint and cpoint-build (finding shared libraries, linking, etc) (call it libcpoint-utils ?)
 - [ ] Add support for dynamically linking the std
 - [ ] Add support for dynamically linking bdxgc  (or using the host libgc)

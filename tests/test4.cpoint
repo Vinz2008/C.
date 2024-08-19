@@ -1,7 +1,7 @@
 import @std/print.cpoint
 
 func main(){
-  for i = 1, i <= 100, 1.0 {
+  for i : i32 = 1, i <= 100, 1.0 {
     if i % 15 == 0 {
       printstr("FizzBuzz\t")
     } else if i%3 == 0 {
@@ -9,7 +9,7 @@ func main(){
     } else if i%5 == 0 {
         printstr("Buzz\t")
     } else {
-        printd(i)
+        printi(i)
         printstr("\t")
     }
   }

@@ -2394,7 +2394,7 @@ Value *ForExprAST::codegen(){
   if (!EndCond)
     return nullptr;
   BasicBlock *LoopBB = BasicBlock::Create(*TheContext, "loop_for", TheFunction);
-  BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "afterloop", TheFunction);
+  BasicBlock *AfterBB = BasicBlock::Create(*TheContext, "afterloop");
   Builder->CreateCondBr(EndCond, LoopBB, AfterBB);
   Builder->SetInsertPoint(LoopBB);
   blocksForBreak.push(AfterBB);
@@ -2445,6 +2445,7 @@ Value *ForExprAST::codegen(){
   Builder->CreateBr(CondBB);
 
   // Any new code will be inserted in AfterBB.
+  TheFunction->insert(TheFunction->end(), AfterBB);
   Builder->SetInsertPoint(AfterBB);
 
   // Add a new entry to the PHI node for the backedge.
