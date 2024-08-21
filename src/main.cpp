@@ -156,6 +156,8 @@ static void add_default_typedefs(){
   typeDefTable.push_back(Cpoint_Type(i32_type));
 }
 
+#if ENABLE_FILE_AST == 0
+
 static void HandleDefinition() {
   if (auto FnAST = ParseDefinition()) {
     if (Comp_context->c_translator){
@@ -192,7 +194,7 @@ static void HandleExtern() {
 
 static void HandleTypeDef(){
   if (auto typeDefAST = ParseTypeDef()){
-    typeDefAST->codegen();
+    //typeDefAST->codegen(); // it is not needed
   } else {
     getNextToken();
   }
@@ -249,6 +251,8 @@ static void HandleMembers(){
     }
 }
 
+#endif
+
 void HandleComment(){
   Log::Info() << "token bef : " << CurTok << "\n";
   getNextToken(); // pass tok_single_line_comment token
@@ -259,13 +263,18 @@ void HandleComment(){
   Log::Info() << "token : " << CurTok << "\n";
 }
 
-static void HandleTest(){
+extern std::vector<std::unique_ptr<TestAST>> testASTNodes;;
+
+void HandleTest(){
   if (auto testAST = ParseTest()){
-      testAST->codegen();
+    testASTNodes.push_back(std::move(testAST));
+    //testAST->codegen();
   } else {
     getNextToken();
   }
 }
+
+#if ENABLE_FILE_AST == 0
 
 void MainLoop(){
   while (1) {
@@ -355,6 +364,8 @@ void MainLoop(){
     }
   }
 }
+
+#endif
 
 
 #if ENABLE_JIT
@@ -695,7 +706,12 @@ int main(int argc, char **argv){
     if (Comp_context->test_mode && !Comp_context->std_mode){
         Log::Warning() << "Using tests without the standard library. You will not be able to use expect and you will need to have linked a libc" << "\n";
     }
+#if ENABLE_FILE_AST
+  std::unique_ptr<FileAST> file_ast = ParseFile();
+  file_ast->codegen();
+#else
     MainLoop();
+#endif
     codegenTemplates();
     //codegenStructTemplates();
     generateTests();

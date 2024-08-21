@@ -2151,3 +2151,161 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, cpoint_type);
   return std::make_unique<VarExprAST>(std::move(VarNames), cpoint_type, std::move(index), infer_type);
 }
+
+extern std::ofstream file_log;
+extern bool last_line;
+extern bool is_in_extern;
+
+static void HandleStruct(std::vector<std::unique_ptr<StructDeclarAST>>& structs){
+  if (auto structAST = ParseStruct()){
+    structs.push_back(std::move(structAST));
+  } else {
+    if (!is_template_parsing_struct){
+      getNextToken();
+    }
+  }
+}
+
+#if ENABLE_FILE_AST
+
+extern void HandleTest();
+
+std::unique_ptr<FileAST> ParseFile(){
+  std::vector<std::unique_ptr<GlobalVariableAST>> global_vars;
+  std::vector<std::unique_ptr<StructDeclarAST>> structs;
+  std::vector<std::unique_ptr<UnionDeclarAST>> unions;
+  std::vector<std::unique_ptr<EnumDeclarAST>> enums;
+  std::vector<std::unique_ptr<MembersDeclarAST>> members;
+  std::vector<std::unique_ptr<PrototypeAST>> function_protos;
+  std::vector<std::unique_ptr<FunctionAST>> functions;
+  std::vector<std::unique_ptr<ModAST>> mods;
+  while (1) {
+    if (Comp_context->debug_mode){
+    std::flush(file_log);
+    }
+    if (last_line == true){
+      if (Comp_context->debug_mode){
+      file_log << "exit" << "\n";
+      }
+      goto after_loop;
+      // return;
+    }
+    switch (CurTok) {
+    case tok_eof:
+      last_line = true; 
+      goto after_loop;
+      // return;
+    case '#':
+        // found call macro
+        break;
+    case ';': // ignore top-level semicolons.
+      getNextToken();
+      break;
+    case tok_func:
+      if (auto FnAST = ParseDefinition()){
+        functions.push_back(std::move(FnAST));
+      } else {
+        if (!is_template_parsing_definition){
+          // Skip token for error recovery.
+          getNextToken();
+        }
+      }
+      break;
+    case tok_extern:
+      is_in_extern = true;
+      if (auto ProtoAST = ParseExtern()){
+        function_protos.push_back(std::move(ProtoAST));
+      } else {
+        getNextToken();
+      }
+      is_in_extern = false;
+      break;
+    case tok_struct:
+      HandleStruct(structs);
+      break;
+    case tok_union:
+      if (auto unionAST = ParseUnion()){
+        unions.push_back(std::move(unionAST));
+      } else {
+        getNextToken();
+      }
+      break;
+    case tok_enum:
+      if (auto enumAST = ParseEnum()){
+        enums.push_back(std::move(enumAST));
+      } else {
+        if (!is_template_parsing_enum){
+            getNextToken();
+        }
+      }
+      break;
+    case tok_class:
+      HandleStruct(structs);
+      break;
+    case tok_var:
+      if (auto GlobalVarAST = ParseGlobalVariable()){
+        global_vars.push_back(std::move(GlobalVarAST));
+      } else {
+        getNextToken();
+      }
+      break;
+    case tok_typedef:
+      if (auto typeDefAST = ParseTypeDef()){
+        // no need to codegen it because it is a noop
+      } else {
+        getNextToken();
+      }
+      break;
+    case tok_mod: {
+      auto modAST = ParseMod();
+      mods.push_back(std::move(modAST));
+      break;
+    }
+    case tok_members:
+      if (auto memberAST = ParseMembers()){
+        members.push_back(std::move(memberAST));
+      } else {
+        getNextToken();
+      }
+      break;
+    case tok_single_line_comment:
+      Log::Info() << "found single-line comment" << "\n";
+      Log::Info() << "char found as a '/' : " << CurTok << "\n";
+      if (Comp_context->debug_mode){
+      file_log << "found single-line comment" << "\n";
+      }
+      HandleComment();
+      break;
+    default:
+      //bool is_in_module_context = CurTok == '}' && !modulesNamesContext.empty();
+      /*if (is_in_module_context){
+        modulesNamesContext.pop_back();
+        getNextToken();
+      } else {*/
+      if (CurTok == tok_identifier && IdentifierStr == "test"){
+        HandleTest();
+        break;
+      }
+#if ENABLE_JIT
+    if (Comp_context->jit_mode){
+      if (CurTok != '\0'){
+        HandleTopLevelExpression();
+      } else {
+        getNextToken();
+      }
+      break;
+    }
+#endif
+      Log::Info() << "CurTok : " << CurTok << "\n";
+      Log::Info() << "identifier : " << IdentifierStr << "\n";
+      LogError("TOP LEVEL EXPRESSION FORBIDDEN");
+      getNextToken();
+      //}
+      break;
+    }
+  }
+after_loop:
+  return std::make_unique<FileAST>(std::move(global_vars), std::move(structs), std::move(unions), std::move(enums), std::move(members), std::move(function_protos), std::move(functions), std::move(mods));
+}
+
+#endif

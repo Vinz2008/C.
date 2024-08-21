@@ -1317,15 +1317,20 @@ public:
 
 // TODO : work on encapsulating an entire file AST in this class
 class FileAST {
-  FileAST(std::vector<std::unique_ptr<GlobalVariableAST>> global_vars, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<ModAST>> mods) : global_vars(std::move(global_vars)), structs(std::move(structs)), function_protos(std::move(function_protos)), functions(std::move(functions)), mods(std::move(mods)) {}
-  void codegen(); // TODO : error handling ?
   std::vector<std::unique_ptr<GlobalVariableAST>> global_vars;
   std::vector<std::unique_ptr<StructDeclarAST>> structs;
+  std::vector<std::unique_ptr<UnionDeclarAST>> unions;
+  std::vector<std::unique_ptr<EnumDeclarAST>> enums;
+  std::vector<std::unique_ptr<MembersDeclarAST>> members;
   std::vector<std::unique_ptr<PrototypeAST>> function_protos;
   std::vector<std::unique_ptr<FunctionAST>> functions;
   std::vector<std::unique_ptr<ModAST>> mods;
+public:
+  FileAST(std::vector<std::unique_ptr<GlobalVariableAST>> global_vars, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<UnionDeclarAST>> unions, std::vector<std::unique_ptr<EnumDeclarAST>> enums, std::vector<std::unique_ptr<MembersDeclarAST>> members, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<ModAST>> mods) : global_vars(std::move(global_vars)), structs(std::move(structs)), unions(std::move(unions)), enums(std::move(enums)), members(std::move(members)), function_protos(std::move(function_protos)), functions(std::move(functions)), mods(std::move(mods)) {}
+  void codegen(); // TODO : error handling ?
 };
 
+std::unique_ptr<FileAST> ParseFile();
 std::unique_ptr<ExprAST> ParseExpression();
 std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
