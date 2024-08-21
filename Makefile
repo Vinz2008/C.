@@ -40,6 +40,8 @@ ifneq ($(shell $(CC) -dM -E src/config.h | grep ENABLE_LLVM_TOOLS_EMBEDDED_COMPI
 LLVM_TOOLS_EMBEDDED_COMPILER = TRUE
 endif
 
+PROFILING ?= FALSE
+
 # ifeq ($(OS),Windows_NT)
 # CXXFLAGS += $(WINDOWS_CXXFLAGS)
 # else
@@ -114,6 +116,15 @@ ifeq ($(STATIC_LLVM), FALSE)
 LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
 endif
 
+endif
+
+# Only use this in release mode
+ifeq ($(PROFILING), TRUE)
+PROFILING_EXTERNAL_SRCS := $(SRCDIR)/external/tracy/public/TracyClient.cpp
+PROFILING_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(PROFILING_EXTERNAL_SRCS))
+OBJS += $(PROFILING_EXTERNAL_OBJS)
+CXXFLAGS += -DTRACY_ENABLE -DTRACY_NO_EXIT -march=native
+LDFLAGS += -lpthread -ldl
 endif
 
 #DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))

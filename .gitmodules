@@ -7,3 +7,6 @@
 [submodule "tools/vim"]
 	path = tools/vim
 	url = https://github.com/Vinz2008/cpoint-vim
+[submodule "src/external/tracy"]
+	path = src/external/tracy
+	url = https://github.com/wolfpld/tracy/
