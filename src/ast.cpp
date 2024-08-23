@@ -1002,27 +1002,59 @@ std::unique_ptr<ExprAST> ParseFunctionArgsTyped(std::vector<std::pair<std::strin
   return std::make_unique<EmptyExprAST>();
 }
 
+static bool is_infinite_loop(std::unique_ptr<ExprAST>& E){
+  if (dynamic_cast<LoopExprAST*>(E.get())){
+    auto loopExpr = dynamic_cast<LoopExprAST*>(E.get());
+    if (loopExpr->is_infinite_loop){
+      return true;
+    }
+  }
+  // TODO : add verification for for and while loops in cases where the expression is always true (add better constness analysis for cases like 2 == 2)
+  if (dynamic_cast<WhileExprAST*>(E.get())){
+    // TODO : also need to verify no exprs contains breaks 
+    /*auto WhileExpr = dynamic_cast<WhileExprAST*>(E.get());
+    return dynamic_cast<BoolExprAST*>(WhileExpr->Cond.get()) && dynamic_cast<BoolExprAST*>(WhileExpr->Cond.get())->val;*/
+  }
+  return false;
+}
+
+
 std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body){
-    bool return_found = false;
-    bool infinite_loop_found = false;
+    //bool return_found = false;
+    bool found_terminator = false;
+    //bool infinite_loop_found = false;
     while (CurTok != '}'){
       auto E = ParseExpression();
       if (!E)
         return nullptr;
-      if (return_found || infinite_loop_found){
+      if (found_terminator /*return_found ||  infinite_loop_found*/){
+        //auto unreachable_code_warning = Log::Warning();
+        //unreachable_code_warning.content << "unreachable code : " << E->to_string();
         continue;
       }
-      if (dynamic_cast<LoopExprAST*>(E.get())){
+      if (is_infinite_loop(E) || E->contains_expr(ExprType::Return) || E->contains_expr(ExprType::Unreachable)){
+        if (!found_terminator){
+          auto unreachable_code_warning = Log::Warning(E->loc);
+          std::string terminator_name = "expr";
+          unreachable_code_warning.head << "Unreachable code found\n";
+          unreachable_code_warning.content << "Any statement after this line is not reachable\n";
+          unreachable_code_warning.end();
+        }
+        found_terminator = true;
+        
+      }
+      /*if (dynamic_cast<LoopExprAST*>(E.get())){
         auto loopExpr = dynamic_cast<LoopExprAST*>(E.get());
         if (loopExpr->is_infinite_loop){
-            infinite_loop_found = true;
+          //infinite_loop_found = true;
+          should_break = true;
         }
-      }
-      if (is_func_body){ // TODO : is this if necessary
+      }*/
+      /*if (is_func_body){ // TODO : is this if necessary
         if (dynamic_cast<ReturnAST*>(E.get())){
             return_found = true;
         }
-      }
+      }*/
       Body.push_back(std::move(E));
     }
     // if the last expressions is a return, replace it with just the expressions because otherwise it would return a never type 
@@ -1289,10 +1321,9 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
         new_struct += "\t}";
         auto reorder_struct_warning = Log::Warning();
         reorder_struct_warning.head << "The " << structName << " fields could be reordered to optimize its size : \n";
-        reorder_struct_warning.head.end();
         reorder_struct_warning.content << "Current struct : \n" << old_struct << "\n"
                                        << "Reordered struct : \n" << new_struct << "\n";
-        reorder_struct_warning.content.end();
+        reorder_struct_warning.end();
 
     }
     }

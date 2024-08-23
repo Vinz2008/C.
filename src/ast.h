@@ -240,8 +240,8 @@ public:
 };
 
 class BoolExprAST : public ExprAST {
-  bool val;
 public:
+  bool val;
   BoolExprAST(bool val) : val(val) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override {
@@ -1215,10 +1215,10 @@ public:
 };
 
 class WhileExprAST : public ExprAST {
+public:
   std::unique_ptr<ExprAST> Cond;
   //std::vector<std::unique_ptr<ExprAST>> Body;
   std::unique_ptr<ExprAST> Body;
-public:
   WhileExprAST(std::unique_ptr<ExprAST> Cond, std::unique_ptr<ExprAST> Body) : Cond(std::move(Cond)), Body(std::move(Body)) {}
   Value *codegen() override;
   std::unique_ptr<ExprAST> clone() override;

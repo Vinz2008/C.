@@ -364,19 +364,27 @@ Value* ConstantVectorExprAST::codegen(){
 }
 
 Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
-    bool should_break = false;
+    //bool should_break = false;
     Value* ret = nullptr;
     for (int i = 0; i < Body.size(); i++){
-        if (Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::Unreachable)){
+        /*if (Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::Unreachable)){
           should_break = true;
-        }
+        }*/
         ret = Body.at(i)->codegen();
         if (!ret){
             return nullptr;
         }
-        if (should_break){
-          break;
-        }
+        /*if (should_break){
+          if (i < Body.size()-1){
+            auto unreachable_code_warning = Log::Warning();
+            unreachable_code_warning.head << "Unreachable code found\n";
+            unreachable_code_warning.head.end();
+            unreachable_code_warning.content << "test content";
+            unreachable_code_warning.content.end();
+            
+          }
+          //break;
+        }*/
     }
     return ret;
 }
@@ -2004,9 +2012,8 @@ Function *FunctionAST::codegen() {
         //return LogErrorF(emptyLoc, "Return type is wrong in the %s function", P.getName().c_str());
         auto wrong_return_type_warning = Log::Warning(emptyLoc);
         wrong_return_type_warning.head << "Return type is wrong in the " << P.getName() << " function" << "\n";
-        wrong_return_type_warning.head.end();
         wrong_return_type_warning.content << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
-        wrong_return_type_warning.content.end();
+        wrong_return_type_warning.end();
     }
 before_ret:
     if (!contains_return_or_unreachable_or_never_call && !is_return_never_type){

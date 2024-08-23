@@ -1,4 +1,5 @@
 #include <iostream>
+#include <sstream>
 
 #include "errors.h"
 #include "ast.h"
@@ -90,42 +91,45 @@ namespace Log {
     };
     // first part of the warning that is in red
     struct WarningHead {
+        std::stringstream head_stream;
         WarningHead(Source_location loc){
-            Color::Modifier red(Color::FG_RED);
-            std::cout << red;
+            /*Color::Modifier red(Color::FG_RED);
+            head_stream << red;*/
             if (loc != emptyLoc){
-                std::cout << "[Warning] at " << Comp_context->filename << ":" << loc.line_nb << ":" << ((loc.col_nb > 0) ? loc.col_nb-1 : loc.col_nb) << " ";
+                head_stream << "[Warning] at " << Comp_context->filename << ":" << loc.line_nb << ":" << ((loc.col_nb > 0) ? loc.col_nb-1 : loc.col_nb) << " ";
             } else {
-                std::cout << "[Warning] ";
+                head_stream << "[Warning] ";
             }
         }
         template< class T >
         WarningHead &operator<<(const T& val){
-            std::cout << val;
+            head_stream << val;
             return *this;
         }
-        void end(){
+        /*void end(){
             Color::Modifier def(Color::FG_DEFAULT);
             std::cout << def;
         }
         ~WarningHead(){
             Color::Modifier def(Color::FG_DEFAULT);
             std::cout << def;
-        }
+        }*/
     };
     // the optional content that is in the normal color
     struct WarningContent {
+        std::stringstream content_stream;
         template< class T >
         WarningContent &operator<<(const T& val){
-            std::cout << val;
+            //std::cout << val;
+            content_stream << val;
             return *this;
         }
-        void end(){
-            std::cout << "----\n";
-        }
-        ~WarningContent(){
+        /*void end(){
+            std::cout << content_stream.str() <<"----\n";
+        }*/
+        /*~WarningContent(){
             std::flush(std::cout);
-        }
+        }*/
     };
     struct Warning {
         Source_location loc;
@@ -136,6 +140,24 @@ namespace Log {
             head << val;
             return head;
         }
+        void end(){
+            Color::Modifier red(Color::FG_RED);
+            Color::Modifier def(Color::FG_DEFAULT);
+            std::cout << red << head.head_stream.str() << def;
+            if (loc.line != ""){
+                std::cout << "\t" << loc.line << "\n";
+                std::cout << "\t";
+                for (int i = 0; i < loc.col_nb-2; i++){
+                    std::cout << " ";
+                }
+                std::cout << "^\n";
+            }
+            if (content.content_stream.str() != ""){
+                std::cout << content.content_stream.str() << "----\n";
+            }
+            std::flush(std::cout);
+        }
+        // TODO : refactor the warning struct as a builder pattern like in rust
         Warning(Source_location loc = emptyLoc) : loc(loc), head(loc) {}
         /*Warning(Source_location loc = emptyLoc){
             Color::Modifier red(Color::FG_RED);

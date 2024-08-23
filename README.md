@@ -251,7 +251,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add (enforce ?) manually defining the self arg and its types in struct members protos (so we can uses refs/ptrs/shared ptrs/unique ptrs for self and so we canhavre static functions that would just be struct members without self )
 - [ ] Add calling functions in mods without specifying the mod (ex a function in the mod file will only need to use foo to call file::foo)
 - [ ] Implement iterators
-- [ ] Add a warning for unreachable code
+- [x] Add a warning for unreachable code
 
 ## Benchmarks compared to other languages
 

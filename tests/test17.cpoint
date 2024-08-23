@@ -7,3 +7,8 @@ func main(){
     #unreachable()
     printd(2)
 }
+
+func test(){
+    return 2
+    var a = 3
+}
