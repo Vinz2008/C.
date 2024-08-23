@@ -654,8 +654,8 @@ int main(int argc, char **argv){
     nb_imports = generate_file_with_imports(filename, temp_filename);
     Log::Info() << "before remove line count because of import mode " << Comp_context->lexloc.line_nb << " lines" << "\n";
     Log::Info() << "lines count to remove because of import mode " << modifier_for_line_count << "\n";
-    Comp_context->lexloc.line_nb -= modifier_for_line_count+nb_imports /*+1*/ /**2*/; // don't know why there are 2 times too much increment so we need to make the modifier double
-    Comp_context->curloc.line_nb -= modifier_for_line_count;
+    Comp_context->lexloc.line_nb -= modifier_for_line_count-nb_imports /*+1*/ /**2*/; // don't know why there are 2 times too much increment so we need to make the modifier double
+    Comp_context->curloc.line_nb -= modifier_for_line_count-nb_imports;
     Log::Info() << "after remove line count because of import mode " << Comp_context->lexloc.line_nb << " lines" << "\n";
     filename = temp_filename;
     }

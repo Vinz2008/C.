@@ -184,6 +184,7 @@ static std::string interpet_func_generics(std::string line, int pos, int nb_line
         }
         pos_line++;
         declar += line + "\n";
+        modifier_for_line_count++;
         if (line.find('{') != std::string::npos){
             in_func_nb_of_opened_braces++;
         }
@@ -246,6 +247,7 @@ static std::string interpret_struct_generics(std::string line, int& pos, int nb_
         }
         pos_line++;
         declar += line + "\n";
+        modifier_for_line_count++;
         if (line.find('{') != std::string::npos){
             in_func_nb_of_opened_braces++;
         }
@@ -262,6 +264,7 @@ static std::string interpret_struct_generics(std::string line, int& pos, int nb_
 static void interpret_extern(std::string line, int& pos_line){
     out_file << line << "\n";
     pos_line++;
+    modifier_for_line_count++;
 }
 
 static void interpret_struct(std::string line, int& pos, int nb_line, int& pos_line){
@@ -317,7 +320,7 @@ static void interpret_struct(std::string line, int& pos, int nb_line, int& pos_l
         } else if (IdentifierStr == "extern"){
             interpret_extern(line, pos_line);
         } else {
-        struct_declar += line;
+            struct_declar += line;
         }
         pos = 0;
         if (!std::getline(imported_file, line)){
@@ -325,6 +328,7 @@ static void interpret_struct(std::string line, int& pos, int nb_line, int& pos_l
         } else {
             pos_line++;
             struct_declar += '\n';
+            modifier_for_line_count++;
         }
     }
     Log::Imports_Info() << "struct_declar : " << struct_declar << "\n";
@@ -351,6 +355,7 @@ static void interpret_enum(std::string line, int& pos, int nb_line, int& pos_lin
             break;
         } else {
             enum_declar += '\n';
+            modifier_for_line_count++;
         }
     }
 after_while:
@@ -377,6 +382,7 @@ static void interpret_union(std::string line, int& pos, int nb_line, int& pos_li
             break;
         } else {
             union_declar += '\n';
+            modifier_for_line_count++;
         }
     }
 after_while:
@@ -429,6 +435,7 @@ void interpret_mod(std::string line, int& pos, int nb_line, int& pos_line, std::
                 out_file << ""
             }*/
             out_file << "\n" << line;
+            modifier_for_line_count++;
             break;
         }
         }
@@ -442,6 +449,7 @@ int nb_of_opened_braces_members;
 void interpret_members(std::string line, int& pos, int nb_line, int& pos_line, std::ifstream &file_code){
     out_file << '\n' << line;
     pos_line++;
+    modifier_for_line_count++;
     if (!first_members_opened){
         first_members_opened = true;
     } else {
@@ -461,6 +469,7 @@ void interpret_members(std::string line, int& pos, int nb_line, int& pos_line, s
         if (line == "}" && nb_of_opened_braces_members == -1){
             Log::Imports_Info() << "close mod block" << "\n";
             out_file << '\n' << line;
+            modifier_for_line_count++;
             break;
         }
         find_patterns(line, nb_line, pos_line, file_code);
@@ -470,13 +479,13 @@ void interpret_members(std::string line, int& pos, int nb_line, int& pos_line, s
 // find funcs, structs, etc
 void find_patterns(std::string line, int nb_line, int& pos_line, std::ifstream& file_code){
     int pos = 0;
-    // TODO : Why is it needed ? Remove it ?
     if (line.find("?[") != std::string::npos){
         if (line.find("define") != std::string::npos){
         preprocess_instruction(line, file_code, pos_line_file);
         //out_file << line << "\n";
-        pos_line++;
         }
+        pos_line++;
+        modifier_for_line_count++;
         return;
     }
     skip_spaces(line, pos);
@@ -544,6 +553,7 @@ void interpret_include(std::string line, int& pos_src){
     getPathFromFilePOV(Path, filename);
     Log::Imports_Info() << "Path : " << Path << "\n";
     int nb_line = get_nb_lines(included_file, Path);
+    modifier_for_line_count += nb_line;
     included_file.open(Path);
     if (included_file.is_open()){
         int pos_line = 0;
@@ -563,6 +573,7 @@ void interpret_include(std::string line, int& pos_src){
                 out_file << "\n";
             }
             }
+            //modifier_for_line_count++;
             pos_line++;
         }
     }
@@ -577,11 +588,9 @@ int find_import_or_include(std::string line){
     if (IdentifierStr == "import"){
         interpret_import(line, pos_src);
         return 1;
-    } if (IdentifierStr == "include"){
+    } else if (IdentifierStr == "include"){
         interpret_include(line, pos_src);
         return 1;
-    } else {
-        // TODO ?
     }
     return 0;
 }
@@ -597,7 +606,7 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
     } else {
         out_file.open(out_path);
     }
-    int nb_imports = 0;
+    int nb_imports_or_include = 0;
     if (Comp_context->std_mode){ // TODO : add a way to include core with no-std (explicit folder ?)
         include_prelude(std_path);
         out_file << "\n";
@@ -622,13 +631,13 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
                 preprocess_instruction(line, file_code, pos_line_file);
                 last_line_macro = true;
             } else {
-            preprocess_replace_variable(line);
-            if (find_import_or_include(line) == 0){
-                out_file << line;
-            } else {
-                nb_imports++;
-                last_line_import_or_include = true;
-            }
+                preprocess_replace_variable(line);
+                if (find_import_or_include(line) == 0){
+                    out_file << line;
+                } else {
+                    nb_imports_or_include++;
+                    last_line_import_or_include = true;
+                }
             }
             pos_line_file++;
         }
@@ -642,7 +651,7 @@ int generate_file_with_imports(std::string file_path, std::string out_path){
         out_file_ifs.close();
         std::remove("temp_stdout.txt");
     }
-    return nb_imports;
+    return nb_imports_or_include;
 }
 
 
