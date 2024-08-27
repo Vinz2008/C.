@@ -2690,8 +2690,44 @@ after_storing:
   return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
+
+// TODO : refactor NamedValues to be scopes in each other instead of a big map
+
+void register_mod_functions_recursive(std::unique_ptr<ModAST>& mod, std::optional<std::string> parent_mods_prefix){
+    for (int i = 0; i < mod->functions.size(); i++){
+        std::string function_name = mod->functions.at(i)->Proto->Name;
+        if (parent_mods_prefix != std::nullopt){
+            function_name = parent_mods_prefix.value() + function_name;
+        }
+        FunctionProtos[function_name] = mod->functions.at(i)->Proto->clone();
+    }
+    for (int i = 0; i < mod->function_protos.size(); i++){
+        std::string function_name = mod->function_protos.at(i)->Name;
+        if (parent_mods_prefix != std::nullopt){
+            function_name = parent_mods_prefix.value() + function_name;
+        }
+        FunctionProtos[function_name] = mod->function_protos.at(i)->clone();
+    }
+
+    for (int i = 0; i < mod->mods.size(); i++){
+        std::string mod_prefix = mod->mod_name;
+        if (parent_mods_prefix.has_value()){
+            mod_prefix = module_mangling(parent_mods_prefix.value(), mod->mod_name);
+        }
+        register_mod_functions_recursive(mod->mods.at(i), std::optional(mod_prefix));
+    }
+}
+
+void register_mod_functions(std::unique_ptr<ModAST>& mod){
+    register_mod_functions_recursive(mod, std::nullopt);
+}
+
 void FileAST::codegen(){
   // TODO : need to register all function protos from : function definitions, struct members, mods, etc
+  for (int i = 0; i < mods.size(); i++){
+    register_mod_functions(mods.at(i));
+  }
+
   for (int i = 0; i < global_vars.size(); i++){
     global_vars.at(i)->codegen();
   }

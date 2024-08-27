@@ -821,14 +821,14 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     getNextToken();
     if (CurTok != '('){
         LogError("Missing parenthesis");
-        return default_type;
+        return Cpoint_Type();
     }
     getNextToken();
     if (CurTok != ')'){
     while (1){
         if (CurTok != tok_identifier){
             LogError("Missing Identifier for args in function type");
-            return default_type;
+            return Cpoint_Type();
         }
         Cpoint_Type arg_type = ParseTypeDeclaration(false);
         args.push_back(arg_type);
@@ -839,7 +839,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         }
         if (CurTok != ','){
             LogError("Missing ',' in args types for function type");
-            return default_type;
+            return Cpoint_Type();
         }
         getNextToken();
     }
@@ -850,7 +850,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
   }
   if (CurTok == tok_vector){
     if (ParseTypeDeclarationVector(is_vector, vector_element_type, vector_element_number) == -1){
-        return default_type;
+        return Cpoint_Type();
     }
   } else if (CurTok == tok_struct || CurTok == tok_class){
     getNextToken();
@@ -864,11 +864,11 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         object_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
         if (!object_template_type_passed){
             LogError("missing template type for struct");
-            return default_type;
+            return Cpoint_Type();
         }
         if (CurTok != '~'){
             LogError("Missing '~' in struct template type usage");
-            return default_type;
+            return Cpoint_Type();
         }
         getNextToken();
         auto structDeclar = TemplateStructDeclars[struct_Name]->declarAST->clone();
@@ -902,11 +902,11 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         object_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
         if (!object_template_type_passed){
             LogError("missing template type for enum");
-            return default_type;
+            return Cpoint_Type();
         }
         if (CurTok != '~'){
             LogError("Missing '~' in enum template type usage");
-            return default_type;
+            return Cpoint_Type();
         }
         getNextToken();
         auto enumDeclar = TemplateEnumDeclars[enumName]->declarAST->clone();
@@ -938,7 +938,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
   } else {
     Log::Info() << "TypeTemplatCallAst : " << TypeTemplateCallAst << "\n";
     LogError("Wrong type %s found", IdentifierStr.c_str());
-    return default_type;
+    return Cpoint_Type();
   }
 before_gen_cpoint_type:
   return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_object_template, object_template_type_passed, is_function, args, return_type, is_vector, new Cpoint_Type(vector_element_type), vector_element_number);
@@ -2142,6 +2142,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     if (CurTok == ':'){
       Log::Info() << "Parse Type Declaration Var" << "\n";
       cpoint_type = ParseTypeDeclaration();
+      assert(!cpoint_type.is_empty);
     } else {
       Log::Info() << "Infering type (CurTok : " << CurTok << ")" << "\n";
       infer_type = true;
@@ -2162,6 +2163,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     if (infer_type){
         if (Init){
             cpoint_type = Init->get_type();
+            assert(!cpoint_type.is_empty);
         } else {
             Log::Info() << "Missing type declaration and default value to do type inference. Type defaults to double" << "\n";
             cpoint_type.type = double_type;
@@ -2178,7 +2180,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       return LogError("expected identifier list after var");
   }
 
-  cpoint_type.is_struct = cpoint_type.struct_name != "";
+  //cpoint_type.is_struct = cpoint_type.struct_name != "";
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, cpoint_type);
   return std::make_unique<VarExprAST>(std::move(VarNames), cpoint_type, std::move(index), infer_type);
 }
@@ -2186,6 +2188,8 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
 extern std::ofstream file_log;
 extern bool last_line;
 extern bool is_in_extern;
+
+#if ENABLE_FILE_AST
 
 static void HandleStruct(std::vector<std::unique_ptr<StructDeclarAST>>& structs){
   if (auto structAST = ParseStruct()){
@@ -2196,8 +2200,6 @@ static void HandleStruct(std::vector<std::unique_ptr<StructDeclarAST>>& structs)
     }
   }
 }
-
-#if ENABLE_FILE_AST
 
 extern void HandleTest();
 

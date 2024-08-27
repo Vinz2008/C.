@@ -123,7 +123,8 @@
         "strstream": "cpp",
         "csignal": "cpp",
         "execution": "cpp",
-        "text_encoding": "cpp"
+        "text_encoding": "cpp",
+        "print": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang",
     "C_Cpp.default.compileCommands": "/home/vincent/C./build/tomlplusplus/builddir/compile_commands.json"
