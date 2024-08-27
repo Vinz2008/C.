@@ -11,10 +11,18 @@ TARGET ?= $(shell $(CC) -dumpmachine)
 export CC
 export CXX
 
+NO_MOLD ?= FALSE
+
+
+STATIC_LLVM ?= FALSE
+
 #LLVM_CONFIG ?= llvm-config
 LLVM_PREFIX ?= /usr
 
-STATIC_LLVM ?= FALSE
+
+STATIC_LLVM_DEPENDENCIES ?= FALSE
+
+STATIC_LLVM_DEPENDENCIES_PREFIX ?= $(LLVM_PREFIX)
 
 export LLVM_PREFIX
 export STATIC_LLVM
@@ -68,6 +76,10 @@ endif
 
 LDFLAGS = $(ADDITIONAL_LDFLAGS)
 
+ifeq ($(STATIC_LLVM_DEPENDENCIES), TRUE)
+LDFLAGS += -L$(STATIC_LLVM_DEPENDENCIES_PREFIX) -Wl,-Bstatic -lncursesw 
+endif
+
 ifeq ($(OS), Windows_NT)
 LDFLAGS += -L/usr/x86_64-w64-mingw32/lib/lib -lLLVM-17 -lstdc++ 
 # LDFLAGS += -lintl # for now not needed (TODO ?)
@@ -97,9 +109,13 @@ ifeq ($(UNAME),Darwin)
 # is MacOS
 LDFLAGS += -lintl
 endif
+
 ifneq (, $(shell which mold))
+ifeq ($(NO_MOLD), FALSE)
 LDFLAGS += -fuse-ld=mold
 endif
+endif
+
 endif
 
 SRCDIR=src
@@ -114,6 +130,10 @@ OBJS += $(LLVM_TOOLS_EXTERNAL_OBJS)
 
 ifeq ($(STATIC_LLVM), FALSE)
 LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
+endif
+
+ifeq ($(STATIC_LLVM_DEPENDENCIES), TRUE)
+LDFLAGS += -Wl,-Bdynamic -Wl,--as-needed
 endif
 
 endif
