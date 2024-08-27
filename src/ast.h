@@ -25,7 +25,7 @@ using namespace llvm;
 #include "errors.h"
 #include "log.h"
 #include "c_translator.h"
-#include "config.h"
+//#include "config.h"
 #include "vars.h"
 #include "mangling.h"
 

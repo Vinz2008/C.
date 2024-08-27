@@ -33,7 +33,7 @@ else
 OUTPUTBIN = cpoint
 endif
 
-CXXFLAGS = -c -g -Wall -Wno-sign-compare -DTARGET="\"$(TARGET)\""
+CXXFLAGS =  -MMD -c -g -Wall -Wno-sign-compare -DTARGET="\"$(TARGET)\""
 
 # CXXFLAGS += -MMD
 
@@ -132,10 +132,10 @@ ifeq ($(STATIC_LLVM), FALSE)
 LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
 endif
 
-ifeq ($(STATIC_LLVM_DEPENDENCIES), TRUE)
-LDFLAGS += -Wl,-Bdynamic -Wl,--as-needed
 endif
 
+ifeq ($(STATIC_LLVM_DEPENDENCIES), TRUE)
+LDFLAGS += -Wl,-Bdynamic -Wl,--as-needed
 endif
 
 # Only use this in release mode
@@ -147,6 +147,7 @@ CXXFLAGS += -DTRACY_ENABLE -DTRACY_NO_EXIT -march=native
 LDFLAGS += -lpthread -ldl
 endif
 
+DEP = $(OBJS:%.o=%.d)
 #DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))
 
 
@@ -212,6 +213,9 @@ $(OUTPUTBIN): $(OBJS)
 
 #-include $(OBJS:%.o=%.d)
 
+-include $(DEP)
+
+
 $(SRCDIR)/%.o:$(SRCDIR)/%.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $<
 
@@ -248,7 +252,7 @@ run:
 #	./$(OUTPUTBIN) -std ./std tests/test2.cpoint -no-gc
 
 clean-build:
-	rm -f ./src/*.o ./src/*.temp
+	rm -f ./src/*.o ./src/*.temp ./src/*.d
 
 clean: clean-build
 	make -C std/c_api clean
