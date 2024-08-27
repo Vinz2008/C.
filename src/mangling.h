@@ -1,5 +1,7 @@
 #include <string>
-#include "types.h"
+//#include "types.h"
+
+class Cpoint_Type;
 
 std::string struct_function_mangling(std::string struct_name, std::string name);
 std::string module_mangling(std::string module_name, std::string function_name);

@@ -1,13 +1,18 @@
 #include <iostream>
 #include <sstream>
 
-#include "errors.h"
-#include "ast.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Value.h"
 
-class StructDeclarAST;
+using namespace llvm;
+
+#include "errors.h"
+//#include "ast.h"
+
 class ExprAST;
 class PrototypeAST;
 class ReturnAST;
+class StructDeclarAST;
 class FunctionAST;
 class GlobalVariableAST;
 class LoopExprAST;
@@ -17,8 +22,9 @@ class UnionDeclarAST;
 class EnumDeclarAST;
 class MembersDeclarAST;
 
-std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
-std::unique_ptr<ExprAST> LogError(const char *Str, ...);
+void vLogError(const char* Str, va_list args, Source_location astLoc);
+void LogError(const char *Str, ...);
+std::unique_ptr<ExprAST> LogErrorE(const char *Str, ...);
 std::unique_ptr<PrototypeAST> LogErrorP(const char *Str, ...);
 std::unique_ptr<ReturnAST> LogErrorR(const char *Str, ...);
 std::unique_ptr<StructDeclarAST> LogErrorS(const char *Str, ...);
@@ -28,7 +34,7 @@ std::unique_ptr<LoopExprAST> LogErrorL(const char* Str, ...);
 std::unique_ptr<ModAST> LogErrorM(const char* Str, ...);
 std::unique_ptr<TestAST> LogErrorT(const char* Str, ...);
 std::unique_ptr<UnionDeclarAST> LogErrorU(const char* Str, ...);
-std::unique_ptr<EnumDeclarAST> LogErrorE(const char* Str, ...);
+std::unique_ptr<EnumDeclarAST> LogErrorEnum(const char* Str, ...);
 Value* LogErrorV(Source_location astLoc, const char *Str, ...);
 Function* LogErrorF(Source_location astLoc, const char *Str, ...);
 GlobalVariable* LogErrorGLLVM(const char *Str, ...);
@@ -43,6 +49,8 @@ extern bool silent_mode;
 extern std::unique_ptr<Compiler_context> Comp_context;
 extern Source_location emptyLoc;
 
+
+// TODO : move this in cpp file
 namespace Log {
     namespace Color {
     enum Code {

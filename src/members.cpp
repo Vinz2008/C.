@@ -1,7 +1,8 @@
 #include "members.h"
-#include "types.h"
 #include <memory>
-
+#include "types.h"
+#include "log.h"
+#include "ast.h"
 
 Value* not_struct_member_call(std::unique_ptr<ExprAST> Expr, std::string functionCall, std::vector<std::unique_ptr<ExprAST>> Args){
     Cpoint_Type expr_type = /*get_cpoint_type_from_llvm(Expr->clone()->codegen()->getType())*/ Expr->get_type();

@@ -1,13 +1,9 @@
+#ifndef ERRORS_H
+#define ERRORS_H
+
 #include <iostream>
 #include <memory>
 #include <cstdarg>
-
-
-
-//#pragma once
-
-#ifndef ERRORS_H
-#define ERRORS_H
 
 
 struct Source_location {
@@ -16,7 +12,6 @@ struct Source_location {
     bool is_empty;
     std::string line;
 };
-
 
 std::ostream& operator<<(std::ostream& os, struct Source_location Loc);
 bool operator!=(Source_location loc1, Source_location loc2);
@@ -42,8 +37,6 @@ public:
 };
 
 void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...);
-
-#include "ast.h"
 
 void vlogErrorExit(Source_location cc_lexloc, std::string line, std::string filename, const char* format, std::va_list args, Source_location astLoc);
 int stringDistance(std::string s1, std::string s2);

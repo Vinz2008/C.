@@ -1,5 +1,6 @@
 #include "match.h"
 #include "llvm/IR/IRBuilder.h"
+#include "ast.h"
 #include "codegen.h"
 #include "operators.h"
 #include "types.h"

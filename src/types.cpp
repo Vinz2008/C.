@@ -33,7 +33,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         Log::Info() << "Typedef type used to declare variable (size of typedef table : " << typeDefTable.size() << ")" << "\n";
         if (typeDefTable.size() < cpoint_type.type){
             Log::Info() << "type number " << cpoint_type.type << "\n";
-            LogError("couldn't find type from typedef");
+            LogErrorE("couldn't find type from typedef");
         }
         return get_type_llvm(typeDefTable.at(cpoint_type.type));
     }
@@ -49,7 +49,7 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
         }
         if (StructDeclarations[structName] == nullptr){
             Log::Info() << "StructDeclarations[structName] is nullptr" << "\n";
-            LogError("Using unknown struct type : %s", structName.c_str());
+            LogErrorE("Using unknown struct type : %s", structName.c_str());
             return nullptr;
         }
         type = StructDeclarations[structName]->struct_type;
@@ -415,7 +415,7 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
             return constInt;
         }
     }
-    LogError("Unknown type for val to constant");
+    LogErrorE("Unknown type for val to constant");
     return nullptr;
     //return dyn_cast<ConstantFP>(val);
 }
@@ -448,7 +448,7 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
   }
   if (typeFrom.is_vector_type || typeTo_cpoint.is_vector_type){
     if (!typeFrom.is_vector_type){
-        LogError("Trying to cast something that is not of a vector type to a vector");
+        LogErrorE("Trying to cast something that is not of a vector type to a vector");
     }
     // automatically transforms a vector of bool to a bool
     if (typeTo_cpoint.type == bool_type && typeFrom.vector_element_type && typeFrom.vector_element_type->type == bool_type){
@@ -457,10 +457,10 @@ bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &va
         return true;
     }
     if (!typeTo_cpoint.is_vector_type){
-        LogError("Trying to cast something that is of vector type to a not vector type");
+        LogErrorE("Trying to cast something that is of vector type to a not vector type");
     }
     if (typeFrom.vector_size != typeTo_cpoint.vector_size){
-        LogError("Trying to cast to a vector type with a different size");
+        LogErrorE("Trying to cast to a vector type with a different size");
     }
     return true;
   }

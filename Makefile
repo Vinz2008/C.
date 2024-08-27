@@ -254,14 +254,18 @@ run:
 clean-build:
 	rm -f ./src/*.o ./src/*.temp ./src/*.d
 
-clean: clean-build
+clean-cpoint: clean-build
+	rm -f cpoint
+
+clean: clean-cpoint
 	make -C std/c_api clean
 	make -C std clean
 	make -C tests clean
 	make -C build clean
 	make -C tools/bindgen clean
 	make -C tools/run clean
-	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
+#	rm -rf cpoint out.ll out.ll.* cpoint.* a.out out.o
+	rm -f out.ll out.ll.* cpoint.* a.out out.o
 	make -C bdwgc clean
 	rm bdwgc/Makefile
 

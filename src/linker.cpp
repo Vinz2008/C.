@@ -1,7 +1,7 @@
+#include "linker.h"
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
-#include <vector>
 #include "config.h"
 #include "utils.h"
 #include "cli.h"

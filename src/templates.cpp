@@ -3,6 +3,7 @@
 #include <memory>
 #include <algorithm>
 #include <unordered_map>
+#include "ast.h"
 #include "codegen.h"
 #include "log.h"
 

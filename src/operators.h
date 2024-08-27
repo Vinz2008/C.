@@ -1,7 +1,8 @@
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/IRBuilder.h"
-#include "types.h"
+// #include "types.h"
+class Cpoint_Type;
 
 using namespace llvm;
 

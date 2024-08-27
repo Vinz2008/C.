@@ -1,5 +1,5 @@
 #include <memory>
-#include "ast.h"
+//#include "ast.h"
 
 enum Token {
   tok_eof = -1,

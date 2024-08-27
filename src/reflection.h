@@ -2,9 +2,11 @@
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Value.h"
 #include "llvm/IR/Type.h"
-#include "ast.h"
+//#include "ast.h"
 
 using namespace llvm;
+
+class ExprAST;
 
 Value* getTypeId(Value* valueLLVM);
 Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr<ExprAST>> Args);

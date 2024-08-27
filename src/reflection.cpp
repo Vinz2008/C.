@@ -1,6 +1,7 @@
 #include "reflection.h"
 #include "types.h"
 #include "log.h"
+#include "ast.h"
 
 using namespace llvm;
 

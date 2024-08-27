@@ -1,10 +1,13 @@
+#ifndef _C_TRANSLATOR_HEADER_
+#define _C_TRANSLATOR_HEADER_
 #include <string>
 #include <fstream>
 #include <memory>
-#include "ast.h"
+#include <vector>
+#include "types.h"
+//#include "ast.h"
 
-#ifndef _C_TRANSLATOR_HEADER_
-#define _C_TRANSLATOR_HEADER_
+class ExprAST;
 
 namespace c_translator {
     enum c_types {

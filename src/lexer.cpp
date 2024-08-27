@@ -1,7 +1,7 @@
+#include "lexer.h"
 #include <iostream>
 #include <unordered_map>
 #include <fstream>
-#include "lexer.h"
 #include "preprocessor.h"
 #include "errors.h"
 #include "log.h"
@@ -383,6 +383,7 @@ after_number_lex_loop:
     } else {
       Log::Info() << "format : " << format << "\n";
       LogError("error in format\n");
+      // TODO : return ?
     }
   }
 

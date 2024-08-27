@@ -1,3 +1,4 @@
+#include "ast.h"
 #include <unordered_map>
 #include <iostream>
 #include <utility>
@@ -5,11 +6,10 @@
 #include <cstdlib>
 #include <ctime>
 #include <stack>
-#include "ast.h"
 #include "lexer.h"
-#include "types.h"
-#include "errors.h"
-#include "log.h"
+//#include "types.h"
+//#include "errors.h"
+//#include "log.h"
 #include "codegen.h"
 #include "config.h"
 #include "preprocessor.h"
@@ -252,7 +252,7 @@ static std::unique_ptr<ExprAST> ParseParenExpr() {
     return nullptr;
 
   if (CurTok != ')')
-    return LogError("expected ')'");
+    return LogErrorE("expected ')'");
   getNextToken(); // eat ).
   return V;
 }
@@ -266,7 +266,7 @@ std::unique_ptr<ExprAST> ParseScope(){
         return nullptr;
     }
     if (CurTok != '}'){
-        return LogError("expected } in scope");
+        return LogErrorE("expected } in scope");
     }
     getNextToken();
     return std::make_unique<ScopeExprAST>(std::move(Body));
@@ -283,7 +283,7 @@ std::unique_ptr<ExprAST> ParseConstantArray(){
     }
     if (member_nb > 0){
       if (CurTok != ','){
-      return LogError("missing \',\' in constant array");
+      return LogErrorE("missing \',\' in constant array");
       }
       getNextToken();
     }
@@ -311,11 +311,11 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
     Log::Info() << "enum_name : " << IdName << "\n";
     std::unique_ptr<ExprAST> Value = nullptr;
     if (CurTok != ':'){
-        return LogError("expected \"::\" for creation of enum");
+        return LogErrorE("expected \"::\" for creation of enum");
     }
     getNextToken();
     if (CurTok != ':'){
-        return LogError("expected \"::\" for creation of enum");
+        return LogErrorE("expected \"::\" for creation of enum");
     }
     getNextToken();
     std::string memberName = IdentifierStr;
@@ -324,7 +324,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         getNextToken();
         Value = ParseExpression();
         if (CurTok != ')'){
-            return LogError("expected ')' for the value in the creation of enum");
+            return LogErrorE("expected ')' for the value in the creation of enum");
         }
         getNextToken();
     }
@@ -334,7 +334,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
   if (CurTok == ':'){
     getNextToken();
     if (CurTok != ':'){
-      return LogError("Invalid single ':'");
+      return LogErrorE("Invalid single ':'");
     }
     getNextToken();
     std::string module_mangled_function_name = IdName;
@@ -347,7 +347,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
       }
       getNextToken();
       if (CurTok != ':'){
-      return LogError("Invalid single ':'");
+      return LogErrorE("Invalid single ':'");
       }
       getNextToken();
     }
@@ -366,7 +366,7 @@ static std::unique_ptr<ExprAST> ParseIdentifierExpr() {
         }
         if (member_nb > 0){
             if (CurTok != ','){
-            return LogError("missing \',\' in constant array");
+            return LogErrorE("missing \',\' in constant array");
             }
             getNextToken();
         }
@@ -397,10 +397,10 @@ std::unique_ptr<ExprAST> getASTNewCallExprAST(std::unique_ptr<ExprAST> function_
         if (BinExpr->Op == "."){
             return std::make_unique<StructMemberCallExprAST>(std::move(BinExpr), std::move(Args));
         } else {
-            return LogError("Unknown operator before call () operator");
+            return LogErrorE("Unknown operator before call () operator");
         }
     }
-    return LogError("Trying to call an expression which it is not implemented for");
+    return LogErrorE("Trying to call an expression which it is not implemented for");
 }
 
 std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool is_template_call){
@@ -410,11 +410,11 @@ std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool 
     if (is_template_call){
         template_passed_type = ParseTypeDeclaration(false);
         if (CurTok != '~'){
-            return LogError("expected '~' not found");
+            return LogErrorE("expected '~' not found");
         }
         getNextToken(); // passing ~
         if (CurTok != '('){
-            return LogError("expected '(' not found");
+            return LogErrorE("expected '(' not found");
         }
         getNextToken(); // passing '('
     }
@@ -424,7 +424,7 @@ std::unique_ptr<ExprAST> ParseFunctionCallOp(std::unique_ptr<ExprAST> LHS, bool 
     }
     Log::Info() << "Args size after parsing : " << Args.size() << "\n";
     if (CurTok != ')'){
-        return LogError("Expected ) in call args");
+        return LogErrorE("Expected ) in call args");
     }
     getNextToken(); // eat ')'
     return getASTNewCallExprAST(std::move(LHS), std::move(Args), template_passed_type);
@@ -530,7 +530,7 @@ std::unique_ptr<ExprAST> ParsePrimary() {
   Log::Info() << "not operator " << CurTok << " " << IdentifierStr << "\n";
   switch (CurTok) {
   default:
-    return LogError("Unknown token %d when expecting an expression", CurTok);
+    return LogErrorE("Unknown token %d when expecting an expression", CurTok);
   case '#':
     return ParseMacroCall();
   case ';':
@@ -609,7 +609,7 @@ std::unique_ptr<ExprAST> ParseConstantVector(){
     int member_nb = 0;
 
     if (CurTok != '{'){
-        return LogError("Missing '{' in Vector constant expr");
+        return LogErrorE("Missing '{' in Vector constant expr");
     }
     getNextToken();
     while (true){
@@ -619,7 +619,7 @@ std::unique_ptr<ExprAST> ParseConstantVector(){
         }
         if (member_nb > 0){
             if (CurTok != ','){
-            return LogError("missing \',\' in constant array");
+            return LogErrorE("missing \',\' in constant array");
             }
             getNextToken();
         }
@@ -648,7 +648,7 @@ std::unique_ptr<ExprAST> ParseInlineAsm(){
             } else if (IdentifierStr == "out") {
                 argType = ArgInlineAsm::ArgType::output;
             } else {
-                return LogError("Unknown type of arg for the asm macro");
+                return LogErrorE("Unknown type of arg for the asm macro");
             }
             getNextToken();
             auto argExpr = ParseExpression();
@@ -657,7 +657,7 @@ std::unique_ptr<ExprAST> ParseInlineAsm(){
                 break;
             }
             if (CurTok != ','){
-                return LogError("Expected ')' or ',' in argument list of the asm macro");
+                return LogErrorE("Expected ')' or ',' in argument list of the asm macro");
             }
             getNextToken();
         }
@@ -674,7 +674,7 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
     std::string function_name = IdentifierStr;
     getNextToken();
     if (CurTok != '('){
-        return LogError("missing '(' in the call of a macro function");
+        return LogErrorE("missing '(' in the call of a macro function");
     }
     getNextToken();
     if (function_name == "asm"){
@@ -694,7 +694,7 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return generate_panic(ArgsMacro);
     } else if (function_name == "stringify"){
         if (ArgsMacro.size() != 1){
-            return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "stringify", 1, ArgsMacro.size());
+            return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "stringify", 1, ArgsMacro.size());
         }
         return stringify_macro(ArgsMacro.at(0));
     } else if (function_name == "concat"){
@@ -729,7 +729,7 @@ std::unique_ptr<ExprAST> ParseMacroCall(){
         return generate_assume_macro(ArgsMacro);
     }
     }
-    return LogError("Unknown function macro called : %s", function_name.c_str());
+    return LogErrorE("Unknown function macro called : %s", function_name.c_str());
 }
 
 std::unique_ptr<ExprAST> ParseSemiColon(){
@@ -742,32 +742,32 @@ int ParseTypeDeclarationVector(bool& is_vector, Cpoint_Type& vector_element_type
     getNextToken();
     
     if (CurTok != '~'){
-        LogError("Missing opening '~' in Vector type declaration");
+        LogErrorE("Missing opening '~' in Vector type declaration");
         return -1;
     }
     getNextToken();
 
     if (CurTok != tok_identifier || !is_type(IdentifierStr)){
-        LogError("Missing type in Vector type");
+        LogErrorE("Missing type in Vector type");
         return -1;
     }
     vector_element_type = Cpoint_Type(get_type(IdentifierStr));
     getNextToken();
     if (CurTok != ','){
-        LogError("Missing number of Vector element in type declaration");
+        LogErrorE("Missing number of Vector element in type declaration");
         return -1;
     }
     getNextToken();
 
     auto number_expr = ParseNumberExpr();
     if (!number_expr){
-        LogError("Missing number of Vector element in type declaration");
+        LogErrorE("Missing number of Vector element in type declaration");
         return -1;
     }
     vector_element_number = (int)dynamic_cast<NumberExprAST*>(number_expr.get())->Val;
 
     if (CurTok != '~'){
-        LogError("Missing closing '~' in Vector type declaration");
+        LogErrorE("Missing closing '~' in Vector type declaration");
         return -1;
     }
     getNextToken();
@@ -800,14 +800,14 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
   }
   if (CurTok == tok_never){
     if (!is_return){
-        LogError("Can't use the never type not in a return");
+        LogErrorE("Can't use the never type not in a return");
         return Cpoint_Type();
     }
     getNextToken();
     return Cpoint_Type(never_type);
   }
   if (CurTok != tok_identifier && CurTok != tok_struct && CurTok != tok_class && CurTok != tok_func && CurTok != tok_union && CurTok != tok_enum && CurTok != tok_vector){
-    LogError("expected identifier after var in type declaration");
+    LogErrorE("expected identifier after var in type declaration");
     return default_type;
   }
   // TODO make a way to recognize a template type in cpoint_type. Remove the following code because the replacement of the type will be made in codegen
@@ -820,14 +820,14 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     is_function = true;
     getNextToken();
     if (CurTok != '('){
-        LogError("Missing parenthesis");
+        LogErrorE("Missing parenthesis");
         return Cpoint_Type();
     }
     getNextToken();
     if (CurTok != ')'){
     while (1){
         if (CurTok != tok_identifier){
-            LogError("Missing Identifier for args in function type");
+            LogErrorE("Missing Identifier for args in function type");
             return Cpoint_Type();
         }
         Cpoint_Type arg_type = ParseTypeDeclaration(false);
@@ -838,7 +838,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
             break;
         }
         if (CurTok != ','){
-            LogError("Missing ',' in args types for function type");
+            LogErrorE("Missing ',' in args types for function type");
             return Cpoint_Type();
         }
         getNextToken();
@@ -863,11 +863,11 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         getNextToken();
         object_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
         if (!object_template_type_passed){
-            LogError("missing template type for struct");
+            LogErrorE("missing template type for struct");
             return Cpoint_Type();
         }
         if (CurTok != '~'){
-            LogError("Missing '~' in struct template type usage");
+            LogErrorE("Missing '~' in struct template type usage");
             return Cpoint_Type();
         }
         getNextToken();
@@ -901,11 +901,11 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         getNextToken();
         object_template_type_passed = new Cpoint_Type(ParseTypeDeclaration(false, false, true));
         if (!object_template_type_passed){
-            LogError("missing template type for enum");
+            LogErrorE("missing template type for enum");
             return Cpoint_Type();
         }
         if (CurTok != '~'){
-            LogError("Missing '~' in enum template type usage");
+            LogErrorE("Missing '~' in enum template type usage");
             return Cpoint_Type();
         }
         getNextToken();
@@ -937,7 +937,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     }
   } else {
     Log::Info() << "TypeTemplatCallAst : " << TypeTemplateCallAst << "\n";
-    LogError("Wrong type %s found", IdentifierStr.c_str());
+    LogErrorE("Wrong type %s found", IdentifierStr.c_str());
     return Cpoint_Type();
   }
 before_gen_cpoint_type:
@@ -960,7 +960,7 @@ std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>
       if (CurTok != ','){
         Log::Info() << "CurTok : " << CurTok << "\n";
         Log::Info() << "OpStringMultiChar : " << OpStringMultiChar << "\n";
-        return LogError("Expected ')' or ',' in argument list");
+        return LogErrorE("Expected ')' or ',' in argument list");
       }
       getNextToken();
     }
@@ -984,7 +984,7 @@ std::unique_ptr<ExprAST> ParseFunctionArgsTyped(std::vector<std::pair<std::strin
       if (arg_nb > 0){
         if (CurTok != ','){
           Log::Info() << "CurTok : " << CurTok << "\n";
-          return LogError("Expected ')' or ',' in argument list");
+          return LogErrorE("Expected ')' or ',' in argument list");
         }
         getNextToken();
       }
@@ -1435,19 +1435,19 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
         has_template = true;
         getNextToken();
         if (CurTok != tok_identifier){
-            return LogErrorE("Missing template type name in enum declaration");
+            return LogErrorEnum("Missing template type name in enum declaration");
         }
         template_name = IdentifierStr;
         TypeTemplateCallAst = template_name;
         getNextToken();
 
         if (CurTok != '~'){
-            return LogErrorE("Missing '~' in enum declaration");
+            return LogErrorEnum("Missing '~' in enum declaration");
         }
         getNextToken();
     }
     if (CurTok != '{'){
-        return LogErrorE("Expected '{' in Enum");
+        return LogErrorEnum("Expected '{' in Enum");
     }
     getNextToken();
     while (CurTok == tok_identifier && CurTok != '}'){
@@ -1464,7 +1464,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
             enum_member_contain_type = true;
             Type = std::make_unique<Cpoint_Type>(ParseTypeDeclaration(false));
             if (CurTok != ')'){
-                return LogErrorE("Expected ')' after '(' in type declaration of Enum member");
+                return LogErrorEnum("Expected ')' after '(' in type declaration of Enum member");
             }
             getNextToken();
         }
@@ -1474,7 +1474,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
             auto IndexTemp = ParseExpression();
             auto indexCodegened = IndexTemp->codegen();
             if (!dyn_cast<Constant>(indexCodegened)){
-                return LogErrorE("Index in Declaration of enum is not a constant");
+                return LogErrorEnum("Index in Declaration of enum is not a constant");
             }
             Index = from_val_to_int(indexCodegened);
             Log::Info() << "EnumDeclarAST parsing custom Index : " << Index << " " << contains_custom_index << "\n";
@@ -1483,7 +1483,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
         EnumMembers.push_back(std::make_unique<EnumMember>(memberName, contains_value, std::move(Type), contains_custom_index, Index));
     }
     if (CurTok != '}'){
-        return LogErrorE("Expected '}' in Enum");
+        return LogErrorEnum("Expected '}' in Enum");
     }
     getNextToken();
     auto enumDeclar = std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembers), has_template, template_name);
@@ -1881,7 +1881,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
     std::string matchVar = IdentifierStr;
     getNextToken();
     if (CurTok != '{'){
-        return LogError("Missing '{' in match");
+        return LogErrorE("Missing '{' in match");
     }
     getNextToken();
     Log::Info() << "CurTok parsing match case : " << CurTok << "\n";
@@ -1903,11 +1903,11 @@ std::unique_ptr<ExprAST> ParseMatch(){
         Log::Info() << "Match case enum_name : " << enum_name << "\n";
         getNextToken();
         if (CurTok != ':'){
-            return LogError("Missing \"::\" in match enum member case");
+            return LogErrorE("Missing \"::\" in match enum member case");
         }
         getNextToken();
         if (CurTok != ':'){
-            return LogError("Missing \"::\" in match enum member case");
+            return LogErrorE("Missing \"::\" in match enum member case");
         }
         getNextToken();
         enum_member_name = IdentifierStr;
@@ -1919,7 +1919,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
             Log::Info() << "Match case found VarName : " << VarName << "\n";
             getNextToken();
             if (CurTok != ')'){
-                return LogError("Missing ) in value of match enum case");
+                return LogErrorE("Missing ) in value of match enum case");
             }
             getNextToken();
         }
@@ -1930,12 +1930,12 @@ std::unique_ptr<ExprAST> ParseMatch(){
         Log::Info() << "CurTok match : " << CurTok << "\n";
         Log::Info() << "OpStringMultiChar : " << OpStringMultiChar << "\n";
         if (CurTok != tok_op_multi_char && OpStringMultiChar != "=>"){
-            return LogError("Missing \"=>\" before match enum case body");
+            return LogErrorE("Missing \"=>\" before match enum case body");
         }
         getNextToken();
         Log::Info() << "CurTok match 2 : " << CurTok << "\n";
         if (CurTok != '>'){
-            return LogError("Missing \"=>\" before match enum case body");
+            return LogErrorE("Missing \"=>\" before match enum case body");
         }
         getNextToken();
 
@@ -1948,7 +1948,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
         Body = std::move(Expr);
         if (!is_body_expr){
         if (CurTok != ','){
-            return LogError("Expected ',' after single line body of match enum case");
+            return LogErrorE("Expected ',' after single line body of match enum case");
         }
         getNextToken();
         }
@@ -1969,7 +1969,7 @@ std::unique_ptr<ExprAST> ParseClosure(){
     std::vector<std::unique_ptr<ExprAST>> Body; 
     getNextToken();
     if (CurTok != '('){
-        return LogError("Missing '(' in closure");
+        return LogErrorE("Missing '(' in closure");
     }
     getNextToken();
     std::vector<std::pair<std::string, Cpoint_Type>> ArgNames;
@@ -1984,7 +1984,7 @@ std::unique_ptr<ExprAST> ParseClosure(){
         getNextToken();
         while (1){
             if (!var_exists(IdentifierStr)){
-                return LogError("Variable %s captured by closure doesn't exist", IdentifierStr.c_str());
+                return LogErrorE("Variable %s captured by closure doesn't exist", IdentifierStr.c_str());
             }
             captured_vars.push_back(IdentifierStr);
             getNextToken();
@@ -1993,7 +1993,7 @@ std::unique_ptr<ExprAST> ParseClosure(){
             }
             Log::Info() << "closure Curtok : " << CurTok << "\n";
             if (CurTok != ','){
-                return LogError("Expected '|' or ',' in captured vars list in closure");
+                return LogErrorE("Expected '|' or ',' in captured vars list in closure");
             }
             getNextToken();
         }
@@ -2005,7 +2005,7 @@ std::unique_ptr<ExprAST> ParseClosure(){
         return_type = ParseTypeDeclaration(false);
     }
     if (CurTok != '{'){
-        return LogError("Missing '{' in closure");
+        return LogErrorE("Missing '{' in closure");
     }
     getNextToken();
     ret = ParseBodyExpressions(Body, false);
@@ -2074,7 +2074,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   getNextToken();  // eat the for.
 
   if (CurTok != tok_identifier)
-    return LogError("expected identifier after for");
+    return LogErrorE("expected identifier after for");
 
   std::string IdName = IdentifierStr;
   getNextToken();  // eat identifier.
@@ -2083,7 +2083,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
     varType = ParseTypeDeclaration();
   }
   if (CurTok != '=')
-    return LogError("expected '=' after for");
+    return LogErrorE("expected '=' after for");
   getNextToken();  // eat '='.
 
 
@@ -2091,7 +2091,7 @@ std::unique_ptr<ExprAST> ParseForExpr() {
   if (!Start)
     return nullptr;
   if (CurTok != ',')
-    return LogError("expected ',' after for start value");
+    return LogErrorE("expected ',' after for start value");
   getNextToken();
   Log::Info() << "Before parse expression for" << "\n";
   auto End = ParseExpression();
@@ -2123,7 +2123,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   bool infer_type = false;
   // At least one variable name is required.
   if (CurTok != tok_identifier)
-    return LogError("expected identifier after var");
+    return LogErrorE("expected identifier after var");
   // TODO : maybe verify the multiple var code and make it register all vars
   while (true) {
     std::string Name = IdentifierStr;
@@ -2134,7 +2134,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       getNextToken();
       index = ParseNumberExpr();
       if (CurTok != ']'){
-        return LogError("missing ']'");
+        return LogErrorE("missing ']'");
       }
       getNextToken();
     }
@@ -2177,7 +2177,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     getNextToken(); // eat the ','.
 
     if (CurTok != tok_identifier)
-      return LogError("expected identifier list after var");
+      return LogErrorE("expected identifier list after var");
   }
 
   //cpoint_type.is_struct = cpoint_type.struct_name != "";

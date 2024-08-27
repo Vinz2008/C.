@@ -1,3 +1,4 @@
+#include "ar.h"
 #include "llvm/Support/LLVMDriver.h"
 
 extern int llvm_ar_main(int argc, char **argv, const llvm::ToolContext &);

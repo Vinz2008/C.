@@ -17,21 +17,21 @@
 #include <stack>
 #include <cstdarg>
 #include <fstream>
-#include "ast.h"
-#include "lexer.h"
-#include "types.h"
-#include "log.h"
+//#include "ast.h"
+//#include "lexer.h"
+//#include "types.h"
+//#include "log.h"
+#include "config.h"
 #include "debuginfo.h"
 #include "operators.h"
 #include "checking.h"
 #include "templates.h"
-#include "config.h"
 #include "abi.h"
 #include "members.h"
-#include "types.h"
-#include "mangling.h"
+//#include "types.h"
+//#include "mangling.h"
 #include "reflection.h"
-#include "vars.h"
+//#include "vars.h"
 #include "macros.h"
 #include "match.h"
 #include "targets/targets.h"
@@ -554,7 +554,7 @@ Cpoint_Type MembersDeclarAST::get_self_type(){
 void MembersDeclarAST::codegen(){
     bool is_builtin_type = is_type(members_for);
     if (StructDeclarations[members_for] == nullptr && !is_builtin_type){
-        LogError("Members for a struct that doesn't exist");
+        LogErrorE("Members for a struct that doesn't exist");
         return;
     }
     Cpoint_Type self_type = get_self_type();
@@ -742,7 +742,7 @@ std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectTy
         }
         }
         if (pos == -1){
-            LogError("Unknown member %s in union member", MemberName.c_str());
+            LogErrorE("Unknown member %s in union member", MemberName.c_str());
             return nullptr;    
         }
         member_type = members.at(pos).second;
@@ -753,7 +753,7 @@ std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectTy
             members = StructDeclarations[get_object_template_name(objectType.struct_name, *objectType.object_template_type_passed)]->members;
         } else {
             if (!StructDeclarations[objectType.struct_name]){
-                LogError("struct not found \"%s\"", objectType.struct_name.c_str());
+                LogErrorE("struct not found \"%s\"", objectType.struct_name.c_str());
                 return nullptr;
             }
             members = StructDeclarations[objectType.struct_name]->members;
@@ -768,7 +768,7 @@ std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectTy
         }
         Log::Info() << "Pos for GEP struct member " << pos << "\n";
         if (pos == -1){
-            LogError("Unknown member %s in struct member", MemberName.c_str());
+            LogErrorE("Unknown member %s in struct member", MemberName.c_str());
             return nullptr;
         }
         member_type = members.at(pos).second;
@@ -1864,7 +1864,7 @@ Function *FunctionAST::codegen() {
   bool is_return_never_type = false;
   if (P.cpoint_type.type == never_type){
     if (Body.back()->get_type().type != never_type){
-        LogError("Never type is not returned when the functions has a never return type");
+        LogErrorE("Never type is not returned when the functions has a never return type");
         return nullptr;
     }
     is_return_never_type = true;

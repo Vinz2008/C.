@@ -1,6 +1,10 @@
 #include "llvm/IR/DIBuilder.h"
-#include "ast.h"
+#include "llvm/IR/Instructions.h"
+//#include "ast.h"
 #include "errors.h"
+#include "types.h"
+
+class ExprAST;
 
 using namespace llvm;
 

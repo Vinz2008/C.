@@ -4,7 +4,7 @@
 #include <functional>
 #include <sys/stat.h>
 #include <filesystem>
-#include <string.h>
+#include <cstring>
 
 namespace fs = std::filesystem;
 

@@ -1,9 +1,11 @@
 #include "preprocessor.h"
 //#include <bits/stdc++.h>
 #include <sstream>
+#include <fstream>
 #include "targets/target-triplet.h"
 #include "lexer.h"
 #include "log.h"
+//#include "ast.h"
 
 std::unique_ptr<Preprocessor::Context> context;
 static std::string word;

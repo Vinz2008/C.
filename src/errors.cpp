@@ -1,10 +1,11 @@
 #include "errors.h"
-#include "color.h"
 #include <cstdarg>
 #include <cstdio>
+#include <cassert>
 #include <iostream>
 #include <memory>
 #include <vector>
+#include "color.h"
 
 extern bool errors_found;
 extern int error_count;

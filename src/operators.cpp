@@ -240,7 +240,7 @@ Cpoint_Type BinaryExprAST::get_type(){
     if (Op == "."){
         auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(RHS->clone());
         if (!varExprMember){
-            LogError("expected an identifier for a struct member");
+            LogErrorE("expected an identifier for a struct member");
             return Cpoint_Type();
         }
         std::string MemberName = varExprMember->Name;
@@ -249,6 +249,6 @@ Cpoint_Type BinaryExprAST::get_type(){
         return get_member_type_and_pos_object(LHS_type, MemberName)->first;
     }
     // TODO : add all operators
-    LogError("trying to get the type from an operator for which the function it is not implemented");
+    LogErrorE("trying to get the type from an operator for which the function it is not implemented");
     return Cpoint_Type();
 }

@@ -1,4 +1,3 @@
-
 #ifndef DEFAULT_PREFIX_PATH
 #ifndef _WIN32
 #define DEFAULT_PREFIX_PATH "/usr/local"

@@ -1,4 +1,15 @@
-#include "ast.h"
+//#include "ast.h"
+#include <memory>
+#include <vector>
+
+#include "llvm/IR/Value.h"
+
+using namespace llvm;
+
+class StringExprAST;
+class ExprAST;
+class ArgsInlineAsm;
+
 
 std::unique_ptr<StringExprAST> get_filename_tok();
 std::unique_ptr<StringExprAST> stringify_macro(std::unique_ptr<ExprAST>& expr);

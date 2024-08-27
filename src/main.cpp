@@ -357,7 +357,7 @@ void MainLoop(){
 #endif
       Log::Info() << "CurTok : " << CurTok << "\n";
       Log::Info() << "identifier : " << IdentifierStr << "\n";
-      LogError("TOP LEVEL EXPRESSION FORBIDDEN");
+      LogErrorE("TOP LEVEL EXPRESSION FORBIDDEN");
       getNextToken();
       //}
       break;

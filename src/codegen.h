@@ -1,12 +1,17 @@
+#ifndef _CODEGEN_HEADER_
+#define _CODEGEN_HEADER_
+
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "types.h"
+#include "llvm/IR/GlobalVariable.h"
+//#include "types.h"
+//#include "errors.h"
 #include "ast.h"
 #include <memory>
 #include <unordered_map>
+#include <cmath>
 
-#ifndef _CODEGEN_HEADER_
-#define _CODEGEN_HEADER_
+using namespace llvm;
 
 void InitializeModule(std::string filename);
 

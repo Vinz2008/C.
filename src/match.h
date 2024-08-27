@@ -2,8 +2,10 @@
 #include <string>
 #include <memory>
 #include "llvm/IR/Value.h"
-#include "ast.h"
+//#include "ast.h"
 
 using namespace llvm;
+
+class matchCase;
 
 Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction);

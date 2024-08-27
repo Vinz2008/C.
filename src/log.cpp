@@ -6,14 +6,20 @@ extern int return_status;
 extern Source_location emptyLoc;
 extern int CurTok;
 
-std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc){
+void vLogError(const char* Str, va_list args, Source_location astLoc){
   assert(Comp_context != nullptr);
   vlogErrorExit(Comp_context->lexloc, Comp_context->line, Comp_context->filename, Str, args, astLoc); // copy comp_context and not move it because it will be used multiple times
   return_status = 1;
-  return nullptr;
 }
 
-std::unique_ptr<ExprAST> LogError(const char *Str, ...){
+void LogError(const char *Str, ...){
+  va_list args;
+  va_start(args, Str);
+  vLogError(Str, args, emptyLoc);
+  va_end(args);
+}
+
+std::unique_ptr<ExprAST> LogErrorE(const char *Str, ...){
   va_list args;
   va_start(args, Str);
   vLogError(Str, args, emptyLoc);
@@ -105,7 +111,7 @@ std::unique_ptr<UnionDeclarAST> LogErrorU(const char* Str, ...){
   return nullptr;
 }
 
-std::unique_ptr<EnumDeclarAST> LogErrorE(const char* Str, ...){
+std::unique_ptr<EnumDeclarAST> LogErrorEnum(const char* Str, ...){
   va_list args;
   va_start(args, Str);
   vLogError(Str, args, emptyLoc);

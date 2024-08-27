@@ -1,9 +1,10 @@
 #include "closure.h"
 #include "llvm/TargetParser/Triple.h"
-#include "types.h"
+#include "llvm/IR/IRBuilder.h"
+//#include "types.h"
 #include "codegen.h"
 #include "debuginfo.h"
-#include "targets/targets.h"
+//#include "targets/targets.h"
 #include "abi.h"
 
 extern std::unique_ptr<LLVMContext> TheContext;
@@ -67,7 +68,7 @@ void generateClosures(){
     }
 }
 
-extern TargetInfo targetInfos;
+//extern TargetInfo targetInfos;
 
 extern Triple TripleLLVM;
 

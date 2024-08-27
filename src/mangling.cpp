@@ -1,4 +1,6 @@
 #include "mangling.h"
+#include "types.h"
+#include <cassert>
 
 std::string struct_function_mangling(std::string struct_name, std::string name){
   std::string mangled_name = struct_name + "__" + name;

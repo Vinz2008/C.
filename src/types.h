@@ -1,4 +1,6 @@
-#pragma once
+#ifndef _TYPES_HEADER_
+#define _TYPES_HEADER_
+
 #include <iostream>
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Value.h"
@@ -94,20 +96,13 @@ public:
     Cpoint_Type deref_type();
 };
 
-llvm::Type* get_type_llvm(Cpoint_Type cpoint_type); // TODO : move this to a meber function
+llvm::Type* get_type_llvm(Cpoint_Type cpoint_type); // TODO : move this to a member function
 llvm::Value* get_default_value(Cpoint_Type type);
 llvm::Constant* get_default_constant(Cpoint_Type type);
 Cpoint_Type get_cpoint_type_from_llvm(llvm::Type* llvm_type);
 bool is_llvm_type_number(llvm::Type* llvm_type);
-//llvm::Type* get_array_llvm_type(llvm::Type* type, int nb_element);
-//bool is_decimal_number_type(Cpoint_Type type);
-//bool is_signed(Cpoint_Type type);
-//bool is_unsigned(Cpoint_Type type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo, llvm::Value* &val);
-//int get_type_number_of_bits(Cpoint_Type type);
-//std::string get_string_from_type(Cpoint_Type type);
-//std::string create_mangled_name_from_type(Cpoint_Type type);
 llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
 llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);
 int from_val_to_int(llvm::Value* val);
@@ -118,3 +113,5 @@ int struct_get_number_type(Cpoint_Type cpoint_type, int type);
 bool is_struct_all_type(Cpoint_Type cpoint_type, int type);
 llvm::VectorType* vector_type_from_struct(Cpoint_Type cpoint_type);
 int get_type_size(Cpoint_Type type);
+
+#endif

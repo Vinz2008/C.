@@ -3,8 +3,9 @@
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/Type.h"
-#include "codegen.h"
-#include "types.h"
+#include "ast.h"
+//#include "codegen.h"
+//#include "types.h"
 #include "operators.h"
 
 using namespace llvm;

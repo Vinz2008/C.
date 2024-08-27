@@ -1,6 +1,8 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/Constants.h"
-#include "types.h"
+// #include "types.h"
+
+class Cpoint_Type;
 
 using namespace llvm;
 

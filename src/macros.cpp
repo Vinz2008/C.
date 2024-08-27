@@ -1,6 +1,7 @@
 #include "macros.h"
 #include <memory>
 #include <ctime>
+#include "ast.h"
 
 void add_manually_extern(std::string fnName, Cpoint_Type cpoint_type, std::vector<std::pair<std::string, Cpoint_Type>> ArgNames, unsigned Kind, unsigned BinaryPrecedence, bool is_variable_number_args, bool has_template, std::string TemplateName);
 
@@ -29,7 +30,7 @@ std::unique_ptr<ExprAST> generate_expect(std::vector<std::unique_ptr<ExprAST>>& 
     std::vector<std::unique_ptr<ExprAST>> Args;
     std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
     if (ArgsMacro.size() != 1){
-        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
+        return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
     }
     std::unique_ptr<StringExprAST> stringified_expr = stringify_macro(ArgsMacro.at(0));
     Args.push_back(std::move(ArgsMacro.at(0)));
@@ -48,7 +49,7 @@ std::unique_ptr<ExprAST> generate_panic(std::vector<std::unique_ptr<ExprAST>>& A
     std::vector<std::unique_ptr<ExprAST>> Args;
     std::vector<std::unique_ptr<ExprAST>> ArgsEmpty;
     if (ArgsMacro.size() != 1){
-        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
+        return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "expect", 1, ArgsMacro.size());
     }
     Args.push_back(ArgsMacro.at(0)->clone());
     Args.push_back(get_filename_tok());
@@ -71,18 +72,18 @@ std::unique_ptr<StringExprAST> generate_time_macro(){
 
 std::unique_ptr<ExprAST> generate_env_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
     if (ArgsMacro.size() != 1){
-        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "env", 1, ArgsMacro.size());
+        return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "env", 1, ArgsMacro.size());
     }
     StringExprAST* str = nullptr;
     if (dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get())){
         str = dynamic_cast<StringExprAST*>(ArgsMacro.at(0).get());
     } else {
-        return LogError("Wrong type of args for %s macro function call : expected a string", "env");
+        return LogErrorE("Wrong type of args for %s macro function call : expected a string", "env");
     }
     std::string env_name = str->str;
     auto path_val = std::getenv(env_name.c_str());
     if (path_val == nullptr){
-        return LogError("Env variable %s doesn't exist for %s macro function call", env_name.c_str(), "env");
+        return LogErrorE("Env variable %s doesn't exist for %s macro function call", env_name.c_str(), "env");
     }
     return std::make_unique<StringExprAST>((std::string)path_val);
 }
@@ -106,7 +107,7 @@ std::unique_ptr<ExprAST> generate_asm_macro(std::unique_ptr<ArgsInlineAsm> ArgsM
 
 std::unique_ptr<ExprAST> generate_todo_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
     if (ArgsMacro.size() > 2){
-        return LogError("Wrong number of args for %s macro function call : expected less or equal to %d, got %d", "todo", 2, ArgsMacro.size());
+        return LogErrorE("Wrong number of args for %s macro function call : expected less or equal to %d, got %d", "todo", 2, ArgsMacro.size());
     }
     std::vector<std::unique_ptr<ExprAST>> Args;
     std::string basic_message = "not implemented";
@@ -114,7 +115,7 @@ std::unique_ptr<ExprAST> generate_todo_macro(std::vector<std::unique_ptr<ExprAST
         Args.push_back(std::make_unique<StringExprAST>(basic_message + "\n"));
     } else {
         if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
-            return LogError("Expected a string arg in the todo macro");
+            return LogErrorE("Expected a string arg in the todo macro");
         }
         std::unique_ptr<StringExprAST> arg_expr = get_Expr_from_ExprAST<StringExprAST>(std::move(Args.at(0)));
         std::string custom_message = arg_expr->str;
@@ -125,7 +126,7 @@ std::unique_ptr<ExprAST> generate_todo_macro(std::vector<std::unique_ptr<ExprAST
 
 std::unique_ptr<ExprAST> generate_dbg_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
     if (ArgsMacro.size() != 1){
-        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "dbg", 1, ArgsMacro.size());
+        return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "dbg", 1, ArgsMacro.size());
     }
     std::vector<std::unique_ptr<ExprAST>> Args;
     Args.push_back(std::move(ArgsMacro.at(0)));
@@ -151,7 +152,7 @@ std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAS
     add_manually_extern(function_name, Cpoint_Type(i32_type), std::move(args_printf), 0, 30, true, false, "");
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
     if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
-        return LogError("First argument of the print macro is not a constant string");
+        return LogErrorE("First argument of the print macro is not a constant string");
     }
     if (is_println){
         auto stringExpr = dynamic_cast<StringExprAST*>(Args.at(0).get());
@@ -173,7 +174,7 @@ std::unique_ptr<ExprAST> generate_unreachable_macro(){
 
 std::unique_ptr<ExprAST> generate_assume_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){
     if (ArgsMacro.size() != 1){
-        return LogError("Wrong number of args for %s macro function call : expected %d, got %d", "assume", 1, ArgsMacro.size());
+        return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "assume", 1, ArgsMacro.size());
     }
     std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_assume", std::move(Args), Cpoint_Type());

@@ -1,3 +1,6 @@
+#ifndef _AST_HEADER_
+#define _AST_HEADER_
+
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/IR/BasicBlock.h"
@@ -18,13 +21,10 @@
 
 using namespace llvm;
 
-#ifndef _AST_HEADER_
-#define _AST_HEADER_
-
 #include "types.h"
 #include "errors.h"
 #include "log.h"
-#include "c_translator.h"
+//#include "c_translator.h"
 //#include "config.h"
 #include "vars.h"
 #include "mangling.h"
@@ -32,6 +32,10 @@ using namespace llvm;
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
 class StructDeclarAST;
+
+namespace c_translator {
+    class Function;
+}
 
 
 // enum used for contains_expr
@@ -451,7 +455,7 @@ public:
     return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, true, args, new Cpoint_Type(FunctionProtos[Name]->cpoint_type));
    }
    if (!get_variable_type(Name)){
-    LogError("Unknown variable %s", Name.c_str());
+    LogErrorE("Unknown variable %s", Name.c_str());
     return Cpoint_Type();
    }
    return *get_variable_type(Name);
@@ -599,7 +603,7 @@ struct StructMemberCallExprAST : public ExprAST {
                 } else if (RHS_variable_expr->Name == "getstructname"){
                     return Cpoint_Type(i8_type, true);
                 } else {
-                    LogError("Unknown Reflection Instruction");
+                    LogErrorE("Unknown Reflection Instruction");
                     return Cpoint_Type();
                 }
             }
@@ -1375,8 +1379,8 @@ std::unique_ptr<ExprAST> ParseDefer();
 std::unique_ptr<ExprAST> ParseScope();
 std::unique_ptr<ExprAST> ParseConstantVector();
 
-std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
-std::unique_ptr<ExprAST> LogError(const char *Str, ...);
+//std::unique_ptr<ExprAST> vLogError(const char* Str, va_list args, Source_location astLoc);
+//std::unique_ptr<ExprAST> LogError(const char *Str, ...);
 
 template <class T>
 std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v);

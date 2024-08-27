@@ -3,7 +3,7 @@
 #if ENABLE_JIT
 
 #include "jit.h"
-#include "ast.h"
+//#include "ast.h"
 #include "lexer.h"
 #include "codegen.h"
 #include "llvm/Support/TargetSelect.h"
