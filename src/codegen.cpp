@@ -2523,7 +2523,7 @@ Value *UnaryExprAST::codegen() {
 
 Value *VarExprAST::codegen() {
   Log::Info() << "VAR CODEGEN " << VarNames.at(0).first << "\n";
-  //std::vector<AllocaInst *> OldBindings;
+  //std::vector<AllocaInst *> OldBindings; 
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
 
   // Register all variables and emit their initializer.
@@ -2602,6 +2602,9 @@ Value *VarExprAST::codegen() {
         goto after_storing; 
         // TODO : write code here to initalize the enum without codegen
       }
+      if (infer_type){
+        cpoint_type = Init->get_type();
+      }
       InitVal = Init->codegen();
       if (!InitVal)
         return nullptr;
@@ -2618,10 +2621,11 @@ Value *VarExprAST::codegen() {
     //double indexD = -1;
     if (index != nullptr){
     indexVal = index->codegen();
-    int indexD = from_val_to_int(indexVal);
+    // this was removed because it was done in the AST
+    /*int indexD = from_val_to_int(indexVal);
     Log::Info() << "index for varexpr array : " << indexD << "\n";
     cpoint_type.is_array = true;
-    cpoint_type.nb_element = indexD;
+    cpoint_type.nb_element = indexD;*/
     }
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
     /*if (!get_type_llvm(cpoint_type)->isPointerTy()){
@@ -2696,15 +2700,19 @@ after_storing:
 void register_mod_functions_recursive(std::unique_ptr<ModAST>& mod, std::optional<std::string> parent_mods_prefix){
     for (int i = 0; i < mod->functions.size(); i++){
         std::string function_name = mod->functions.at(i)->Proto->Name;
+        function_name = module_mangling(mod->mod_name, function_name);
         if (parent_mods_prefix != std::nullopt){
-            function_name = parent_mods_prefix.value() + function_name;
+            //function_name = parent_mods_prefix.value() + function_name;
+            function_name = module_mangling(parent_mods_prefix.value(), function_name);
         }
         FunctionProtos[function_name] = mod->functions.at(i)->Proto->clone();
     }
     for (int i = 0; i < mod->function_protos.size(); i++){
         std::string function_name = mod->function_protos.at(i)->Name;
+        function_name = module_mangling(mod->mod_name, function_name);
         if (parent_mods_prefix != std::nullopt){
-            function_name = parent_mods_prefix.value() + function_name;
+            //function_name = parent_mods_prefix.value() + function_name;
+            function_name = module_mangling(parent_mods_prefix.value(), function_name);
         }
         FunctionProtos[function_name] = mod->function_protos.at(i)->clone();
     }
@@ -2722,20 +2730,40 @@ void register_mod_functions(std::unique_ptr<ModAST>& mod){
     register_mod_functions_recursive(mod, std::nullopt);
 }
 
+void register_function_protos(std::unique_ptr<PrototypeAST>& proto){
+    FunctionProtos[proto->getName()] = proto->clone();
+}
+
 void FileAST::codegen(){
   // TODO : need to register all function protos from : function definitions, struct members, mods, etc
+  // TOOD : detect in function codegen of mod functions if they were already registered and not do it 
+  
+  for (int i = 0; i < function_protos.size(); i++){
+    register_function_protos(function_protos.at(i));
+  }
+
   for (int i = 0; i < mods.size(); i++){
     register_mod_functions(mods.at(i));
   }
+  
 
   for (int i = 0; i < global_vars.size(); i++){
     global_vars.at(i)->codegen();
   }
+  /*for (int i = 0; i < function_protos.size(); i++){
+    function_protos.at(i)->codegen();
+  }*/
   for (int i = 0; i < structs.size(); i++){
     structs.at(i)->codegen();
   }
-  for (int i = 0; i < function_protos.size(); i++){
-    function_protos.at(i)->codegen();
+  for (int i = 0; i < enums.size(); i++){
+    enums.at(i)->codegen();
+  }
+  for (int i = 0; i < unions.size(); i++){
+    unions.at(i)->codegen();
+  }
+  for (int i = 0; i < members.size(); i++){
+    members.at(i)->codegen();
   }
   for (int i = 0; i < functions.size(); i++){
     functions.at(i)->codegen();

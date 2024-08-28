@@ -1,6 +1,8 @@
 #include "ast.h"
 #include <unordered_map>
-#include <iostream>
+//#include <iostream>
+#include <ostream>
+#include <fstream>
 #include <utility>
 #include <cstdarg>
 #include <cstdlib>
@@ -1487,6 +1489,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
     }
     getNextToken();
     auto enumDeclar = std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembers), has_template, template_name);
+    EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(nullptr, enumDeclar->clone());
     if (has_template){
         TemplateEnumDeclars[Name] = std::make_unique<EnumDeclar>(std::move(enumDeclar), template_name);
         is_template_parsing_enum = true;
@@ -2160,7 +2163,8 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
       if (!Init)
         return nullptr;
     }
-    if (infer_type){
+    // TODO : readd the infer type to the ast instead of codegen
+    /*if (infer_type){
         if (Init){
             cpoint_type = Init->get_type();
             assert(!cpoint_type.is_empty);
@@ -2168,7 +2172,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
             Log::Info() << "Missing type declaration and default value to do type inference. Type defaults to double" << "\n";
             cpoint_type.type = double_type;
         }
-    }
+    }*/
     VarNames.push_back(std::make_pair(Name, std::move(Init)));
 
     // End of var list, exit loop.
@@ -2214,7 +2218,7 @@ std::unique_ptr<FileAST> ParseFile(){
   std::vector<std::unique_ptr<ModAST>> mods;
   while (1) {
     if (Comp_context->debug_mode){
-    std::flush(file_log);
+        std::flush(file_log);
     }
     if (last_line == true){
       if (Comp_context->debug_mode){
