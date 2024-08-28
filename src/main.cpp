@@ -42,6 +42,10 @@
 #include "lld.h"
 #endif
 
+#if ENABLE_CIR
+#include "cir.h"
+#endif
+
 using namespace std;
 
 /*using namespace llvm;
@@ -708,6 +712,9 @@ int main(int argc, char **argv){
     }
 #if ENABLE_FILE_AST
   std::unique_ptr<FileAST> file_ast = ParseFile();
+#if ENABLE_CIR
+  file_ast->cir_gen();
+#endif
   file_ast->codegen();
 #else
     MainLoop();

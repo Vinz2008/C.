@@ -25,13 +25,21 @@ using namespace llvm;
 #include "errors.h"
 #include "log.h"
 //#include "c_translator.h"
-//#include "config.h"
+#include "config.h"
 #include "vars.h"
 #include "mangling.h"
 
 extern std::unique_ptr<Compiler_context> Comp_context; 
 
 class StructDeclarAST;
+
+#if ENABLE_CIR
+class FileCIR;
+
+namespace CIR {
+    class Value;
+}
+#endif
 
 namespace c_translator {
     class Function;
@@ -64,6 +72,10 @@ public:
   virtual std::string to_string() = 0;
   virtual Cpoint_Type get_type() = 0;
   virtual std::string generate_c() = 0;
+
+#if ENABLE_CIR
+  virtual std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) = 0;
+#endif
    // maybe refactor this to contain any expr
   /*virtual bool contains_return(){
     return false;
@@ -131,6 +143,9 @@ public:
     }
     return false;
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 bool is_of_expr_type(ExprAST* expr, enum ExprType exprType);
@@ -167,6 +182,9 @@ public:
       }
       return false;
     }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 
@@ -182,6 +200,9 @@ public:
         return Cpoint_Type();
     }
     std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 /// NumberExprAST - Expression class for numeric literals like "1.0".
@@ -207,6 +228,9 @@ public:
     }
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class StringExprAST : public ExprAST {
@@ -224,6 +248,9 @@ public:
     return Cpoint_Type(i8_type, true);
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class CharExprAST : public ExprAST {
@@ -241,6 +268,9 @@ public:
     return Cpoint_Type(i8_type);
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class BoolExprAST : public ExprAST {
@@ -258,6 +288,9 @@ public:
     return Cpoint_Type(bool_type);
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class AddrExprAST : public ExprAST {
@@ -280,6 +313,9 @@ public:
     return type;
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class DerefExprAST : public ExprAST {
@@ -297,6 +333,9 @@ public:
         return Expr->get_type().deref_type();
     }
     std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 // TODO : fix sizeof not being printed in assertions with expect (to_string() return "" ?)
@@ -333,6 +372,9 @@ public:
     return Cpoint_Type(i32_type);
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class TypeidExprAST : public ExprAST {
@@ -351,6 +393,9 @@ public:
         return Cpoint_Type(i32_type);
     }
     std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class ArgInlineAsm {
@@ -390,6 +435,9 @@ public:
         return Cpoint_Type(void_type); // is it ?
     }
     std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 // TODO : fix the reorder warning
@@ -462,6 +510,9 @@ public:
    //return type;
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 class ConstantArrayExprAST : public ExprAST {
 public:
@@ -482,6 +533,9 @@ public:
     return type;
   }
   std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class ConstantStructExprAST : public ExprAST {
@@ -502,6 +556,9 @@ public:
         return Cpoint_Type(other_type, false, 0, false, 0, true, struct_name);
     }
     std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class ConstantVectorExprAST : public ExprAST {
@@ -523,6 +580,9 @@ public:
         return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, new Cpoint_Type(vector_element_type), vector_size);
     }
     std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class EnumCreation : public ExprAST {
@@ -541,6 +601,9 @@ public:
         return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", true, EnumVarName);
     }
     std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class BinaryExprAST : public ExprAST {
@@ -559,6 +622,9 @@ public:
   }
   Cpoint_Type get_type() override;
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class UnaryExprAST : public ExprAST {
@@ -577,6 +643,9 @@ public:
   }
   Cpoint_Type get_type() override;
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
@@ -623,6 +692,9 @@ struct StructMemberCallExprAST : public ExprAST {
     }
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 
@@ -763,6 +835,9 @@ public:
     }
     return false;
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class VarExprAST : public ExprAST {
@@ -789,6 +864,9 @@ public:
     return cpoint_type;
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 /*class RedeclarationExprAST : public ExprAST {
@@ -827,6 +905,9 @@ public:
         return type;
     }
     std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class NullExprAST : public ExprAST {
@@ -843,13 +924,14 @@ public:
         return Cpoint_Type(void_type, true);
     }
     std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
-// JUNKY HACK TIME !!
-// will just return a Value* when being codegened
-// is used if a value* is needed to be passed as an AST node
+
 // TODO : remove this because it is not used
-class LLVMASTValueWrapper : public ExprAST {
+/*class LLVMASTValueWrapper : public ExprAST {
 public:
     Value* val;
     LLVMASTValueWrapper(Value* val) : val(val){}
@@ -866,9 +948,9 @@ public:
         return Cpoint_Type();
     }
     std::string generate_c() override {
-        return ""; // How will we fucking use this with the c backend ?? No idea, will figure this out
+        return "";
     }
-};
+};*/
 
 class matchCase {
 public:
@@ -925,6 +1007,9 @@ public:
       }
       return branches_containing_expr == matchCases.size();
     }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class ClosureAST : public ExprAST {
@@ -953,6 +1038,9 @@ public:
       }
       return false;
     }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class FunctionAST {
@@ -975,6 +1063,9 @@ public:
     }
     return ret;
   }
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
+#endif
 };
 
 class StructDeclarAST {
@@ -989,6 +1080,9 @@ public:
     : Name(name), Vars(std::move(Vars)), Functions(std::move(Functions)), ExternFunctions(std::move(ExternFunctions)), has_template(has_template), template_name(template_name) {}
   Type *codegen();
   std::unique_ptr<StructDeclarAST> clone();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
+#endif
 };
 
 class UnionDeclarAST {
@@ -998,6 +1092,9 @@ public:
   UnionDeclarAST(const std::string& Name, std::vector<std::unique_ptr<VarExprAST>> Vars) : Name(Name), Vars(std::move(Vars)) {}
   Type* codegen();
   std::unique_ptr<UnionDeclarAST> clone();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
+#endif
 };
 
 class MembersDeclarAST {
@@ -1009,6 +1106,9 @@ public:
     MembersDeclarAST(const std::string& members_name, const std::string& members_for, std::vector<std::unique_ptr<FunctionAST>> Functions, std::vector<std::unique_ptr<PrototypeAST>> Externs) : members_name(members_name), members_for(members_for), Functions(std::move(Functions)), Externs(std::move(Externs)) {}
     void codegen();
     Cpoint_Type get_self_type();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
+#endif
 };
 
 class EnumMember {
@@ -1032,6 +1132,9 @@ public:
     EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<std::unique_ptr<EnumMember>> EnumMembers, bool has_template, std::string template_name) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)), has_template(has_template), template_name(template_name) {}
     Type* codegen();
     std::unique_ptr<EnumDeclarAST> clone();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
+#endif
 };
 
 class TestAST {
@@ -1056,6 +1159,9 @@ public:
   GlobalVariableAST(const std::string& varName, bool is_const, bool is_extern, Cpoint_Type cpoint_type, std::unique_ptr<ExprAST> Init, bool is_array, std::unique_ptr<ExprAST> index, std::string section_name) 
     : varName(varName), is_const(is_const), is_extern(is_extern), cpoint_type(cpoint_type), Init(std::move(Init)), is_array(is_array), index(std::move(index)), section_name(section_name) {} 
   GlobalVariable* codegen();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR);
+#endif
 };
 
 class TypeDefAST {
@@ -1080,6 +1186,9 @@ public:
         return Cpoint_Type();
     }
     std::string generate_c() override { return ""; }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class ModAST {
@@ -1092,6 +1201,9 @@ public:
 
   ModAST(const std::string& mod_name, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<ModAST>> mods) :  mod_name(mod_name), functions(std::move(functions)), function_protos(std::move(function_protos)), structs(std::move(structs)), mods(std::move(mods)) {}
   void codegen();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
+#endif
 };
 
 class IfExprAST : public ExprAST {
@@ -1132,6 +1244,9 @@ public:
         return  Then->contains_expr(exprType) && Else->contains_expr(exprType);
     }
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class BreakExprAST : public ExprAST {
@@ -1152,6 +1267,9 @@ public:
   virtual bool contains_expr(enum ExprType exprType) override {
     return exprType == ExprType::Break;
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class GotoExprAST : public ExprAST {
@@ -1169,6 +1287,9 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class LabelExprAST : public ExprAST {
@@ -1186,6 +1307,9 @@ public:
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class ForExprAST : public ExprAST {
@@ -1216,6 +1340,9 @@ public:
   bool contains_expr(enum ExprType exprType) override {
     return Body->contains_expr(exprType); 
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class WhileExprAST : public ExprAST {
@@ -1241,7 +1368,9 @@ public:
   bool contains_expr(enum ExprType exprType) override {
     return Body->contains_expr(exprType);
   }
-  
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class LoopExprAST : public ExprAST {
@@ -1280,6 +1409,9 @@ public:
     }
     return false;
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class SemicolonExprAST : public ExprAST {
@@ -1298,6 +1430,9 @@ public:
   std::string generate_c() override {
     return ";";
   }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 class DeferExprAST : public ExprAST {
@@ -1317,6 +1452,9 @@ public:
     std::string generate_c() override {
         return "";
     }
+#if ENABLE_CIR
+  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+#endif
 };
 
 // TODO : work on encapsulating an entire file AST in this class
@@ -1332,6 +1470,9 @@ class FileAST {
 public:
   FileAST(std::vector<std::unique_ptr<GlobalVariableAST>> global_vars, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<UnionDeclarAST>> unions, std::vector<std::unique_ptr<EnumDeclarAST>> enums, std::vector<std::unique_ptr<MembersDeclarAST>> members, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<ModAST>> mods) : global_vars(std::move(global_vars)), structs(std::move(structs)), unions(std::move(unions)), enums(std::move(enums)), members(std::move(members)), function_protos(std::move(function_protos)), functions(std::move(functions)), mods(std::move(mods)) {}
   void codegen(); // TODO : error handling ?
+#if ENABLE_CIR
+  std::unique_ptr<FileCIR> cir_gen();
+#endif
 };
 
 std::unique_ptr<FileAST> ParseFile();
