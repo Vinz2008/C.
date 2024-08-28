@@ -37,7 +37,7 @@ class StructDeclarAST;
 class FileCIR;
 
 namespace CIR {
-    class Value;
+    class InstructionRef;
 }
 #endif
 
@@ -74,7 +74,7 @@ public:
   virtual std::string generate_c() = 0;
 
 #if ENABLE_CIR
-  virtual std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) = 0;
+  virtual CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) = 0;
 #endif
    // maybe refactor this to contain any expr
   /*virtual bool contains_return(){
@@ -144,7 +144,7 @@ public:
     return false;
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -183,7 +183,7 @@ public:
       return false;
     }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -201,7 +201,7 @@ public:
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -229,7 +229,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -249,7 +249,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -269,7 +269,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -289,7 +289,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -314,7 +314,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -334,7 +334,7 @@ public:
     }
     std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -373,7 +373,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -394,7 +394,7 @@ public:
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -436,7 +436,7 @@ public:
     }
     std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -511,7 +511,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 class ConstantArrayExprAST : public ExprAST {
@@ -534,7 +534,7 @@ public:
   }
   std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -557,7 +557,7 @@ public:
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -581,7 +581,7 @@ public:
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -602,7 +602,7 @@ public:
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -623,7 +623,7 @@ public:
   Cpoint_Type get_type() override;
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -644,7 +644,7 @@ public:
   Cpoint_Type get_type() override;
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -693,7 +693,7 @@ struct StructMemberCallExprAST : public ExprAST {
     std::unique_ptr<ExprAST> clone() override;
     Value *codegen() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -836,7 +836,7 @@ public:
     return false;
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -865,7 +865,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -906,7 +906,7 @@ public:
     }
     std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -925,7 +925,7 @@ public:
     }
     std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1008,7 +1008,7 @@ public:
       return branches_containing_expr == matchCases.size();
     }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1039,7 +1039,7 @@ public:
       return false;
     }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1187,7 +1187,7 @@ public:
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1245,7 +1245,7 @@ public:
     }
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1268,7 +1268,7 @@ public:
     return exprType == ExprType::Break;
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1288,7 +1288,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1308,7 +1308,7 @@ public:
   }
   std::string generate_c() override;
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1341,7 +1341,7 @@ public:
     return Body->contains_expr(exprType); 
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1369,7 +1369,7 @@ public:
     return Body->contains_expr(exprType);
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1410,7 +1410,7 @@ public:
     return false;
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1431,7 +1431,7 @@ public:
     return ";";
   }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 
@@ -1453,7 +1453,7 @@ public:
         return "";
     }
 #if ENABLE_CIR
-  std::unique_ptr<CIR::Value> cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
+  CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
 #endif
 };
 

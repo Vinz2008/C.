@@ -12,10 +12,29 @@ std::string CIR::ConstNumber::to_string(){
     return const_nb_cir;
 }
 
-std::string CIR::BasicBlock::to_string(){
+std::string CIR::VarInit::to_string(){
+    std::string init_val_cir = (VarName.second.is_empty()) ? "" : VarName.second.to_string();
+    std::string varinit_cir = "var " + VarName.first + " " + init_val_cir ;
+    return varinit_cir;
+}
+
+
+std::string CIR::LoadVarInstruction::to_string(){
+    return var.to_string();
+}
+/*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){
         basic_block_cir += instructions.at(i)->to_string();
+    }
+    return basic_block_cir;
+}*/
+
+std::string CIR::BasicBlock::to_string(int& InstructionIndex){
+    std::string basic_block_cir = name + ":\n";
+    for (int i = 0; i < instructions.size(); i++){
+        basic_block_cir += "\t%" + std::to_string(InstructionIndex) + " = " + instructions.at(i)->to_string() + "\n";
+        InstructionIndex++;
     }
     return basic_block_cir;
 }
@@ -31,8 +50,9 @@ std::string CIR::Function::to_string(){
     func_cir += ") ";
     func_cir += create_pretty_name_for_type(proto->return_type); 
     func_cir += " {\n";
+    int InstructionIndex = 0;
     for (int i = 0; i < basicBlocks.size(); i++){
-        func_cir += basicBlocks.at(i)->to_string();
+        func_cir += basicBlocks.at(i)->to_string(InstructionIndex);
     }
     func_cir += "}";
     return func_cir;

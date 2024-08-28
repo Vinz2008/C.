@@ -5,132 +5,141 @@
 
 #include "../ast.h"
 
-std::unique_ptr<CIR::Value> VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return fileCIR->CurrentFunction->vars[Name];
 }
 
-std::unique_ptr<CIR::Value> DeferExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef DeferExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ReturnAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ReturnAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ScopeExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ScopeExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
 
-std::unique_ptr<CIR::Value> AddrExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef AddrExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    CIR::InstructionRef varInit;
+    if (VarNames.at(0).second){
+        varInit = VarNames.at(0).second->cir_gen(fileCIR);
+    }
+    auto var_ref = fileCIR->add_instruction(std::make_unique<CIR::VarInit>(std::make_pair(VarNames.at(0).first, varInit)));
+    fileCIR->CurrentFunction->vars[VarNames.at(0).first] = var_ref;
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> EmptyExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef EmptyExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> IfExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef IfExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> TypeidExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef TypeidExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> CharExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef CharExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    CIR::ConstNumber::nb_val_ty nb_val;
+    nb_val.int_nb = c;
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(i8_type), nb_val));
+    //return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> SemicolonExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef SemicolonExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> LoopExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef LoopExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ForExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ForExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> StructMemberCallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef StructMemberCallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> MatchExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef MatchExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ConstantVectorExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ConstantVectorExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> EnumCreation::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef EnumCreation::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     // for debug for new
     for (int i = 0; i < Args.size(); i++){
         Args.at(i)->cir_gen(fileCIR);
     }
-    return std::make_unique<CIR::Value>();
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> GotoExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef GotoExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> WhileExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef WhileExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> BreakExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef BreakExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ConstantStructExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ConstantStructExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ConstantArrayExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ConstantArrayExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> LabelExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef LabelExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> NumberExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+CIR::InstructionRef NumberExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     Cpoint_Type number_type = this->get_type();
     union CIR::ConstNumber::nb_val_ty nb_val;
     bool is_float = number_type.type == double_type;
@@ -140,28 +149,28 @@ std::unique_ptr<CIR::Value> NumberExprAST::cir_gen(std::unique_ptr<FileCIR>& fil
         nb_val.int_nb = (int)Val; 
     }
     // insert in insertpoint instead
-    fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(is_float, nb_val));
-    return std::make_unique<CIR::Value>();
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(is_float, number_type, nb_val));
+    //return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> UnaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef UnaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> NullExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef NullExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> ClosureAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef ClosureAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> CastExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef CastExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
-std::unique_ptr<CIR::Value> CommentExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return std::make_unique<CIR::Value>();
+CIR::InstructionRef CommentExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    return CIR::InstructionRef();
 }
 
 void ModAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){

@@ -2159,6 +2159,7 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
     }
     // Read the optional initializer.
     std::unique_ptr<ExprAST> Init = nullptr;
+    // TODO : Make it mandatory to init the var
     if (CurTok == '=') {
       getNextToken(); // eat the '='.
 
