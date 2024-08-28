@@ -2617,16 +2617,16 @@ Value *VarExprAST::codegen() {
       InitVal = get_default_value(cpoint_type);
       //InitVal = get_default_constant(*cpoint_type);
     }
-    llvm::Value* indexVal = nullptr;
-    //double indexD = -1;
+    /*llvm::Value* indexVal = nullptr;
+    double indexD = -1;
     if (index != nullptr){
     indexVal = index->codegen();
     // this was removed because it was done in the AST
-    /*int indexD = from_val_to_int(indexVal);
+    int indexD = from_val_to_int(indexVal);
     Log::Info() << "index for varexpr array : " << indexD << "\n";
     cpoint_type.is_array = true;
-    cpoint_type.nb_element = indexD;*/
-    }
+    cpoint_type.nb_element = indexD;
+    }*/
     AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, VarName, cpoint_type);
     /*if (!get_type_llvm(cpoint_type)->isPointerTy()){
     Log::Warning() << "cpoint_type in var " << VarNames[i].first << " is not ptr" << "\n";

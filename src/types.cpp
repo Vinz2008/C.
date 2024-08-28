@@ -211,7 +211,7 @@ finding_type:
         }
     }
     int nb_ptr = (is_ptr) ? 1 : 0;
-    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, nb_element, is_struct, struct_name, false, "", false, "", false, is_function);
+    return Cpoint_Type(type, is_ptr, nb_ptr, is_array, nb_element, is_struct, struct_name, false, "", false, "", false, is_function, nullptr, false, {}, nullptr, is_vector_type, vector_element_type, vector_size);
 }
 
 Value* get_default_value(Cpoint_Type type){
