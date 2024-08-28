@@ -13,7 +13,7 @@
 #define DEFAULT_BUILD_INSTALL_PATH DEFAULT_PREFIX_LIB_PATH "/cpoint/build_install"
 
 #define ENABLE_JIT 0
-#define ENABLE_FILE_AST 0
+#define ENABLE_FILE_AST 1
 
 
 // comment this if you want to disable it (it is not like the other flags because it is needed to be known in the build system)
