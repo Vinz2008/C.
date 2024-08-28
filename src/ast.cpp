@@ -1163,6 +1163,9 @@ static std::unique_ptr<PrototypeAST> ParsePrototype() {
     Log::Info() << "type : " << IdentifierStr << "\n";
     cpoint_type = ParseTypeDeclaration(false, true);
   }
+  if (FnName == "main"){
+    cpoint_type = Cpoint_Type(i32_type);
+  }
   /*if (!modulesNamesContext.empty()){
     std::string module_mangled_function_name = FnName;
     for (int i = modulesNamesContext.size()-1; i >= 0; i--){

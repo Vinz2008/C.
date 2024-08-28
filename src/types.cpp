@@ -675,11 +675,13 @@ int get_type(std::string type){
 }
 
 static std::string get_string_from_type(Cpoint_Type type){
+    assert(!type.is_empty);
     if (type.type < 0){
         return types_list.at(-(type.type + 1));
     } else {
         return types_list.at(type.type+types_list_start.size());
     }
+    
 }
 
 std::string Cpoint_Type::create_mangled_name(){
@@ -696,15 +698,19 @@ std::string Cpoint_Type::create_mangled_name(){
 }
 
 std::string create_pretty_name_for_type(Cpoint_Type type){
+    std::string name = "";
     if (type.is_struct){
-        std::string name =  "struct " + type.struct_name;
+        name =  "struct " + type.struct_name;
         if (type.is_ptr){
             name += " ptr";
         }
         return name;
     }
-    std::string name;
-    name = get_string_from_type(type);
+    if (type.type == never_type){
+        name = "!";
+    } else {
+        name = get_string_from_type(type);
+    }
     if (type.is_ptr){
         name += " ptr";
         if (type.nb_ptr > 1){

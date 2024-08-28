@@ -3,6 +3,7 @@ cpoint
 *.exe
 out.c
 *.ll
+*.cir
 *.bc
 *.S
 test

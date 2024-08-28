@@ -43,7 +43,7 @@
 #endif
 
 #if ENABLE_CIR
-#include "cir.h"
+#include "CIR/cir.h"
 #endif
 
 using namespace std;
@@ -713,7 +713,11 @@ int main(int argc, char **argv){
 #if ENABLE_FILE_AST
   std::unique_ptr<FileAST> file_ast = ParseFile();
 #if ENABLE_CIR
-  file_ast->cir_gen();
+  auto file_cir = file_ast->cir_gen();
+  std::string cir_string = file_cir->to_string();
+  ofstream cir_file("out.cir");
+  cir_file << cir_string << "\n";
+  cir_file.close();
 #endif
   file_ast->codegen();
 #else

@@ -14,7 +14,7 @@
 
 #define ENABLE_JIT 0
 #define ENABLE_FILE_AST 1
-#define ENABLE_CIR 0 // only works when ENABLE_FILE_AST is enabled
+#define ENABLE_CIR 1 // only works when ENABLE_FILE_AST is enabled
 
 
 // comment this if you want to disable it (it is not like the other flags because it is needed to be known in the build system)

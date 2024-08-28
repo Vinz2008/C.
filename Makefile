@@ -120,7 +120,7 @@ endif
 
 SRCDIR=src
 
-SRCS := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/targets/*.cpp)
+SRCS := $(wildcard $(SRCDIR)/*.cpp) $(wildcard $(SRCDIR)/targets/*.cpp) $(wildcard $(SRCDIR)/CIR/*.cpp)
 OBJS = $(patsubst %.cpp,%.o,$(SRCS))
 ifeq ($(LLVM_TOOLS_EMBEDDED_COMPILER),TRUE)
 LLVM_TOOLS_EXTERNAL_SRCS := $(wildcard $(SRCDIR)/external/*.cpp)
