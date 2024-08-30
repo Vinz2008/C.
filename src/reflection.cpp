@@ -8,9 +8,13 @@ using namespace llvm;
 extern std::unique_ptr<LLVMContext> TheContext;
 extern std::unique_ptr<IRBuilder<>> Builder;
 
-Value* getTypeId(Value* valueLLVM){
+/*Value* getTypeId(Value* valueLLVM){
     Type* valType = valueLLVM->getType();
     Cpoint_Type cpoint_type = get_cpoint_type_from_llvm(valType);
+    return ConstantInt::get(*TheContext, APInt(32, (uint64_t)cpoint_type.type));
+}*/
+
+Value* getTypeId(Cpoint_Type cpoint_type){
     return ConstantInt::get(*TheContext, APInt(32, (uint64_t)cpoint_type.type));
 }
 
@@ -19,7 +23,7 @@ static Value* refletionInstrTypeId(std::vector<std::unique_ptr<ExprAST>> Args){
     if (Args.size() > 1){
         return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
     }
-    return getTypeId(Args.at(0)->codegen());
+    return getTypeId(Args.at(0)->get_type());
 }
 
 static Value* refletionInstrGetStructName(std::vector<std::unique_ptr<ExprAST>> Args){

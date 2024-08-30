@@ -1628,8 +1628,9 @@ Value* SizeofExprAST::codegen(){
 }
 
 Value* TypeidExprAST::codegen(){
-    Value* valueLLVM = val->codegen();
-    return getTypeId(valueLLVM);
+    return getTypeId(val->get_type());
+    /*Value* valueLLVM = val->codegen();
+    return getTypeId(valueLLVM);*/
 }
 
 Value* CastExprAST::codegen(){
