@@ -1156,7 +1156,8 @@ Value* AsmExprAST::codegen(){
 }
 
 Value* SemicolonExprAST::codegen(){
-    return UndefValue::get(Type::getVoidTy(*TheContext));
+    //return UndefValue::get(Type::getVoidTy(*TheContext));
+    return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
 Value *BinaryExprAST::codegen() {
@@ -1628,7 +1629,7 @@ Value* SizeofExprAST::codegen(){
 }
 
 Value* TypeidExprAST::codegen(){
-    return getTypeId(val->get_type());
+    return getTypeIdLLVM(val->get_type());
     /*Value* valueLLVM = val->codegen();
     return getTypeId(valueLLVM);*/
 }
@@ -2057,11 +2058,11 @@ Function *FunctionAST::codegen() {
         wrong_return_type_warning.end();
     }
 before_ret:
-    std::cout << "is_last_expr_return : " << is_last_expr_return << std::endl; 
+    //std::cout << "is_last_expr_return : " << is_last_expr_return << std::endl; 
     if (!contains_return_or_unreachable_or_never_call && !is_return_never_type && !is_last_expr_return){
     // only verify if the last expr is a goto if the function is main (because it will create a ret by default)
-    std::cout << "ret_val_type : " << get_cpoint_type_from_llvm(ret_val_type) << std::endl;
-    std::cout << "is RetVal nullptr : " << (RetVal == nullptr) << std::endl;
+    //std::cout << "ret_val_type : " << get_cpoint_type_from_llvm(ret_val_type) << std::endl;
+    //std::cout << "is RetVal nullptr : " << (RetVal == nullptr) << std::endl;
     if ((!is_last_expr_a_goto && !is_last_expr_an_infinite_loop) || P.getName() != "main"){
         if (RetVal && !ret_val_type->isVoidTy()){
             Builder->CreateRet(RetVal);

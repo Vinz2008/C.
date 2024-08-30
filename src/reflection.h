@@ -10,5 +10,6 @@ class ExprAST;
 
 class Cpoint_Type;
 
-Value* getTypeId(Cpoint_Type cpoint_type);
+int getTypeId(Cpoint_Type cpoint_type);
+Value* getTypeIdLLVM(Cpoint_Type cpoint_type);
 Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr<ExprAST>> Args);

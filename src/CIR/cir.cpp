@@ -4,6 +4,7 @@
 #if ENABLE_CIR
 
 #include "../ast.h"
+#include "../reflection.h"
 
 // TODO verify that last instruction of function is never type (a return, an unreachable, etc)
 
@@ -38,7 +39,7 @@ CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     if (VarNames.at(0).second){
         varInit = VarNames.at(0).second->cir_gen(fileCIR);
     }
-    auto var_ref = fileCIR->add_instruction(std::make_unique<CIR::VarInit>(std::make_pair(VarNames.at(0).first, varInit)));
+    auto var_ref = fileCIR->add_instruction(std::make_unique<CIR::VarInit>(std::make_pair(VarNames.at(0).first, varInit), cpoint_type));
     fileCIR->CurrentFunction->vars[VarNames.at(0).first] = var_ref;
     return CIR::InstructionRef();
 }
@@ -60,18 +61,20 @@ CIR::InstructionRef IfExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef TypeidExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    int typeId = getTypeId(this->val->get_type());
+    CIR::ConstNumber::nb_val_ty nb_val;
+    nb_val.int_nb = typeId;
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(i32_type), nb_val));
 }
 
 CIR::InstructionRef CharExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     CIR::ConstNumber::nb_val_ty nb_val;
     nb_val.int_nb = c;
     return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(i8_type), nb_val));
-    //return CIR::InstructionRef();
 }
 
 CIR::InstructionRef SemicolonExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstVoid>());
 }
 
 CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -79,7 +82,9 @@ CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    CIR::ConstNumber::nb_val_ty nb_val;
+    nb_val.int_nb = (val) ? 1 : 0;
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(bool_type), nb_val));
 }
 
 CIR::InstructionRef LoopExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -162,7 +167,7 @@ CIR::InstructionRef UnaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef NullExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    return fileCIR->add_instruction(std::make_unique<CIR::Null>());
 }
 
 CIR::InstructionRef ClosureAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){

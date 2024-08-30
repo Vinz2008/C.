@@ -14,8 +14,12 @@ extern std::unique_ptr<IRBuilder<>> Builder;
     return ConstantInt::get(*TheContext, APInt(32, (uint64_t)cpoint_type.type));
 }*/
 
-Value* getTypeId(Cpoint_Type cpoint_type){
-    return ConstantInt::get(*TheContext, APInt(32, (uint64_t)cpoint_type.type));
+int getTypeId(Cpoint_Type cpoint_type){
+    return cpoint_type.type;
+}
+
+Value* getTypeIdLLVM(Cpoint_Type cpoint_type){
+    return ConstantInt::get(*TheContext, APInt(32, getTypeId(cpoint_type)));
 }
 
 
@@ -23,7 +27,7 @@ static Value* refletionInstrTypeId(std::vector<std::unique_ptr<ExprAST>> Args){
     if (Args.size() > 1){
         return LogErrorV(emptyLoc, "wrong number of arguments for reflection function");
     }
-    return getTypeId(Args.at(0)->get_type());
+    return getTypeIdLLVM(Args.at(0)->get_type());
 }
 
 static Value* refletionInstrGetStructName(std::vector<std::unique_ptr<ExprAST>> Args){

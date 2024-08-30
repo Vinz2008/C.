@@ -2,19 +2,25 @@
 
 #if ENABLE_CIR
 
+#include "../types.h"
+
 std::string CIR::ConstNumber::to_string(){
     std::string const_nb_cir = "const ";
     if (is_float){
         const_nb_cir += "double " + std::to_string(nb_val.float_nb);
     } else {
-        const_nb_cir += "i32 " + std::to_string(nb_val.int_nb);
+        std::string val_str = std::to_string(nb_val.int_nb);
+        if (type.type == bool_type){
+            val_str = (nb_val.int_nb == 1) ? "true" : "false";
+        }
+        const_nb_cir += create_pretty_name_for_type(type) + " " + val_str;
     }
     return const_nb_cir;
 }
 
 std::string CIR::VarInit::to_string(){
     std::string init_val_cir = (VarName.second.is_empty()) ? "" : VarName.second.to_string();
-    std::string varinit_cir = "var " + VarName.first + " " + init_val_cir ;
+    std::string varinit_cir = "var " + create_pretty_name_for_type(var_type) + " " + VarName.first + " " + init_val_cir ;
     return varinit_cir;
 }
 
@@ -36,7 +42,7 @@ std::string CIR::CallInstruction::to_string(){
 }
 
 std::string CIR::ReturnInstruction::to_string(){
-    return "";
+    return "return " + ret_val.to_string();
 }
 
 /*std::string CIR::BasicBlock::to_string(){

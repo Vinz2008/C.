@@ -158,7 +158,7 @@ release: set_release all
 debug: set_debug all
 
 set_release: 
-	$(eval CXXFLAGS += -O3 -flto) 
+	$(eval CXXFLAGS += -O3 -flto -DNDEBUG) 
 	$(eval LDFLAGS += -s -flto) 
 	$(eval MAKETARGET += release)
 
