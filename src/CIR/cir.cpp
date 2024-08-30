@@ -8,6 +8,18 @@
 
 // TODO verify that last instruction of function is never type (a return, an unreachable, etc)
 
+static CIR::InstructionRef codegenBody(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>>& Body){
+    CIR::InstructionRef ret;
+    for (int i = 0; i < Body.size(); i++){
+        ret = Body.at(i)->cir_gen(fileCIR);
+        // TODO : readd this when all exprs are implemented ?
+        /*if (ret.is_empty()){
+            return ret;
+        }*/
+    }
+    return ret;
+}
+
 CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     return fileCIR->CurrentFunction->vars[Name];
 }
@@ -22,7 +34,9 @@ CIR::InstructionRef ReturnAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef ScopeExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    // add createScope and endScope to make defers work
+    CIR::InstructionRef ret = codegenBody(fileCIR, Body);
+    return ret;
 }
 
 CIR::InstructionRef AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -31,6 +45,7 @@ CIR::InstructionRef AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 
 CIR::InstructionRef AddrExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    // TODO : implement GEP in the language ?
     return CIR::InstructionRef();
 }
 
@@ -79,7 +94,7 @@ CIR::InstructionRef SemicolonExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR)
 }
 
 CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    return fileCIR->add_instruction(std::make_unique<CIR::SizeofInstruction>(is_type, type, (is_type) ? CIR::InstructionRef() : expr->cir_gen(fileCIR)));
 }
 
 CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){

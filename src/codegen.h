@@ -123,8 +123,8 @@ public:
 void generateExterns();
 void generateClosures();
 
-void createScope();
-void endScope();
+//void createScope();
+//void endScope();
 
 Value *LogErrorV(Source_location astLoc, const char *Str, ...);
 bool should_return_struct_with_ptr(Cpoint_Type cpoint_type);

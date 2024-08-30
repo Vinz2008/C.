@@ -57,6 +57,10 @@ std::string CIR::GotoInstruction::to_string(){
     return "goto " + goto_bb.to_string();
 }
 
+std::string CIR::SizeofInstruction::to_string(){
+    return "sizeof " + ((is_type) ? create_pretty_name_for_type(type) : var.to_string());
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){

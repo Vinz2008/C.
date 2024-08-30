@@ -363,7 +363,7 @@ Value* ConstantVectorExprAST::codegen(){
     return ConstantVector::get(VectorMembersVal);
 }
 
-Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
+static Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
     //bool should_break = false;
     Value* ret = nullptr;
     for (int i = 0; i < Body.size(); i++){
@@ -387,6 +387,26 @@ Value* codegenBody(std::vector<std::unique_ptr<ExprAST>>& Body){
         }*/
     }
     return ret;
+}
+
+static void createScope(){
+    DIScope* debuginfos_scope = nullptr;
+    if (debug_info_mode){
+        Function* TheFunction = Builder->GetInsertBlock()->getParent();
+        int lineNo = 0; // TODO
+        debuginfos_scope = DBuilder->createLexicalBlock(TheFunction->getSubprogram(), CpointDebugInfo.TheCU->getFile(), lineNo, 0);
+    }
+    Scope new_scope = Scope(std::deque<std::unique_ptr<ExprAST>>(), debuginfos_scope);
+    Scopes.push_back(std::move(new_scope));
+}
+
+static void endScope(){
+    Scope back = std::move(Scopes.back());
+    Log::Info() << "gen scope defers : " << back.to_string() << "\n";
+    for (auto it = back.deferExprs.begin(); it != back.deferExprs.end(); ++it) {
+        (*it)->codegen();
+    }
+    Scopes.pop_back();
 }
 
 Value* ScopeExprAST::codegen(){
@@ -626,26 +646,6 @@ Value* DeferExprAST::codegen(){
     back.deferExprs.push_back(std::move(Expr));
     Scopes.push_back(std::move(back));
     return Constant::getNullValue(get_type_llvm(void_type));
-}
-
-void createScope(){
-    DIScope* debuginfos_scope = nullptr;
-    if (debug_info_mode){
-        Function* TheFunction = Builder->GetInsertBlock()->getParent();
-        int lineNo = 0; // TODO
-        debuginfos_scope = DBuilder->createLexicalBlock(TheFunction->getSubprogram(), CpointDebugInfo.TheCU->getFile(), lineNo, 0);
-    }
-    Scope new_scope = Scope(std::deque<std::unique_ptr<ExprAST>>(), debuginfos_scope);
-    Scopes.push_back(std::move(new_scope));
-}
-
-void endScope(){
-    Scope back = std::move(Scopes.back());
-    Log::Info() << "gen scope defers : " << back.to_string() << "\n";
-    for (auto it = back.deferExprs.begin(); it != back.deferExprs.end(); ++it) {
-        (*it)->codegen();
-    }
-    Scopes.pop_back();
 }
 
 void assignUnionMember(Value* union_ptr, Value* val, Cpoint_Type member_type){

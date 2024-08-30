@@ -97,6 +97,22 @@ namespace CIR {
         GotoInstruction(CIR::BasicBlockRef goto_bb) : goto_bb(goto_bb) {}
         std::string to_string() override;
     };
+
+    class SizeofInstruction : public CIR::Instruction {
+    public:
+        bool is_type;
+        Cpoint_Type type;
+        InstructionRef var;
+        SizeofInstruction(bool is_type, Cpoint_Type type, InstructionRef var) : is_type(is_type), type(type), var(var) {
+            if (!var.is_empty()){
+                assert(type.is_empty);
+            }
+            if (!type.is_empty){
+                assert(var.is_empty());
+            }
+        }
+        std::string to_string() override;
+    };
     class ConstNumber : public CIR::Instruction {
     public:
         bool is_float;
