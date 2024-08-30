@@ -24,16 +24,11 @@ std::string CIR::VarInit::to_string(){
     return varinit_cir;
 }
 
-
-std::string CIR::LoadVarInstruction::to_string(){
-    return var.to_string();
-}
-
 std::string CIR::CallInstruction::to_string(){
     std::string call_cir = "call " + Callee + "(";
     for (int i = 0; i < Args.size(); i++){
         if (i != 0){
-            call_cir += " ";
+            call_cir += ", ";
         }
         call_cir += Args.at(i).to_string(); // add type of instruction for every arg
     }
@@ -43,6 +38,23 @@ std::string CIR::CallInstruction::to_string(){
 
 std::string CIR::ReturnInstruction::to_string(){
     return "return " + ret_val.to_string();
+}
+
+std::string CIR::LoadGlobalInstruction::to_string(){
+    std::string load_global_cir = "load_global ";
+    if (is_string){
+        load_global_cir += "(str)";
+    }
+    load_global_cir += std::to_string(global_pos);
+    return load_global_cir;
+}
+
+std::string CIR::LoadArgInstruction::to_string(){
+    return "load_arg " + create_pretty_name_for_type(arg_type) + " " + arg_name;
+}
+
+std::string CIR::GotoInstruction::to_string(){
+    return "goto " + goto_bb.to_string();
 }
 
 /*std::string CIR::BasicBlock::to_string(){
@@ -81,8 +93,37 @@ std::string CIR::Function::to_string(){
     return func_cir;
 }
 
+static std::string escape_string(const std::string& input){
+    std::string output;
+    output.reserve(input.size()); // Reserve space to avoid frequent re-allocations
+    for (int i = 0; i < input.length(); i++){
+        switch (input.at(i)){
+            case '\n':
+                output += "\\n";
+                break;
+            case '\t':
+                output += "\\t";
+                break;
+            default:
+                output += input[i];
+                break;
+        }
+    }
+    return output;
+}
+
 std::string FileCIR::to_string(){
     std::string file_cir_str = "// WARNING : this content is only for debug purposes and to be read by an human. The format of it could change at any moment.\n\n";
+    
+    if (!strings.empty()){
+    file_cir_str += "strs = {\n";
+    for (int i = 0; i < strings.size(); i++){
+        file_cir_str += "\t" + std::to_string(i) + " = \"" + escape_string(strings.at(i)) + "\"\n";
+    }
+    file_cir_str += "}\n";
+    }
+
+    
     for (int i = 0; i < functions.size(); i++){
         file_cir_str += functions.at(i)->to_string() + "\n\n";
     }

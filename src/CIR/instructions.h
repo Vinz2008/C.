@@ -1,10 +1,18 @@
+#ifndef _CIR_INSTRUCTIONS_
+#define _CIR_INSTRUCTIONS_
+
 #include "../config.h"
 
 #if ENABLE_CIR
 
 #include "../types.h"
 
+#include "basic_block.h"
+
+//#include "cir.h"
+
 namespace CIR {
+    class BasicBlockRef;
     class Instruction {
     public:
         // TODO : add a type to each instruction
@@ -46,11 +54,25 @@ namespace CIR {
         ReturnInstruction(InstructionRef ret_val) : ret_val(ret_val) {}
         std::string to_string() override;
     };
-    class LoadVarInstruction : public CIR::Instruction {
+    /*class LoadVarInstruction : public CIR::Instruction {
     public:
         InstructionRef var;
         Cpoint_Type load_type;
         LoadVarInstruction(InstructionRef var, Cpoint_Type load_type) : var(var), load_type(load_type) {}
+        std::string to_string() override;
+    };*/
+    class LoadGlobalInstruction : public CIR::Instruction {
+    public:
+        bool is_string;
+        int global_pos; // TODO : replace with a GlobalRef type ?
+        LoadGlobalInstruction(bool is_string, int global_pos) : is_string(is_string), global_pos(global_pos) {}
+        std::string to_string() override;
+    };
+    class LoadArgInstruction : public CIR::Instruction {
+    public:
+        std::string arg_name;
+        Cpoint_Type arg_type;
+        LoadArgInstruction(std::string arg_name, Cpoint_Type arg_type) : arg_name(arg_name), arg_type(arg_type) {}
         std::string to_string() override;
     };
     class VarInit : public CIR::Instruction {
@@ -66,6 +88,13 @@ namespace CIR {
         InstructionRef val; // TODO : add to Instructions the types of instructions to have the from type of the cast
         Cpoint_Type cast_type;
         CastInstruction(InstructionRef val, Cpoint_Type cast_type) : val(val), cast_type(cast_type) {}
+        std::string to_string() override;
+    };
+    
+    class GotoInstruction : public CIR::Instruction {
+    public:
+        CIR::BasicBlockRef goto_bb;
+        GotoInstruction(CIR::BasicBlockRef goto_bb) : goto_bb(goto_bb) {}
         std::string to_string() override;
     };
     class ConstNumber : public CIR::Instruction {
@@ -94,5 +123,7 @@ namespace CIR {
         }
     };
 }
+
+#endif
 
 #endif

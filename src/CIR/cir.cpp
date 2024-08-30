@@ -49,7 +49,8 @@ CIR::InstructionRef EmptyExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    fileCIR->strings.push_back(str);
+    return fileCIR->add_instruction(std::make_unique<CIR::LoadGlobalInstruction>(true, fileCIR->strings.size()-1));
 }
 
 CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -145,6 +146,9 @@ CIR::InstructionRef ConstantArrayExprAST::cir_gen(std::unique_ptr<FileCIR>& file
 }
 
 CIR::InstructionRef LabelExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    CIR::BasicBlockRef labelBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>(label_name));
+    fileCIR->add_instruction(std::make_unique<CIR::GotoInstruction>(labelBB));
+    fileCIR->set_insert_point(labelBB);
     return CIR::InstructionRef();
 }
 
@@ -206,11 +210,24 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     auto proto = std::make_unique<CIR::FunctionProto>(Proto->Name, Proto->cpoint_type, Proto->Args);
     auto function = std::make_unique<CIR::Function>(std::move(proto));
     fileCIR->add_function(std::move(function));
-    fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("entry"));
-    for (int i = 0; i < Body.size(); i++){
-        Body.at(i)->cir_gen(fileCIR);
+    CIR::BasicBlockRef entry_bb = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("entry"));
+    fileCIR->set_insert_point(entry_bb);
+    for (int i = 0; i < Proto->Args.size(); i++){
+        auto load_arg = fileCIR->add_instruction(std::make_unique<CIR::LoadArgInstruction>(Proto->Args.at(i).first, Proto->Args.at(i).second));
+        fileCIR->CurrentFunction->vars[Proto->Args.at(i).first] = load_arg;
     }
-    //fileCIR->functions.push_back(std::move(function));
+    CIR::InstructionRef ret_val;
+    for (int i = 0; i < Body.size(); i++){
+        ret_val = Body.at(i)->cir_gen(fileCIR);
+    }
+    if (Proto->cpoint_type.type == void_type && !Proto->cpoint_type.is_ptr){
+        ret_val = fileCIR->add_instruction(std::make_unique<CIR::ConstVoid>());
+    } else if (Proto->Name == "main") {
+        CIR::ConstNumber::nb_val_ty nb_val;
+        nb_val.int_nb = 0;
+        ret_val = fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(i32_type), nb_val));
+    }
+    fileCIR->add_instruction(std::make_unique<CIR::ReturnInstruction>(ret_val));
 }
 
 void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
