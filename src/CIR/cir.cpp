@@ -5,6 +5,8 @@
 
 #include "../ast.h"
 
+// TODO verify that last instruction of function is never type (a return, an unreachable, etc)
+
 CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     return fileCIR->CurrentFunction->vars[Name];
 }
@@ -14,7 +16,8 @@ CIR::InstructionRef DeferExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef ReturnAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    auto return_inst = std::make_unique<CIR::ReturnInstruction>(returned_expr->cir_gen(fileCIR));
+    return fileCIR->add_instruction(std::move(return_inst));
 }
 
 CIR::InstructionRef ScopeExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -105,10 +108,11 @@ CIR::InstructionRef EnumCreation::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     // for debug for new
+    auto call_instr = std::make_unique<CIR::CallInstruction>(Callee, std::vector<CIR::InstructionRef>());
     for (int i = 0; i < Args.size(); i++){
-        Args.at(i)->cir_gen(fileCIR);
+        call_instr->Args.push_back(Args.at(i)->cir_gen(fileCIR));
     }
-    return CIR::InstructionRef();
+    return fileCIR->add_instruction(std::move(call_instr));
 }
 
 CIR::InstructionRef GotoExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){

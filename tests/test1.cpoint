@@ -2,7 +2,7 @@ import @std/print.cpoint
 
 extern printf(format : i8 ptr ...) i32;
 
-func main(){
+func main() void {
   var i : i32 = 2
   var temp : i32 = 3
   var p : i32 ptr = addr i

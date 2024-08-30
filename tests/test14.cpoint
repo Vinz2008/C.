@@ -1,7 +1,7 @@
 import @std/print.cpoint
 import @std/file.cpoint
 
-func main(){
+func main() void {
     var fd : i32 = file::open("test_io.txt")
     #println("fd : {}", fd)
     var out : i32 = file::write(fd, "test hello world\n")
@@ -20,7 +20,7 @@ func main(){
     // printstr(file::get_line(fd2))
     for i = 0, i < 2, 1.0 {
         // printd(i)
-        // printstr(file::get_line(fd2))
+        printstr(file::get_line(fd2))
     }
     file::close(fd2)
 }

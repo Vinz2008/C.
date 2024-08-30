@@ -6,7 +6,7 @@
 #include <memory>
 #include "../types.h"
 
-#include "ir_print.h"
+#include "instructions.h"
 
 
 namespace CIR {

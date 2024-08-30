@@ -22,6 +22,23 @@ std::string CIR::VarInit::to_string(){
 std::string CIR::LoadVarInstruction::to_string(){
     return var.to_string();
 }
+
+std::string CIR::CallInstruction::to_string(){
+    std::string call_cir = "call " + Callee + "(";
+    for (int i = 0; i < Args.size(); i++){
+        if (i != 0){
+            call_cir += " ";
+        }
+        call_cir += Args.at(i).to_string(); // add type of instruction for every arg
+    }
+    call_cir += ")";
+    return call_cir;
+}
+
+std::string CIR::ReturnInstruction::to_string(){
+    return "";
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){

@@ -1857,7 +1857,10 @@ Function *FunctionAST::codegen() {
   }
   bool contains_return_or_unreachable_or_never_call = false;
   for (int i = 0; i < Body.size(); i++){
-    if (Body.at(i)->contains_expr(ExprType::Unreachable) || Body.at(i)->contains_expr(ExprType::Return) || Body.at(i)->contains_expr(ExprType::NeverFunctionCall)){
+    if (Body.at(i)->contains_expr(ExprType::Unreachable) || Body.at(i)->contains_expr(ExprType::NeverFunctionCall)){
+        contains_return_or_unreachable_or_never_call = true;
+    }
+    if (i != Body.size()-1 && Body.at(i)->contains_expr(ExprType::Return)){
         contains_return_or_unreachable_or_never_call = true;
     }
   }
@@ -1937,6 +1940,15 @@ Function *FunctionAST::codegen() {
     i++;
   }
   }
+  //Type* ret_val_type = nullptr;
+  bool is_last_expr_return = false;
+  std::unique_ptr<ExprAST> last_expr = nullptr;
+  if (!Body.empty() && dynamic_cast<ReturnAST*>(Body.back().get())){
+    is_last_expr_return = true;
+    last_expr = Body.back()->clone();
+    //ret_val_type = get_type_llvm(dynamic_cast<ReturnAST*>(Body.back().get())->returned_expr->get_type());
+  }
+
   if (debug_info_mode){
   for (int i = 0; i < Body.size(); i++){
   CpointDebugInfo.emitLocation(Body.at(i).get());
@@ -1947,9 +1959,9 @@ Function *FunctionAST::codegen() {
   createScope();
   //Value *RetVal = nullptr;
   //std::cout << "BODY SIZE : " << Body.size() << std::endl;
-  bool is_last_expr_a_goto = dynamic_cast<GotoExprAST*>(Body.back().get());
+  bool is_last_expr_a_goto = !Body.empty() && dynamic_cast<GotoExprAST*>(Body.back().get());
   bool is_last_expr_an_infinite_loop = false;
-  if (dynamic_cast<LoopExprAST*>(Body.back().get())){
+  if (!Body.empty() && dynamic_cast<LoopExprAST*>(Body.back().get())){
     is_last_expr_an_infinite_loop = dynamic_cast<LoopExprAST*>(Body.back().get())->is_infinite_loop;
   }
   
@@ -1959,13 +1971,27 @@ Function *FunctionAST::codegen() {
   }*/
 
   endScope();
-  
+  Type* ret_val_type;
+  // if the last expr is not a return
+  if (is_last_expr_return){
+    assert(last_expr != nullptr);
+    assert(dynamic_cast<ReturnAST*>(last_expr.get()) != nullptr);
+    std::cout << "returned_expr : " << dynamic_cast<ReturnAST*>(last_expr.get())->returned_expr->to_string() << std::endl;
+    ret_val_type = get_type_llvm(dynamic_cast<ReturnAST*>(last_expr.get())->returned_expr->get_type());
+  } else {
+    if (!RetVal){
+        ret_val_type = get_type_llvm(Cpoint_Type(void_type));
+    } else {
+        ret_val_type = RetVal->getType();
+    }
+  }
+
   //if (RetVal) {
     Log::Info() << "before sret P.cpoint_type : " << P.cpoint_type << "\n";
     if (RetVal){
-    Log::Info() << "before sret RetVal->getType()->isStructTy() : " << RetVal->getType()->isStructTy() << "\n";
+    Log::Info() << "before sret RetVal->getType()->isStructTy() : " << /*RetVal->getType()*/ ret_val_type->isStructTy() << "\n";
     }
-    if  (P.cpoint_type.is_just_struct() && should_return_struct_with_ptr(P.cpoint_type) && RetVal && RetVal->getType()->isStructTy()){
+    if  (P.cpoint_type.is_just_struct() && should_return_struct_with_ptr(P.cpoint_type) && /*RetVal && RetVal->getType()*/ ret_val_type->isStructTy()){
         Log::Info() << "sret storing in return" << "\n";
         /*auto intrisicId = Intrinsic::memcpy;
         Function* memcpyF = Intrinsic::getDeclaration(TheModule.get(), intrisicId);
@@ -1990,13 +2016,23 @@ Function *FunctionAST::codegen() {
         Builder->CreateRetVoid();
         goto after_ret;
     }
-    if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
+    /*if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
         // void is represented by nullptr
         RetVal = nullptr;
         goto before_ret;
+    }*/
+
+   if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type))){
+        // void is represented by nullptr
+        RetVal = nullptr;
     }
+
+    if (!RetVal){
+        goto before_ret;
+    }
+
     // Finish off the function.
-    if (RetVal->getType() == get_type_llvm(Cpoint_Type(void_type)) && TheFunction->getReturnType() != get_type_llvm(Cpoint_Type(void_type))){
+    if (/*RetVal->getType()*/ ret_val_type == get_type_llvm(Cpoint_Type(void_type)) && /*TheFunction->getReturnType() != get_type_llvm(Cpoint_Type(void_type))*/ Proto->cpoint_type.type != void_type){
         if (P.getName() == "main"){
             RetVal = ConstantInt::get(*TheContext, APInt(32, 0, true));
             // TODO : maybe do an error if main function doesn't return an int and verify it after converting instead of createing the return 0
@@ -2004,11 +2040,15 @@ Function *FunctionAST::codegen() {
             Log::Warning(emptyLoc) << "Missing return value in function (the return value is void)" << "\n";
         }
     }
+    if (P.getName() == "main" && ret_val_type != get_type_llvm(Proto->cpoint_type)){
+        RetVal = ConstantInt::get(*TheContext, APInt(32, 0, true));
+        ret_val_type = get_type_llvm(Cpoint_Type(i32_type));
+    }
 
-    if (RetVal->getType() != get_type_llvm(Cpoint_Type(void_type)) && RetVal->getType() != TheFunction->getReturnType()){
+    if (!is_last_expr_return && /*RetVal->getType()*/ ret_val_type != get_type_llvm(Cpoint_Type(void_type)) && /*RetVal->getType()*/ ret_val_type != TheFunction->getReturnType()){
       convert_to_type(get_cpoint_type_from_llvm(RetVal->getType()), TheFunction->getReturnType(), RetVal);
     }
-    if (RetVal->getType() != TheFunction->getReturnType()){
+    if (/*RetVal->getType()*/ ret_val_type != TheFunction->getReturnType()){
         //return LogErrorF(emptyLoc, "Return type is wrong in the %s function", P.getName().c_str());
         auto wrong_return_type_warning = Log::Warning(emptyLoc);
         wrong_return_type_warning.head << "Return type is wrong in the " << P.getName() << " function" << "\n";
@@ -2016,10 +2056,13 @@ Function *FunctionAST::codegen() {
         wrong_return_type_warning.end();
     }
 before_ret:
-    if (!contains_return_or_unreachable_or_never_call && !is_return_never_type){
+    std::cout << "is_last_expr_return : " << is_last_expr_return << std::endl; 
+    if (!contains_return_or_unreachable_or_never_call && !is_return_never_type && !is_last_expr_return){
     // only verify if the last expr is a goto if the function is main (because it will create a ret by default)
+    std::cout << "ret_val_type : " << get_cpoint_type_from_llvm(ret_val_type) << std::endl;
+    std::cout << "is RetVal nullptr : " << (RetVal == nullptr) << std::endl;
     if ((!is_last_expr_a_goto && !is_last_expr_an_infinite_loop) || P.getName() != "main"){
-        if (RetVal){
+        if (RetVal && !ret_val_type->isVoidTy()){
             Builder->CreateRet(RetVal);
         } else {
             Builder->CreateRetVoid();
@@ -2027,6 +2070,10 @@ before_ret:
     }
     }
 after_ret:
+    /*std::error_code EC;
+    auto dump_file = raw_fd_ostream(StringRef("dump_" + P.getName() + ".ll"), EC);
+    TheFunction->print(dump_file);*/
+    
     CpointDebugInfo.LexicalBlocks.pop_back();
     // Validate the generated code, checking for consistency.
     // TODO : maybe enable this only in somes cases
@@ -2256,9 +2303,10 @@ Value* ReturnAST::codegen(){
     convert_to_type(get_cpoint_type_from_llvm(value_returned->getType()), TheFunction->getReturnType(), value_returned);
   }
   //return Builder->CreateRet(value_returned);
-  Builder->CreateRet(value_returned);
-  //return value_returned;
-  return Constant::getNullValue(Type::getVoidTy(*TheContext));
+  return Builder->CreateRet(value_returned);
+  //return value_returned; // even though the type of returnAST is a never type, LLVM will prefer that we just return the Value
+  
+  //return Constant::getNullValue(Type::getVoidTy(*TheContext));
 }
 
 Value* GotoExprAST::codegen(){

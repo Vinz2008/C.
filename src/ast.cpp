@@ -1021,7 +1021,10 @@ static bool is_infinite_loop(std::unique_ptr<ExprAST>& E){
 }
 
 
-std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body){
+std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body, Cpoint_Type func_return_type, bool is_main){
+    if (is_func_body){
+        assert(!func_return_type.is_empty);
+    }
     //bool return_found = false;
     bool found_terminator = false;
     //bool infinite_loop_found = false;
@@ -1029,8 +1032,8 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
       auto E = ParseExpression();
       if (!E)
         return nullptr;
-      if (found_terminator /*return_found ||  infinite_loop_found*/){
-        //auto unreachable_code_warning = Log::Warning();
+      if (found_terminator || dynamic_cast<CommentExprAST*>(E.get()) /*return_found ||  infinite_loop_found*/){
+        //auto unreachaParseBodyExpressionsble_code_warning = Log::Warning();
         //unreachable_code_warning.content << "unreachable code : " << E->to_string();
         continue;
       }
@@ -1059,12 +1062,26 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
       }*/
       Body.push_back(std::move(E));
     }
+    /*if (is_func_body && dynamic_cast<ReturnAST*>(Body.back().get()) == nullptr){
+        // if the last expr of a func is not a return, return the value
+        //if ()
+        Cpoint_Type last_expr_type = Body.back()->get_type();
+        std::cout << "last_expr_type : " << last_expr_type << std::endl;
+        std::cout << "last_expr_type == Cpoint_Type(void_type) " << (last_expr_type.type == void_type && !last_expr_type.is_ptr) << std::endl;
+        if (!is_main && last_expr_type != Cpoint_Type(void_type) && last_expr_type.type != never_type && func_return_type.type != void_type){
+            auto returned_expr = std::move(Body.back());
+            Body.pop_back();
+            Body.push_back(std::make_unique<ReturnAST>(std::move(returned_expr)));
+        }
+    }*/
+
+    // TODO : it was removed, was it needed ?
     // if the last expressions is a return, replace it with just the expressions because otherwise it would return a never type 
-    if (is_func_body && dynamic_cast<ReturnAST*>(Body.back().get())){
+    /*if (is_func_body && dynamic_cast<ReturnAST*>(Body.back().get())){
         auto return_expr = std::move(Body.back());
         Body.pop_back();
         Body.push_back(std::move(dynamic_cast<ReturnAST*>(return_expr.get())->returned_expr));
-    }
+    }*/
     return std::make_unique<EmptyExprAST>(); 
 }
 
@@ -1519,7 +1536,7 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   if (Comp_context->std_mode && Proto->Name == "main" && Comp_context->gc_mode){
   generate_gc_init(Body);
   }
-  auto ret = ParseBodyExpressions(Body, true);
+  auto ret = ParseBodyExpressions(Body, true, Proto->cpoint_type, Proto->getName() == "main");
   if (!ret){
     return nullptr;
   }
@@ -2255,6 +2272,7 @@ std::unique_ptr<FileAST> ParseFile(){
     case tok_extern:
       is_in_extern = true;
       if (auto ProtoAST = ParseExtern()){
+        FunctionProtos[ProtoAST->Name] = ProtoAST->clone();
         function_protos.push_back(std::move(ProtoAST));
       } else {
         getNextToken();

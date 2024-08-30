@@ -30,6 +30,19 @@ namespace CIR {
             return "%" + std::to_string(instruction_pos); 
         }
     };
+    class CallInstruction : public CIR::Instruction {
+    public:
+        std::string Callee;
+        std::vector<InstructionRef> Args;
+        CallInstruction(std::string Callee, std::vector<InstructionRef> Args) : Callee(Callee), Args(Args) {}
+        std::string to_string() override;
+    };
+    class ReturnInstruction : public CIR::Instruction {
+    public:
+        InstructionRef ret_val;
+        ReturnInstruction(InstructionRef ret_val) : ret_val(ret_val) {}
+        std::string to_string() override;
+    };
     class LoadVarInstruction : public CIR::Instruction {
     public:
         InstructionRef var;

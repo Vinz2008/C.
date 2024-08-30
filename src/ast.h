@@ -684,6 +684,7 @@ struct StructMemberCallExprAST : public ExprAST {
                 struct_name = get_object_template_name(struct_name, *LHS_type.object_template_type_passed);
             }
             std::string function_mangled_name = struct_function_mangling(/*StructMember->LHS->get_type().struct_name*/ struct_name, RHS_variable_expr->Name);
+            assert(FunctionProtos[function_mangled_name] != nullptr);
             return FunctionProtos[function_mangled_name]->cpoint_type;
         } else {
             std::string function_mangled_name = LHS_type.create_mangled_name() + "__" + RHS_variable_expr->Name;
@@ -1481,7 +1482,7 @@ std::unique_ptr<ExprAST> ParsePrimary();
 std::unique_ptr<FunctionAST> ParseDefinition();
 std::unique_ptr<PrototypeAST> ParseExtern();
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args);
-std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body = false);
+std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAST>>& Body, bool is_func_body = false, Cpoint_Type func_return_type = Cpoint_Type(),  bool is_main = false);
 std::unique_ptr<FunctionAST> ParseTopLevelExpr();
 std::unique_ptr<ExprAST> ParseIfExpr();
 std::unique_ptr<ExprAST> ParseReturn();
