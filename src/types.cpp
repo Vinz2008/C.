@@ -720,7 +720,7 @@ std::string create_pretty_name_for_type(Cpoint_Type type){
         }
     }
     if (type.is_array){
-        name += " array";
+        name += "[" + std::to_string(type.nb_element) + "]";
     }
     return name;
 }

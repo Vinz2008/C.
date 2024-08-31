@@ -154,6 +154,20 @@ public:
         return CurrentFunction->basicBlocks.at(basic_block_ref.get_pos()).get();
     }
 
+    CIR::Instruction* get_instruction(CIR::InstructionRef instruction_ref){
+        int ret_instruction_pos = 0;
+        int instruction_ref_pos = instruction_ref.get_pos();
+        for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
+            for (int j = 0; j < CurrentFunction->basicBlocks.at(i)->instructions.size(); j++){
+                if (ret_instruction_pos == instruction_ref_pos){
+                    return CurrentFunction->basicBlocks.at(i)->instructions.at(j).get();
+                }
+                ret_instruction_pos++;
+            }
+        }
+        return nullptr;
+    }
+
     CIR::BasicBlockRef get_basic_block_from_name(std::string bb_name){
         for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
             if (CurrentFunction->basicBlocks.at(i)->name == bb_name){

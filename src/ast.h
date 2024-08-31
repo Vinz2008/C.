@@ -222,9 +222,9 @@ public:
   }
   Cpoint_Type get_type() override {
     if (trunc(Val) == Val){
-        return i32_type;
+        return Cpoint_Type(i32_type);
     } else {
-        return double_type;
+        return Cpoint_Type(double_type);
     }
   }
   std::string generate_c() override;

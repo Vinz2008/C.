@@ -11,13 +11,16 @@
 
 //#include "cir.h"
 
+class FileCIR;
+
 namespace CIR {
     class BasicBlockRef;
     class Instruction {
     public:
         // TODO : add a type to each instruction
         std::string label;
-        Instruction(std::string label = "") : label(label) {}
+        Cpoint_Type type; // TODO : replace with CIR_Type ?
+        Instruction(std::string label = "", Cpoint_Type type = Cpoint_Type()) : label(label), type(type) {}
         virtual ~Instruction() = default;
         virtual std::string to_string() = 0;
     };
@@ -34,12 +37,20 @@ namespace CIR {
         bool is_empty(){
             return empty_ref;
         }
-        std::string to_string(){
-            if (instruction_pos == -1) {
-                return "%" + std::to_string(instruction_pos) + " (invalid)";
+        std::string to_string(); /*{
+            std::string instruction_ref_str = "%" + std::to_string(instruction_pos);
+            CIR::Instruction* instr = fileCIR->get_instruction(*this);
+            if (instr->label != ""){
+                instruction_ref_str += "(" + instr->label + ")";
             }
-            return "%" + std::to_string(instruction_pos); 
-        }
+            if (!instr->type.is_empty){
+                instruction_ref_str += " : " + create_pretty_name_for_type(type);
+            }
+            if (instruction_pos == -1) {
+                instruction_ref_str += " (invalid)";
+            }
+            return instruction_ref_str; 
+        }*/
     };
     class CallInstruction : public CIR::Instruction {
     public:
@@ -116,7 +127,7 @@ namespace CIR {
     class ConstNumber : public CIR::Instruction {
     public:
         bool is_float;
-        Cpoint_Type type;
+        Cpoint_Type type; // TODO : remove the type ? because it is already in the instruction ? or add a get_type member for instructions and then use it to add the types to Instructions
         union nb_val_ty {
             double float_nb;
             int int_nb;

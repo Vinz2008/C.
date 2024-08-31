@@ -69,6 +69,14 @@ std::string CIR::SizeofInstruction::to_string(){
     return basic_block_cir;
 }*/
 
+std::string CIR::InstructionRef::to_string(){
+    std::string instruction_ref_str = "%" + std::to_string(instruction_pos);
+    if (instruction_pos == -1) {
+        instruction_ref_str += " (invalid)";
+    }
+    return instruction_ref_str; 
+}
+
 std::string CIR::BasicBlock::to_string(int& InstructionIndex){
     std::string basic_block_cir = name + ":";
     if (!predecessors.empty()){
@@ -82,7 +90,14 @@ std::string CIR::BasicBlock::to_string(int& InstructionIndex){
     }
     basic_block_cir += "\n";
     for (int i = 0; i < instructions.size(); i++){
-        basic_block_cir += "\t%" + std::to_string(InstructionIndex) + " = " + instructions.at(i)->to_string() + "\n";
+        basic_block_cir += "\t%" + std::to_string(InstructionIndex);
+        if (instructions.at(i)->label != ""){
+            basic_block_cir += "(" + instructions.at(i)->label + ") ";
+        }
+        if (!instructions.at(i)->type.is_empty){
+            basic_block_cir += ": " + create_pretty_name_for_type(instructions.at(i)->type);
+        }
+        basic_block_cir += " = " + instructions.at(i)->to_string() + "\n";
         InstructionIndex++;
     }
     return basic_block_cir;

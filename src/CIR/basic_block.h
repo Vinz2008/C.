@@ -5,6 +5,8 @@
 
 //#include "instructions.h"
 
+class FileCIR;
+
 namespace CIR {
     class Instruction;
     class BasicBlockRef {
