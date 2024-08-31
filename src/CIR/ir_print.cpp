@@ -149,7 +149,7 @@ std::string FileCIR::to_string(){
     for (int i = 0; i < strings.size(); i++){
         file_cir_str += "\t" + std::to_string(i) + " = \"" + escape_string(strings.at(i)) + "\"\n";
     }
-    file_cir_str += "}\n";
+    file_cir_str += "}\n\n";
     }
 
     
