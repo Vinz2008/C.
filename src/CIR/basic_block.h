@@ -7,14 +7,6 @@
 
 namespace CIR {
     class Instruction;
-    class BasicBlock {
-    public:
-        std::string name;
-        std::vector<std::unique_ptr<Instruction>> instructions;
-        BasicBlock(std::string name, std::vector<std::unique_ptr<Instruction>> instructions = std::vector<std::unique_ptr<Instruction>>()) : name(name), instructions(std::move(instructions)) {}
-        //std::string to_string();
-        std::string to_string(int& InstructionIndex);
-    };
     class BasicBlockRef {
         bool empty_ref;
         int basic_block_pos;
@@ -26,6 +18,9 @@ namespace CIR {
             assert(!empty_ref);
             return basic_block_pos;
         }
+        std::string get_label(){
+            return label;
+        }
         bool is_empty(){
             return empty_ref;
         }
@@ -35,6 +30,15 @@ namespace CIR {
             }
             return label + ":"; 
         }
+    };
+    class BasicBlock {
+    public:
+        std::string name;
+        std::vector<std::unique_ptr<Instruction>> instructions;
+        std::vector<BasicBlockRef> predecessors;
+        BasicBlock(std::string name, std::vector<std::unique_ptr<Instruction>> instructions = std::vector<std::unique_ptr<Instruction>>()) : name(name), instructions(std::move(instructions)), predecessors() {}
+        //std::string to_string();
+        std::string to_string(int& InstructionIndex);
     };
 
 }

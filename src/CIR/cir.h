@@ -154,6 +154,15 @@ public:
         return CurrentFunction->basicBlocks.at(basic_block_ref.get_pos()).get();
     }
 
+    CIR::BasicBlockRef get_basic_block_from_name(std::string bb_name){
+        for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
+            if (CurrentFunction->basicBlocks.at(i)->name == bb_name){
+                return CIR::BasicBlockRef(i, bb_name);
+            }
+        }
+        return CIR::BasicBlockRef();
+    }
+
     void set_insert_point(CIR::BasicBlockRef basic_block){
         CurrentBasicBlock = basic_block;
     }

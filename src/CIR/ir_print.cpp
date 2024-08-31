@@ -70,7 +70,17 @@ std::string CIR::SizeofInstruction::to_string(){
 }*/
 
 std::string CIR::BasicBlock::to_string(int& InstructionIndex){
-    std::string basic_block_cir = name + ":\n";
+    std::string basic_block_cir = name + ":";
+    if (!predecessors.empty()){
+        basic_block_cir += "\t\t\t // predecessors : ";
+        for (int i = 0; i < predecessors.size(); i++){
+            if (i != 0){
+                basic_block_cir += ", ";
+            }
+            basic_block_cir += predecessors.at(i).get_label();
+        }
+    }
+    basic_block_cir += "\n";
     for (int i = 0; i < instructions.size(); i++){
         basic_block_cir += "\t%" + std::to_string(InstructionIndex) + " = " + instructions.at(i)->to_string() + "\n";
         InstructionIndex++;

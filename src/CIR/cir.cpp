@@ -20,6 +20,11 @@ static CIR::InstructionRef codegenBody(std::unique_ptr<FileCIR>& fileCIR, std::v
     return ret;
 }
 
+static CIR::InstructionRef createGoto(std::unique_ptr<FileCIR>& fileCIR, CIR::BasicBlockRef goto_basic_block){
+    fileCIR->get_basic_block(goto_basic_block)->predecessors.push_back(fileCIR->CurrentBasicBlock);
+    return fileCIR->add_instruction(std::make_unique<CIR::GotoInstruction>(goto_basic_block));
+}
+
 CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     return fileCIR->CurrentFunction->vars[Name];
 }
@@ -137,7 +142,10 @@ CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef GotoExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    auto goto_basic_block = fileCIR->get_basic_block_from_name(label_name);
+    assert(!goto_basic_block.is_empty());
+    return createGoto(fileCIR, goto_basic_block);
+    //return fileCIR->add_instruction(std::make_unique<CIR::GotoInstruction>(goto_basic_block));
 }
 
 CIR::InstructionRef WhileExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -162,7 +170,8 @@ CIR::InstructionRef ConstantArrayExprAST::cir_gen(std::unique_ptr<FileCIR>& file
 
 CIR::InstructionRef LabelExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     CIR::BasicBlockRef labelBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>(label_name));
-    fileCIR->add_instruction(std::make_unique<CIR::GotoInstruction>(labelBB));
+    //fileCIR->add_instruction(std::make_unique<CIR::GotoInstruction>(labelBB));
+    createGoto(fileCIR, labelBB);
     fileCIR->set_insert_point(labelBB);
     return CIR::InstructionRef();
 }
