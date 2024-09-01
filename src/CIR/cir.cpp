@@ -299,7 +299,9 @@ void PrototypeAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    auto proto = std::make_unique<CIR::FunctionProto>(Proto->Name, Proto->cpoint_type, Proto->Args);
+    auto proto = std::make_unique<CIR::FunctionProto>(Proto->Name, Proto->cpoint_type, Proto->Args, Proto->is_variable_number_args, Proto->is_private_func);
+    auto proto_clone = CIR::FunctionProto(Proto->Name, Proto->cpoint_type, Proto->Args, Proto->is_variable_number_args, Proto->is_private_func);
+    fileCIR->protos[Proto->Name] = proto_clone;
     auto function = std::make_unique<CIR::Function>(std::move(proto));
     fileCIR->add_function(std::move(function));
     CIR::BasicBlockRef entry_bb = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("entry"));
@@ -335,8 +337,8 @@ void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 }
 
-std::unique_ptr<FileCIR> FileAST::cir_gen(){
-  auto fileCIR = std::make_unique<FileCIR>(std::vector<std::unique_ptr<CIR::Function>>());
+std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
+  auto fileCIR = std::make_unique<FileCIR>(filename, std::vector<std::unique_ptr<CIR::Function>>());
   for (int i = 0; i < global_vars.size(); i++){
     global_vars.at(i)->cir_gen(fileCIR);
   }

@@ -1743,10 +1743,10 @@ Function *PrototypeAST::codegen() {
   FunctionType *FT;
   bool has_sret = false;
   if (Name == "main"){
-  std::vector<Type*> args_type_main;
-  args_type_main.push_back(get_type_llvm(Cpoint_Type(i32_type)));
-  args_type_main.push_back(get_type_llvm(Cpoint_Type(void_type, true))->getPointerTo());
-  FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(i32_type)), args_type_main, false);
+    std::vector<Type*> args_type_main;
+    args_type_main.push_back(get_type_llvm(Cpoint_Type(i32_type)));
+    args_type_main.push_back(get_type_llvm(Cpoint_Type(void_type, true))->getPointerTo());
+    FT = FunctionType::get(/*get_type_llvm(cpoint_type)*/ get_type_llvm(Cpoint_Type(i32_type)), args_type_main, false);
   } else {
   if (cpoint_type.is_just_struct()){
     // replace this by if (should_return_struct_with_ptr())

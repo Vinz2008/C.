@@ -44,6 +44,7 @@
 
 #if ENABLE_CIR
 #include "CIR/cir.h"
+#include "backends/backends.h"
 #endif
 
 using namespace std;
@@ -416,6 +417,7 @@ int main(int argc, char **argv){
     std::string llvm_default_target_triple = llvm::sys::getDefaultTargetTriple();
     TripleLLVM = Triple(llvm_default_target_triple); // default target triplet only for lld
     std::string TargetTriple = "";
+    enum backend_type backend = backend_type::LLVM_TYPE; // add a cli flag to set this
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();
@@ -713,11 +715,14 @@ int main(int argc, char **argv){
 #if ENABLE_FILE_AST
   std::unique_ptr<FileAST> file_ast = ParseFile();
 #if ENABLE_CIR
-  auto file_cir = file_ast->cir_gen();
+  auto file_cir = file_ast->cir_gen(first_filename);
   std::string cir_string = file_cir->to_string();
   ofstream cir_file("out.cir");
   cir_file << cir_string << "\n";
   cir_file.close();
+  if (codegenBackend(std::move(file_cir), backend, object_filename, TripleLLVM, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.cpu, targetInfos.features) == 1){
+    return 1;
+  }
 #endif
   file_ast->codegen();
 #else
@@ -741,7 +746,7 @@ int main(int argc, char **argv){
     if (Comp_context->c_translator){
         c_translator::generate_c_code("out.c");
     } else {
-    int ret = generate_llvm_object_file(object_filename, TripleLLVM, /*TargetTriple*/ targetInfos.llvm_target_triple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.cpu, targetInfos.features);
+    int ret = generate_llvm_object_file(std::move(TheModule), object_filename, TripleLLVM, /*TargetTriple*/ targetInfos.llvm_target_triple, file_out_ostream, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.cpu, targetInfos.features);
     if (ret == 1){
         return 1;
     }

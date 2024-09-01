@@ -580,7 +580,7 @@ public:
         return "Vector { " + vector_members_str + " }";
     }
     Cpoint_Type get_type() override {
-        return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, new Cpoint_Type(vector_element_type), vector_size);
+        return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, (vector_element_type.is_empty) ? nullptr : new Cpoint_Type(vector_element_type), vector_size);
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR
@@ -1476,7 +1476,7 @@ public:
   FileAST(std::vector<std::unique_ptr<GlobalVariableAST>> global_vars, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<UnionDeclarAST>> unions, std::vector<std::unique_ptr<EnumDeclarAST>> enums, std::vector<std::unique_ptr<MembersDeclarAST>> members, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<ModAST>> mods) : global_vars(std::move(global_vars)), structs(std::move(structs)), unions(std::move(unions)), enums(std::move(enums)), members(std::move(members)), function_protos(std::move(function_protos)), functions(std::move(functions)), mods(std::move(mods)) {}
   void codegen(); // TODO : error handling ?
 #if ENABLE_CIR
-  std::unique_ptr<FileCIR> cir_gen();
+  std::unique_ptr<FileCIR> cir_gen(std::string filename);
 #endif
 };
 

@@ -51,6 +51,8 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
             // found first non void or never type in match branches
             match_return_type = matchCaseType;
         }
+        Log::Info() << "match_return_type : " << match_return_type << "\n";
+        Log::Info() << "matchCaseType : " << matchCaseType << "\n";
         if (match_return_type.type != void_type && match_return_type != matchCaseType && matchCaseType.type != never_type){
             return LogErrorV(emptyLoc, "Match case %s returned type %s instead of %s type", matchCases.at(i)->expr->to_string().c_str(), create_pretty_name_for_type(matchCaseType).c_str(), create_pretty_name_for_type(match_return_type).c_str());
         }

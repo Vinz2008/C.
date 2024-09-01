@@ -136,6 +136,36 @@ before_is_ptr:
     return type;   
 }
 
+
+bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
+    bool is_object_template_type_passed_same = false;
+    if (lhs.object_template_type_passed != nullptr && rhs.object_template_type_passed != nullptr){
+        is_object_template_type_passed_same = *lhs.object_template_type_passed == *rhs.object_template_type_passed;
+    } else if (lhs.object_template_type_passed == nullptr && rhs.object_template_type_passed == nullptr){
+        is_object_template_type_passed_same = true;
+    }
+
+    bool is_return_type_same = false;
+    if (lhs.return_type != nullptr && rhs.return_type != nullptr){
+        is_return_type_same = *lhs.return_type == *rhs.return_type;
+    } else if (lhs.return_type == nullptr && rhs.return_type == nullptr){
+        is_return_type_same = true;
+    }
+
+    bool is_vector_element_type_same = false;
+    if (lhs.vector_element_type != nullptr && rhs.vector_element_type != nullptr){
+        is_vector_element_type_same = *lhs.vector_element_type == *rhs.vector_element_type;
+    } else if (lhs.vector_element_type == nullptr && rhs.vector_element_type == nullptr){
+        is_vector_element_type_same = true;
+    }
+
+    return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_object_template == rhs.is_object_template && lhs.is_empty == rhs.is_empty && is_object_template_type_passed_same && lhs.is_function == rhs.is_function && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(), rhs.args.end()) && is_return_type_same && lhs.is_vector_type == rhs.is_vector_type && is_vector_element_type_same && lhs.vector_size == rhs.vector_size;
+}
+
+bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
+    return !(lhs == rhs);
+}
+
 bool is_llvm_type_number(Type* llvm_type){
     return llvm_type == Type::getDoubleTy(*TheContext) || llvm_type == Type::getInt8Ty(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt32Ty(*TheContext) || llvm_type == Type::getInt64Ty(*TheContext) || llvm_type == Type::getInt128Ty(*TheContext);
 }

@@ -21,6 +21,8 @@
 using namespace llvm;
 using namespace llvm::sys;
 
+// TODO : move this in the backends/llvm.cpp file
+
 // also stolen from zig
 struct TimeTracerRAII {
   // Granularity in ms
@@ -54,11 +56,12 @@ struct TimeTracerRAII {
   }
 };
 
-extern std::unique_ptr<Module> TheModule;
+//extern std::unique_ptr<Module> TheModule;
 extern std::unique_ptr<Compiler_context> Comp_context;
 
 // TODO : just pass a TargetInfo insted of CPU, LLVMTargetTriple and cpu_features
-int generate_llvm_object_file(std::string object_filename, Triple TripleLLVM, std::string LLVMTargetTriple, llvm::raw_ostream* file_out_ostream, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level, std::string CPU, std::string cpu_features){
+// TODO : replace is_optimised and optimize level with an enum with level 0, 1, 2 and 3 
+int generate_llvm_object_file(std::unique_ptr<Module> TheModule, std::string object_filename, Triple TripleLLVM, std::string LLVMTargetTriple, llvm::raw_ostream* file_out_ostream, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level, std::string CPU, std::string cpu_features){
     InitializeAllTargetInfos();
     InitializeAllTargets();
     InitializeAllTargetMCs();

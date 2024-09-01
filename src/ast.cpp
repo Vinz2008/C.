@@ -947,7 +947,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
     return Cpoint_Type();
   }
 before_gen_cpoint_type:
-  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_object_template, object_template_type_passed, is_function, args, return_type, is_vector, new Cpoint_Type(vector_element_type), vector_element_number);
+  return Cpoint_Type(type, is_ptr, nb_ptr, false, 0, struct_Name != "", struct_Name, unionName != "", unionName, enumName != "", enumName, is_template_type, is_object_template, object_template_type_passed, is_function, args, return_type, is_vector, (vector_element_type.is_empty) ? nullptr :  new Cpoint_Type(vector_element_type), vector_element_number);
 }
 
 std::unique_ptr<ExprAST> ParseFunctionArgs(std::vector<std::unique_ptr<ExprAST>>& Args){

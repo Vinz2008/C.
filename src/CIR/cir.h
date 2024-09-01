@@ -93,7 +93,10 @@ namespace CIR {
         std::string name;
         Cpoint_Type return_type;
         std::vector<std::pair<std::string, Cpoint_Type>> args;
-        FunctionProto(std::string name, Cpoint_Type return_type, std::vector<std::pair<std::string, Cpoint_Type>> args) : name(name), return_type(return_type), args(std::move(args)) {}
+        bool is_variable_number_args;
+        bool is_private_func;
+        FunctionProto() : name(), return_type(), args(), is_variable_number_args(false), is_private_func(false) {}
+        FunctionProto(std::string name, Cpoint_Type return_type, std::vector<std::pair<std::string, Cpoint_Type>> args, bool is_variable_number_args, bool is_private_func) : name(name), return_type(return_type), args(std::move(args)), is_variable_number_args(is_variable_number_args), is_private_func(is_private_func) {}
     };
     class Function {
     public:
@@ -125,14 +128,16 @@ namespace CIR {
 
 class FileCIR {
 public:
+    std::string filename; // not the path of the path of the real file compiled (it is a .temp file), the filename is the name of the file passed to the cli
     std::vector<std::unique_ptr<CIR::Function>> functions;
+    std::unordered_map<std::string, CIR::FunctionProto> protos;
     std::vector<std::string> strings;
     // TODO : add function to reset all these ptrs and indices
     CIR::Function* CurrentFunction;
     //CIR::BasicBlock* CurrentBasicBlock;
     CIR::BasicBlockRef CurrentBasicBlock;
     //int InsertPoint;
-    FileCIR(std::vector<std::unique_ptr<CIR::Function>> functions) : functions(std::move(functions)), strings(), CurrentFunction(nullptr), CurrentBasicBlock() /*, InsertPoint(0)*/  {} 
+    FileCIR(std::string filename, std::vector<std::unique_ptr<CIR::Function>> functions) : filename(filename), functions(std::move(functions)), protos(), strings(), CurrentFunction(nullptr), CurrentBasicBlock() /*, InsertPoint(0)*/  {} 
     void add_function(std::unique_ptr<CIR::Function> func){
         functions.push_back(std::move(func));
         CurrentFunction = functions.back().get();
