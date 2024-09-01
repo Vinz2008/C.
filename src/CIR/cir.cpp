@@ -61,6 +61,14 @@ CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     CIR::InstructionRef varInit;
     if (VarNames.at(0).second){
         varInit = VarNames.at(0).second->cir_gen(fileCIR);
+        if (!varInit.is_empty()){ // TODO : remove this if ?
+            CIR::Instruction* init_instr = fileCIR->get_instruction(varInit);
+            if (init_instr->type != cpoint_type){
+                if (!cir_convert_to_type(fileCIR, init_instr->type, cpoint_type, varInit)){
+                    return CIR::InstructionRef();
+                }
+            }
+        }
     }
     auto var_instr = std::make_unique<CIR::VarInit>(std::make_pair(VarNames.at(0).first, varInit), cpoint_type);
     var_instr->type = cpoint_type;
@@ -224,7 +232,17 @@ CIR::InstructionRef ClosureAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef CastExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    CIR::InstructionRef val_to_cast = ValToCast->cir_gen(fileCIR);
+    
+    //auto cast_instr = std::make_unique<CIR::CastInstruction>(val_to_cast, type);
+    //cast_instr->type = type;
+    //return fileCIR->add_instruction(std::move(cast_instr));
+    if (!cir_convert_to_type(fileCIR, fileCIR->get_instruction(val_to_cast)->type, type, val_to_cast)){
+        return CIR::InstructionRef();
+    }
+
+    return val_to_cast;
+
 }
 
 CIR::InstructionRef CommentExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -232,11 +250,36 @@ CIR::InstructionRef CommentExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 void ModAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-
+    for (int i = 0; i < function_protos.size(); i++){
+        std::unique_ptr<PrototypeAST> function_proto = function_protos.at(i)->clone(); // for now, clone this because it is used for the codegen function (TODO ?)
+        std::string mangled_function_name = module_mangling(mod_name, function_proto->Name);
+        function_proto->Name = mangled_function_name;
+        function_proto->cir_gen(fileCIR);
+    
+        FunctionProtos[mangled_function_name] = function_proto->clone();
+    }
+    for (int i = 0; i < functions.size(); i++){
+        std::unique_ptr<FunctionAST> function = functions.at(i)->clone();
+        std::string mangled_function_name = module_mangling(mod_name, function->Proto->Name);
+        function->Proto->Name = mangled_function_name;
+        function->cir_gen(fileCIR);
+    
+        // functions.at(i)->Proto
+    }
+    for (int i = 0; i < structs.size(); i++){
+        // TODO
+        fprintf(stderr, "STRUCTS IN MOD NOT IMPLEMENTED YET\n");
+        exit(1);
+    }
+    for (int i = 0; i < mods.size(); i++){
+        std::unique_ptr<ModAST> mod = mods.at(i)->clone();
+        mod->mod_name = module_mangling(mod_name, mod->mod_name);
+        mod->cir_gen(fileCIR);
+    }
 }
 
 void MembersDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-
+    
 }
 
 void EnumDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -249,6 +292,10 @@ void UnionDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 void GlobalVariableAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
+}
+
+void PrototypeAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    FunctionProtos[this->getName()] = this->clone();
 }
 
 void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){

@@ -6,6 +6,8 @@
 #include "llvm/IR/Value.h"
 #include "llvm/IR/DerivedTypes.h"
 
+#include "config.h"
+
 enum types {
     double_type = -1,
 //    int_type = -2,
@@ -75,7 +77,19 @@ public:
         return os;
     }
     friend bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
-        return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_object_template == rhs.is_object_template && lhs.is_empty == rhs.is_empty && lhs.object_template_type_passed == rhs.object_template_type_passed && lhs.is_function == rhs.is_function && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(), rhs.args.end()) && lhs.return_type == rhs.return_type && lhs.is_vector_type == rhs.is_vector_type && lhs.vector_element_type == rhs.vector_element_type && lhs.vector_size == rhs.vector_size;
+        bool is_object_template_type_passed_same = false;
+        if (lhs.object_template_type_passed && rhs.object_template_type_passed){
+            is_object_template_type_passed_same = *lhs.object_template_type_passed == *rhs.object_template_type_passed;
+        }
+        bool is_return_type_same = false;
+        if (lhs.return_type && rhs.return_type){
+            is_return_type_same = *lhs.return_type == *rhs.return_type;
+        }
+        bool is_vector_element_type_same = false;
+        if (lhs.vector_element_type && rhs.vector_element_type){
+            is_vector_element_type_same = *lhs.vector_element_type == *rhs.vector_element_type;
+        }
+        return lhs.type == rhs.type && lhs.is_ptr == rhs.is_ptr && lhs.nb_ptr == rhs.nb_ptr && lhs.is_array == rhs.is_array && lhs.nb_element == rhs.nb_element && lhs.is_struct == rhs.is_struct && lhs.struct_name == rhs.struct_name && lhs.is_union == rhs.is_union && lhs.union_name == rhs.union_name && lhs.is_enum == rhs.is_enum && lhs.enum_name == rhs.enum_name && lhs.is_template_type == rhs.is_template_type && lhs.is_object_template == rhs.is_object_template && lhs.is_empty == rhs.is_empty && is_object_template_type_passed_same && lhs.is_function == rhs.is_function && std::equal(lhs.args.begin(), lhs.args.end(), rhs.args.begin(), rhs.args.end()) && is_return_type_same && lhs.is_vector_type == rhs.is_vector_type && is_vector_element_type_same && lhs.vector_size == rhs.vector_size;
     }
     friend bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
         return !(lhs == rhs);
@@ -103,6 +117,17 @@ Cpoint_Type get_cpoint_type_from_llvm(llvm::Type* llvm_type);
 bool is_llvm_type_number(llvm::Type* llvm_type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo, llvm::Value* &val);
+
+#if ENABLE_CIR
+class FileCIR;
+
+namespace CIR {
+    class InstructionRef;
+}
+
+bool cir_convert_to_type(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type typeFrom, Cpoint_Type typeTo, CIR::InstructionRef& val);
+#endif
+
 llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
 llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);
 int from_val_to_int(llvm::Value* val);

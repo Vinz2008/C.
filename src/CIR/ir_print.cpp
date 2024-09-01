@@ -61,6 +61,10 @@ std::string CIR::SizeofInstruction::to_string(){
     return "sizeof " + ((is_type) ? create_pretty_name_for_type(type) : var.to_string());
 }
 
+std::string CIR::CastInstruction::to_string(){
+    return "cast " + create_pretty_name_for_type(cast_type) + " " + val.to_string();
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){

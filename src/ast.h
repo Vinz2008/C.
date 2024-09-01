@@ -470,6 +470,9 @@ public:
     return std::make_unique<PrototypeAST>((Source_location){Line, 0}, Name, Args, cpoint_type, IsOperator, Precedence, is_variable_number_args, has_template, template_name);
   }
   c_translator::Function* c_codegen();
+#if ENABLE_CIR
+  void cir_gen(std::unique_ptr<FileCIR>& fileCIR);
+#endif
 };
 
 extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
@@ -1202,6 +1205,7 @@ public:
 
   ModAST(const std::string& mod_name, std::vector<std::unique_ptr<FunctionAST>> functions, std::vector<std::unique_ptr<PrototypeAST>> function_protos, std::vector<std::unique_ptr<StructDeclarAST>> structs, std::vector<std::unique_ptr<ModAST>> mods) :  mod_name(mod_name), functions(std::move(functions)), function_protos(std::move(function_protos)), structs(std::move(structs)), mods(std::move(mods)) {}
   void codegen();
+  std::unique_ptr<ModAST> clone();
 #if ENABLE_CIR
   void cir_gen(std::unique_ptr<FileCIR>& fileCIR); // TODO : return a type ?
 #endif

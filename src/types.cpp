@@ -10,6 +10,10 @@
 #include "lexer.h"
 #include <unordered_map>
 
+#if ENABLE_CIR
+#include "CIR/cir.h"
+#endif
+
 using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
@@ -429,6 +433,28 @@ Constant* from_val_to_constant_infer(Value* val){
     }
     return dyn_cast<ConstantFP>(val);
 }
+
+#if ENABLE_CIR
+
+// the val passed is the val to convert, and after the function is the val converted
+// if return true, the conversion FAILED (even if the conversion does nothing, it will return true)
+bool cir_convert_to_type(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type typeFrom, Cpoint_Type typeTo, CIR::InstructionRef& val){
+    if (typeFrom == typeTo){
+        return true; // noop if the same type
+    }
+    if (typeTo == Cpoint_Type(void_type)){
+        val = fileCIR->add_instruction(std::make_unique<CIR::ConstVoid>());
+        return true;
+    }
+    // TODO : do type checking to verify if the conversion is valid (for example with a bool check_conversion(Cpoint_Type typeFrom, Cpoint_Type typeTo) function) 
+    
+    auto cast_instr = std::make_unique<CIR::CastInstruction>(val, typeTo);
+    cast_instr->type = typeTo;
+    val = fileCIR->add_instruction(std::move(cast_instr));
+    return true;
+}
+
+#endif
 
 
 bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){

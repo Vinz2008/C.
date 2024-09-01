@@ -124,6 +124,10 @@ std::unique_ptr<ExprAST> VarExprAST::clone(){
     return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
 }
 
+std::unique_ptr<ModAST> ModAST::clone(){
+    return std::make_unique<ModAST>(mod_name, clone_vector<FunctionAST>(functions), clone_vector<PrototypeAST>(function_protos), clone_vector<StructDeclarAST>(structs), clone_vector<ModAST>(mods));
+}
+
 std::unique_ptr<FunctionAST> FunctionAST::clone(){
     return std::make_unique<FunctionAST>(Proto->clone(), clone_vector<ExprAST>(Body));
 }
