@@ -1222,7 +1222,11 @@ Value *BinaryExprAST::codegen() {
     return operators::LLVMCreateGreaterOrEqualThan(L, R, LHS_type);
   }
   if (Op == ">>"){
-    return Builder->CreateLShr(L, R, "shiftrtmp");
+    if (LHS_type.is_unsigned()){
+        return Builder->CreateLShr(L, R, "shiftrtmp");
+    } else {
+        return Builder->CreateAShr(L, R, "shiftrtmp");
+    }
   }
   if (Op == "<<"){
     return Builder->CreateShl(L, R, "shiftltmp");

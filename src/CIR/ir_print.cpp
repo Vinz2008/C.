@@ -65,6 +65,75 @@ std::string CIR::CastInstruction::to_string(){
     return "cast " + create_pretty_name_for_type(cast_type) + " " + val.to_string();
 }
 
+std::string CIR::AddInstruction::to_string(){
+    return "add " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::SubInstruction::to_string(){
+    return "sub " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::MulInstruction::to_string(){
+    return "mul " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::RemInstruction::to_string(){
+    return "rem " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::DivInstruction::to_string(){
+    return "div " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::AndInstruction::to_string(){
+    return "and " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::OrInstruction::to_string(){
+    return "or " + arg1.to_string() + ", " + arg2.to_string();
+}
+
+std::string CIR::CmpInstruction::to_string(){
+    std::string cmp_cir = "cmp ";
+    switch (cmp_type){
+    case CMP_EQ: 
+        cmp_cir += "eq ";
+        break;
+    case CMP_GREATER: 
+        cmp_cir += "greater ";
+        break;
+    case CMP_GREATER_EQ:
+        cmp_cir += "greater eq ";
+        break;
+    case CMP_LOWER: 
+        cmp_cir += "lower ";
+        break;
+    case CMP_LOWER_EQ:
+        cmp_cir += "lower eq ";
+        break;
+    default:
+        break;
+    }
+    cmp_cir += arg1.to_string() + ", " + arg2.to_string();
+    return cmp_cir;
+}
+
+std::string CIR::ShiftInstruction::to_string(){
+    std::string shift_cir = "shift ";
+    switch (shift_type){
+    case SHIFT_LEFT:
+        shift_cir += "left ";
+        break;
+    case SHIFT_RIGHT:
+        shift_cir += "right ";
+        break;
+    default:
+        break;
+    }
+    shift_cir += arg1.to_string() + ", " + arg2.to_string();
+    return shift_cir;
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){

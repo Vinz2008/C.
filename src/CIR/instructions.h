@@ -124,6 +124,90 @@ namespace CIR {
         }
         std::string to_string() override;
     };
+
+    class AddInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        AddInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class SubInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        SubInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class MulInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        MulInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class RemInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        RemInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class DivInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        DivInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class AndInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        AndInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class OrInstruction : public CIR::Instruction {
+    public:
+        InstructionRef arg1;
+        InstructionRef arg2;
+        OrInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class ShiftInstruction : public CIR::Instruction {
+    public:
+        enum shift_type_ty {
+            SHIFT_LEFT,
+            SHIFT_RIGHT,
+        } shift_type;
+        InstructionRef arg1;
+        InstructionRef arg2;
+        ShiftInstruction(enum shift_type_ty shift_type, InstructionRef arg1, InstructionRef arg2) : shift_type(shift_type), arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
+    class CmpInstruction : public CIR::Instruction {
+    public:
+        enum cmp_type_ty {
+            CMP_EQ,
+            CMP_GREATER,
+            CMP_GREATER_EQ,
+            CMP_LOWER,
+            CMP_LOWER_EQ,
+        } cmp_type;
+        InstructionRef arg1;
+        InstructionRef arg2;
+        CmpInstruction(enum cmp_type_ty cmp_type, InstructionRef arg1, InstructionRef arg2) : cmp_type(cmp_type), arg1(arg1), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
     class ConstNumber : public CIR::Instruction {
     public:
         bool is_float;

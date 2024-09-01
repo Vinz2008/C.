@@ -13,6 +13,8 @@ extern std::unordered_map<std::string, int> BinopPrecedence;
 
 namespace operators {
 
+// TODO : move these to the backends/llvm/ folder
+
 Value* LLVMCreateAdd(Value* L, Value* R, Cpoint_Type arg_type){
     /*if (arg_type.is_vector_type){
         Cpoint_Type vector_element_type = *arg_type.vector_element_type;
