@@ -7,6 +7,7 @@
 #include "../reflection.h"
 
 // TODO verify that last instruction of function is never type (a return, an unreachable, etc)
+// TODO : add debug infos
 
 static CIR::InstructionRef codegenBody(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>>& Body){
     CIR::InstructionRef ret;
@@ -27,8 +28,16 @@ static CIR::InstructionRef createGoto(std::unique_ptr<FileCIR>& fileCIR, CIR::Ba
     return fileCIR->add_instruction(std::move(goto_instr));
 }
 
+static CIR::InstructionRef createGotoIf(std::unique_ptr<FileCIR>& fileCIR, CIR::InstructionRef CondI, CIR::BasicBlockRef goto_bb_true, CIR::BasicBlockRef goto_bb_false){
+    fileCIR->get_basic_block(goto_bb_true)->predecessors.push_back(fileCIR->CurrentBasicBlock);
+    fileCIR->get_basic_block(goto_bb_false)->predecessors.push_back(fileCIR->CurrentBasicBlock);
+    auto goto_instr = std::make_unique<CIR::GotoIfInstruction>(CondI, goto_bb_true, goto_bb_false);
+    goto_instr->type = Cpoint_Type(never_type);
+    return fileCIR->add_instruction(std::move(goto_instr));
+}
+
 CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return fileCIR->CurrentFunction->vars[Name];
+    return fileCIR->CurrentFunction->vars[Name].var_ref;
 }
 
 CIR::InstructionRef DeferExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -73,7 +82,7 @@ CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     auto var_instr = std::make_unique<CIR::VarInit>(std::make_pair(VarNames.at(0).first, varInit), cpoint_type);
     var_instr->type = cpoint_type;
     auto var_ref = fileCIR->add_instruction(std::move(var_instr));
-    fileCIR->CurrentFunction->vars[VarNames.at(0).first] = var_ref;
+    fileCIR->CurrentFunction->vars[VarNames.at(0).first] = CIR::Var(var_ref, cpoint_type);
     return var_ref;
     //return CIR::InstructionRef();
 }
@@ -94,6 +103,69 @@ CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef IfExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    Cpoint_Type cond_type = Cond->get_type();
+    CIR::InstructionRef CondI = Cond->cir_gen(fileCIR);
+    if (CondI.is_empty()){
+        return CIR::InstructionRef();
+    }
+    if (cond_type.type != bool_type || cond_type.is_vector_type){
+        // TODO : create default comparisons : if is pointer, compare to null, if number compare to 1, etc
+        cir_convert_to_type(fileCIR, cond_type, Cpoint_Type(bool_type), CondI);
+    }
+
+    bool has_one_branch_if = false;
+    CIR::BasicBlockRef ThenBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("then"));
+    CIR::BasicBlockRef ElseBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("else"));
+    CIR::BasicBlockRef MergeBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("ifcont"));
+    createGotoIf(fileCIR, CondI, ThenBB, ElseBB);
+    fileCIR->set_insert_point(ThenBB);
+    bool has_then_return = Then->contains_expr(ExprType::Return);
+    bool has_then_break = Then->contains_expr(ExprType::Break);
+    bool has_then_unreachable = Then->contains_expr(ExprType::Unreachable);
+    bool has_then_never_function_call = Then->contains_expr(ExprType::NeverFunctionCall);
+    CIR::InstructionRef ThenI = Then->cir_gen(fileCIR);
+    if (!has_then_break /*!break_found*/ && !has_then_return && !has_then_unreachable && !has_then_never_function_call){
+        createGoto(fileCIR, MergeBB);
+    } else {
+        has_one_branch_if = true;
+    }
+    fileCIR->set_insert_point(ElseBB);
+    bool has_else_return = false;
+    bool has_else_break = false;
+    bool has_else_unreachable = false;
+    bool has_else_never_function_call = false;
+    CIR::InstructionRef ElseI;
+    if (Else){
+        has_else_return = Else->contains_expr(ExprType::Return);
+        has_else_break = Else->contains_expr(ExprType::Break);
+        has_else_unreachable = Else->contains_expr(ExprType::Unreachable);
+        has_else_never_function_call = Else->contains_expr(ExprType::NeverFunctionCall);
+        ElseI = Else->cir_gen(fileCIR);
+        if (ElseI.is_empty()){
+            return CIR::InstructionRef();
+        }
+        // TODO
+        /*if (ElseV->getType() != Type::getVoidTy(*TheContext) && ElseV->getType() != phiType){
+        if (!convert_to_type(get_cpoint_type_from_llvm(ElseV->getType()), phiType, ElseV)){
+            return LogErrorV(this->loc, "Mismatch, expected : %s, got : %s", get_cpoint_type_from_llvm(phiType).c_stringify(), get_cpoint_type_from_llvm(ElseV->getType()).c_stringify());
+        }
+        }*/
+    }
+
+    if (!has_else_break && !has_else_return && !has_else_unreachable && !has_else_never_function_call){
+        createGoto(fileCIR, MergeBB);
+    } else {
+        has_one_branch_if = true;
+    }
+    // TODO : add the GetInsertBlock to this ?
+
+    fileCIR->set_insert_point(MergeBB);
+
+    if (fileCIR->CurrentFunction->proto->return_type.type == void_type){
+        return fileCIR->add_instruction(std::make_unique<CIR::ConstVoid>());
+    }
+
+    // TODO : add phi
     return CIR::InstructionRef();
 }
 
@@ -132,7 +204,24 @@ CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(bool_type), nb_val));
 }
 
+static CIR::InstructionRef InfiniteLoopCodegen(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>> &Body){
+    CIR::BasicBlockRef loopBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("loop_infinite"));
+    createGoto(fileCIR, loopBB);
+    fileCIR->set_insert_point(loopBB);
+    for (int i = 0; i < Body.size(); i++){
+      if (Body.at(i)->cir_gen(fileCIR).is_empty())
+        return CIR::InstructionRef();
+    }
+    fileCIR->set_insert_point(loopBB);
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNever>());
+}
+
 CIR::InstructionRef LoopExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    if (is_infinite_loop){
+        return InfiniteLoopCodegen(fileCIR, Body);
+    } else {
+        // TODO 
+    }
     return CIR::InstructionRef();
 }
 
@@ -174,7 +263,26 @@ CIR::InstructionRef GotoExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef WhileExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    CIR::BasicBlockRef whileBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("while"));
+    createGoto(fileCIR, whileBB);
+    fileCIR->set_insert_point(whileBB);
+    CIR::BasicBlockRef LoopBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("loop_while"));
+    CIR::InstructionRef CondI = Cond->cir_gen(fileCIR);
+    if (CondI.is_empty()){
+        return CIR::InstructionRef();
+    }
+    CIR::BasicBlockRef AfterBB = fileCIR->add_basic_block(std::make_unique<CIR::BasicBlock>("afterloop_while"));
+    // TODO : add to block for breaks
+
+    createGotoIf(fileCIR, CondI, LoopBB, AfterBB);
+    fileCIR->set_insert_point(LoopBB);
+    // TODO : add scope
+    Body->cir_gen(fileCIR);
+
+    createGoto(fileCIR, whileBB);
+    fileCIR->set_insert_point(AfterBB);
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNever>());
+    //return CIR::InstructionRef();
 }
 
 CIR::InstructionRef BreakExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -377,7 +485,7 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         auto load_arg_instr = std::make_unique<CIR::LoadArgInstruction>(Proto->Args.at(i).first, Proto->Args.at(i).second);
         load_arg_instr->type = Proto->Args.at(i).second;
         auto load_arg = fileCIR->add_instruction(std::move(load_arg_instr));
-        fileCIR->CurrentFunction->vars[Proto->Args.at(i).first] = load_arg;
+        fileCIR->CurrentFunction->vars[Proto->Args.at(i).first] = CIR::Var(load_arg, Proto->Args.at(i).second);
     }
     CIR::InstructionRef ret_val;
     for (int i = 0; i < Body.size(); i++){

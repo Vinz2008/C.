@@ -10,8 +10,8 @@ func test(x){
         printstr("nothing")
     }
     while 10 > i {
-    i = i + 1
-    printd(i)
+        i = i + 1
+        printd(i)
     }
     0
 }

@@ -2213,7 +2213,7 @@ Value *IfExprAST::codegen() {
   bool has_then_return = /*Then->contains_return()*/ Then->contains_expr(ExprType::Return);
   bool has_then_break = Then->contains_expr(ExprType::Break);
   bool has_then_unreachable = Then->contains_expr(ExprType::Unreachable);
-  bool has_then_never_function_call = Then->contains_expr(ExprType::NeverFunctionCall);;
+  bool has_then_never_function_call = Then->contains_expr(ExprType::NeverFunctionCall);
   Value *ThenV = Then->codegen();
   if (ThenV->getType() != Type::getVoidTy(*TheContext)){
   phiType = ThenV->getType();

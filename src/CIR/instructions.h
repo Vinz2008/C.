@@ -109,6 +109,15 @@ namespace CIR {
         std::string to_string() override;
     };
 
+    class GotoIfInstruction : public CIR::Instruction {
+    public:
+        CIR::InstructionRef cond_instruction;
+        CIR::BasicBlockRef goto_bb_if_true;
+        CIR::BasicBlockRef goto_bb_if_false;
+        GotoIfInstruction(CIR::InstructionRef cond_instruction, CIR::BasicBlockRef goto_bb_if_true, CIR::BasicBlockRef goto_bb_if_false) : cond_instruction(cond_instruction), goto_bb_if_true(goto_bb_if_true), goto_bb_if_false(goto_bb_if_false) {}
+        std::string to_string() override;
+    };
+
     class SizeofInstruction : public CIR::Instruction {
     public:
         bool is_type;
@@ -224,6 +233,13 @@ namespace CIR {
         ConstVoid(){}
         std::string to_string() override {
             return "void";
+        }
+    };
+    class ConstNever : public CIR::Instruction {
+    public:
+        ConstNever(){}
+        std::string to_string() override {
+            return "!";
         }
     };
     class Null : public CIR::Instruction {

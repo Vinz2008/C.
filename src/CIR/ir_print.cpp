@@ -57,6 +57,10 @@ std::string CIR::GotoInstruction::to_string(){
     return "goto " + goto_bb.to_string();
 }
 
+std::string CIR::GotoIfInstruction::to_string(){
+    return "goto if " + cond_instruction.to_string() + ", true : " +  goto_bb_if_true.to_string() + ", false : " + goto_bb_if_false.to_string();
+}
+
 std::string CIR::SizeofInstruction::to_string(){
     return "sizeof " + ((is_type) ? create_pretty_name_for_type(type) : var.to_string());
 }

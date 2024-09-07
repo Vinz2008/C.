@@ -98,13 +98,20 @@ namespace CIR {
         FunctionProto() : name(), return_type(), args(), is_variable_number_args(false), is_private_func(false) {}
         FunctionProto(std::string name, Cpoint_Type return_type, std::vector<std::pair<std::string, Cpoint_Type>> args, bool is_variable_number_args, bool is_private_func) : name(name), return_type(return_type), args(std::move(args)), is_variable_number_args(is_variable_number_args), is_private_func(is_private_func) {}
     };
+    class Var {
+    public:
+        InstructionRef var_ref;
+        Cpoint_Type type;
+        Var() : var_ref(), type() {}
+        Var(InstructionRef var_ref, Cpoint_Type type) : var_ref(var_ref), type(type) {}
+    };
     class Function {
     public:
         //std::string name;
         std::unique_ptr<FunctionProto> proto;
         std::vector<std::unique_ptr<CIR::BasicBlock>> basicBlocks;
-        std::unordered_map<std::string, InstructionRef> vars;
-        Function(std::unique_ptr<FunctionProto> proto, std::vector<std::unique_ptr<CIR::BasicBlock>> basicBlocks = {}, std::unordered_map<std::string, InstructionRef> vars = {}) : proto(std::move(proto)), basicBlocks(std::move(basicBlocks)), vars(vars) {}
+        std::unordered_map<std::string, Var> vars;
+        Function(std::unique_ptr<FunctionProto> proto, std::vector<std::unique_ptr<CIR::BasicBlock>> basicBlocks = {}, std::unordered_map<std::string, Var> vars = {}) : proto(std::move(proto)), basicBlocks(std::move(basicBlocks)), vars(vars) {}
         std::string to_string();
         Instruction* get_instruction(int pos){
             int iter_pos = 0;
