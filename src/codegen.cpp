@@ -2020,8 +2020,8 @@ Function *FunctionAST::codegen() {
         //Builder->CreateCall(getFunction("printi"), std::vector<Value*>({getSizeOfStruct(sret_ptr)})); // for debugging purpose
         Builder->CreateMemCpy(sret_ptr, MaybeAlign(0), /*RetVal*/ temp_var, MaybeAlign(0), getSizeOfStruct(sret_ptr));
         Builder->CreateRetVoid();
-        goto after_ret;
-    }
+        //goto after_ret;
+    } else {
     /*if (TheFunction->getReturnType() == get_type_llvm(Cpoint_Type(void_type)) || !RetVal){
         // void is represented by nullptr
         RetVal = nullptr;
@@ -2033,10 +2033,11 @@ Function *FunctionAST::codegen() {
         RetVal = nullptr;
     }
 
-    if (!RetVal){
+    /*if (!RetVal){
         goto before_ret;
-    }
+    }*/
 
+    if (RetVal){
     // Finish off the function.
     if (/*RetVal->getType()*/ ret_val_type == get_type_llvm(Cpoint_Type(void_type)) && /*TheFunction->getReturnType() != get_type_llvm(Cpoint_Type(void_type))*/ Proto->cpoint_type.type != void_type){
         if (P.getName() == "main"){
@@ -2061,7 +2062,8 @@ Function *FunctionAST::codegen() {
         wrong_return_type_warning.content << "Expected type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(TheFunction->getReturnType())) << ", got type : " << create_pretty_name_for_type(get_cpoint_type_from_llvm(RetVal->getType())) << "\n";
         wrong_return_type_warning.end();
     }
-before_ret:
+    }
+//before_ret:
     //std::cout << "is_last_expr_return : " << is_last_expr_return << std::endl; 
     if (!contains_return_or_unreachable_or_never_call && !is_return_never_type && !is_last_expr_return){
     // only verify if the last expr is a goto if the function is main (because it will create a ret by default)
@@ -2075,7 +2077,9 @@ before_ret:
         }
     }
     }
-after_ret:
+
+    }
+//after_ret:
     /*std::error_code EC;
     auto dump_file = raw_fd_ostream(StringRef("dump_" + P.getName() + ".ll"), EC);
     TheFunction->print(dump_file);*/

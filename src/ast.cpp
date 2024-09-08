@@ -1839,7 +1839,32 @@ std::unique_ptr<ExprAST> ParseIfExpr() {
     return nullptr;
   }
   std::unique_ptr<ExprAST> Else = nullptr;
-else_start:
+
+  while (CurTok == tok_else){
+    getNextToken();
+    if (CurTok == tok_if){
+        auto else_if_expr = ParseIfExpr();
+        if (!else_if_expr){
+            return nullptr;
+        }
+        if (Else){
+            Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(Else), std::move(else_if_expr)));
+        } else {
+            Else = std::make_unique<ScopeExprAST>(make_unique_ptr_static_vector<ExprAST>(std::move(else_if_expr)));
+        }
+        Log::Info() << "Tok before verif tok_else : " << CurTok << "\n";
+    } else {
+        Else = ParseExpression();
+        break;
+    }
+  }
+
+
+
+
+
+
+/*else_start:
   if (CurTok == tok_else){
   getNextToken();
   if (CurTok == tok_if){
@@ -1859,7 +1884,7 @@ else_start:
   } else {
   Else = ParseExpression();
   }
-  }
+  }*/
   Log::Info() << "CurTok at end of IfExprAST : " << CurTok << "\n";
   return std::make_unique<IfExprAST>(IfLoc, std::move(Cond), std::move(Then),
                                       std::move(Else));

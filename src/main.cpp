@@ -753,9 +753,10 @@ int main(int argc, char **argv){
     std::string gc_path = DEFAULT_GC_PATH;
     Log::Print() << _("Wrote ") << object_filename << "\n";
     std::string std_static_path = std_path;
-    if (asm_mode){
+    /*if (asm_mode){
         goto after_linking;
-    }
+    }*/
+    if (!asm_mode){
     if (std_path.back() != '/'){
       std_static_path.append("/");
     }
@@ -840,7 +841,8 @@ int main(int argc, char **argv){
     }
 
     }
-after_linking:
+    }
+//after_linking:
     if (remove_temp_file){
       remove(temp_filename.c_str());
     }
