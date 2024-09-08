@@ -150,7 +150,7 @@ std::unique_ptr<ExprAST> generate_print_macro(std::vector<std::unique_ptr<ExprAS
         function_name = "fprintf";
     }
     add_manually_extern(function_name, Cpoint_Type(i32_type), std::move(args_printf), 0, 30, true, false, "");
-    std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
+    std::vector<std::unique_ptr<ExprAST>> Args = clone_unique_ptr_vec<ExprAST>(ArgsMacro);
     if (!dynamic_cast<StringExprAST*>(Args.at(0).get())){
         return LogErrorE("First argument of the print macro is not a constant string");
     }
@@ -176,7 +176,7 @@ std::unique_ptr<ExprAST> generate_assume_macro(std::vector<std::unique_ptr<ExprA
     if (ArgsMacro.size() != 1){
         return LogErrorE("Wrong number of args for %s macro function call : expected %d, got %d", "assume", 1, ArgsMacro.size());
     }
-    std::vector<std::unique_ptr<ExprAST>> Args = clone_vector<ExprAST>(ArgsMacro);
+    std::vector<std::unique_ptr<ExprAST>> Args = clone_unique_ptr_vec<ExprAST>(ArgsMacro);
     return std::make_unique<CallExprAST>(emptyLoc, "cpoint_internal_assume", std::move(Args), Cpoint_Type());
 }
 

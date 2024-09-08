@@ -406,16 +406,16 @@ public:
         input
     } argType;
     ArgInlineAsm(std::unique_ptr<ExprAST> ArgExpr, enum ArgType argType) : ArgExpr(std::move(ArgExpr)), argType(argType) {}
-    std::unique_ptr<ArgInlineAsm> clone(){
-        return std::make_unique<ArgInlineAsm>(ArgExpr->clone(), argType);
+    ArgInlineAsm clone(){
+        return ArgInlineAsm(ArgExpr->clone(), argType);
     }
 };
 
 class ArgsInlineAsm {
 public:
     std::unique_ptr<StringExprAST> assembly_code;
-    std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs;
-    ArgsInlineAsm(std::unique_ptr<StringExprAST> assembly_code, std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs) : assembly_code(std::move(assembly_code)), InputOutputArgs(std::move(InputOutputArgs)) {}
+    std::vector<ArgInlineAsm> InputOutputArgs;
+    ArgsInlineAsm(std::unique_ptr<StringExprAST> assembly_code, std::vector<ArgInlineAsm> InputOutputArgs) : assembly_code(std::move(assembly_code)), InputOutputArgs(std::move(InputOutputArgs)) {}
     std::unique_ptr<ArgsInlineAsm> clone();
 };
 
@@ -966,22 +966,22 @@ public:
     std::unique_ptr<ExprAST> Body; 
     //std::vector<std::unique_ptr<ExprAST>> Body; 
     matchCase(std::unique_ptr<ExprAST> expr, const std::string& enum_name, const std::string& enum_member, const std::string& var_name, bool is_underscore, std::unique_ptr<ExprAST> Body) : expr(std::move(expr)), enum_name(enum_name), enum_member(enum_member), var_name(var_name), is_underscore(is_underscore), Body(std::move(Body)) {}
-    std::unique_ptr<matchCase> clone();
+    matchCase clone();
 };
 
 class MatchExprAST : public ExprAST {
 public:
     // TODO : change from string to ExprAST
     std::string matchVar;
-    std::vector<std::unique_ptr<matchCase>> matchCases;
-    MatchExprAST(const std::string& matchVar, std::vector<std::unique_ptr<matchCase>> matchCases) : matchVar(matchVar), matchCases(std::move(matchCases)) {}
+    std::vector<matchCase> matchCases;
+    MatchExprAST(const std::string& matchVar, std::vector<matchCase> matchCases) : matchVar(matchVar), matchCases(std::move(matchCases)) {}
     Value *codegen() override;
     std::unique_ptr<ExprAST> clone() override;
     std::string to_string() override {
         std::string match_body = "match " + matchVar + "{\n";
         for (int i = 0; i < matchCases.size(); i++){
-            match_body += "\t" + matchCases.at(i)->expr->to_string() + "=> ";
-            match_body += matchCases.at(i)->Body->to_string();
+            match_body += "\t" + matchCases.at(i).expr->to_string() + "=> ";
+            match_body += matchCases.at(i).Body->to_string();
         }
         match_body += "}";
         return match_body;
@@ -989,7 +989,7 @@ public:
     Cpoint_Type get_type() override {
         Cpoint_Type match_return_type = Cpoint_Type(void_type);
         for (int i = 0; i < matchCases.size(); i++){
-            Cpoint_Type matchCaseType = matchCases.at(i)->Body->get_type();
+            Cpoint_Type matchCaseType = matchCases.at(i).Body->get_type();
             if (matchCaseType.type != void_type && matchCaseType.type != never_type && match_return_type.type == void_type){
                 // found first non void or never type in match branches
                 match_return_type = matchCaseType;
@@ -1004,7 +1004,7 @@ public:
       int branches_containing_expr = 0;
       for (int i = 0; i < matchCases.size(); i++){
         //if (matchCases.at(i)->Body->contains_return()){
-        if (matchCases.at(i)->Body->contains_expr(exprType)){
+        if (matchCases.at(i).Body->contains_expr(exprType)){
           //return true;
           branches_containing_expr++;
         }
@@ -1119,21 +1119,21 @@ class EnumMember {
 public:
     std::string Name;
     bool contains_value;
-    std::unique_ptr<Cpoint_Type> Type;
+    std::unique_ptr<Cpoint_Type> Type; // TODO : remove the unique_ptr part ?
     bool contains_custom_index;
     int Index;
     EnumMember(const std::string& Name, bool contains_value = false, std::unique_ptr<Cpoint_Type> Type = nullptr, bool contains_custom_index = false, int Index = -1) : Name(Name), contains_value(contains_value), Type(std::move(Type)), contains_custom_index(contains_custom_index), Index(Index) {}
-    std::unique_ptr<EnumMember> clone();
+    EnumMember clone();
 };
 
 class EnumDeclarAST {
 public:
     std::string Name;
     bool enum_member_contain_type;
-    std::vector<std::unique_ptr<EnumMember>> EnumMembers;
+    std::vector<EnumMember> EnumMembers;
     bool has_template;
     std::string template_name;
-    EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<std::unique_ptr<EnumMember>> EnumMembers, bool has_template, std::string template_name) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)), has_template(has_template), template_name(template_name) {}
+    EnumDeclarAST(const std::string& Name, bool enum_member_contain_type, std::vector<EnumMember> EnumMembers, bool has_template, std::string template_name) : Name(Name), enum_member_contain_type(enum_member_contain_type), EnumMembers(std::move(EnumMembers)), has_template(has_template), template_name(template_name) {}
     Type* codegen();
     std::unique_ptr<EnumDeclarAST> clone();
 #if ENABLE_CIR
@@ -1462,7 +1462,6 @@ public:
 #endif
 };
 
-// TODO : work on encapsulating an entire file AST in this class
 class FileAST {
   std::vector<std::unique_ptr<GlobalVariableAST>> global_vars;
   std::vector<std::unique_ptr<StructDeclarAST>> structs;
@@ -1529,7 +1528,7 @@ std::unique_ptr<ExprAST> ParseConstantVector();
 //std::unique_ptr<ExprAST> LogError(const char *Str, ...);
 
 template <class T>
-std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v);
+std::vector<std::unique_ptr<T>> clone_unique_ptr_vec(std::vector<std::unique_ptr<T>>& v);
 
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body);
 std::unique_ptr<VarExprAST> get_VarExpr_from_ExprAST(std::unique_ptr<ExprAST> E);

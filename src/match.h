@@ -8,4 +8,4 @@ using namespace llvm;
 
 class matchCase;
 
-Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction);
+Value* MatchNotEnumCodegen(std::string matchVar, std::vector<matchCase> matchCases, Function* TheFunction);

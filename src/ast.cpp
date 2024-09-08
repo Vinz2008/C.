@@ -41,8 +41,8 @@ extern std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateSt
 extern std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
 //extern std::vector<std::string> modulesNamesContext;
 extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
-extern std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
-extern std::vector<std::unique_ptr<TemplateEnumCreation>> EnumTemplatesToGenerate;
+extern std::vector<TemplateStructCreation> StructTemplatesToGenerate;
+extern std::vector<TemplateEnumCreation> EnumTemplatesToGenerate;
 extern std::string TypeTemplateCallAst;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
@@ -62,11 +62,22 @@ bool is_template_parsing_enum = false;
 Source_location emptyLoc = {0, 0, true, ""};
 
 template <class T>
-std::vector<std::unique_ptr<T>> clone_vector(std::vector<std::unique_ptr<T>>& v){
+std::vector<std::unique_ptr<T>> clone_unique_ptr_vec(std::vector<std::unique_ptr<T>>& v){
     std::vector<std::unique_ptr<T>> v_cloned;
     if (!v.empty()){
         for (int i = 0; i < v.size(); i++){
             v_cloned.push_back(v.at(i)->clone());
+        }
+    }
+    return v_cloned;
+}
+
+template <class T>
+std::vector<T> clone_containing_unique_ptr_vector(std::vector<T>& v){
+    std::vector<T> v_cloned;
+    if (!v.empty()){
+        for (int i = 0; i < v.size(); i++){
+            v_cloned.push_back(v.at(i).clone());
         }
     }
     return v_cloned;
@@ -80,19 +91,19 @@ std::vector<std::unique_ptr<T>> make_unique_ptr_static_vector(Ptrs&& ... ptrs){
 }
 
 std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
-    return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_vector<ExprAST>(Args));
+    return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_unique_ptr_vec<ExprAST>(Args));
 }
 
 std::unique_ptr<ExprAST> ConstantArrayExprAST::clone(){
-    return std::make_unique<ConstantArrayExprAST>(clone_vector<ExprAST>(ArrayMembers));
+    return std::make_unique<ConstantArrayExprAST>(clone_unique_ptr_vec<ExprAST>(ArrayMembers));
 }
 
 std::unique_ptr<ExprAST> ConstantStructExprAST::clone(){
-    return std::make_unique<ConstantStructExprAST>(struct_name, clone_vector<ExprAST>(StructMembers));
+    return std::make_unique<ConstantStructExprAST>(struct_name, clone_unique_ptr_vec<ExprAST>(StructMembers));
 }
 
 std::unique_ptr<ExprAST> ConstantVectorExprAST::clone(){
-    return std::make_unique<ConstantVectorExprAST>(vector_element_type, vector_size, clone_vector<ExprAST>(VectorMembers));
+    return std::make_unique<ConstantVectorExprAST>(vector_element_type, vector_size, clone_unique_ptr_vec<ExprAST>(VectorMembers));
 }
 
 std::unique_ptr<ExprAST> EnumCreation::clone(){
@@ -104,7 +115,7 @@ std::unique_ptr<ExprAST> EnumCreation::clone(){
 }
 
 std::unique_ptr<ExprAST> CallExprAST::clone(){
-    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, clone_vector<ExprAST>(Args), template_passed_type);
+    return std::make_unique<CallExprAST>(ExprAST::loc, Callee, clone_unique_ptr_vec<ExprAST>(Args), template_passed_type);
 }
 
 std::unique_ptr<ExprAST> VarExprAST::clone(){
@@ -125,11 +136,11 @@ std::unique_ptr<ExprAST> VarExprAST::clone(){
 }
 
 std::unique_ptr<ModAST> ModAST::clone(){
-    return std::make_unique<ModAST>(mod_name, clone_vector<FunctionAST>(functions), clone_vector<PrototypeAST>(function_protos), clone_vector<StructDeclarAST>(structs), clone_vector<ModAST>(mods));
+    return std::make_unique<ModAST>(mod_name, clone_unique_ptr_vec<FunctionAST>(functions), clone_unique_ptr_vec<PrototypeAST>(function_protos), clone_unique_ptr_vec<StructDeclarAST>(structs), clone_unique_ptr_vec<ModAST>(mods));
 }
 
 std::unique_ptr<FunctionAST> FunctionAST::clone(){
-    return std::make_unique<FunctionAST>(Proto->clone(), clone_vector<ExprAST>(Body));
+    return std::make_unique<FunctionAST>(Proto->clone(), clone_unique_ptr_vec<ExprAST>(Body));
 }
 
 std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
@@ -143,7 +154,7 @@ std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
         VarsCloned.push_back(std::move(VarTemp));
       }
     }
-    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), clone_vector<FunctionAST>(Functions), clone_vector<PrototypeAST>(ExternFunctions), has_template, template_name);
+    return std::make_unique<StructDeclarAST>(Name, std::move(VarsCloned), clone_unique_ptr_vec<FunctionAST>(Functions), clone_unique_ptr_vec<PrototypeAST>(ExternFunctions), has_template, template_name);
 }
 
 std::unique_ptr<UnionDeclarAST> UnionDeclarAST::clone(){
@@ -159,20 +170,20 @@ std::unique_ptr<UnionDeclarAST> UnionDeclarAST::clone(){
     return std::make_unique<UnionDeclarAST>(Name, std::move(VarsCloned));
 }
 
-std::unique_ptr<EnumMember> EnumMember::clone(){
+EnumMember EnumMember::clone(){
     std::unique_ptr<Cpoint_Type> TypeCloned = nullptr;
     if (Type){
         TypeCloned = std::make_unique<Cpoint_Type>(*Type);
     }
-    return std::make_unique<EnumMember>(Name, contains_value, std::move(TypeCloned), contains_custom_index, Index);
+    return EnumMember(Name, contains_value, std::move(TypeCloned), contains_custom_index, Index);
 }
 
 std::unique_ptr<EnumDeclarAST> EnumDeclarAST::clone(){
-    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, clone_vector<EnumMember>(EnumMembers), has_template, template_name);
+    return std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, clone_containing_unique_ptr_vector(EnumMembers), has_template, template_name);
 }
 
 std::unique_ptr<TestAST> TestAST::clone(){
-    return std::make_unique<TestAST>(description, clone_vector<ExprAST>(Body));
+    return std::make_unique<TestAST>(description, clone_unique_ptr_vec<ExprAST>(Body));
 }
 
 std::unique_ptr<ExprAST> IfExprAST::clone(){
@@ -188,31 +199,31 @@ std::unique_ptr<ExprAST> WhileExprAST::clone(){
 }
 
 std::unique_ptr<ExprAST> LoopExprAST::clone(){
-    return std::make_unique<LoopExprAST>(VarName, Array->clone(), clone_vector<ExprAST>(Body), is_infinite_loop);
+    return std::make_unique<LoopExprAST>(VarName, Array->clone(), clone_unique_ptr_vec<ExprAST>(Body), is_infinite_loop);
 }
 
-std::unique_ptr<matchCase> matchCase::clone(){
+matchCase matchCase::clone(){
     std::unique_ptr<ExprAST> exprCloned;
     if (expr){
         exprCloned = expr->clone();
     }
-    return std::make_unique<matchCase>(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, Body->clone());
+    return matchCase(std::move(exprCloned), enum_name, enum_member, var_name, is_underscore, Body->clone());
 }
 
 std::unique_ptr<ExprAST> MatchExprAST::clone(){
-    return std::make_unique<MatchExprAST>(matchVar, clone_vector<matchCase>(matchCases));
+    return std::make_unique<MatchExprAST>(matchVar, clone_containing_unique_ptr_vector<matchCase>(matchCases));
 }
 
 std::unique_ptr<ExprAST> ClosureAST::clone(){
-    return std::make_unique<ClosureAST>(clone_vector<ExprAST>(Body), ArgNames, return_type,captured_vars);
+    return std::make_unique<ClosureAST>(clone_unique_ptr_vec<ExprAST>(Body), ArgNames, return_type,captured_vars);
 }
 
 std::unique_ptr<ArgsInlineAsm> ArgsInlineAsm::clone(){
-    return std::make_unique<ArgsInlineAsm>(std::unique_ptr<StringExprAST>(dynamic_cast<StringExprAST*>(assembly_code->clone().release())), clone_vector<ArgInlineAsm>(InputOutputArgs));
+    return std::make_unique<ArgsInlineAsm>(std::unique_ptr<StringExprAST>(dynamic_cast<StringExprAST*>(assembly_code->clone().release())), clone_containing_unique_ptr_vector(InputOutputArgs));
 }
 
 std::unique_ptr<ExprAST> ScopeExprAST::clone(){
-    return std::make_unique<ScopeExprAST>(clone_vector<ExprAST>(Body));
+    return std::make_unique<ScopeExprAST>(clone_unique_ptr_vec<ExprAST>(Body));
 }
 
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
@@ -644,7 +655,7 @@ std::unique_ptr<ExprAST> ParseInlineAsm(){
     if (!asm_code){
         return nullptr;
     }
-    std::vector<std::unique_ptr<ArgInlineAsm>> InputOutputArgs;
+    std::vector<ArgInlineAsm> InputOutputArgs;
     if (CurTok == ','){
         getNextToken();
         while (1) {
@@ -658,7 +669,7 @@ std::unique_ptr<ExprAST> ParseInlineAsm(){
             }
             getNextToken();
             auto argExpr = ParseExpression();
-            InputOutputArgs.push_back(std::make_unique<ArgInlineAsm>(std::move(argExpr), argType));
+            InputOutputArgs.push_back(/*std::make_unique<ArgInlineAsm>*/ ArgInlineAsm(std::move(argExpr), argType));
             if (CurTok == ')'){
                 break;
             }
@@ -879,7 +890,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         getNextToken();
         auto structDeclar = TemplateStructDeclars[struct_Name]->declarAST->clone();
         structDeclar->Name = get_object_template_name(struct_Name, *object_template_type_passed);
-        StructTemplatesToGenerate.push_back(std::make_unique<TemplateStructCreation>(*object_template_type_passed, std::move(structDeclar)));
+        StructTemplatesToGenerate.push_back(TemplateStructCreation(*object_template_type_passed, std::move(structDeclar)) /*std::make_unique<TemplateStructCreation>(*object_template_type_passed, std::move(structDeclar))*/);
         Log::Info() << "added to StructTemplatesToGenerate" << "\n";
         is_object_template = true;
     }
@@ -917,7 +928,7 @@ Cpoint_Type ParseTypeDeclaration(bool eat_token /*= true*/, bool is_return /*= f
         getNextToken();
         auto enumDeclar = TemplateEnumDeclars[enumName]->declarAST->clone();
         enumDeclar->Name = get_object_template_name(enumName, *object_template_type_passed);
-        EnumTemplatesToGenerate.push_back(std::make_unique<TemplateEnumCreation>(*object_template_type_passed, std::move(enumDeclar)));
+        EnumTemplatesToGenerate.push_back(/*std::make_unique<TemplateEnumCreation>*/ TemplateEnumCreation(*object_template_type_passed, std::move(enumDeclar)));
         Log::Info() << "added to EnumTemplatesToGenerate" << "\n";
         is_object_template = true;
     }
@@ -1452,7 +1463,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
     getNextToken(); // eat enum
     std::string Name;
     bool enum_member_contain_type = false;
-    std::vector<std::unique_ptr<EnumMember>> EnumMembers;
+    std::vector<EnumMember> EnumMembers;
     Name = IdentifierStr;
     getNextToken();
     bool has_template = false;
@@ -1506,7 +1517,7 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
             Log::Info() << "EnumDeclarAST parsing custom Index : " << Index << " " << contains_custom_index << "\n";
         }
         Log::Info() << "EnumDeclarAST contains_custom_index : " << contains_custom_index << "\n";
-        EnumMembers.push_back(std::make_unique<EnumMember>(memberName, contains_value, std::move(Type), contains_custom_index, Index));
+        EnumMembers.push_back(EnumMember(memberName, contains_value, std::move(Type), contains_custom_index, Index));
     }
     if (CurTok != '}'){
         return LogErrorEnum("Expected '}' in Enum");
@@ -1929,7 +1940,7 @@ std::unique_ptr<ExprAST> ParseLabelExpr(){
 
 std::unique_ptr<ExprAST> ParseMatch(){
     getNextToken();
-    std::vector<std::unique_ptr<matchCase>> matchCases;
+    std::vector<matchCase> matchCases;
     std::string matchVar = IdentifierStr;
     getNextToken();
     if (CurTok != '{'){
@@ -2004,7 +2015,7 @@ std::unique_ptr<ExprAST> ParseMatch(){
         }
         getNextToken();
         }
-        matchCases.push_back(std::make_unique<matchCase>(std::move(expr), enum_name, enum_member_name, VarName, is_underscore, std::move(Body)));
+        matchCases.push_back(matchCase(std::move(expr), enum_name, enum_member_name, VarName, is_underscore, std::move(Body)));
     }
     getNextToken();
     return std::make_unique<MatchExprAST>(matchVar, std::move(matchCases));

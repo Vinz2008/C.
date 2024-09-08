@@ -24,7 +24,7 @@ static void string_vector_erase(std::vector<std::string>& strings, std::string s
 }
 
 
-Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<matchCase>> matchCases, Function* TheFunction){
+Value* MatchNotEnumCodegen(std::string matchVar, std::vector<matchCase> matchCases, Function* TheFunction){
     // For now consider by default it will compare ints
     // TODO : make this work with global vars
     AllocaInst* Alloca = NamedValues[matchVar]->alloca_inst;
@@ -46,7 +46,7 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     Cpoint_Type match_return_type = Cpoint_Type(void_type);
     int number_returning_value_branch = 0;
     for (int i = 0; i < matchCases.size(); i++){
-        Cpoint_Type matchCaseType = matchCases.at(i)->Body->get_type();
+        Cpoint_Type matchCaseType = matchCases.at(i).Body->get_type();
         if (matchCaseType.type != void_type && matchCaseType.type != never_type && match_return_type.type == void_type){
             // found first non void or never type in match branches
             match_return_type = matchCaseType;
@@ -54,7 +54,7 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
         Log::Info() << "match_return_type : " << match_return_type << "\n";
         Log::Info() << "matchCaseType : " << matchCaseType << "\n";
         if (match_return_type.type != void_type && match_return_type != matchCaseType && matchCaseType.type != never_type){
-            return LogErrorV(emptyLoc, "Match case %s returned type %s instead of %s type", matchCases.at(i)->expr->to_string().c_str(), create_pretty_name_for_type(matchCaseType).c_str(), create_pretty_name_for_type(match_return_type).c_str());
+            return LogErrorV(emptyLoc, "Match case %s returned type %s instead of %s type", matchCases.at(i).expr->to_string().c_str(), create_pretty_name_for_type(matchCaseType).c_str(), create_pretty_name_for_type(match_return_type).c_str());
         }
         if (matchCaseType.type != void_type && matchCaseType.type != never_type  && match_return_type.type != void_type){
             number_returning_value_branch++;
@@ -74,17 +74,17 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
     std::vector<std::pair<Value*, BasicBlock*>> phi_members;
     bool found_underscore = false;
     for (int i = 0; i < matchCases.size(); i++){
-        std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
-        bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
-        bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
-        Cpoint_Type matchCaseType = matchCaseTemp->Body->get_type();
+        matchCase matchCaseTemp = matchCases.at(i).clone();
+        bool has_match_return = matchCaseTemp.Body->contains_expr(ExprType::Return);
+        bool has_match_unreachable = matchCaseTemp.Body->contains_expr(ExprType::Unreachable);
+        Cpoint_Type matchCaseType = matchCaseTemp.Body->get_type();
         bool does_body_return_never = matchCaseType.type == never_type;
-        if (matchCaseTemp->is_underscore){
+        if (matchCaseTemp.is_underscore){
             found_underscore = true;
             defaultDestBB = BasicBlock::Create(*TheContext, "default_dest", TheFunction);
             Builder->SetInsertPoint(defaultDestBB);
             //Cpoint_Type matchCaseType = matchCaseTemp->Body->get_type();
-            auto body_return = matchCaseTemp->Body->codegen();
+            auto body_return = matchCaseTemp.Body->codegen();
             //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
             //    matchCaseTemp->Body.at(j)->codegen();
             //}
@@ -98,7 +98,7 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
         } else {
             BasicBlock* thenBB = BasicBlock::Create(*TheContext, "then_match_const", TheFunction);
             Builder->SetInsertPoint(thenBB);
-            auto valExpr = std::move(matchCaseTemp->expr); 
+            auto valExpr = std::move(matchCaseTemp.expr); 
             Value* val = nullptr;
             /*if (dynamic_cast<NumberExprAST*>(valExpr.get())){
                 val = valExpr->codegen();
@@ -138,7 +138,7 @@ Value* MatchNotEnumCodegen(std::string matchVar, std::vector<std::unique_ptr<mat
             bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
             Cpoint_Type matchCaseType = matchCaseTemp->Body->get_type();
             bool does_body_return_never = matchCaseType.type == never_type;*/
-            auto body_return = matchCaseTemp->Body->codegen();
+            auto body_return = matchCaseTemp.Body->codegen();
             //for (int j = 0; j < matchCaseTemp->Body.size(); j++){
             //    matchCaseTemp->Body.at(j)->codegen();
             //}
@@ -223,31 +223,31 @@ Value* MatchExprAST::codegen(){
     BasicBlock *AfterMatch = BasicBlock::Create(*TheContext, "after_match");
     std::vector<std::string> membersNotFound;
     for (int i = 0; i < enumDeclar->EnumMembers.size(); i++){
-        membersNotFound.push_back(enumDeclar->EnumMembers.at(i)->Name);
+        membersNotFound.push_back(enumDeclar->EnumMembers.at(i).Name);
     }
     for (int i = 0; i < matchCases.size(); i++){
-        std::unique_ptr<matchCase> matchCaseTemp = matchCases.at(i)->clone();
+        matchCase matchCaseTemp = matchCases.at(i).clone();
         BasicBlock *ElseBB;
-        if (matchCaseTemp->is_underscore){
+        if (matchCaseTemp.is_underscore){
             //Builder->CreateBr(AfterMatch);
-            matchCaseTemp->Body->codegen();
+            matchCaseTemp.Body->codegen();
             // for (int i = 0; i < matchCaseTemp->Body.size(); i++){
             //     matchCaseTemp->Body.at(i)->codegen();
             // }
             membersNotFound.clear();
             break;
         } else {
-        string_vector_erase(membersNotFound, matchCaseTemp->enum_member);
-        if (matchCaseTemp->enum_name != NamedValues[matchVar]->type.enum_name){
+        string_vector_erase(membersNotFound, matchCaseTemp.enum_member);
+        if (matchCaseTemp.enum_name != NamedValues[matchVar]->type.enum_name){
             return LogErrorV(this->loc, "The match case is using a member of a different enum than the one in the expression");
         }
         int pos = -1;
         bool has_custom_index = false;
         for (int j = 0; j < enumDeclar->EnumMembers.size(); j++){
-            if (enumDeclar->EnumMembers[j]->Name == matchCaseTemp->enum_member){
-                if (enumDeclar->EnumMembers[j]->contains_custom_index){
+            if (enumDeclar->EnumMembers[j].Name == matchCaseTemp.enum_member){
+                if (enumDeclar->EnumMembers[j].contains_custom_index){
                     has_custom_index = true;
-                    pos = enumDeclar->EnumMembers[j]->Index;
+                    pos = enumDeclar->EnumMembers[j].Index;
                 } else {
                     pos = j;
                 }
@@ -263,21 +263,21 @@ Value* MatchExprAST::codegen(){
         ElseBB = BasicBlock::Create(*TheContext, "else_match");
         Builder->CreateCondBr(cmp, ThenBB, ElseBB);
         Builder->SetInsertPoint(ThenBB);
-        if (matchCaseTemp->var_name != ""){
-            if (!enumDeclar->EnumMembers[pos]->contains_value){
+        if (matchCaseTemp.var_name != ""){
+            if (!enumDeclar->EnumMembers[pos].contains_value){
                 return LogErrorV(this->loc, "Enum Member doesn't contain a value");
             }
-            AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, matchCaseTemp->var_name, *enumDeclar->EnumMembers[pos]->Type);
-            Value* enum_val = Builder->CreateLoad(get_type_llvm(*enumDeclar->EnumMembers[pos]->Type), val_ptr, "enum_val_load");
+            AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, matchCaseTemp.var_name, *enumDeclar->EnumMembers[pos].Type);
+            Value* enum_val = Builder->CreateLoad(get_type_llvm(*enumDeclar->EnumMembers[pos].Type), val_ptr, "enum_val_load");
             Builder->CreateStore(enum_val, Alloca);
-            NamedValues[matchCaseTemp->var_name] = std::make_unique<NamedValue>(Alloca, *enumDeclar->EnumMembers[pos]->Type);
-            Log::Info() << "Create var for match : " << enumDeclar->EnumMembers[pos]->Name << "\n";
+            NamedValues[matchCaseTemp.var_name] = std::make_unique<NamedValue>(Alloca, *enumDeclar->EnumMembers[pos].Type);
+            Log::Info() << "Create var for match : " << enumDeclar->EnumMembers[pos].Name << "\n";
         }
         }
-        bool has_match_return = matchCaseTemp->Body->contains_expr(ExprType::Return);
-        bool has_match_unreachable = matchCaseTemp->Body->contains_expr(ExprType::Unreachable);
-        bool does_body_return_never = matchCaseTemp->Body->get_type().type == never_type;
-        matchCaseTemp->Body->codegen();
+        bool has_match_return = matchCaseTemp.Body->contains_expr(ExprType::Return);
+        bool has_match_unreachable = matchCaseTemp.Body->contains_expr(ExprType::Unreachable);
+        bool does_body_return_never = matchCaseTemp.Body->get_type().type == never_type;
+        matchCaseTemp.Body->codegen();
         // for (int i = 0; i < matchCaseTemp->Body.size(); i++){
         //     matchCaseTemp->Body.at(i)->codegen();
         // }

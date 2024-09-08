@@ -64,9 +64,6 @@ std::stack<BasicBlock*> blocksForBreak; // TODO : put this in Compiler_Context
 
 std::vector<std::unique_ptr<TemplateCall>> TemplatesToGenerate;
 
-std::vector<std::unique_ptr<TemplateStructCreation>> StructTemplatesToGenerate;
-std::vector<std::unique_ptr<TemplateEnumCreation>> EnumTemplatesToGenerate;
-
 
 // TODO : differenciate between the ones with enums, structs and function calls 
 std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen; // contains the type of template in function call
@@ -550,10 +547,10 @@ Type* EnumDeclarAST::codegen(){
     int biggest_type_size = 0;
     Cpoint_Type biggest_type = Cpoint_Type(double_type);
     for (int i = 0; i < EnumMembers.size(); i++){
-        if (EnumMembers.at(i)->Type){
-        if (EnumMembers.at(i)->Type->get_number_of_bits() > biggest_type_size){
-            biggest_type = *(EnumMembers.at(i)->Type);
-            biggest_type_size = EnumMembers.at(i)->Type->get_number_of_bits();
+        if (EnumMembers.at(i).Type){
+        if (EnumMembers.at(i).Type->get_number_of_bits() > biggest_type_size){
+            biggest_type = *(EnumMembers.at(i).Type);
+            biggest_type_size = EnumMembers.at(i).Type->get_number_of_bits();
         }
         }
     }
@@ -624,10 +621,10 @@ Value* EnumCreation::codegen(){
     bool is_custom_value = false;
     // TODO : move the finding of the index in a different function
     for (int i = 0; i < EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.size(); i++){
-        if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->Name == EnumMemberName){
-            if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->contains_custom_index){
+        if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i).Name == EnumMemberName){
+            if (EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i).contains_custom_index){
                 is_custom_value = true;
-                index = EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i)->Index;
+                index = EnumDeclarations[EnumVarName]->EnumDeclar->EnumMembers.at(i).Index;
             } else {
                 index = i;
             }
@@ -1103,16 +1100,16 @@ Value* AsmExprAST::codegen(){
     std::vector<Value*> AsmArgs;
     std::vector<Type*> AsmArgsTypes;
     for (int i = 0; i < Args->InputOutputArgs.size(); i++){
-        if (dynamic_cast<VariableExprAST*>(Args->InputOutputArgs.at(i)->ArgExpr.get())){
-            auto expr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Args->InputOutputArgs.at(i)->ArgExpr));
+        if (dynamic_cast<VariableExprAST*>(Args->InputOutputArgs.at(i).ArgExpr.get())){
+            auto expr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Args->InputOutputArgs.at(i).ArgExpr));
             if (!expr){
                 return LogErrorV(this->loc, "Error in expression of asm macro");
             }
-            if (Args->InputOutputArgs.at(i)->argType == ArgInlineAsm::ArgType::output){
+            if (Args->InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::output){
                 contains_out = true;
                 asm_type = expr->type;
                 out_var_allocation = get_var_allocation(expr->Name);
-            } else if (Args->InputOutputArgs.at(i)->argType == ArgInlineAsm::ArgType::input){
+            } else if (Args->InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::input){
                 contains_in = true;
                 /*in_values_loaded*/ AsmArgs.push_back(Builder->CreateLoad(get_type_llvm(expr->type), get_var_allocation(expr->Name)));
                 AsmArgsTypes.push_back(get_type_llvm(expr->type));
@@ -1130,10 +1127,10 @@ Value* AsmExprAST::codegen(){
         if (assembly_code.at(i) == '{' && assembly_code.at(i+1) && '}'){
             if (Args->InputOutputArgs.size() > arg_nb){
                 generated_assembly_code += "${" + std::to_string(arg_nb) + ":q}";
-                if (Args->InputOutputArgs.at(arg_nb)->argType == ArgInlineAsm::ArgType::input){
+                if (Args->InputOutputArgs.at(arg_nb).argType == ArgInlineAsm::ArgType::input){
                     constraints += "r,";
                     arg_in_nb++;
-                } else if (Args->InputOutputArgs.at(arg_nb)->argType == ArgInlineAsm::ArgType::output){
+                } else if (Args->InputOutputArgs.at(arg_nb).argType == ArgInlineAsm::ArgType::output){
                     constraints += "=&r,";
                 }
                 arg_nb++;
@@ -2615,27 +2612,27 @@ Value *VarExprAST::codegen() {
         Value* ptr_tag = nullptr;
         Value* value_tag = nullptr;
         auto EnumMembers = std::move(EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->clone()->EnumMembers);
-        std::unique_ptr<EnumMember> enumMember = nullptr;
+        std::optional<EnumMember> enumMember = std::nullopt;
         int pos_member = -1;
         
         for (int i = 0; i < EnumMembers.size(); i++){
             //Log::Info() << "EnumMembers.at(i)->contains_custom_index other : " << EnumMembers.at(i)->contains_custom_index << "\n";
-            if (EnumMembers.at(i)->Name == enumCreation->EnumMemberName){
+            if (EnumMembers.at(i).Name == enumCreation->EnumMemberName){
                 //Log::Info() << "EnumMembers.at(i)->contains_custom_index : " << EnumMembers.at(i)->contains_custom_index << "\n";
-                if (EnumMembers.at(i)->contains_custom_index){
+                if (EnumMembers.at(i).contains_custom_index){
                     /*auto indexCodegened = EnumMembers.at(i)->Index->codegen();
                     if (!dyn_cast<Constant*>(indexCodegened)){
                         return LogErrorV(this->loc, "In enum DeclarASt ")
                     }*/
-                    Log::Info() << "EnumMembers.at(i)->Index : " << EnumMembers.at(i)->Index << "\n";
-                    pos_member = EnumMembers.at(i)->Index;
+                    Log::Info() << "EnumMembers.at(i)->Index : " << EnumMembers.at(i).Index << "\n";
+                    pos_member = EnumMembers.at(i).Index;
                 } else {
                     pos_member = i;
                 }
-                enumMember = EnumMembers.at(i)->clone();
+                enumMember = EnumMembers.at(i).clone();
             }
         }
-        if (!enumMember){
+        if (!enumMember.has_value()){
             return LogErrorV(this->loc, "Couldn't find enum member %s", enumCreation->EnumMemberName.c_str());
         }
         if (!EnumDeclarations[enumCreation->EnumVarName]->EnumDeclar->enum_member_contain_type){
