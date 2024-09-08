@@ -216,8 +216,42 @@ namespace CIR {
         CmpInstruction(enum cmp_type_ty cmp_type, InstructionRef arg1, InstructionRef arg2) : cmp_type(cmp_type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
+    class ConstNumber;
+    class ConstVoid;
+    class ConstNever;
+    class ConstNull;
+    class ConstInstruction : public CIR::Instruction {
+    public:
+        ConstInstruction(){}
+        friend bool operator==(const ConstInstruction& const1, const ConstInstruction& const2); /*{
+            if (dynamic_cast<const ConstNumber*>(&const1) && dynamic_cast<const ConstNumber*>(&const2)){
+                auto const1nb = dynamic_cast<const ConstNumber*>(&const1);
+                auto const2nb = dynamic_cast<const ConstNumber*>(&const2);
+                bool is_enum_val_same = false;
+                if (const1nb->is_float == const2nb->is_float){
+                    if (const1nb->is_float){
+                        is_enum_val_same = const1nb->nb_val.float_nb == const2nb->nb_val.float_nb;
+                    } else {
+                        is_enum_val_same = const1nb->nb_val.int_nb == const2nb->nb_val.int_nb;
+                    }
+                }
+                return is_enum_val_same && const1nb->type == const1nb->type;
+            }
+            if (dynamic_cast<const ConstVoid*>(&const1) && dynamic_cast<const ConstVoid*>(&const2)){
+                return true;
+            }
+            if (dynamic_cast<const ConstNever*>(&const1) && dynamic_cast<const ConstNever*>(&const2)){
+                return true;
+            }
+            if (dynamic_cast<const ConstNull*>(&const1) && dynamic_cast<const ConstNull*>(&const2)){
+                return true;
+            }
+            return false;
+        }*/
+    };
+    
 
-    class ConstNumber : public CIR::Instruction {
+    class ConstNumber : public CIR::ConstInstruction {
     public:
         bool is_float;
         Cpoint_Type type; // TODO : remove the type ? because it is already in the instruction ? or add a get_type member for instructions and then use it to add the types to Instructions
@@ -228,23 +262,23 @@ namespace CIR {
         ConstNumber(bool is_float, Cpoint_Type type, union nb_val_ty nb_val) : is_float(is_float), type(type), nb_val(nb_val) {}
         std::string to_string() override;
     };
-    class ConstVoid : public CIR::Instruction {
+    class ConstVoid : public CIR::ConstInstruction {
     public:
         ConstVoid(){}
         std::string to_string() override {
             return "void";
         }
     };
-    class ConstNever : public CIR::Instruction {
+    class ConstNever : public CIR::ConstInstruction {
     public:
         ConstNever(){}
         std::string to_string() override {
             return "!";
         }
     };
-    class Null : public CIR::Instruction {
+    class ConstNull : public CIR::ConstInstruction {
     public:
-        Null(){}
+        ConstNull(){}
         std::string to_string() override {
             return "null";
         }

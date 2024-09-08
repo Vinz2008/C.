@@ -6,8 +6,36 @@
 #include "../ast.h"
 #include "../reflection.h"
 
-// TODO verify that last instruction of function is never type (a return, an unreachable, etc)
+// TODO verify that last instruction of function (and basic block) is never type (a return, an unreachable, etc)
 // TODO : add debug infos
+
+// TODO : use this to remove duplicates global vars inits ?
+bool operator==(const CIR::ConstInstruction& const1, const CIR::ConstInstruction& const2){
+    if (dynamic_cast<const CIR::ConstNumber*>(&const1) && dynamic_cast<const CIR::ConstNumber*>(&const2)){
+        auto const1nb = dynamic_cast<const CIR::ConstNumber*>(&const1);
+        auto const2nb = dynamic_cast<const CIR::ConstNumber*>(&const2);
+        bool is_enum_val_same = false;
+        if (const1nb->is_float == const2nb->is_float){
+            if (const1nb->is_float){
+                is_enum_val_same = const1nb->nb_val.float_nb == const2nb->nb_val.float_nb;
+            } else {
+                is_enum_val_same = const1nb->nb_val.int_nb == const2nb->nb_val.int_nb;
+            }
+        }
+        return is_enum_val_same && const1nb->type == const1nb->type;
+    }
+    if (dynamic_cast<const CIR::ConstVoid*>(&const1) && dynamic_cast<const CIR::ConstVoid*>(&const2)){
+        return true;
+    }
+    if (dynamic_cast<const CIR::ConstNever*>(&const1) && dynamic_cast<const CIR::ConstNever*>(&const2)){
+        return true;
+    }
+    if (dynamic_cast<const CIR::ConstNull*>(&const1) && dynamic_cast<const CIR::ConstNull*>(&const2)){
+        return true;
+    }
+    return false;
+}
+
 
 static CIR::InstructionRef codegenBody(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>>& Body){
     CIR::InstructionRef ret;
@@ -397,7 +425,7 @@ CIR::InstructionRef UnaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef NullExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    auto null_instr = std::make_unique<CIR::Null>();
+    auto null_instr = std::make_unique<CIR::ConstNull>();
     null_instr->type = Cpoint_Type(void_type, true); // TODO : replace this with a null type than can be cast to any pointer in a CIR_Type
     return fileCIR->add_instruction(std::move(null_instr));
 }
@@ -465,8 +493,19 @@ void UnionDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 }
 
-void GlobalVariableAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+static bool is_const_instruction(CIR::Instruction* instr){
+    return dynamic_cast<CIR::ConstInstruction*>(instr);
+}
 
+void GlobalVariableAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    CIR::InstructionRef InitI;
+    if (Init){
+        InitI = Init->cir_gen(fileCIR);
+        if (!is_const_instruction(fileCIR->get_instruction(InitI))){
+            // TODO : error
+        }
+    }
+    fileCIR->global_vars[varName] = std::make_unique<CIR::GlobalVar>(varName, cpoint_type, is_const, is_extern, InitI, section_name);
 }
 
 void PrototypeAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -514,9 +553,11 @@ void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
   auto fileCIR = std::make_unique<FileCIR>(filename, std::vector<std::unique_ptr<CIR::Function>>());
+  fileCIR->start_global_context();
   for (int i = 0; i < global_vars.size(); i++){
     global_vars.at(i)->cir_gen(fileCIR);
   }
+  fileCIR->end_global_context();
   /*for (int i = 0; i < function_protos.size(); i++){
     function_protos.at(i)->cir_gen();
   }*/

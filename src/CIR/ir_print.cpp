@@ -220,7 +220,34 @@ static std::string escape_string(const std::string& input){
 
 std::string FileCIR::to_string(){
     std::string file_cir_str = "// WARNING : this content is only for debug purposes and to be read by an human. The format of it could change at any moment.\n\n";
-    
+    if (!global_context.basicBlocks.empty()){
+    file_cir_str += "global_inits = {\n";
+    for (int i = 0; i < global_context.basicBlocks.at(0)->instructions.size(); i++){
+        file_cir_str += "\t%" + std::to_string(i);
+        if (!global_context.basicBlocks.at(0)->instructions.at(i)->type.is_empty){
+            file_cir_str += ": " + create_pretty_name_for_type(global_context.basicBlocks.at(0)->instructions.at(i)->type);
+        }
+        file_cir_str += " = " + global_context.basicBlocks.at(0)->instructions.at(i)->to_string() + "\n";
+    }
+    file_cir_str += "}\n\n";
+    }
+    for (auto const& [var_name, var] : global_vars){
+        file_cir_str += "@" + var_name + " ";
+        if (var->is_extern){
+            file_cir_str += "extern ";
+        }
+        if (var->is_const){
+            file_cir_str += "const ";
+        }
+        if (var->section_name != ""){
+            file_cir_str += "section : " + var->section_name + " ";
+        }
+        if (!var->Init.is_empty()){
+            file_cir_str += "= " + var->Init.to_string();
+        }
+        file_cir_str += "\n";
+    }
+
     if (!strings.empty()){
     file_cir_str += "strs = {\n";
     for (int i = 0; i < strings.size(); i++){

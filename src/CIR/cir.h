@@ -98,6 +98,16 @@ namespace CIR {
         FunctionProto() : name(), return_type(), args(), is_variable_number_args(false), is_private_func(false) {}
         FunctionProto(std::string name, Cpoint_Type return_type, std::vector<std::pair<std::string, Cpoint_Type>> args, bool is_variable_number_args, bool is_private_func) : name(name), return_type(return_type), args(std::move(args)), is_variable_number_args(is_variable_number_args), is_private_func(is_private_func) {}
     };
+    class GlobalVar {
+    public:
+        std::string name;
+        Cpoint_Type type;
+        bool is_const;
+        bool is_extern;
+        CIR::InstructionRef Init;
+        std::string section_name; // TODO : have a better way to have attributes to global vars (an Attributes class ?)
+        GlobalVar(std::string name, Cpoint_Type type, bool is_const, bool is_extern, CIR::InstructionRef Init, std::string section_name) : name(name), type(type), is_const(is_const), is_extern(is_extern), Init(Init), section_name(section_name) {}
+    };
     class Var {
     public:
         InstructionRef var_ref;
@@ -111,6 +121,7 @@ namespace CIR {
         std::unique_ptr<FunctionProto> proto;
         std::vector<std::unique_ptr<CIR::BasicBlock>> basicBlocks;
         std::unordered_map<std::string, Var> vars;
+        Function() : proto(), basicBlocks(), vars() {}
         Function(std::unique_ptr<FunctionProto> proto, std::vector<std::unique_ptr<CIR::BasicBlock>> basicBlocks = {}, std::unordered_map<std::string, Var> vars = {}) : proto(std::move(proto)), basicBlocks(std::move(basicBlocks)), vars(vars) {}
         std::string to_string();
         Instruction* get_instruction(int pos){
@@ -138,13 +149,16 @@ public:
     std::string filename; // not the path of the path of the real file compiled (it is a .temp file), the filename is the name of the file passed to the cli
     std::vector<std::unique_ptr<CIR::Function>> functions;
     std::unordered_map<std::string, CIR::FunctionProto> protos;
+    std::unordered_map<std::string, std::unique_ptr<CIR::GlobalVar>> global_vars;
     std::vector<std::string> strings;
     // TODO : add function to reset all these ptrs and indices
+    CIR::Function global_context; // is a (false) function with global vars (is used to have const instructions for global vars init)
     CIR::Function* CurrentFunction;
     //CIR::BasicBlock* CurrentBasicBlock;
     CIR::BasicBlockRef CurrentBasicBlock;
     //int InsertPoint;
-    FileCIR(std::string filename, std::vector<std::unique_ptr<CIR::Function>> functions) : filename(filename), functions(std::move(functions)), protos(), strings(), CurrentFunction(nullptr), CurrentBasicBlock() /*, InsertPoint(0)*/  {} 
+    FileCIR(std::string filename, std::vector<std::unique_ptr<CIR::Function>> functions) : filename(filename), functions(std::move(functions)), protos(), global_vars(), strings(), global_context(), CurrentFunction(nullptr), CurrentBasicBlock() /*, InsertPoint(0)*/  {} 
+    
     void add_function(std::unique_ptr<CIR::Function> func){
         functions.push_back(std::move(func));
         CurrentFunction = functions.back().get();
@@ -204,6 +218,18 @@ public:
         } else {
             CurrentBasicBlock->instructions.insert(CurrentBasicBlock->instructions.begin() + InsertPoint, std::move(instruction));
         }*/
+    }
+
+    void start_global_context(){
+        CurrentFunction = &global_context;
+        std::string global_bb_name = "globals";
+        global_context.basicBlocks.push_back(std::make_unique<CIR::BasicBlock>(global_bb_name));
+        set_insert_point(get_basic_block_from_name(global_bb_name));
+    }
+
+    void end_global_context(){
+        CurrentFunction = nullptr;
+        CurrentBasicBlock = CIR::BasicBlockRef();
     }
     
     std::string to_string();
