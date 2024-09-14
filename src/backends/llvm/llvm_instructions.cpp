@@ -1,3 +1,7 @@
+#include "../../config.h"
+
+#if ENABLE_CIR
+
 #include "llvm_instructions.h"
 #include "llvm.h"
 #include "structs.h"
@@ -207,3 +211,5 @@ void codegenFile(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_pt
 }
 
 }
+
+#endif

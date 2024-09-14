@@ -419,7 +419,9 @@ int main(int argc, char **argv){
     std::string llvm_default_target_triple = llvm::sys::getDefaultTargetTriple();
     TripleLLVM = Triple(llvm_default_target_triple); // default target triplet only for lld
     std::string TargetTriple = "";
+#if ENABLE_CIR
     enum backend_type backend = backend_type::LLVM_TYPE; // add a cli flag to set this
+#endif
     if (argc < 2){
 #if ENABLE_JIT
         return StartJIT();

@@ -1,3 +1,7 @@
+#include "../../config.h"
+
+#if ENABLE_CIR
+
 #include "structs.h"
 #include "llvm.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -20,3 +24,5 @@ void codegenStruct(std::unique_ptr<LLVM::Context> &codegen_context, CIR::Struct&
 }
 
 }
+
+#endif

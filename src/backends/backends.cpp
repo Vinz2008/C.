@@ -1,3 +1,6 @@
+#include "../config.h"
+#if ENABLE_CIR
+
 #include "backends.h"
 #include "../CIR/cir.h"
 #include "./llvm/llvm.h"
@@ -13,3 +16,5 @@ int codegenBackend(std::unique_ptr<FileCIR> fileCIR, enum backend_type backend, 
     }
 
 }
+
+#endif
