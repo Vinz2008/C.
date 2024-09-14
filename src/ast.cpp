@@ -65,6 +65,7 @@ template <class T>
 std::vector<std::unique_ptr<T>> clone_unique_ptr_vec(std::vector<std::unique_ptr<T>>& v){
     std::vector<std::unique_ptr<T>> v_cloned;
     if (!v.empty()){
+        v_cloned.reserve(v.size());
         for (int i = 0; i < v.size(); i++){
             v_cloned.push_back(v.at(i)->clone());
         }
@@ -76,6 +77,7 @@ template <class T>
 std::vector<T> clone_containing_unique_ptr_vector(std::vector<T>& v){
     std::vector<T> v_cloned;
     if (!v.empty()){
+        v_cloned.reserve(v.size());
         for (int i = 0; i < v.size(); i++){
             v_cloned.push_back(v.at(i).clone());
         }
@@ -86,7 +88,9 @@ std::vector<T> clone_containing_unique_ptr_vector(std::vector<T>& v){
 template<typename T, typename ... Ptrs>
 std::vector<std::unique_ptr<T>> make_unique_ptr_static_vector(Ptrs&& ... ptrs){
     std::vector<std::unique_ptr<T>> vec;
-    (vec.emplace_back( std::forward<Ptrs>(ptrs) ), ...);
+    const std::size_t arg_size = sizeof...(Ptrs);
+    vec.reserve(arg_size);
+    (vec.emplace_back( std::forward<Ptrs>(ptrs)), ...);
     return vec;
 }
 
@@ -121,17 +125,13 @@ std::unique_ptr<ExprAST> CallExprAST::clone(){
 std::unique_ptr<ExprAST> VarExprAST::clone(){
     std::vector<std::pair<std::string, std::unique_ptr<ExprAST>>> VarNamesCloned;
     if (!VarNames.empty()){
+      VarNamesCloned.reserve(VarNames.size());
       Log::Info() << "VarNames.size() " << VarNames.size() << "\n";
       for (int i = 0; i < VarNames.size(); i++){
         VarNamesCloned.push_back(std::make_pair(VarNames.at(i).first, VarNames.at(i).second ? VarNames.at(i).second->clone() : nullptr));
       }
     }
-    std::unique_ptr<ExprAST> indexCloned;
-    if (index == nullptr){
-      indexCloned = nullptr;
-    } else {
-      indexCloned = index->clone();
-    }
+    std::unique_ptr<ExprAST> indexCloned = (index) ? index->clone() : nullptr;
     return std::make_unique<VarExprAST>(std::move(VarNamesCloned), cpoint_type, std::move(indexCloned), infer_type);
 }
 
@@ -147,6 +147,7 @@ std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
     std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
     Log::Info() << "is Vars empty" << Vars.empty() << "\n"; 
     if (!Vars.empty()){
+      VarsCloned.reserve(Vars.size());
       for (int i = 0; i < Vars.size(); i++){
         std::unique_ptr<VarExprAST> VarTemp = get_Expr_from_ExprAST<VarExprAST>(Vars.at(i)->clone());
         assert(VarTemp != nullptr);
@@ -159,12 +160,14 @@ std::unique_ptr<StructDeclarAST> StructDeclarAST::clone(){
 
 std::unique_ptr<UnionDeclarAST> UnionDeclarAST::clone(){
     std::vector<std::unique_ptr<VarExprAST>> VarsCloned;
+    VarsCloned.reserve(Vars.size());
     for (int i = 0; i < Vars.size(); i++){
       std::unique_ptr<ExprAST> VarCloned = Vars.at(i)->clone();
-      std::unique_ptr<VarExprAST> VarTemp;
+      /*std::unique_ptr<VarExprAST> VarTemp;
       VarExprAST* VarTempPtr = static_cast<VarExprAST*>(VarCloned.get());
       VarCloned.release();
-      VarTemp.reset(VarTempPtr);
+      VarTemp.reset(VarTempPtr);*/
+      std::unique_ptr<VarExprAST> VarTemp = get_Expr_from_ExprAST<VarExprAST>(std::move(VarCloned));
       VarsCloned.push_back(std::move(VarTemp));
     }
     return std::make_unique<UnionDeclarAST>(Name, std::move(VarsCloned));
