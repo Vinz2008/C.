@@ -1,5 +1,6 @@
 #include "../../CIR/cir.h"
 
 namespace LLVM {
-    void codegenStruct(CIR::Struct& structs);
+    class Context;
+    void codegenStruct(std::unique_ptr<LLVM::Context> &codegen_context, CIR::Struct& structs);
 }

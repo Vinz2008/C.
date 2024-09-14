@@ -25,7 +25,7 @@ static Function* codegenProto(std::unique_ptr<LLVM::Context>& codegen_context, C
             if (arg_type.is_just_struct() && should_pass_struct_byval(arg_type)){
                 arg_type.is_ptr = true;
             }
-            type_args.push_back(get_type_llvm(arg_type));
+            type_args.push_back(get_type_llvm(codegen_context, arg_type));
         }
     }
     bool has_sret = false;
@@ -35,11 +35,11 @@ static Function* codegenProto(std::unique_ptr<LLVM::Context>& codegen_context, C
             has_sret = true;
             Cpoint_Type sret_arg_type = proto.return_type;
             sret_arg_type.is_ptr = true;
-            type_args.insert(type_args.begin(), get_type_llvm(sret_arg_type));
+            type_args.insert(type_args.begin(), get_type_llvm(codegen_context, sret_arg_type));
         }
     }
     Cpoint_Type return_type = (has_sret) ? Cpoint_Type(void_type) : proto.return_type;
-    FunctionType* FT = FunctionType::get(get_type_llvm(return_type), type_args, proto.is_variable_number_args);
+    FunctionType* FT = FunctionType::get(get_type_llvm(codegen_context, return_type), type_args, proto.is_variable_number_args);
     // TODO : add code for externs ? (see codegen.cpp) (add is_extern to FunctionProto ?)
     GlobalValue::LinkageTypes linkageType = Function::ExternalLinkage;
     if (proto.is_private_func){
@@ -54,18 +54,18 @@ static Function* codegenProto(std::unique_ptr<LLVM::Context>& codegen_context, C
     bool has_added_sret = false;
     for (auto &Arg : F->args()){
         if (has_sret && Idx == 0 && !has_added_sret){
-            addArgSretAttribute(Arg, get_type_llvm(proto.return_type));
+            addArgSretAttribute(Arg, get_type_llvm(codegen_context, proto.return_type));
             Arg.setName("sret_arg");
             Idx = 0;
             has_added_sret = true;
         } else if (proto.args.at(Idx).second.is_just_struct() && should_pass_struct_byval(proto.args.at(Idx).second)){
             Log::Info() << "should_pass_struct_byval arg " << proto.args.at(Idx).first << " : " << proto.args.at(Idx).second << "\n";
-            Cpoint_Type arg_type = get_cpoint_type_from_llvm(get_type_llvm(proto.args.at(Idx).second));
+            Cpoint_Type arg_type = get_cpoint_type_from_llvm(get_type_llvm(codegen_context, proto.args.at(Idx).second));
             Cpoint_Type by_val_ptr_type = arg_type;
             by_val_ptr_type.is_ptr = true;
             by_val_ptr_type.nb_ptr++;
-            Arg.mutateType(get_type_llvm(by_val_ptr_type));
-            Arg.addAttr(Attribute::getWithByValType(*codegen_context->TheContext, get_type_llvm(arg_type)));
+            Arg.mutateType(get_type_llvm(codegen_context, by_val_ptr_type));
+            Arg.addAttr(Attribute::getWithByValType(*codegen_context->TheContext, get_type_llvm(codegen_context, arg_type)));
             Arg.addAttr(Attribute::getWithAlignment(*codegen_context->TheContext, Align(8)));
             Arg.setName(proto.args[Idx++].first);
         } else {
@@ -104,7 +104,7 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
 
 void codegenFile(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> fileCIR){
     for (auto& s : fileCIR->structs){
-        codegenStruct(s.second);
+        codegenStruct(codegen_context, s.second);
     }
     for (int i = 0; i < fileCIR->functions.size(); i++){
         codegenFunction(codegen_context, fileCIR, std::move(fileCIR->functions.at(i)));

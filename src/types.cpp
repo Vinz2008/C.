@@ -14,6 +14,8 @@
 #include "CIR/cir.h"
 #endif
 
+#include "backends/llvm/llvm.h" // TODO : remove eveything that needs llvm from here in the future
+
 using namespace llvm;
 
 extern std::unique_ptr<LLVMContext> TheContext;
@@ -25,7 +27,19 @@ std::vector<Cpoint_Type> typeDefTable;
 extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern Source_location emptyLoc;
 
+Type* get_type_llvm(LLVMContext& context, std::unordered_map<std::string, Type*>& struct_declars, Cpoint_Type cpoint_type);
+
+// by default, use the global TheContext (TODO : remove it after finishing CIR)
 Type* get_type_llvm(Cpoint_Type cpoint_type){
+    auto struct_declars_empty = std::unordered_map<std::string, Type*>();
+    return get_type_llvm(*TheContext, struct_declars_empty, cpoint_type);
+}
+
+Type* get_type_llvm(std::unique_ptr<LLVM::Context>& llvm_context, Cpoint_Type cpoint_type){
+    return get_type_llvm(*llvm_context->TheContext, llvm_context->structDeclars, cpoint_type);
+}
+
+Type* get_type_llvm(LLVMContext& context, std::unordered_map<std::string, Type*>& struct_declars, Cpoint_Type cpoint_type){
     assert(!cpoint_type.is_empty);
     Type* type;
     if (cpoint_type.is_template_type){
@@ -56,7 +70,11 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
             LogErrorE("Using unknown struct type : %s", structName.c_str());
             return nullptr;
         }
-        type = StructDeclarations[structName]->struct_type;
+        if (struct_declars.empty()){ // is not CIR backend
+            type = StructDeclarations[structName]->struct_type;
+        } else {
+            type = struct_declars[structName];
+        }
     } else if (cpoint_type.is_union){
         type = UnionDeclarations[cpoint_type.union_name]->union_type;
     } else if (cpoint_type.is_enum){
@@ -69,53 +87,53 @@ Type* get_type_llvm(Cpoint_Type cpoint_type){
     switch (cpoint_type.type){
         default:
         case double_type:
-            type = Type::getDoubleTy(*TheContext);
+            type = Type::getDoubleTy(context);
             break;
         case i32_type:
 //        case int_type:
         case u32_type:
-            type = Type::getInt32Ty(*TheContext);
+            type = Type::getInt32Ty(context);
             break;
         case float_type:
-            type = Type::getFloatTy(*TheContext);
+            type = Type::getFloatTy(context);
             break;
         case i8_type:
         case u8_type:
-           type = Type::getInt8Ty(*TheContext);
+           type = Type::getInt8Ty(context);
            break;
         case i16_type:
         case u16_type:
-            type = Type::getInt16Ty(*TheContext);
+            type = Type::getInt16Ty(context);
             break;
         case i64_type:
         case u64_type:
-            type = Type::getInt64Ty(*TheContext);
+            type = Type::getInt64Ty(context);
             break;
         case i128_type:
         case u128_type:
-            type = Type::getInt128Ty(*TheContext);
+            type = Type::getInt128Ty(context);
             break;
         case bool_type:
-            type = Type::getInt1Ty(*TheContext);
+            type = Type::getInt1Ty(context);
             break;
         case void_type:
         case never_type:
             if (!cpoint_type.is_ptr){
-            type = Type::getVoidTy(*TheContext);
+            type = Type::getVoidTy(context);
             } else {
-            type = PointerType::get(*TheContext, 0U);
+            type = PointerType::get(context, 0U);
             if (cpoint_type.is_array){
                 type = llvm::ArrayType::get(type, cpoint_type.nb_element);
             }
             }
             return type;
         /*case argv_type:
-            return Type::getInt8PtrTy(*TheContext)->getPointerTo();*/
+            return Type::getInt8PtrTy(context)->getPointerTo();*/
     }
     }
 before_is_ptr:
     if (cpoint_type.is_ptr){
-        type = PointerType::get(*TheContext, 0);
+        type = PointerType::get(context, 0);
     }
     // code that should not be used except in var creation. The index is not found when doing the codegen
     if (cpoint_type.is_array){
@@ -131,7 +149,7 @@ before_is_ptr:
             Log::Info() << "cpoint_type.return_type is nullptr" << "\n";
         }
         type = llvm::FunctionType::get(get_type_llvm(*cpoint_type.return_type), args, false);*/
-        type = PointerType::get(*TheContext, 0);
+        type = PointerType::get(context, 0);
     }
     return type;   
 }
@@ -167,7 +185,7 @@ bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
 }
 
 bool is_llvm_type_number(Type* llvm_type){
-    return llvm_type == Type::getDoubleTy(*TheContext) || llvm_type == Type::getInt8Ty(*TheContext) || llvm_type == Type::getInt16Ty(*TheContext) || llvm_type == Type::getInt32Ty(*TheContext) || llvm_type == Type::getInt64Ty(*TheContext) || llvm_type == Type::getInt128Ty(*TheContext);
+    return llvm_type == get_type_llvm(Cpoint_Type(double_type)) || llvm_type == get_type_llvm(Cpoint_Type(i8_type)) || llvm_type == get_type_llvm(Cpoint_Type(i16_type)) || llvm_type == get_type_llvm(Cpoint_Type(i32_type)) || get_type_llvm(Cpoint_Type(i64_type)) || llvm_type == get_type_llvm(Cpoint_Type(i128_type));
 }
 
 // TODO : remove this (not used)

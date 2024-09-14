@@ -16,6 +16,7 @@ namespace LLVM {
         std::unique_ptr<LLVMContext> TheContext;
         std::unique_ptr<Module> TheModule;
         std::unique_ptr<IRBuilder<>> Builder;
-        Context(std::unique_ptr<LLVMContext> TheContext, std::unique_ptr<Module> TheModule, std::unique_ptr<IRBuilder<>> Builder) : TheContext(std::move(TheContext)), TheModule(std::move(TheModule)), Builder(std::move(Builder)) {}
+        std::unordered_map<std::string, Type*> structDeclars;
+        Context(std::unique_ptr<LLVMContext> TheContext, std::unique_ptr<Module> TheModule, std::unique_ptr<IRBuilder<>> Builder) : TheContext(std::move(TheContext)), TheModule(std::move(TheModule)), Builder(std::move(Builder)), structDeclars() {}
     };
 }

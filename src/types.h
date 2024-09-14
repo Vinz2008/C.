@@ -115,6 +115,10 @@ public:
     Cpoint_Type deref_type();
 };
 
+namespace LLVM {
+    class Context;
+}
+llvm::Type* get_type_llvm(std::unique_ptr<LLVM::Context>& llvm_context, Cpoint_Type cpoint_type);
 llvm::Type* get_type_llvm(Cpoint_Type cpoint_type); // TODO : move this to a member function
 llvm::Value* get_default_value(Cpoint_Type type);
 llvm::Constant* get_default_constant(Cpoint_Type type);
