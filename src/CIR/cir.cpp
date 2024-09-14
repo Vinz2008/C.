@@ -511,6 +511,8 @@ void GlobalVariableAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 void PrototypeAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     FunctionProtos[this->getName()] = this->clone();
+    auto proto_clone = CIR::FunctionProto(this->Name, this->cpoint_type, this->Args, this->is_variable_number_args, this->is_private_func);
+    fileCIR->protos[this->Name] = proto_clone;
 }
 
 void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -565,9 +567,9 @@ std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
     global_vars.at(i)->cir_gen(fileCIR);
   }
   fileCIR->end_global_context();
-  /*for (int i = 0; i < function_protos.size(); i++){
-    function_protos.at(i)->cir_gen();
-  }*/
+  for (int i = 0; i < function_protos.size(); i++){
+    function_protos.at(i)->cir_gen(fileCIR);
+  }
   for (int i = 0; i < structs.size(); i++){
     structs.at(i)->cir_gen(fileCIR);
   }

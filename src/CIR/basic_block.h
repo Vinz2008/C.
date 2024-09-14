@@ -36,7 +36,7 @@ namespace CIR {
     class BasicBlock {
     public:
         std::string name;
-        std::vector<std::unique_ptr<Instruction>> instructions;
+        std::vector<std::unique_ptr<Instruction>> instructions; // TODO : remove unique_ptr
         std::vector<BasicBlockRef> predecessors;
         BasicBlock(std::string name, std::vector<std::unique_ptr<Instruction>> instructions = std::vector<std::unique_ptr<Instruction>>()) : name(name), instructions(std::move(instructions)), predecessors() {}
         //std::string to_string();
