@@ -143,7 +143,8 @@ ifeq ($(PROFILING), TRUE)
 PROFILING_EXTERNAL_SRCS := $(SRCDIR)/external/tracy/public/TracyClient.cpp
 PROFILING_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(PROFILING_EXTERNAL_SRCS))
 OBJS += $(PROFILING_EXTERNAL_OBJS)
-CXXFLAGS += -DTRACY_ENABLE -DTRACY_NO_EXIT -march=native
+CXXFLAGS += -DPROFILING -DTRACY_ENABLE -march=native
+#CXXFLAGS += -DTRACY_NO_EXIT
 LDFLAGS += -lpthread -ldl
 endif
 

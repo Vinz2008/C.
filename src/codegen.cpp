@@ -36,6 +36,8 @@
 #include "match.h"
 #include "targets/targets.h"
 
+#include "tracy.h"
+
 #include <typeinfo>
 #include <cxxabi.h>
 
@@ -2790,6 +2792,7 @@ void register_function_protos(std::unique_ptr<PrototypeAST>& proto){
 }
 
 void FileAST::codegen(){
+  ZoneScopedN("LLVM codegen");
   // TODO : need to register all function protos from : function definitions, struct members, mods, etc
   // TOOD : detect in function codegen of mod functions if they were already registered and not do it 
   

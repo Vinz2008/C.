@@ -47,6 +47,8 @@
 #include "backends/backends.h"
 #endif
 
+#include "tracy.h"
+
 using namespace std;
 
 /*using namespace llvm;
@@ -783,6 +785,7 @@ int main(int argc, char **argv){
       }
     }
     if (link_files_mode){
+      ZoneScopedN("linking");
       std::vector<string> vect_obj_files;
       if (TargetTriple.find("wasm") == std::string::npos){
       std::string gc_static_path = gc_path;

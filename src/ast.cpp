@@ -19,6 +19,8 @@
 #include "abi.h"
 #include "debuginfo.h"
 
+#include "tracy.h"
+
 extern double NumVal;
 extern int CurTok;
 extern std::string strStatic;
@@ -2272,6 +2274,7 @@ static void HandleStruct(std::vector<std::unique_ptr<StructDeclarAST>>& structs)
 extern void HandleTest();
 
 std::unique_ptr<FileAST> ParseFile(){
+  ZoneScopedN("Parsing");
   std::vector<std::unique_ptr<GlobalVariableAST>> global_vars;
   std::vector<std::unique_ptr<StructDeclarAST>> structs;
   std::vector<std::unique_ptr<UnionDeclarAST>> unions;

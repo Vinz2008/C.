@@ -5,6 +5,7 @@
 
 #include "../ast.h"
 #include "../reflection.h"
+#include "../tracy.h"
 
 // TODO verify that last instruction of function (and basic block) is never type (a return, an unreachable, etc)
 // TODO : add debug infos
@@ -557,6 +558,7 @@ void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
+  ZoneScopedN("CIR generation");
   auto fileCIR = std::make_unique<FileCIR>(filename, std::vector<std::unique_ptr<CIR::Function>>());
   fileCIR->start_global_context();
   for (int i = 0; i < global_vars.size(); i++){
