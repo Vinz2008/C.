@@ -251,7 +251,11 @@ run:
 	./$(OUTPUTBIN) -std ./std tests/test2.cpoint
 #	./$(OUTPUTBIN) -std ./std tests/test2.cpoint -no-gc
 
-clean-build:
+
+clean-subfolders:
+	rm -f ./src/backends/*.o ./src/backends/*/*.o ./src/CIR/*.o ./src/backends/*.d ./src/backends/*/*.d ./src/CIR/*.d
+
+clean-build: clean-subfolders
 	rm -f ./src/*.o ./src/*.temp ./src/*.d
 
 clean-cpoint: clean-build

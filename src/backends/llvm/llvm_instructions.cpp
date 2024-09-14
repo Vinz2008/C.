@@ -1,5 +1,6 @@
 #include "llvm_instructions.h"
 #include "llvm.h"
+#include "structs.h"
 #include "../../CIR/cir.h"
 #include "../../abi.h"
 #include "../../log.h"
@@ -102,6 +103,9 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
 }
 
 void codegenFile(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> fileCIR){
+    for (auto& s : fileCIR->structs){
+        codegenStruct(s.second);
+    }
     for (int i = 0; i < fileCIR->functions.size(); i++){
         codegenFunction(codegen_context, fileCIR, std::move(fileCIR->functions.at(i)));
     }

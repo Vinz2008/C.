@@ -137,6 +137,13 @@ namespace CIR {
             return nullptr;
         }
     };
+    class Struct {
+    public:
+        std::string name;
+        std::vector<std::pair<std::string, Cpoint_Type>> vars;
+        Struct() : name(), vars() {}
+        Struct(std::string name, std::vector<std::pair<std::string, Cpoint_Type>> vars) : name(name), vars(vars) {}
+    };
     // TODO : make it a base class
     class Value {
     public:
@@ -150,6 +157,7 @@ public:
     std::vector<std::unique_ptr<CIR::Function>> functions;
     std::unordered_map<std::string, CIR::FunctionProto> protos;
     std::unordered_map<std::string, std::unique_ptr<CIR::GlobalVar>> global_vars;
+    std::unordered_map<std::string, CIR::Struct> structs;
     std::vector<std::string> strings;
     // TODO : add function to reset all these ptrs and indices
     CIR::Function global_context; // is a (false) function with global vars (is used to have const instructions for global vars init)

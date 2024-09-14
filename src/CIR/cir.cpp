@@ -548,7 +548,12 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-
+    std::vector<std::pair<std::string, Cpoint_Type>> vars;
+    for (int i = 0; i < Vars.size(); i++){
+        // TODO : add support for support of multiple variables in one var
+        vars.push_back(std::make_pair(Vars.at(i)->VarNames.at(0).first, Vars.at(i)->cpoint_type));
+    }
+    fileCIR->structs[Name] = CIR::Struct(Name, vars);
 }
 
 std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
