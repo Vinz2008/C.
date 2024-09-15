@@ -53,6 +53,10 @@ std::string CIR::LoadArgInstruction::to_string(){
     return "load_arg " + create_pretty_name_for_type(arg_type) + " " + arg_name;
 }
 
+std::string CIR::LoadVarInstruction::to_string(){
+    return "load_var " + create_pretty_name_for_type(load_type) + " " + var.to_string();
+}
+
 std::string CIR::GotoInstruction::to_string(){
     return "goto " + goto_bb.to_string();
 }

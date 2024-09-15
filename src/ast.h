@@ -737,7 +737,7 @@ public:
   std::string Callee;
   std::vector<std::unique_ptr<ExprAST>> Args;
   /*std::string*/ Cpoint_Type template_passed_type;
-  CallExprAST(Source_location Loc, const std::string &Callee,
+  CallExprAST(Source_location Loc, std::string Callee,
               std::vector<std::unique_ptr<ExprAST>> Args, /*const std::string&*/ Cpoint_Type template_passed_type)
       : ExprAST(Loc), Callee(Callee), Args(std::move(Args)), template_passed_type(template_passed_type) {}
   Value *codegen() override;

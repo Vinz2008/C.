@@ -17,8 +17,9 @@ namespace LLVM {
         std::unique_ptr<Module> TheModule;
         std::unique_ptr<IRBuilder<>> Builder;
         std::unordered_map<std::string, Type*> structDeclars;
+        std::vector<Constant*> staticStrings;
         std::vector<Value*> tempBBValues; // Values of each instruction (by pos) for the Basic Block that is codegened
-        std::unordered_map<std::string, AllocaInst*> tempVarsAllocas;
+        std::unordered_map<std::string, AllocaInst*> tempVarsAllocas; // TODO : rename to tempArgsAllocas ?
         Context(std::unique_ptr<LLVMContext> TheContext, std::unique_ptr<Module> TheModule, std::unique_ptr<IRBuilder<>> Builder) : TheContext(std::move(TheContext)), TheModule(std::move(TheModule)), Builder(std::move(Builder)), structDeclars(), tempBBValues(), tempVarsAllocas() {}
     };
 }

@@ -151,6 +151,8 @@ namespace CIR {
     };
 }
 
+//void add_manually_extern(std::unique_ptr<FileCIR>& fileCIR, CIR::FunctionProto proto);
+
 class FileCIR {
 public:
     std::string filename; // not the path of the path of the real file compiled (it is a .temp file), the filename is the name of the file passed to the cli

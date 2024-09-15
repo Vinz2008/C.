@@ -65,13 +65,13 @@ namespace CIR {
         ReturnInstruction(InstructionRef ret_val) : ret_val(ret_val) {}
         std::string to_string() override;
     };
-    /*class LoadVarInstruction : public CIR::Instruction {
+    class LoadVarInstruction : public CIR::Instruction {
     public:
         InstructionRef var;
         Cpoint_Type load_type;
         LoadVarInstruction(InstructionRef var, Cpoint_Type load_type) : var(var), load_type(load_type) {}
         std::string to_string() override;
-    };*/
+    };
     class LoadGlobalInstruction : public CIR::Instruction {
     public:
         bool is_string;

@@ -148,6 +148,41 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
     } else if (dynamic_cast<CIR::LoadArgInstruction*>(instruction.get())){
         auto load_arg_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadArgInstruction>(std::move(instruction));
         instruction_val = codegen_context->Builder->CreateLoad(get_type_llvm(codegen_context, load_arg_instruction->type), codegen_context->tempVarsAllocas[load_arg_instruction->arg_name]);
+    } else if (dynamic_cast<CIR::ConstNumber*>(instruction.get())){
+        auto const_nb_instruction = get_Instruction_from_CIR_Instruction<CIR::ConstNumber>(std::move(instruction));
+        if (const_nb_instruction->is_float){
+            instruction_val = ConstantFP::get(*codegen_context->TheContext, APFloat(const_nb_instruction->nb_val.float_nb));
+        } else {
+            instruction_val = ConstantInt::get(*codegen_context->TheContext, APInt(const_nb_instruction->type.get_number_of_bits(), const_nb_instruction->nb_val.int_nb, const_nb_instruction->type.is_signed()));
+        }
+    } else if (dynamic_cast<CIR::CastInstruction*>(instruction.get())){
+        auto cast_instruction = get_Instruction_from_CIR_Instruction<CIR::CastInstruction>(std::move(instruction));
+        Value* cast_val = codegen_context->tempBBValues.at(cast_instruction->val.get_pos());
+        convert_to_type(cast_instruction->type, cast_instruction->cast_type, cast_val);
+        instruction_val = cast_val;
+    } else if (dynamic_cast<CIR::VarInit*>(instruction.get())){
+        auto var_init_instruction = get_Instruction_from_CIR_Instruction<CIR::VarInit>(std::move(instruction));
+        Function* TheFunction = codegen_context->Builder->GetInsertBlock()->getParent();
+        AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, var_init_instruction->VarName.first, get_type_llvm(codegen_context, var_init_instruction->type));
+        if (!var_init_instruction->VarName.second.is_empty()){
+            Value* InitVal = codegen_context->tempBBValues.at(var_init_instruction->VarName.second.get_pos());
+            codegen_context->Builder->CreateStore(InitVal, Alloca);
+        }
+        codegen_context->tempVarsAllocas[var_init_instruction->VarName.first] = Alloca;
+        instruction_val = Alloca;
+        //instruction_val = nullptr;
+    } else if (dynamic_cast<CIR::LoadGlobalInstruction*>(instruction.get())){
+        auto load_global_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadGlobalInstruction>(std::move(instruction));
+        if (load_global_instruction->is_string){
+            instruction_val = codegen_context->staticStrings.at(load_global_instruction->global_pos);
+        } else {
+            fprintf(stderr, "NOT IMPLEMENTED, TODO");
+            exit(1);
+        }
+    } else if (dynamic_cast<CIR::LoadVarInstruction*>(instruction.get())){
+        auto load_var_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadVarInstruction>(std::move(instruction));
+        Value* AllocaVal = codegen_context->tempBBValues.at(load_var_instruction->var.get_pos());
+        instruction_val = codegen_context->Builder->CreateLoad(get_type_llvm(codegen_context, load_var_instruction->load_type), AllocaVal);
     } else if (dynamic_cast<CIR::ConstVoid*>(instruction.get())){
         instruction_val = nullptr;
     } else {
@@ -202,6 +237,10 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
 }
 
 void codegenFile(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> fileCIR){
+    for (int i = 0; i < fileCIR->strings.size(); i++){
+        auto const_str = codegen_context->Builder->CreateGlobalStringPtr(StringRef(fileCIR->strings.at(i)), "", 0, codegen_context->TheModule.get());
+        codegen_context->staticStrings.push_back(const_str);
+    }
     for (auto& s : fileCIR->structs){
         codegenStruct(codegen_context, s.second);
     }

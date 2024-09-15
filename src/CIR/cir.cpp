@@ -37,6 +37,23 @@ bool operator==(const CIR::ConstInstruction& const1, const CIR::ConstInstruction
     return false;
 }
 
+// TODO : add other externs (for tests, etc)
+static void add_manually_extern(std::unique_ptr<FileCIR>& fileCIR, CIR::FunctionProto proto){
+    fileCIR->protos[proto.name] = proto;
+}
+
+static void add_externs_for_gc(std::unique_ptr<FileCIR>& fileCIR){
+    std::vector<std::pair<std::string, Cpoint_Type>> args_gc_init;
+    add_manually_extern(fileCIR, CIR::FunctionProto("gc_init", Cpoint_Type(void_type), args_gc_init, false, false));
+    std::vector<std::pair<std::string, Cpoint_Type>> args_gc_malloc;
+    args_gc_malloc.push_back(std::make_pair("size", Cpoint_Type(i64_type)));
+    add_manually_extern(fileCIR, CIR::FunctionProto("gc_malloc", Cpoint_Type(void_type, true), args_gc_malloc, false, false));
+    std::vector<std::pair<std::string, Cpoint_Type>> args_gc_realloc;
+    args_gc_realloc.push_back(std::make_pair("ptr", Cpoint_Type(void_type, true)));
+    args_gc_realloc.push_back(std::make_pair("size", Cpoint_Type(i64_type)));
+    add_manually_extern(fileCIR, CIR::FunctionProto("gc_realloc", Cpoint_Type(void_type, true), args_gc_realloc, false, false));
+}
+
 
 static CIR::InstructionRef codegenBody(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>>& Body){
     CIR::InstructionRef ret;
@@ -66,7 +83,11 @@ static CIR::InstructionRef createGotoIf(std::unique_ptr<FileCIR>& fileCIR, CIR::
 }
 
 CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return fileCIR->CurrentFunction->vars[Name].var_ref;
+    auto var_ref = fileCIR->CurrentFunction->vars[Name].var_ref;
+    auto load_var_instr = std::make_unique<CIR::LoadVarInstruction>(var_ref, fileCIR->CurrentFunction->vars[Name].type);
+    load_var_instr->type = fileCIR->CurrentFunction->vars[Name].type;
+    return fileCIR->add_instruction(std::move(load_var_instr));
+    //return fileCIR->CurrentFunction->vars[Name].var_ref;
 }
 
 CIR::InstructionRef DeferExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -112,6 +133,8 @@ CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     var_instr->type = cpoint_type;
     auto var_ref = fileCIR->add_instruction(std::move(var_instr));
     fileCIR->CurrentFunction->vars[VarNames.at(0).first] = CIR::Var(var_ref, cpoint_type);
+    // TODO : struct constructors
+    // TODO : debuginfos
     return var_ref;
     //return CIR::InstructionRef();
 }
@@ -121,8 +144,15 @@ CIR::InstructionRef EmptyExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    fileCIR->strings.push_back(str);
-    auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(true, fileCIR->strings.size()-1);
+    auto find_duplicate_string = std::find(fileCIR->strings.begin(), fileCIR->strings.end(), str);
+    int pos = -1;
+    if (find_duplicate_string != fileCIR->strings.end()){
+        pos = std::distance(fileCIR->strings.begin(), find_duplicate_string);
+    } else {
+        fileCIR->strings.push_back(str);
+        pos = fileCIR->strings.size()-1;
+    }
+    auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(true, pos);
     load_global_instr->type = Cpoint_Type(i8_type, true);
     return fileCIR->add_instruction(std::move(load_global_instr));
 }
@@ -230,7 +260,9 @@ CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     CIR::ConstNumber::nb_val_ty nb_val;
     nb_val.int_nb = (val) ? 1 : 0;
-    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(bool_type), nb_val));
+    auto bool_instr = std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(bool_type), nb_val);
+    bool_instr->type = Cpoint_Type(bool_type);
+    return fileCIR->add_instruction(std::move(bool_instr));
 }
 
 static CIR::InstructionRef InfiniteLoopCodegen(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>> &Body){
@@ -324,7 +356,15 @@ CIR::InstructionRef ConstantStructExprAST::cir_gen(std::unique_ptr<FileCIR>& fil
 
 // TODO : add a LogError for InstructionRef
 
+extern std::unordered_map<std::string, int> BinopPrecedence;
+
 CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    if (BinopPrecedence.find(Op) == BinopPrecedence.end()){ // is custom op
+        std::vector<std::unique_ptr<ExprAST>> Args;
+        Args.push_back(std::move(LHS));
+        Args.push_back(std::move(RHS));
+        return CallExprAST(emptyLoc, "binary" + Op, std::move(Args), Cpoint_Type()).cir_gen(fileCIR);
+    }
     // TODO : readd this after fixing get_type for vars (problem with NamedValues, put it in the AST node ?)
     /*Cpoint_Type LHS_type = LHS->get_type().get_real_type();
     Cpoint_Type RHS_type = RHS->get_type();
@@ -390,6 +430,8 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         return fileCIR->add_instruction(std::move(binary_instr));
     }*/
     // TODO : readd custom operator support ?
+
+
     return CIR::InstructionRef();
 }
 
@@ -422,7 +464,22 @@ CIR::InstructionRef NumberExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef UnaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    if (Opcode == '-'){
+        auto LHS = std::make_unique<NumberExprAST>(0);
+        auto RHS = std::move(Operand);
+        return BinaryExprAST(this->loc, "-", std::move(LHS), std::move(RHS)).cir_gen(fileCIR);
+    }
+    if (Opcode == '&'){
+        return AddrExprAST(std::move(Operand)).cir_gen(fileCIR);
+    }
+    if (Opcode == '*'){
+        return DerefExprAST(std::move(Operand)).cir_gen(fileCIR);
+    }
+    std::vector<std::unique_ptr<ExprAST>> Operands;
+    Operands.push_back(Operand->clone());
+    std::string unary_func = "unary";
+    unary_func.push_back(Opcode);
+    return CallExprAST(this->loc, unary_func, std::move(Operands), Cpoint_Type()).cir_gen(fileCIR);
 }
 
 CIR::InstructionRef NullExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -562,6 +619,7 @@ void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
   ZoneScopedN("CIR generation");
   auto fileCIR = std::make_unique<FileCIR>(filename, std::vector<std::unique_ptr<CIR::Function>>());
+  add_externs_for_gc(fileCIR);
   fileCIR->start_global_context();
   for (int i = 0; i < global_vars.size(); i++){
     global_vars.at(i)->cir_gen(fileCIR);
