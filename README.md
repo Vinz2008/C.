@@ -256,6 +256,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Stop using the llvm namespace to differentiate similar functions or classes from cir and to see where llvm is called to make the compiler more independent of it 
 - [x] Remove all unnecessary gotos in the compiler codebase
 - [ ] Have the least number of unique_ptrs (so dynamic allocation) in the codebase (ex : use only vectors and not vectors of unique_ptrs when you can, it will also optimize cache)
+- [ ] Make if (expr1 && expr2) two ifs to make guards work (like clang)
 
 ## Benchmarks compared to other languages
 
