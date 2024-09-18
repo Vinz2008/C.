@@ -37,6 +37,11 @@ bool operator==(const CIR::ConstInstruction& const1, const CIR::ConstInstruction
     return false;
 }
 
+// TODO : is this needed ?
+Cpoint_Type CIR::InstructionRef::get_type(std::unique_ptr<FileCIR>& fileCIR){
+    return fileCIR->CurrentFunction->get_instruction(this->get_pos())->type;
+}
+
 // TODO : add other externs (for tests, etc)
 static void add_manually_extern(std::unique_ptr<FileCIR>& fileCIR, CIR::FunctionProto proto){
     fileCIR->protos[proto.name] = proto;
@@ -224,7 +229,15 @@ CIR::InstructionRef IfExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
 
     // TODO : add phi
-    return CIR::InstructionRef();
+    if (Else && !has_one_branch_if){
+        Cpoint_Type phi_type = Then->get_type();
+        CIR::BasicBlockRef phi_bb1 = ThenBB;
+        CIR::InstructionRef phi_arg1 = ThenI;
+        CIR::BasicBlockRef phi_bb2 = ElseBB;
+        CIR::InstructionRef phi_arg2 = ElseI;
+        return fileCIR->add_instruction(std::make_unique<CIR::PhiInstruction>(phi_type, phi_bb1, phi_arg1, phi_bb2, phi_arg2));
+    }
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstVoid>());
 }
 
 CIR::InstructionRef TypeidExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -358,10 +371,30 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         return CallExprAST(emptyLoc, "binary" + Op, std::move(Args), Cpoint_Type()).cir_gen(fileCIR);
     }
     // TODO : readd this after fixing get_type for vars (problem with NamedValues, put it in the AST node ?)
-    /*Cpoint_Type LHS_type = LHS->get_type().get_real_type();
+    Cpoint_Type LHS_type = LHS->get_type().get_real_type();
     Cpoint_Type RHS_type = RHS->get_type();
+    Cpoint_Type op_type = this->get_type();
     CIR::InstructionRef LHS_Instr = LHS->cir_gen(fileCIR);
     CIR::InstructionRef RHS_Instr = RHS->cir_gen(fileCIR);
+    if (Op == "+"){ // TODO : is this needed ?
+        if (LHS_type.is_ptr){
+            cir_convert_to_type(fileCIR, LHS_type, Cpoint_Type(i64_type), LHS_Instr);
+            //LHS_Instr = fileCIR->add_instruction(std::make_unique<CIR::CastInstruction>(LHS_Instr, Cpoint_Type(i64_type)));
+            LHS_type = Cpoint_Type(i64_type);
+        }
+        if (RHS_type.is_ptr){
+            cir_convert_to_type(fileCIR, RHS_type, Cpoint_Type(i64_type), RHS_Instr);
+            //RHS_Instr = fileCIR->add_instruction(std::make_unique<CIR::CastInstruction>(LHS_Instr, Cpoint_Type(i64_type)));
+            RHS_type = Cpoint_Type(i64_type);
+        }
+    }
+    // TODO : transform i8 and i16s to i32 ? (see codegen.cpp and see if it is needed)
+    if (LHS_type != RHS_type){
+        Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(LHS_type) << " and " << create_pretty_name_for_type(RHS_type) << " types" << "\n";
+        cir_convert_to_type(fileCIR, RHS_type, LHS_type, RHS_Instr);
+        RHS_type = LHS_type;
+        //RHS_Instr = fileCIR->add_instruction(std::make_unique<CIR::CastInstruction>(RHS_Instr, LHS_type));
+    }
     if (Op == "&&" || Op == "&"){
         if (LHS_type.is_decimal_number_type()){
             // TODO : replace i32_type by i64_type ?
@@ -370,46 +403,48 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         if (RHS_type.is_decimal_number_type()){
             cir_convert_to_type(fileCIR, LHS_type, Cpoint_Type(i32_type), RHS_Instr);
         }
-        auto and_instr = std::make_unique<CIR::AndInstruction>(LHS_Instr, RHS_Instr);
+        auto and_instr = std::make_unique<CIR::AndInstruction>(op_type, LHS_Instr, RHS_Instr);
         and_instr->type = this->get_type();
         return fileCIR->add_instruction(std::move(and_instr));
     }
     std::unique_ptr<CIR::Instruction> binary_instr = nullptr;
     if (Op == "=="){
         binary_instr = std::make_unique<CIR::CmpInstruction>(CIR::CmpInstruction::CMP_EQ, LHS_Instr, RHS_Instr);
+    } else if (Op == "!="){
+        binary_instr = std::make_unique<CIR::CmpInstruction>(CIR::CmpInstruction::CMP_NOT_EQ, LHS_Instr, RHS_Instr);
     } else if (Op == "<="){
         binary_instr = std::make_unique<CIR::CmpInstruction>(CIR::CmpInstruction::CMP_LOWER_EQ, LHS_Instr, RHS_Instr);
     } else if (Op == ">="){
         binary_instr = std::make_unique<CIR::CmpInstruction>(CIR::CmpInstruction::CMP_GREATER_EQ, LHS_Instr, RHS_Instr);
     } else if (Op == ">>"){
-        binary_instr = std::make_unique<CIR::ShiftInstruction>(CIR::ShiftInstruction::SHIFT_LEFT, LHS_Instr, RHS_Instr);
+        binary_instr = std::make_unique<CIR::ShiftInstruction>(op_type, CIR::ShiftInstruction::SHIFT_LEFT, LHS_Instr, RHS_Instr);
     } else if (Op == "<<"){
-        binary_instr = std::make_unique<CIR::ShiftInstruction>(CIR::ShiftInstruction::SHIFT_RIGHT, LHS_Instr, RHS_Instr);
+        binary_instr = std::make_unique<CIR::ShiftInstruction>(op_type, CIR::ShiftInstruction::SHIFT_RIGHT, LHS_Instr, RHS_Instr);
     } else {
     switch (Op.at(0)) {
         case '+':
-            binary_instr = std::make_unique<CIR::AddInstruction>(LHS_Instr, RHS_Instr);
+            binary_instr = std::make_unique<CIR::AddInstruction>(op_type, LHS_Instr, RHS_Instr);
             break;
         case '-':
-            binary_instr = std::make_unique<CIR::SubInstruction>(LHS_Instr, RHS_Instr);
+            binary_instr = std::make_unique<CIR::SubInstruction>(op_type, LHS_Instr, RHS_Instr);
             break;
         case '*':
-            binary_instr = std::make_unique<CIR::MulInstruction>(LHS_Instr, RHS_Instr);
+            binary_instr = std::make_unique<CIR::MulInstruction>(op_type, LHS_Instr, RHS_Instr);
             break;
         case '%':
-            binary_instr = std::make_unique<CIR::RemInstruction>(LHS_Instr, RHS_Instr);
+            binary_instr = std::make_unique<CIR::RemInstruction>(op_type, LHS_Instr, RHS_Instr);
             break;
         case '<':
             binary_instr = std::make_unique<CIR::CmpInstruction>(CIR::CmpInstruction::CMP_LOWER, LHS_Instr, RHS_Instr);
             break;
         case '/':
-            binary_instr = std::make_unique<CIR::DivInstruction>(LHS_Instr, RHS_Instr);
+            binary_instr = std::make_unique<CIR::DivInstruction>(op_type, LHS_Instr, RHS_Instr);
             break;
         case '>':
             binary_instr = std::make_unique<CIR::CmpInstruction>(CIR::CmpInstruction::CMP_GREATER, LHS_Instr, RHS_Instr);
             break;
         case '|':
-            binary_instr = std::make_unique<CIR::OrInstruction>(LHS_Instr, RHS_Instr);
+            binary_instr = std::make_unique<CIR::OrInstruction>(op_type, LHS_Instr, RHS_Instr);
         default:
             // TODO : maybe reactivate this
             //LogError("invalid binary operator");
@@ -418,9 +453,8 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
     }
     if (binary_instr){
-        binary_instr->type = this->get_type();
         return fileCIR->add_instruction(std::move(binary_instr));
-    }*/
+    }
     // TODO : readd custom operator support ?
 
 

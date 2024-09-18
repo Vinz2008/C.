@@ -186,6 +186,64 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         auto load_var_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadVarInstruction>(std::move(instruction));
         Value* AllocaVal = codegen_context->tempBBValues.at(load_var_instruction->var.get_pos());
         instruction_val = codegen_context->Builder->CreateLoad(get_type_llvm(codegen_context, load_var_instruction->load_type), AllocaVal);
+    } else if (dynamic_cast<CIR::CmpInstruction*>(instruction.get())){
+        auto cmp_instruction = get_Instruction_from_CIR_Instruction<CIR::CmpInstruction>(std::move(instruction));
+        Value* arg1_val = codegen_context->tempBBValues.at(cmp_instruction->arg1.get_pos());
+        Value* arg2_val = codegen_context->tempBBValues.at(cmp_instruction->arg2.get_pos());
+        Type* arg_type = arg1_val->getType();
+        std::string cmp_label = "cmp_tmp"; // TODO : move the label to the cir part
+        if (arg_type->isVectorTy()){
+            arg_type = dyn_cast<VectorType>(arg_type)->getElementType();
+        }
+        switch (cmp_instruction->cmp_type){
+            case CIR::CmpInstruction::CMP_EQ:
+                if (arg_type->isFloatTy()){
+                    instruction_val =  codegen_context->Builder->CreateFCmpUEQ(arg1_val, arg2_val, cmp_label);
+                } else {
+                    instruction_val = codegen_context->Builder->CreateICmpEQ(arg1_val, arg2_val, cmp_label);
+                }
+                break;
+            case CIR::CmpInstruction::CMP_NOT_EQ:
+                if (arg_type->isFloatTy()){
+                    instruction_val = codegen_context->Builder->CreateFCmpUNE(arg1_val, arg2_val, cmp_label);
+                } else {
+                    instruction_val = codegen_context->Builder->CreateICmpNE(arg1_val, arg2_val, cmp_label);
+                }
+                break;
+            case CIR::CmpInstruction::CMP_GREATER:
+                if (arg_type->isFloatTy()){
+                    instruction_val = codegen_context->Builder->CreateFCmpOGT(arg1_val, arg2_val, cmp_label);
+                } else {
+                    instruction_val = codegen_context->Builder->CreateICmpSGT(arg1_val,  arg2_val, cmp_label);
+                }
+                break;
+            case CIR::CmpInstruction::CMP_GREATER_EQ:
+                if (arg_type->isFloatTy()){
+                    instruction_val = codegen_context->Builder->CreateFCmpOGE(arg1_val, arg2_val, cmp_label);
+                } else {
+                    instruction_val = codegen_context->Builder->CreateICmpSGE(arg1_val, arg2_val, cmp_label);
+                }
+                break;
+            case CIR::CmpInstruction::CMP_LOWER:
+                arg1_val->print(outs());
+                arg2_val->print(outs());
+                if (arg_type->isFloatTy()){
+                    instruction_val = codegen_context->Builder->CreateFCmpOLT(arg1_val, arg2_val, cmp_label);
+                } else {
+                    instruction_val = codegen_context->Builder->CreateICmpSLT(arg1_val, arg2_val, cmp_label);
+                }
+                break;
+            case CIR::CmpInstruction::CMP_LOWER_EQ:
+                if (arg_type->isFloatTy()){
+                    instruction_val = codegen_context->Builder->CreateFCmpOLE(arg1_val, arg2_val, cmp_label);
+                } else {
+                    instruction_val = codegen_context->Builder->CreateICmpSLE(arg1_val, arg2_val, cmp_label);
+                }
+                break;
+            default:
+                fprintf(stderr, "CIR ERROR : Invalid compare instruction");
+                exit(1);
+        }
     } else if (dynamic_cast<CIR::ConstVoid*>(instruction.get())){
         instruction_val = nullptr;
     } else {

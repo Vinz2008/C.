@@ -497,7 +497,7 @@ bool cir_convert_to_type(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type typeFrom
     // TODO : do type checking to verify if the conversion is valid (for example with a bool check_conversion(Cpoint_Type typeFrom, Cpoint_Type typeTo) function) 
     
     auto cast_instr = std::make_unique<CIR::CastInstruction>(val, typeTo);
-    cast_instr->type = typeTo;
+    //cast_instr->type = typeTo;
     val = fileCIR->add_instruction(std::move(cast_instr));
     return true;
 }

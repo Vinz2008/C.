@@ -38,6 +38,7 @@ namespace CIR {
         bool is_empty(){
             return empty_ref;
         }
+        Cpoint_Type get_type(std::unique_ptr<FileCIR>& file);
         std::string to_string(); /*{
             std::string instruction_ref_str = "%" + std::to_string(instruction_pos);
             CIR::Instruction* instr = fileCIR->get_instruction(*this);
@@ -203,10 +204,22 @@ namespace CIR {
         std::string to_string() override;
     };
 
+    class PhiInstruction : public CIR::Instruction {
+    public:
+        Cpoint_Type phi_type;
+        BasicBlockRef bb1;
+        InstructionRef arg1;
+        BasicBlockRef bb2;
+        InstructionRef arg2;
+        PhiInstruction(Cpoint_Type phi_type, BasicBlockRef bb1, InstructionRef arg1, BasicBlockRef bb2, InstructionRef arg2) : Instruction(phi_type), phi_type(phi_type), bb1(bb1), arg1(arg1), bb2(bb2), arg2(arg2) {}
+        std::string to_string() override;
+    };
+
     class CmpInstruction : public CIR::Instruction {
     public:
         enum cmp_type_ty {
             CMP_EQ,
+            CMP_NOT_EQ,
             CMP_GREATER,
             CMP_GREATER_EQ,
             CMP_LOWER,

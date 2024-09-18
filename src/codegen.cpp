@@ -1190,7 +1190,7 @@ Value *BinaryExprAST::codegen() {
   }
   if (L->getType() != R->getType()){
     Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
-    convert_to_type(get_cpoint_type_from_llvm(R->getType()) /*RHS_type*/, L->getType(), R); // TODO : uncomment for unsigned types support
+    convert_to_type(get_cpoint_type_from_llvm(R->getType()) /*RHS_type*/, L->getType(), R);
   }
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
   if (Op == "&&"){

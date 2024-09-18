@@ -221,7 +221,12 @@ public:
         //assert(CurrentBasicBlock != nullptr);
         CIR::BasicBlock* bb = get_basic_block(CurrentBasicBlock);
         bb->instructions.push_back(std::move(instruction));
-        return CIR::InstructionRef(bb->instructions.size()-1);
+        int function_instruction_nb = 0;
+        for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
+            function_instruction_nb += CurrentFunction->basicBlocks.at(i)->instructions.size();
+        }
+        return CIR::InstructionRef(function_instruction_nb-1);
+        //return CIR::InstructionRef(bb->instructions.size()-1);
         /*if (InsertPoint == CurrentBasicBlock->instructions.size()){
             CurrentBasicBlock->instructions.push_back(std::move(instruction));
             InsertPoint++;
@@ -238,6 +243,9 @@ public:
     }
 
     void end_global_context(){
+        if (global_context.basicBlocks.at(0)->instructions.empty()){ // no global vars
+            global_context.basicBlocks.clear();
+        }
         CurrentFunction = nullptr;
         CurrentBasicBlock = CIR::BasicBlockRef();
     }

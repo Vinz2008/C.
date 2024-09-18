@@ -152,6 +152,10 @@ std::string CIR::ShiftInstruction::to_string(){
     return shift_cir;
 }
 
+std::string CIR::PhiInstruction::to_string(){
+    return "phi " + bb1.to_string() + " -> " + arg1.to_string() + ", " + bb2.to_string() + " -> " + arg2.to_string();
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){
