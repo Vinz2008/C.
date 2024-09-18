@@ -152,8 +152,7 @@ CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         fileCIR->strings.push_back(str);
         pos = fileCIR->strings.size()-1;
     }
-    auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(true, pos);
-    load_global_instr->type = Cpoint_Type(i8_type, true);
+    auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(Cpoint_Type(i8_type, true), true, pos);
     return fileCIR->add_instruction(std::move(load_global_instr));
 }
 
@@ -233,8 +232,7 @@ CIR::InstructionRef TypeidExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     CIR::ConstNumber::nb_val_ty nb_val;
     nb_val.int_nb = typeId;
     Cpoint_Type nb_type = Cpoint_Type(i32_type);
-    auto typeid_instr = std::make_unique<CIR::ConstNumber>(false, nb_type, nb_val);
-    typeid_instr->type = nb_type;
+    auto typeid_instr = std::make_unique<CIR::ConstNumber>(nb_type, false, nb_val);
     return fileCIR->add_instruction(std::move(typeid_instr));
 }
 
@@ -242,14 +240,12 @@ CIR::InstructionRef CharExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     CIR::ConstNumber::nb_val_ty nb_val;
     nb_val.int_nb = c;
     Cpoint_Type char_type = Cpoint_Type(i8_type);
-    auto const_char_instr = std::make_unique<CIR::ConstNumber>(false, char_type, nb_val);
-    const_char_instr->type = char_type;
+    auto const_char_instr = std::make_unique<CIR::ConstNumber>(char_type, false, nb_val);
     return fileCIR->add_instruction(std::move(const_char_instr));
 }
 
 CIR::InstructionRef SemicolonExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     auto void_instr = std::make_unique<CIR::ConstVoid>();
-    void_instr->type = Cpoint_Type(void_type);
     return fileCIR->add_instruction(std::move(void_instr));
 }
 
@@ -258,10 +254,7 @@ CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    CIR::ConstNumber::nb_val_ty nb_val;
-    nb_val.int_nb = (val) ? 1 : 0;
-    auto bool_instr = std::make_unique<CIR::ConstNumber>(false, Cpoint_Type(bool_type), nb_val);
-    bool_instr->type = Cpoint_Type(bool_type);
+    auto bool_instr = std::make_unique<CIR::ConstBool>(Cpoint_Type(bool_type), val);
     return fileCIR->add_instruction(std::move(bool_instr));
 }
 
@@ -308,8 +301,7 @@ CIR::InstructionRef EnumCreation::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     // for debug for new
-    auto call_instr = std::make_unique<CIR::CallInstruction>(Callee, std::vector<CIR::InstructionRef>());
-    call_instr->type = this->get_type();
+    auto call_instr = std::make_unique<CIR::CallInstruction>(this->get_type(), Callee, std::vector<CIR::InstructionRef>());
     for (int i = 0; i < Args.size(); i++){
         call_instr->Args.push_back(Args.at(i)->cir_gen(fileCIR));
     }
@@ -457,7 +449,7 @@ CIR::InstructionRef NumberExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         nb_val.int_nb = (int)Val; 
     }
     // insert in insertpoint instead
-    auto const_nb_instr = std::make_unique<CIR::ConstNumber>(is_float, number_type, nb_val);
+    auto const_nb_instr = std::make_unique<CIR::ConstNumber>(number_type, is_float, nb_val);
     const_nb_instr->type = number_type;
     return fileCIR->add_instruction(std::move(const_nb_instr));
     //return CIR::InstructionRef();
@@ -592,14 +584,12 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
     if (Proto->cpoint_type.type == void_type && !Proto->cpoint_type.is_ptr){
         auto void_instr = std::make_unique<CIR::ConstVoid>();
-        void_instr->type = Cpoint_Type(void_type);
         ret_val = fileCIR->add_instruction(std::move(void_instr));
     } else if (Proto->Name == "main") {
         CIR::ConstNumber::nb_val_ty nb_val;
         nb_val.int_nb = 0;
         Cpoint_Type main_ret_type = Cpoint_Type(i32_type);
-        auto main_ret_instr = std::make_unique<CIR::ConstNumber>(false, main_ret_type, nb_val);
-        main_ret_instr->type = main_ret_type;
+        auto main_ret_instr = std::make_unique<CIR::ConstNumber>(main_ret_type, false, nb_val);
         ret_val = fileCIR->add_instruction(std::move(main_ret_instr));
     }
     auto return_instr = std::make_unique<CIR::ReturnInstruction>(ret_val);

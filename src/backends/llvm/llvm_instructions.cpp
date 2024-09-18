@@ -155,6 +155,9 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         } else {
             instruction_val = ConstantInt::get(*codegen_context->TheContext, APInt(const_nb_instruction->type.get_number_of_bits(), const_nb_instruction->nb_val.int_nb, const_nb_instruction->type.is_signed()));
         }
+    } else if (dynamic_cast<CIR::ConstBool*>(instruction.get())){
+        auto const_bool_instruction = get_Instruction_from_CIR_Instruction<CIR::ConstBool>(std::move(instruction));
+        instruction_val = ConstantInt::get(*codegen_context->TheContext, APInt(1, (uint64_t)const_bool_instruction->val, false));
     } else if (dynamic_cast<CIR::CastInstruction*>(instruction.get())){
         auto cast_instruction = get_Instruction_from_CIR_Instruction<CIR::CastInstruction>(std::move(instruction));
         Value* cast_val = codegen_context->tempBBValues.at(cast_instruction->val.get_pos());

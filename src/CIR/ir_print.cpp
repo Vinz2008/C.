@@ -18,6 +18,16 @@ std::string CIR::ConstNumber::to_string(){
     return const_nb_cir;
 }
 
+std::string CIR::ConstBool::to_string(){
+    std::string const_bool_cir = "const ";
+    if (val){
+        const_bool_cir += "true";
+    } else {
+        const_bool_cir += "false";
+    }
+    return const_bool_cir;
+}
+
 std::string CIR::VarInit::to_string(){
     std::string init_val_cir = (VarName.second.is_empty()) ? "" : VarName.second.to_string();
     std::string varinit_cir = "var " + create_pretty_name_for_type(var_type) + " " + VarName.first + " " + init_val_cir ;

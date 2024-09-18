@@ -21,6 +21,7 @@ namespace CIR {
         std::string label;
         Cpoint_Type type; // TODO : replace with CIR_Type ?
         Instruction(std::string label = "", Cpoint_Type type = Cpoint_Type()) : label(label), type(type) {}
+        Instruction(Cpoint_Type type) : label(""), type(type) {}
         virtual ~Instruction() = default;
         virtual std::string to_string() = 0;
     };
@@ -56,34 +57,34 @@ namespace CIR {
     public:
         std::string Callee;
         std::vector<InstructionRef> Args;
-        CallInstruction(std::string Callee, std::vector<InstructionRef> Args) : Callee(Callee), Args(Args) {}
+        CallInstruction(Cpoint_Type type, std::string Callee, std::vector<InstructionRef> Args) : Instruction(type), Callee(Callee), Args(Args) {}
         std::string to_string() override;
     };
     class ReturnInstruction : public CIR::Instruction {
     public:
         InstructionRef ret_val;
-        ReturnInstruction(InstructionRef ret_val) : ret_val(ret_val) {}
+        ReturnInstruction(InstructionRef ret_val) : Instruction(Cpoint_Type(never_type)), ret_val(ret_val) {}
         std::string to_string() override;
     };
     class LoadVarInstruction : public CIR::Instruction {
     public:
         InstructionRef var;
         Cpoint_Type load_type;
-        LoadVarInstruction(InstructionRef var, Cpoint_Type load_type) : var(var), load_type(load_type) {}
+        LoadVarInstruction(InstructionRef var, Cpoint_Type load_type) : Instruction(load_type), var(var), load_type(load_type) {}
         std::string to_string() override;
     };
     class LoadGlobalInstruction : public CIR::Instruction {
     public:
         bool is_string;
         int global_pos; // TODO : replace with a GlobalRef type ?
-        LoadGlobalInstruction(bool is_string, int global_pos) : is_string(is_string), global_pos(global_pos) {}
+        LoadGlobalInstruction(Cpoint_Type type, bool is_string, int global_pos) : Instruction(type), is_string(is_string), global_pos(global_pos) {}
         std::string to_string() override;
     };
     class LoadArgInstruction : public CIR::Instruction {
     public:
         std::string arg_name;
         Cpoint_Type arg_type;
-        LoadArgInstruction(std::string arg_name, Cpoint_Type arg_type) : arg_name(arg_name), arg_type(arg_type) {}
+        LoadArgInstruction(std::string arg_name, Cpoint_Type arg_type) : Instruction(arg_type), arg_name(arg_name), arg_type(arg_type) {}
         std::string to_string() override;
     };
     class VarInit : public CIR::Instruction {
@@ -91,21 +92,21 @@ namespace CIR {
         // TODO : add multiple vars support
         std::pair<std::string, InstructionRef> VarName;
         Cpoint_Type var_type;
-        VarInit(std::pair<std::string, InstructionRef> VarName, Cpoint_Type var_type) : VarName(VarName), var_type(var_type) {}
+        VarInit(std::pair<std::string, InstructionRef> VarName, Cpoint_Type var_type) : Instruction(var_type), VarName(VarName), var_type(var_type) {}
         std::string to_string() override;
     };
     class CastInstruction : public CIR::Instruction {
     public:
         InstructionRef val; // TODO : add to Instructions the types of instructions to have the from type of the cast
         Cpoint_Type cast_type;
-        CastInstruction(InstructionRef val, Cpoint_Type cast_type) : val(val), cast_type(cast_type) {}
+        CastInstruction(InstructionRef val, Cpoint_Type cast_type) : Instruction(cast_type), val(val), cast_type(cast_type) {}
         std::string to_string() override;
     };
     
     class GotoInstruction : public CIR::Instruction {
     public:
         CIR::BasicBlockRef goto_bb;
-        GotoInstruction(CIR::BasicBlockRef goto_bb) : goto_bb(goto_bb) {}
+        GotoInstruction(CIR::BasicBlockRef goto_bb) : Instruction(Cpoint_Type(never_type)), goto_bb(goto_bb) {}
         std::string to_string() override;
     };
 
@@ -114,7 +115,7 @@ namespace CIR {
         CIR::InstructionRef cond_instruction;
         CIR::BasicBlockRef goto_bb_if_true;
         CIR::BasicBlockRef goto_bb_if_false;
-        GotoIfInstruction(CIR::InstructionRef cond_instruction, CIR::BasicBlockRef goto_bb_if_true, CIR::BasicBlockRef goto_bb_if_false) : cond_instruction(cond_instruction), goto_bb_if_true(goto_bb_if_true), goto_bb_if_false(goto_bb_if_false) {}
+        GotoIfInstruction(CIR::InstructionRef cond_instruction, CIR::BasicBlockRef goto_bb_if_true, CIR::BasicBlockRef goto_bb_if_false) : Instruction(Cpoint_Type(never_type)), cond_instruction(cond_instruction), goto_bb_if_true(goto_bb_if_true), goto_bb_if_false(goto_bb_if_false) {}
         std::string to_string() override;
     };
 
@@ -123,7 +124,7 @@ namespace CIR {
         bool is_type;
         Cpoint_Type type;
         InstructionRef var;
-        SizeofInstruction(bool is_type, Cpoint_Type type, InstructionRef var) : is_type(is_type), type(type), var(var) {
+        SizeofInstruction(bool is_type, Cpoint_Type type, InstructionRef var) : Instruction(Cpoint_Type(i32_type)), is_type(is_type), type(type), var(var) {
             if (!var.is_empty()){
                 assert(type.is_empty);
             }
@@ -138,7 +139,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        AddInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        AddInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -146,7 +147,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        SubInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        SubInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -154,7 +155,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        MulInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        MulInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -162,7 +163,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        RemInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        RemInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -170,7 +171,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        DivInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        DivInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -178,7 +179,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        AndInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        AndInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -186,7 +187,7 @@ namespace CIR {
     public:
         InstructionRef arg1;
         InstructionRef arg2;
-        OrInstruction(InstructionRef arg1, InstructionRef arg2) : arg1(arg1), arg2(arg2) {}
+        OrInstruction(Cpoint_Type type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -198,7 +199,7 @@ namespace CIR {
         } shift_type;
         InstructionRef arg1;
         InstructionRef arg2;
-        ShiftInstruction(enum shift_type_ty shift_type, InstructionRef arg1, InstructionRef arg2) : shift_type(shift_type), arg1(arg1), arg2(arg2) {}
+        ShiftInstruction(Cpoint_Type type, enum shift_type_ty shift_type, InstructionRef arg1, InstructionRef arg2) : Instruction(type), shift_type(shift_type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
 
@@ -213,7 +214,7 @@ namespace CIR {
         } cmp_type;
         InstructionRef arg1;
         InstructionRef arg2;
-        CmpInstruction(enum cmp_type_ty cmp_type, InstructionRef arg1, InstructionRef arg2) : cmp_type(cmp_type), arg1(arg1), arg2(arg2) {}
+        CmpInstruction(enum cmp_type_ty cmp_type, InstructionRef arg1, InstructionRef arg2) : Instruction(Cpoint_Type(bool_type)), cmp_type(cmp_type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
     class ConstNumber;
@@ -223,6 +224,7 @@ namespace CIR {
     class ConstInstruction : public CIR::Instruction {
     public:
         ConstInstruction(){}
+        ConstInstruction(Cpoint_Type type) : CIR::Instruction("", type) {}
         friend bool operator==(const ConstInstruction& const1, const ConstInstruction& const2); /*{
             if (dynamic_cast<const ConstNumber*>(&const1) && dynamic_cast<const ConstNumber*>(&const2)){
                 auto const1nb = dynamic_cast<const ConstNumber*>(&const1);
@@ -254,34 +256,43 @@ namespace CIR {
     class ConstNumber : public CIR::ConstInstruction {
     public:
         bool is_float;
-        Cpoint_Type type; // TODO : remove the type ? because it is already in the instruction ? or add a get_type member for instructions and then use it to add the types to Instructions
         union nb_val_ty {
             double float_nb;
             int int_nb;
         } nb_val;
-        ConstNumber(bool is_float, Cpoint_Type type, union nb_val_ty nb_val) : is_float(is_float), type(type), nb_val(nb_val) {}
+        ConstNumber(Cpoint_Type type, bool is_float, union nb_val_ty nb_val) : ConstInstruction(type), is_float(is_float), nb_val(nb_val) {}
+        std::string to_string() override;
+    };
+    class ConstBool : public CIR::ConstInstruction {
+    public:
+        bool val;
+        ConstBool(Cpoint_Type type, bool val) : ConstInstruction(type), val(val){}
         std::string to_string() override;
     };
     class ConstVoid : public CIR::ConstInstruction {
     public:
-        ConstVoid(){}
+        ConstVoid() : ConstInstruction(Cpoint_Type(void_type)) {}
         std::string to_string() override {
             return "void";
         }
     };
     class ConstNever : public CIR::ConstInstruction {
     public:
-        ConstNever(){}
+        ConstNever() : ConstInstruction(Cpoint_Type(never_type)) {}
         std::string to_string() override {
             return "!";
         }
     };
     class ConstNull : public CIR::ConstInstruction {
     public:
-        ConstNull(){}
+        ConstNull() : ConstInstruction(Cpoint_Type(void_type, true)) {} // TODO, add a null type ? (like nullptr_t in cpp)
         std::string to_string() override {
             return "null";
         }
+    };
+
+    class ConstStruct : public CIR::ConstInstruction {
+
     };
 }
 
