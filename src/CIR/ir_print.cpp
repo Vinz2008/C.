@@ -67,6 +67,10 @@ std::string CIR::LoadVarInstruction::to_string(){
     return "load_var " + create_pretty_name_for_type(load_type) + " " + var.to_string();
 }
 
+std::string CIR::StoreVarInstruction::to_string(){
+    return "store_var " + var.to_string() + " = " + val.to_string();
+}
+
 std::string CIR::GotoInstruction::to_string(){
     return "goto " + goto_bb.to_string();
 }
@@ -76,7 +80,7 @@ std::string CIR::GotoIfInstruction::to_string(){
 }
 
 std::string CIR::SizeofInstruction::to_string(){
-    return "sizeof " + ((is_type) ? create_pretty_name_for_type(type) : var.to_string());
+    return "sizeof " + ((is_type) ? create_pretty_name_for_type(type) : expr.to_string());
 }
 
 std::string CIR::CastInstruction::to_string(){
@@ -185,12 +189,14 @@ std::string CIR::BasicBlock::to_string(int& InstructionIndex){
     }
     basic_block_cir += "\n";
     for (int i = 0; i < instructions.size(); i++){
-        basic_block_cir += "\t%" + std::to_string(InstructionIndex);
+        basic_block_cir += "\t%" + std::to_string(InstructionIndex) + ":";
         if (instructions.at(i)->label != ""){
-            basic_block_cir += "(" + instructions.at(i)->label + ") ";
+            basic_block_cir += " (\"" + instructions.at(i)->label + "\") "; // TODO : remove this to make the cir more clean ?
+        } else {
+            basic_block_cir += " ";
         }
         if (!instructions.at(i)->type.is_empty){
-            basic_block_cir += ": " + create_pretty_name_for_type(instructions.at(i)->type);
+            basic_block_cir += create_pretty_name_for_type(instructions.at(i)->type);
         }
         basic_block_cir += " = " + instructions.at(i)->to_string() + "\n";
         InstructionIndex++;

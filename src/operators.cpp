@@ -207,8 +207,8 @@ void installPrecendenceOperators(){
 
 }
 
-Cpoint_Type UnaryExprAST::get_type(){
-    Cpoint_Type operand_type = Operand->get_type();
+Cpoint_Type UnaryExprAST::get_type(FileCIR* fileCIR){
+    Cpoint_Type operand_type = Operand->get_type(fileCIR);
     if (Opcode == '-'){
         return operand_type;
     }
@@ -225,19 +225,19 @@ Cpoint_Type UnaryExprAST::get_type(){
 
 #include <typeinfo>
 
-Cpoint_Type BinaryExprAST::get_type(){
+Cpoint_Type BinaryExprAST::get_type(FileCIR* fileCIR){
     if (Op == "=" || Op == "<<" || Op == ">>" || Op == "|" || Op == "^" || Op == "&" || Op == "+" || Op == "-" || Op == "*" || Op == "%" || Op == "/"){
         return LHS->get_type();
     }
     if (Op == "||" || Op == "&&" || Op == "==" || Op == "!=" || Op == "<" || Op == "<=" || Op == ">" || Op == ">="){
-        Cpoint_Type LHS_type = LHS->get_type();
+        Cpoint_Type LHS_type = LHS->get_type(fileCIR);
         if (LHS_type.is_vector_type && Op == "=="){
             return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, new Cpoint_Type(bool_type), LHS_type.vector_size);
         }
         return Cpoint_Type(bool_type);
     }
     if (Op == "["){
-        return LHS->get_type().deref_type();
+        return LHS->get_type(fileCIR).deref_type();
     }
     if (Op == "."){
         auto varExprMember = get_Expr_from_ExprAST<VariableExprAST>(RHS->clone());
@@ -247,7 +247,7 @@ Cpoint_Type BinaryExprAST::get_type(){
         }
         std::string MemberName = varExprMember->Name;
         //Log::Info() << "LHS name struct member : " << typeid(*LHS.get()).name() << "\n";
-        Cpoint_Type LHS_type = LHS->get_type();
+        Cpoint_Type LHS_type = LHS->get_type(fileCIR);
         return get_member_type_and_pos_object(LHS_type, MemberName)->first;
     }
     // TODO : add all operators

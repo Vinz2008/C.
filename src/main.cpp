@@ -549,7 +549,7 @@ int main(int argc, char **argv){
             } else if ((std::string)argv[i] == "debug"){
                 Comp_context->is_release_mode = false;
             } else {
-                Log::Warning(emptyLoc) << "Unknown build mode, defaults to debug mode" << "\n";
+                (Log::Warning(emptyLoc) << "Unknown build mode, defaults to debug mode" << "\n").end();
                 Comp_context->is_release_mode = false;
             }
         } else if (arg.compare("-verbose-std-build") == 0){
@@ -714,7 +714,7 @@ int main(int argc, char **argv){
       }
     }
     if (Comp_context->test_mode && !Comp_context->std_mode){
-        Log::Warning() << "Using tests without the standard library. You will not be able to use expect and you will need to have linked a libc" << "\n";
+        (Log::Warning() << "Using tests without the standard library. You will not be able to use expect and you will need to have linked a libc" << "\n").end();
     }
 #if ENABLE_FILE_AST
   std::unique_ptr<FileAST> file_ast = ParseFile();
@@ -724,6 +724,8 @@ int main(int argc, char **argv){
   ofstream cir_file("out.cir");
   cir_file << cir_string << "\n";
   cir_file.close();
+  // put in assert so it is not called in release mode
+  assert(checkFileCIR(file_cir));
   if (codegenBackend(std::move(file_cir), backend, object_filename, TripleLLVM, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.cpu, targetInfos.features) == 1){
     return 1;
   }

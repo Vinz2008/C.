@@ -114,6 +114,9 @@ namespace CIR {
         Cpoint_Type type;
         Var() : var_ref(), type() {}
         Var(InstructionRef var_ref, Cpoint_Type type) : var_ref(var_ref), type(type) {}
+        bool is_empty(){
+            return var_ref.is_empty() && type.is_empty;
+        }
     };
     class Function {
     public:
@@ -256,3 +259,5 @@ public:
 #endif
 
 #endif
+
+bool checkFileCIR(std::unique_ptr<FileCIR>& fileCIR);

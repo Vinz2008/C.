@@ -126,6 +126,7 @@ Cpoint_Type get_cpoint_type_from_llvm(llvm::Type* llvm_type);
 bool is_llvm_type_number(llvm::Type* llvm_type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
 bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo, llvm::Value* &val);
+bool convert_to_type(std::unique_ptr<LLVM::Context>& llvm_context, Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, llvm::Value* &val);
 
 
 bool operator==(const Cpoint_Type& lhs, const Cpoint_Type& rhs);

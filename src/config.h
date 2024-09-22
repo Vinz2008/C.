@@ -26,3 +26,5 @@
 // TARGET is defined in CXXFLAGS of Makefile but it is useful to remove errors in ide and so it compiles even with overriden cxxflags (which would break the infos menu)
 #define TARGET ""
 #endif
+
+#define INTERNAL_FUNC_PREFIX "cpoint_internal_"

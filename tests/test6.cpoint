@@ -1,7 +1,7 @@
 import @std/print.cpoint
 
-func test(x, y){
-  if x < 3 {
+func test(x : i32, y : i32){
+  if true {
     printd(1)
     1
   } else { 

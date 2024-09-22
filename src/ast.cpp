@@ -17,6 +17,7 @@
 #include "preprocessor.h"
 #include "macros.h"
 #include "abi.h"
+#include "CIR/cir.h"
 #include "debuginfo.h"
 
 #include "tracy.h"
@@ -230,6 +231,40 @@ std::unique_ptr<ArgsInlineAsm> ArgsInlineAsm::clone(){
 std::unique_ptr<ExprAST> ScopeExprAST::clone(){
     return std::make_unique<ScopeExprAST>(clone_unique_ptr_vec<ExprAST>(Body));
 }
+
+Cpoint_Type VariableExprAST::get_type(FileCIR* fileCIR){
+    /*if (type != Cpoint_Type()){
+        return type;
+    } else {
+        return *get_variable_type(Name);
+        //fprintf(stderr, "No type found (compiler bug probably)");
+        //exit(1);
+    }*/
+
+   if (fileCIR != nullptr){
+       // TODO : add support for functions used like vars
+        if (!fileCIR->CurrentFunction->vars[Name].is_empty()){
+            return fileCIR->CurrentFunction->vars[Name].type;
+        } else {
+            LogErrorE("Unknown variable %s", Name.c_str());
+            return Cpoint_Type();
+        }
+   }
+   if (FunctionProtos[Name]){
+    std::vector<Cpoint_Type> args;
+    for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){
+        args.push_back(FunctionProtos[Name]->Args.at(i).second);
+    }
+    return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, true, args, new Cpoint_Type(FunctionProtos[Name]->cpoint_type));
+   }
+   if (!get_variable_type(Name)){
+    LogErrorE("Unknown variable %s", Name.c_str());
+    return Cpoint_Type();
+   }
+   return *get_variable_type(Name);
+   //return type;
+  }
+
 
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body){
     std::vector<std::unique_ptr<ExprAST>> Args_gc_init;
@@ -1057,7 +1092,7 @@ std::unique_ptr<ExprAST> ParseBodyExpressions(std::vector<std::unique_ptr<ExprAS
         //unreachable_code_warning.content << "unreachable code : " << E->to_string();
         continue;
       }
-      if (is_infinite_loop(E) || E->contains_expr(ExprType::Return) || E->contains_expr(ExprType::Unreachable)){
+      if (is_infinite_loop(E) || (E->contains_expr(ExprType::Return) && CurTok != '}' /*and is not the last expr*/) || E->contains_expr(ExprType::Unreachable)){
         if (!found_terminator){
           auto unreachable_code_warning = Log::Warning(E->loc);
           std::string terminator_name = "expr";

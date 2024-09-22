@@ -88,6 +88,13 @@ namespace CIR {
         LoadArgInstruction(std::string arg_name, Cpoint_Type arg_type) : Instruction(arg_type), arg_name(arg_name), arg_type(arg_type) {}
         std::string to_string() override;
     };
+    class StoreVarInstruction : public CIR::Instruction {
+    public:
+        InstructionRef var;
+        InstructionRef val;
+        StoreVarInstruction(InstructionRef var, InstructionRef val) : Instruction(Cpoint_Type(void_type)) /*TODO ?*/, var(var), val(val) {}
+        std::string to_string() override;
+    };
     class VarInit : public CIR::Instruction {
     public:
         // TODO : add multiple vars support
@@ -99,8 +106,9 @@ namespace CIR {
     class CastInstruction : public CIR::Instruction {
     public:
         InstructionRef val; // TODO : add to Instructions the types of instructions to have the from type of the cast
+        Cpoint_Type from_type;
         Cpoint_Type cast_type;
-        CastInstruction(InstructionRef val, Cpoint_Type cast_type) : Instruction(cast_type), val(val), cast_type(cast_type) {}
+        CastInstruction(InstructionRef val, Cpoint_Type from_type, Cpoint_Type cast_type) : Instruction(cast_type), val(val), from_type(from_type), cast_type(cast_type) {}
         std::string to_string() override;
     };
     
@@ -124,13 +132,13 @@ namespace CIR {
     public:
         bool is_type;
         Cpoint_Type type;
-        InstructionRef var;
-        SizeofInstruction(bool is_type, Cpoint_Type type, InstructionRef var) : Instruction(Cpoint_Type(i32_type)), is_type(is_type), type(type), var(var) {
-            if (!var.is_empty()){
+        InstructionRef expr;
+        SizeofInstruction(bool is_type, Cpoint_Type type, InstructionRef expr) : Instruction(Cpoint_Type(i32_type)), is_type(is_type), type(type), expr(expr) {
+            if (!expr.is_empty()){
                 assert(type.is_empty);
             }
             if (!type.is_empty){
-                assert(var.is_empty());
+                assert(expr.is_empty());
             }
         }
         std::string to_string() override;

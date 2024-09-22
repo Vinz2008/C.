@@ -1189,7 +1189,7 @@ Value *BinaryExprAST::codegen() {
     convert_to_type(get_cpoint_type_from_llvm(R->getType()), Cpoint_Type(i32_type), R);
   }
   if (L->getType() != R->getType()){
-    Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n";
+    (Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(get_cpoint_type_from_llvm(L->getType())) << " and " << create_pretty_name_for_type(get_cpoint_type_from_llvm(R->getType())) << " types" << "\n").end();
     convert_to_type(get_cpoint_type_from_llvm(R->getType()) /*RHS_type*/, L->getType(), R);
   }
   // and operator only work with ints and bools returned from operators are for now doubles, TODO)
@@ -1276,7 +1276,8 @@ Value *CallExprAST::codegen() {
   Function* TheFunction = Builder->GetInsertBlock()->getParent();
   Log::Info() << "function called " << Callee << "\n";
   // TODO : instead of using an internal func prefix, use namespace (which will be the same logic, just with a different number of underscore)
-  std::string internal_func_prefix = CallExprAST::get_internal_func_prefix();
+  std::string internal_func_prefix = INTERNAL_FUNC_PREFIX;
+  //std::string internal_func_prefix = CallExprAST::get_internal_func_prefix();
   bool is_internal = false;
   CpointDebugInfo.emitLocation(this);
   if (StructDeclarations[Callee] != nullptr){
@@ -2043,7 +2044,7 @@ Function *FunctionAST::codegen() {
             RetVal = ConstantInt::get(*TheContext, APInt(32, 0, true));
             // TODO : maybe do an error if main function doesn't return an int and verify it after converting instead of createing the return 0
         } else {
-            Log::Warning(emptyLoc) << "Missing return value in function (the return value is void)" << "\n";
+            (Log::Warning(emptyLoc) << "Missing return value in function (the return value is void)" << "\n").end();
         }
     }
     if (P.getName() == "main" && ret_val_type != get_type_llvm(Proto->cpoint_type)){
@@ -2322,8 +2323,8 @@ Value* GotoExprAST::codegen(){
   Function *TheFunction = Builder->GetInsertBlock()->getParent();
   BasicBlock* bb = get_basic_block(TheFunction, label_name);
   if (bb == nullptr){
-    Log::Warning(this->loc) << "Basic block couldn't be found in goto" << "\n";
-    return nullptr;
+    //(Log::Warning(this->loc) << "Basic block couldn't be found in goto" << "\n").end();
+    return LogErrorV(this->loc, "Basic block couldn't be found in goto");
   }
   Builder->CreateBr(bb);
   return Constant::getNullValue(Type::getDoubleTy(*TheContext));

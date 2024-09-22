@@ -202,7 +202,7 @@ void preprocess_instruction(std::string line, std::ifstream& file_code, int& pos
             warning += (" " + word);
             get_next_word(instruction, pos);
         }
-        Log::Warning(emptyLoc) << warning << "\n";
+        (Log::Warning(emptyLoc) << warning << "\n").end();
     } else if (word == "error"){
         std::string error = "";
         get_next_word(instruction, pos);

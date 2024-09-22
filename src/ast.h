@@ -70,7 +70,7 @@ public:
   virtual Value *codegen() = 0;
   virtual std::unique_ptr<ExprAST> clone() = 0;
   virtual std::string to_string() = 0;
-  virtual Cpoint_Type get_type() = 0;
+  virtual Cpoint_Type get_type(FileCIR* fileCIR = nullptr) = 0; // TODO : after removing all the old llvm codegen in codegen.cpp, replace the ptr with a ref ?
   virtual std::string generate_c() = 0;
 
 #if ENABLE_CIR
@@ -127,7 +127,7 @@ public:
   std::string to_string() override {
     return "return " + returned_expr->to_string();
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     //return Cpoint_Type(void_type);
     return Cpoint_Type(never_type);
   }
@@ -164,7 +164,7 @@ public:
         body_str += "}\n";
         return body_str;
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Body.back()->get_type();
     }
     std::string generate_c() override { return ""; } // TODO
@@ -196,7 +196,7 @@ public:
     std::string to_string() override {
         return "";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type();
     }
     std::string generate_c() override { return ""; }
@@ -220,7 +220,7 @@ public:
     }
     return std::to_string(Val);
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR = nullptr) override {
     if (trunc(Val) == Val){
         return Cpoint_Type(i32_type);
     } else {
@@ -244,7 +244,7 @@ public:
   std::string to_string() override {
     return "\"" + str + "\"";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(i8_type, true);
   }
   std::string generate_c() override;
@@ -264,7 +264,7 @@ public:
   std::string to_string() override {
     return "\'" + std::string(1, (char)c) + "\'";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(i8_type);
   }
   std::string generate_c() override;
@@ -284,7 +284,7 @@ public:
   std::string to_string() override {
     return val ? "true" : "false";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(bool_type);
   }
   std::string generate_c() override;
@@ -306,7 +306,7 @@ public:
   std::string to_string() override {
     return "addr " + /*((Expr) ?*/ Expr->to_string() /*: Ident)*/;
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     Cpoint_Type type = Expr->get_type();
     type.is_ptr = true;
     type.nb_ptr++;
@@ -329,7 +329,7 @@ public:
     std::string to_string() override {
         return "deref " + Expr->to_string();
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Expr->get_type().deref_type();
     }
     std::string generate_c() override;
@@ -368,7 +368,7 @@ public:
     }
     //return "sizeof " + (is_type) ? create_pretty_name_for_type(type.get_real_type()) : expr->to_string();
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(i32_type);
   }
   std::string generate_c() override;
@@ -389,7 +389,7 @@ public:
     std::string to_string() override {
         return "typeId " + val->to_string();
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(i32_type);
     }
     std::string generate_c() override { return ""; }
@@ -431,7 +431,7 @@ public:
     std::string to_string() override {
         return "#asm(\"" + Args->assembly_code->str + "\")";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(void_type); // is it ?
     }
     std::string generate_c() override;
@@ -490,14 +490,14 @@ public:
   std::string to_string() override {
     return Name;
   }
-  Cpoint_Type get_type() override {
-    /*if (type != Cpoint_Type()){
-        return type;
-    } else {
-        return *get_variable_type(Name);
-        //fprintf(stderr, "No type found (compiler bug probably)");
-        //exit(1);
-    }*/
+  Cpoint_Type get_type(FileCIR* fileCIR) override; /*{
+    //if (type != Cpoint_Type()){
+    //    return type;
+    //} else {
+    //    return *get_variable_type(Name);
+    //    //fprintf(stderr, "No type found (compiler bug probably)");
+    //    //exit(1);
+    //}
    if (FunctionProtos[Name]){
     std::vector<Cpoint_Type> args;
     for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){
@@ -511,7 +511,7 @@ public:
    }
    return *get_variable_type(Name);
    //return type;
-  }
+  }*/
   std::string generate_c() override;
 #if ENABLE_CIR
   CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
@@ -530,7 +530,7 @@ public:
     }
     return "[" + array + "]";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     Cpoint_Type type = ArrayMembers.at(0)->get_type();
     type.is_array = true;
     return type;
@@ -555,7 +555,7 @@ public:
         }
         return struct_name + " { " + struct_members_str + " }";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(other_type, false, 0, false, 0, true, struct_name);
     }
     std::string generate_c() override { return ""; }
@@ -579,7 +579,7 @@ public:
         }
         return "Vector { " + vector_members_str + " }";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, (vector_element_type.is_empty) ? nullptr : new Cpoint_Type(vector_element_type), vector_size);
     }
     std::string generate_c() override { return ""; }
@@ -600,7 +600,7 @@ public:
     std::string to_string() override {
         return EnumVarName + "::" + EnumMemberName + "(" + ((value) ? value->to_string() : (std::string)"") + ")";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", true, EnumVarName);
     }
     std::string generate_c() override { return ""; }
@@ -623,7 +623,7 @@ public:
   std::string to_string() override {
     return LHS->to_string() + " " + Op + " " + RHS->to_string();  
   }
-  Cpoint_Type get_type() override;
+  Cpoint_Type get_type(FileCIR* fileCIR = nullptr) override;
   std::string generate_c() override;
 #if ENABLE_CIR
   CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
@@ -644,7 +644,7 @@ public:
   std::string to_string() override {
     return Opcode + Operand->to_string();
   }
-  Cpoint_Type get_type() override;
+  Cpoint_Type get_type(FileCIR* fileCIR) override;
   std::string generate_c() override;
 #if ENABLE_CIR
   CIR::InstructionRef cir_gen(std::unique_ptr<FileCIR>& fileCIR) override;
@@ -663,7 +663,7 @@ struct StructMemberCallExprAST : public ExprAST {
         return StructMember->LHS->to_string() + "." + StructMember->RHS->to_string();
     }
     std::string generate_c() override { return ""; }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         assert(dynamic_cast<VariableExprAST*>(StructMember->RHS.get()));
         auto RHS_variable_expr = dynamic_cast<VariableExprAST*>(StructMember->RHS.get());
         if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
@@ -782,12 +782,9 @@ public:
     // TODO maybe add the template type to the string expression (add a bool in this class to identify if a type is passed in the template)
     return function_name + template_type + args;
   }
-  static const std::string get_internal_func_prefix(){ 
-    return "cpoint_internal_"; 
-  }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR = nullptr) override {
     // TODO : move getting the type and calling the internal functions in another file where it would be next to each other so it would be simple when adding a new one
-    std::string internal_func_prefix = get_internal_func_prefix();
+    std::string internal_func_prefix = INTERNAL_FUNC_PREFIX;
     if (Callee.rfind(internal_func_prefix, 0) == 0){
         std::string Callee_without_prefix = Callee.substr(internal_func_prefix.size(), Callee.size());
         if (Callee_without_prefix == "unreachable"){
@@ -864,7 +861,7 @@ public:
     }
     return var_expr;
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return cpoint_type;
   }
   std::string generate_c() override;
@@ -905,7 +902,7 @@ public:
     std::string to_string() override {
       return "cast " + create_pretty_name_for_type(type) + " " + ValToCast->to_string();
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return type;
     }
     std::string generate_c() override;
@@ -924,7 +921,7 @@ public:
     std::string to_string() override {
         return "null";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(void_type, true);
     }
     std::string generate_c() override;
@@ -986,7 +983,7 @@ public:
         match_body += "}";
         return match_body;
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         Cpoint_Type match_return_type = Cpoint_Type(void_type);
         for (int i = 0; i < matchCases.size(); i++){
             Cpoint_Type matchCaseType = matchCases.at(i).Body->get_type();
@@ -1029,7 +1026,7 @@ public:
         // TODO
         return "";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(); // TODO : create a function pointer
     }
     std::string generate_c() override { return ""; }
@@ -1186,7 +1183,7 @@ public:
     std::string to_string() override {
         return "";
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type();
     }
     std::string generate_c() override { return ""; }
@@ -1230,7 +1227,7 @@ public:
     body_else += Else->to_string() + "\n";
     return "if " + Cond->to_string() + "{\n" + body_then + "} else {\n" + body_else + "}";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     if (!Else){
         return Cpoint_Type(void_type);
     } else {
@@ -1264,7 +1261,7 @@ public:
   std::string to_string() override {
     return "break";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     //return Cpoint_Type(void_type);
     return Cpoint_Type(never_type);
   }
@@ -1288,7 +1285,7 @@ public:
   std::string to_string() override {
     return "goto " + label_name;
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
@@ -1308,7 +1305,7 @@ public:
   std::string to_string() override {
     return label_name + ":";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
@@ -1338,7 +1335,7 @@ public:
     for_body += Body->to_string();
     return "for " + VarName + " = " + Start->to_string() + ", " + End->to_string() + ", " + Step->to_string() + " " + for_body;
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
@@ -1366,7 +1363,7 @@ public:
     }*/
     return "while" + Cond->to_string() + " " + while_body;
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
@@ -1398,7 +1395,7 @@ public:
     }
     return "loop " +  loop_expr + "{\n" + loop_body + "}";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override;
@@ -1429,7 +1426,7 @@ public:
   std::string to_string() override {
     return ";";
   }
-  Cpoint_Type get_type() override {
+  Cpoint_Type get_type(FileCIR* fileCIR) override {
     return Cpoint_Type(void_type);
   }
   std::string generate_c() override {
@@ -1451,7 +1448,7 @@ public:
     std::string to_string() override {
         return "defer " + Expr->to_string();
     }
-    Cpoint_Type get_type() override {
+    Cpoint_Type get_type(FileCIR* fileCIR) override {
         return Cpoint_Type(void_type);
     }
     std::string generate_c() override {

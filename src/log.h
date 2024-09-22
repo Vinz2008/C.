@@ -144,9 +144,9 @@ namespace Log {
         struct WarningHead head;
         struct WarningContent content;
         template< class T >
-        WarningHead &operator<<(const T& val){
+        Warning &operator<<(const T& val){
             head << val;
-            return head;
+            return *this;
         }
         void end(){
             Color::Modifier red(Color::FG_RED);

@@ -23,6 +23,7 @@ static std::unique_ptr<IRBuilder<>> Builder;*/
 // TODO : add PICMode to Comp_Context and pass a ref to it
 int codegenLLVM(std::unique_ptr<FileCIR> fileCIR, std::string object_filename, Triple tripleLLVM, bool PICmode, bool asm_mode, bool time_report, bool is_optimised, bool thread_sanitizer, int optimize_level, std::string CPU, std::string cpu_features){
     ZoneScopedN("CIR LLVM codegen");
+    
     auto LLVM_Context = std::make_unique<LLVMContext>();
     auto TheModule = std::make_unique<Module>(fileCIR->filename, *LLVM_Context);
     auto Builder = std::make_unique<IRBuilder<>>(*LLVM_Context);
