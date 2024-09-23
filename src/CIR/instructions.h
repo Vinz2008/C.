@@ -144,6 +144,22 @@ namespace CIR {
         std::string to_string() override;
     };
 
+    class ArgInlineAsm {
+    public:
+        InstructionRef ArgExpr;
+        enum ArgType {
+            output,
+            input
+        } argType;
+        ArgInlineAsm(InstructionRef ArgExpr, enum ArgType argType) : ArgExpr(ArgExpr), argType(argType) {}
+    };
+    class InlineAsmInstruction : public CIR::Instruction {
+    public:
+        std::string asm_code;
+        std::vector<CIR::ArgInlineAsm> InputOutputArgs;
+        InlineAsmInstruction(std::string asm_code, std::vector<CIR::ArgInlineAsm> InputOutputArgs) : asm_code(asm_code), InputOutputArgs(InputOutputArgs) {}
+    };
+
     class AddInstruction : public CIR::Instruction {
     public:
         InstructionRef arg1;

@@ -101,8 +101,8 @@ std::unique_ptr<StringExprAST> generate_concat_macro(std::vector<std::unique_ptr
     return std::make_unique<StringExprAST>(concatenated_str);
 }
 
-std::unique_ptr<ExprAST> generate_asm_macro(std::unique_ptr<ArgsInlineAsm> ArgsMacro){
-    return std::make_unique<AsmExprAST>(std::move(ArgsMacro));
+std::unique_ptr<ExprAST> generate_asm_macro(std::unique_ptr<StringExprAST> assembly_code, std::vector<ArgInlineAsm> InputOutputArgs){
+    return std::make_unique<AsmExprAST>(std::move(assembly_code), std::move(InputOutputArgs));
 }
 
 std::unique_ptr<ExprAST> generate_todo_macro(std::vector<std::unique_ptr<ExprAST>>& ArgsMacro){

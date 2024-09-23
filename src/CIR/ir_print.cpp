@@ -256,20 +256,22 @@ std::string FileCIR::to_string(){
     file_cir_str += "}\n\n";
     }
     for (auto const& [var_name, var] : global_vars){
-        file_cir_str += "@" + var_name + " ";
-        if (var->is_extern){
-            file_cir_str += "extern ";
+        if (var){
+            file_cir_str += "@" + var_name + " ";
+            if (var->is_extern){
+                file_cir_str += "extern ";
+            }
+            if (var->is_const){
+                file_cir_str += "const ";
+            }
+            if (var->section_name != ""){
+                file_cir_str += "section : " + var->section_name + " ";
+            }
+            if (!var->Init.is_empty()){
+                file_cir_str += "= " + var->Init.to_string();
+            }
+            file_cir_str += "\n";
         }
-        if (var->is_const){
-            file_cir_str += "const ";
-        }
-        if (var->section_name != ""){
-            file_cir_str += "section : " + var->section_name + " ";
-        }
-        if (!var->Init.is_empty()){
-            file_cir_str += "= " + var->Init.to_string();
-        }
-        file_cir_str += "\n";
     }
 
     if (!strings.empty()){

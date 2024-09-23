@@ -118,6 +118,15 @@ CIR::InstructionRef ScopeExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    for (int i = 0; i < InputOutputArgs.size(); i++){
+        if (dynamic_cast<VariableExprAST*>(InputOutputArgs.at(i).ArgExpr.get())){
+            auto var_expr = get_Expr_from_ExprAST<VariableExprAST>(InputOutputArgs.at(i).ArgExpr->clone());
+            // TODO
+        } else {
+            LogErrorV(this->loc, "Unknown expression for \"in\" in asm macro"); // TODO : add dedicated function for this case
+            return CIR::InstructionRef();
+        }
+    }
     return CIR::InstructionRef();
 }
 
@@ -224,8 +233,8 @@ CIR::InstructionRef IfExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
             return CIR::InstructionRef();
         }
         Cpoint_Type Else_type = Else->get_type(fileCIR.get());
-        std::cout << "Else_type : " << Else_type << std::endl;
-        std::cout << "phi_type : " << phi_type << std::endl;
+        //std::cout << "Else_type : " << Else_type << std::endl;
+        //std::cout << "phi_type : " << phi_type << std::endl;
         if (Else_type.type != void_type && Else_type != phi_type){
             if (!cir_convert_to_type(fileCIR, Else_type, phi_type, ElseI)){
                 // TODO: add special function for errors in this context
@@ -416,6 +425,7 @@ CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     for (int i = 0; i < Args.size(); i++){
         CIR::InstructionRef argI = Args.at(i)->cir_gen(fileCIR);
         Cpoint_Type arg_type = Args.at(i)->get_type(fileCIR.get());
+        //std::cout << fileCIR->protos[Callee].args.size() << std::endl;
         if (arg_type != fileCIR->protos[Callee].args.at(i).second){
             cir_convert_to_type(fileCIR, arg_type, fileCIR->protos[Callee].args.at(i).second, argI);
         }
@@ -743,6 +753,10 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     if (ret_val.get_type(fileCIR).type == never_type){
         fileCIR->add_instruction(std::make_unique<CIR::ConstNever>());
     } else if (!body_contains_unreachable){
+        Cpoint_Type ret_val_type = fileCIR->get_instruction(ret_val.get_pos())->type;
+        if (ret_val_type != Proto->cpoint_type){
+            ret_val = fileCIR->add_instruction(std::make_unique<CIR::CastInstruction>(ret_val, ret_val_type, Proto->cpoint_type));
+        }
         auto return_instr = std::make_unique<CIR::ReturnInstruction>(ret_val);
         return_instr->type = Cpoint_Type(never_type);
         fileCIR->add_instruction(std::move(return_instr));
@@ -784,10 +798,51 @@ bool checkFileCIR(std::unique_ptr<FileCIR>& fileCIR){
     return true;
 }
 
+static void register_mod_functions_recursive(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ModAST>& mod, std::optional<std::string> parent_mods_prefix){
+    for (int i = 0; i < mod->functions.size(); i++){
+        std::string function_name = mod->functions.at(i)->Proto->Name;
+        function_name = module_mangling(mod->mod_name, function_name);
+        if (parent_mods_prefix != std::nullopt){
+            //function_name = parent_mods_prefix.value() + function_name;
+            function_name = module_mangling(parent_mods_prefix.value(), function_name);
+        }
+        auto Proto = mod->functions.at(i)->Proto->clone();
+        Proto->Name = function_name;
+        Proto->cir_gen(fileCIR);
+        //FunctionProtos[function_name] = mod->functions.at(i)->Proto->clone();
+    }
+    for (int i = 0; i < mod->function_protos.size(); i++){
+        std::string function_name = mod->function_protos.at(i)->Name;
+        function_name = module_mangling(mod->mod_name, function_name);
+        if (parent_mods_prefix != std::nullopt){
+            //function_name = parent_mods_prefix.value() + function_name;
+            function_name = module_mangling(parent_mods_prefix.value(), function_name);
+        }
+        auto Proto = mod->function_protos.at(i)->clone();
+        Proto->Name = function_name;
+        Proto->cir_gen(fileCIR);
+    }
+
+    for (int i = 0; i < mod->mods.size(); i++){
+        std::string mod_prefix = mod->mod_name;
+        if (parent_mods_prefix.has_value()){
+            mod_prefix = module_mangling(parent_mods_prefix.value(), mod->mod_name);
+        }
+        register_mod_functions_recursive(fileCIR, mod->mods.at(i), std::optional(mod_prefix));
+    }
+}
+
+static void register_mod_functions(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ModAST>& mod){
+    register_mod_functions_recursive(fileCIR, mod, std::nullopt);
+}
+
 std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
   ZoneScopedN("CIR generation");
   auto fileCIR = std::make_unique<FileCIR>(filename, std::vector<std::unique_ptr<CIR::Function>>());
   add_externs_for_gc(fileCIR);
+  for (int i = 0; i < mods.size(); i++){
+    register_mod_functions(fileCIR, mods.at(i));
+  }
   fileCIR->start_global_context();
   for (int i = 0; i < global_vars.size(); i++){
     global_vars.at(i)->cir_gen(fileCIR);

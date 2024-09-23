@@ -97,6 +97,10 @@ std::vector<std::unique_ptr<T>> make_unique_ptr_static_vector(Ptrs&& ... ptrs){
     return vec;
 }
 
+std::unique_ptr<ExprAST> AsmExprAST::clone(){
+    return std::make_unique<AsmExprAST>(get_Expr_from_ExprAST<StringExprAST>(assembly_code->clone()), clone_containing_unique_ptr_vector<ArgInlineAsm>(InputOutputArgs));
+}
+
 std::unique_ptr<ExprAST> StructMemberCallExprAST::clone(){
     return std::make_unique<StructMemberCallExprAST>(get_Expr_from_ExprAST<BinaryExprAST>(StructMember->clone()), clone_unique_ptr_vec<ExprAST>(Args));
 }
@@ -224,9 +228,9 @@ std::unique_ptr<ExprAST> ClosureAST::clone(){
     return std::make_unique<ClosureAST>(clone_unique_ptr_vec<ExprAST>(Body), ArgNames, return_type,captured_vars);
 }
 
-std::unique_ptr<ArgsInlineAsm> ArgsInlineAsm::clone(){
+/*std::unique_ptr<ArgsInlineAsm> ArgsInlineAsm::clone(){
     return std::make_unique<ArgsInlineAsm>(std::unique_ptr<StringExprAST>(dynamic_cast<StringExprAST*>(assembly_code->clone().release())), clone_containing_unique_ptr_vector(InputOutputArgs));
-}
+}*/
 
 std::unique_ptr<ExprAST> ScopeExprAST::clone(){
     return std::make_unique<ScopeExprAST>(clone_unique_ptr_vec<ExprAST>(Body));
@@ -245,6 +249,14 @@ Cpoint_Type VariableExprAST::get_type(FileCIR* fileCIR){
        // TODO : add support for functions used like vars
         if (!fileCIR->CurrentFunction->vars[Name].is_empty()){
             return fileCIR->CurrentFunction->vars[Name].type;
+        } else if (fileCIR->global_vars[Name]){
+            return fileCIR->global_vars[Name]->type;
+        } else if (!fileCIR->protos[Name].is_empty()){
+            std::vector<Cpoint_Type> args;
+            for (int i = 0; i < fileCIR->protos[Name].args.size(); i++){
+                args.push_back(fileCIR->protos[Name].args.at(i).second);
+            }
+            return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, true, args, new Cpoint_Type(fileCIR->protos[Name].return_type));
         } else {
             LogErrorE("Unknown variable %s", Name.c_str());
             return Cpoint_Type();
@@ -720,8 +732,7 @@ std::unique_ptr<ExprAST> ParseInlineAsm(){
         }
     }
     getNextToken(); // eat ')'
-    std::unique_ptr<ArgsInlineAsm> argsInlineAsm = std::make_unique<ArgsInlineAsm>(std::move(asm_code), std::move(InputOutputArgs));
-    return generate_asm_macro(std::move(argsInlineAsm));
+    return generate_asm_macro(std::move(asm_code), std::move(InputOutputArgs));
 }
 
 std::unique_ptr<ExprAST> ParseMacroCall(){

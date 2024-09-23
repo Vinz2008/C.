@@ -411,28 +411,31 @@ public:
     }
 };
 
-class ArgsInlineAsm {
+/*class ArgsInlineAsm {
 public:
     std::unique_ptr<StringExprAST> assembly_code;
     std::vector<ArgInlineAsm> InputOutputArgs;
     ArgsInlineAsm(std::unique_ptr<StringExprAST> assembly_code, std::vector<ArgInlineAsm> InputOutputArgs) : assembly_code(std::move(assembly_code)), InputOutputArgs(std::move(InputOutputArgs)) {}
     std::unique_ptr<ArgsInlineAsm> clone();
-};
+};*/
 
 class AsmExprAST : public ExprAST {
     //std::string assembly_code;
-    std::unique_ptr<ArgsInlineAsm> Args;
+    //std::unique_ptr<ArgsInlineAsm> Args;
+    std::unique_ptr<StringExprAST> assembly_code;
+    std::vector<ArgInlineAsm> InputOutputArgs;
 public:
-    AsmExprAST(std::unique_ptr<ArgsInlineAsm> Args) : Args(std::move(Args)) {}
+    //AsmExprAST(std::unique_ptr<ArgsInlineAsm> Args) : Args(std::move(Args)) {}
+    AsmExprAST(std::unique_ptr<StringExprAST> assembly_code, std::vector<ArgInlineAsm> InputOutputArgs) : assembly_code(std::move(assembly_code)), InputOutputArgs(std::move(InputOutputArgs)) {}
     Value* codegen() override;
-    std::unique_ptr<ExprAST> clone() override {
-        return std::make_unique<AsmExprAST>(Args->clone());
-    }
+    std::unique_ptr<ExprAST> clone() override; /*{
+        return std::make_unique<AsmExprAST>(assembly_code->clone(), clone_unique_ptr_vec);
+    }*/
     std::string to_string() override {
-        return "#asm(\"" + Args->assembly_code->str + "\")";
+        return "#asm(\"" + assembly_code->str + "\")"; // TODO : add args in string
     }
     Cpoint_Type get_type(FileCIR* fileCIR) override {
-        return Cpoint_Type(void_type); // is it ?
+        return Cpoint_Type(void_type); // TODO : is it ?
     }
     std::string generate_c() override;
 #if ENABLE_CIR
@@ -1526,6 +1529,9 @@ std::unique_ptr<ExprAST> ParseConstantVector();
 
 template <class T>
 std::vector<std::unique_ptr<T>> clone_unique_ptr_vec(std::vector<std::unique_ptr<T>>& v);
+
+template <class T>
+std::vector<T> clone_containing_unique_ptr_vector(std::vector<T>& v);
 
 void generate_gc_init(std::vector<std::unique_ptr<ExprAST>>& Body);
 std::unique_ptr<VarExprAST> get_VarExpr_from_ExprAST(std::unique_ptr<ExprAST> E);

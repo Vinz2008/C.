@@ -1101,17 +1101,17 @@ Value* AsmExprAST::codegen(){
     Value* out_var_allocation = nullptr;
     std::vector<Value*> AsmArgs;
     std::vector<Type*> AsmArgsTypes;
-    for (int i = 0; i < Args->InputOutputArgs.size(); i++){
-        if (dynamic_cast<VariableExprAST*>(Args->InputOutputArgs.at(i).ArgExpr.get())){
-            auto expr = get_Expr_from_ExprAST<VariableExprAST>(std::move(Args->InputOutputArgs.at(i).ArgExpr));
+    for (int i = 0; i < InputOutputArgs.size(); i++){
+        if (dynamic_cast<VariableExprAST*>(InputOutputArgs.at(i).ArgExpr.get())){
+            auto expr = get_Expr_from_ExprAST<VariableExprAST>(std::move(InputOutputArgs.at(i).ArgExpr));
             if (!expr){
                 return LogErrorV(this->loc, "Error in expression of asm macro");
             }
-            if (Args->InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::output){
+            if (InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::output){
                 contains_out = true;
                 asm_type = expr->type;
                 out_var_allocation = get_var_allocation(expr->Name);
-            } else if (Args->InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::input){
+            } else if (InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::input){
                 contains_in = true;
                 /*in_values_loaded*/ AsmArgs.push_back(Builder->CreateLoad(get_type_llvm(expr->type), get_var_allocation(expr->Name)));
                 AsmArgsTypes.push_back(get_type_llvm(expr->type));
@@ -1120,19 +1120,19 @@ Value* AsmExprAST::codegen(){
             return LogErrorV(this->loc, "Unknown expression for \"in\" in asm macro");
         }
     }
-    std::string assembly_code = Args->assembly_code->str;
+    std::string assembly_code_str = assembly_code->str;
     std::string generated_assembly_code = "";
     std::string constraints = ""; 
     int arg_nb = 0;
     int arg_in_nb = 0;
-    for (int i = 0; i < assembly_code.size(); i++){
-        if (assembly_code.at(i) == '{' && assembly_code.at(i+1) && '}'){
-            if (Args->InputOutputArgs.size() > arg_nb){
+    for (int i = 0; i < assembly_code_str.size(); i++){
+        if (assembly_code_str.at(i) == '{' && assembly_code_str.at(i+1) && '}'){
+            if (InputOutputArgs.size() > arg_nb){
                 generated_assembly_code += "${" + std::to_string(arg_nb) + ":q}";
-                if (Args->InputOutputArgs.at(arg_nb).argType == ArgInlineAsm::ArgType::input){
+                if (InputOutputArgs.at(arg_nb).argType == ArgInlineAsm::ArgType::input){
                     constraints += "r,";
                     arg_in_nb++;
-                } else if (Args->InputOutputArgs.at(arg_nb).argType == ArgInlineAsm::ArgType::output){
+                } else if (InputOutputArgs.at(arg_nb).argType == ArgInlineAsm::ArgType::output){
                     constraints += "=&r,";
                 }
                 arg_nb++;
@@ -1141,7 +1141,7 @@ Value* AsmExprAST::codegen(){
             }
             i++;
         } else {
-            generated_assembly_code += assembly_code.at(i);
+            generated_assembly_code += assembly_code_str.at(i);
         }
     }
     constraints += "~{dirflag},~{fpsr},~{flags},~{memory}"; // TODO : set constraints only when needed
@@ -2755,7 +2755,7 @@ after_storing:
 
 // TODO : refactor NamedValues to be scopes in each other instead of a big map
 
-void register_mod_functions_recursive(std::unique_ptr<ModAST>& mod, std::optional<std::string> parent_mods_prefix){
+static void register_mod_functions_recursive(std::unique_ptr<ModAST>& mod, std::optional<std::string> parent_mods_prefix){
     for (int i = 0; i < mod->functions.size(); i++){
         std::string function_name = mod->functions.at(i)->Proto->Name;
         function_name = module_mangling(mod->mod_name, function_name);
@@ -2784,11 +2784,11 @@ void register_mod_functions_recursive(std::unique_ptr<ModAST>& mod, std::optiona
     }
 }
 
-void register_mod_functions(std::unique_ptr<ModAST>& mod){
+static void register_mod_functions(std::unique_ptr<ModAST>& mod){
     register_mod_functions_recursive(mod, std::nullopt);
 }
 
-void register_function_protos(std::unique_ptr<PrototypeAST>& proto){
+static void register_function_protos(std::unique_ptr<PrototypeAST>& proto){
     FunctionProtos[proto->getName()] = proto->clone();
 }
 

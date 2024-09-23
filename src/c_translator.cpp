@@ -331,5 +331,5 @@ std::string SizeofExprAST::generate_c(){
 
 std::string AsmExprAST::generate_c(){
     // TODO : add input-output vars/regs
-    return "asm(\"" + Args->assembly_code->str + "\")";
+    return "asm(\"" + assembly_code->str + "\")";
 }

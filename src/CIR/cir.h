@@ -95,8 +95,11 @@ namespace CIR {
         std::vector<std::pair<std::string, Cpoint_Type>> args;
         bool is_variable_number_args;
         bool is_private_func;
-        FunctionProto() : name(), return_type(), args(), is_variable_number_args(false), is_private_func(false) {}
+        FunctionProto() : name(""), return_type(), args(), is_variable_number_args(false), is_private_func(false) {}
         FunctionProto(std::string name, Cpoint_Type return_type, std::vector<std::pair<std::string, Cpoint_Type>> args, bool is_variable_number_args, bool is_private_func) : name(name), return_type(return_type), args(std::move(args)), is_variable_number_args(is_variable_number_args), is_private_func(is_private_func) {}
+        bool is_empty() {
+            return name == "" && return_type.is_empty && args.empty() && !is_variable_number_args && !is_private_func;
+        }
     };
     class GlobalVar {
     public:

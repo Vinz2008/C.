@@ -263,6 +263,20 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         } else {
             instruction_val = codegen_context->Builder->CreateFAdd(arg1_val, arg2_val, "faddtmp");
         }
+    } else if (dynamic_cast<CIR::RemInstruction*>(instruction.get())){
+        auto rem_instruction = get_Instruction_from_CIR_Instruction<CIR::RemInstruction>(std::move(instruction));
+        Value* arg1_val = codegen_context->functionValues.at(rem_instruction->arg1.get_pos());
+        Value* arg2_val = codegen_context->functionValues.at(rem_instruction->arg2.get_pos());
+        Cpoint_Type rem_type = rem_instruction->type;
+        if (!rem_type.is_decimal_number_type()){
+            if (rem_type.is_signed()){
+                instruction_val = codegen_context->Builder->CreateSRem(arg1_val, arg2_val, "sremtmp");
+            } else {
+                instruction_val = codegen_context->Builder->CreateURem(arg1_val, arg2_val, "uremtmp");
+            }
+        } else {
+            instruction_val = codegen_context->Builder->CreateFRem(arg1_val, arg2_val, "fremtmp");
+        }
     } else if (dynamic_cast<CIR::GotoInstruction*>(instruction.get())){
         auto goto_instruction = get_Instruction_from_CIR_Instruction<CIR::GotoInstruction>(std::move(instruction));
         BasicBlock* bb = codegen_context->functionBBs.at(goto_instruction->goto_bb.get_pos());

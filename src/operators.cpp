@@ -227,7 +227,7 @@ Cpoint_Type UnaryExprAST::get_type(FileCIR* fileCIR){
 
 Cpoint_Type BinaryExprAST::get_type(FileCIR* fileCIR){
     if (Op == "=" || Op == "<<" || Op == ">>" || Op == "|" || Op == "^" || Op == "&" || Op == "+" || Op == "-" || Op == "*" || Op == "%" || Op == "/"){
-        return LHS->get_type();
+        return LHS->get_type(fileCIR);
     }
     if (Op == "||" || Op == "&&" || Op == "==" || Op == "!=" || Op == "<" || Op == "<=" || Op == ">" || Op == ">="){
         Cpoint_Type LHS_type = LHS->get_type(fileCIR);
