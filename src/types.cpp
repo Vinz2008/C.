@@ -39,6 +39,11 @@ Type* get_type_llvm(std::unique_ptr<LLVM::Context>& llvm_context, Cpoint_Type cp
     return get_type_llvm(*llvm_context->TheContext, llvm_context->structDeclars, cpoint_type);
 }
 
+Type* get_type_llvm(LLVMContext& context, Cpoint_Type cpoint_type){
+    auto struct_declars_empty = std::unordered_map<std::string, Type*>();
+    return get_type_llvm(context, struct_declars_empty, cpoint_type);
+}
+
 Type* get_type_llvm(LLVMContext& context, std::unordered_map<std::string, Type*>& struct_declars, Cpoint_Type cpoint_type){
     assert(!cpoint_type.is_empty);
     Type* type;
@@ -505,7 +510,7 @@ bool cir_convert_to_type(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type typeFrom
 #endif
 
 // TODO : make it return false only when there is a problem when converting (when the conversion is a noop, return true instead of false) and verify the return to see if the conversion failed (and if it failed, call LogError)
-static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &val){
+static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, std::unique_ptr<LLVMContext>& context, Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &val){
   Log::Info() << "Creating cast" << "\n";
   Log::Info() << "typeFrom : " << typeFrom << "\n";
   Log::Info() << "typeTo : " << typeTo_cpoint << "\n";
@@ -533,12 +538,12 @@ static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, Cpoint_
   }
   //Log::Info() << "typeTo is ptr : " << typeTo->isPointerTy() << "\n";
   if (typeFrom.is_array && typeTo_cpoint.is_ptr){
-    auto zero = llvm::ConstantInt::get(*TheContext, llvm::APInt(64, 0, true));
+    auto zero = llvm::ConstantInt::get(*context, llvm::APInt(64, 0, true));
     Log::Info() << "from array to ptr TEST typeFrom : " << typeFrom << "\n";
     //val = Builder->CreateLoad(get_type_llvm(Cpoint_Type(i32_type, true, 1)), val, "load_gep_ptr");
-    val = builder->CreateGEP(get_type_llvm(typeFrom), val, {zero, zero});
+    val = builder->CreateGEP(get_type_llvm(*context, typeFrom), val, {zero, zero});
     Log::Info() << "from array to ptr TEST3" << "\n";
-    val = builder->CreateLoad(get_type_llvm(Cpoint_Type(void_type, true, 1)), val);
+    val = builder->CreateLoad(get_type_llvm(*context, Cpoint_Type(void_type, true, 1)), val);
     return true;
   }
   if (typeFrom.is_array || (typeFrom.is_struct && !typeFrom.is_ptr) || typeTo_cpoint.is_array || (typeTo_cpoint.is_struct && !typeTo_cpoint.is_ptr)){
@@ -546,14 +551,14 @@ static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, Cpoint_
   }
   if (typeFrom.is_ptr && !typeTo_cpoint.is_ptr){
     Log::Info() << "PtrToInt" << "\n";
-    val = builder->CreatePtrToInt(val, get_type_llvm(typeTo_cpoint), "ptrtoint_cast");
+    val = builder->CreatePtrToInt(val, get_type_llvm(*context, typeTo_cpoint), "ptrtoint_cast");
     return true;
   } 
   if (!typeFrom.is_ptr && typeTo_cpoint.is_ptr){
     if (typeFrom.type == double_type || typeFrom.type ==  float_type){
-        val = builder->CreateFPToUI(val, get_type_llvm(Cpoint_Type(i32_type)), "ui_to_fp_inttoptr");
+        val = builder->CreateFPToUI(val, get_type_llvm(*context, Cpoint_Type(i32_type)), "ui_to_fp_inttoptr");
     }
-    val = builder->CreateIntToPtr(val, get_type_llvm(typeTo_cpoint), "inttoptr_cast");
+    val = builder->CreateIntToPtr(val, get_type_llvm(*context, typeTo_cpoint), "inttoptr_cast");
     return true;
   }
   if (typeFrom.is_ptr || typeTo_cpoint.is_ptr){
@@ -567,22 +572,22 @@ static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, Cpoint_
         if (typeFrom.type == double_type && typeTo_cpoint.type == float_type){
             Log::Info() << "From double to float" << "\n";
             //val = Builder->CreateFPExt(val, typeTo, "cast");
-            val = builder->CreateFPTrunc(val, get_type_llvm(typeTo_cpoint), "cast");
+            val = builder->CreateFPTrunc(val, get_type_llvm(*context, typeTo_cpoint), "cast");
             return true;
         } else if (typeFrom.type == float_type && typeTo_cpoint.type == double_type){
             Log::Info() << "From float to double" << "\n";
             //val = Builder->CreateFPTrunc(val, typeTo, "cast");
-            val = builder->CreateFPExt(val, get_type_llvm(typeTo_cpoint), "cast");
+            val = builder->CreateFPExt(val, get_type_llvm(*context, typeTo_cpoint), "cast");
             return true;
         }
         return false;
     } else if (typeTo_cpoint.is_signed()){
       Log::Info() << "From float/double to signed int" << "\n";
-      val = builder->CreateFPToUI(val, get_type_llvm(typeTo_cpoint), "cast"); // change this to signed int conversion. For now it segfaults
+      val = builder->CreateFPToSI(val, get_type_llvm(*context, typeTo_cpoint), "cast"); // change this to signed int conversion. For now it segfaults
       return true;
     } else if (typeTo_cpoint.is_unsigned()){
       Log::Info() << "From float/double to unsigned int" << "\n";
-      val = builder->CreateFPToUI(val, get_type_llvm(typeTo_cpoint), "cast");
+      val = builder->CreateFPToUI(val, get_type_llvm(*context, typeTo_cpoint), "cast");
       return true;
     }
     return false;
@@ -593,24 +598,24 @@ static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, Cpoint_
         Log::Info() << "is_signed typeFrom.type " << typeFrom.type << " : " << typeFrom.is_signed() << "\n";
         if (typeFrom.is_signed()){
             Log::Info() << "SIToFP\n";
-            val = builder->CreateSIToFP(val, get_type_llvm(typeTo_cpoint), "sitofp_cast");
+            val = builder->CreateSIToFP(val, get_type_llvm(*context, typeTo_cpoint), "sitofp_cast");
         } else {
-            val = builder->CreateUIToFP(val, get_type_llvm(typeTo_cpoint), "uitofp_cast");
+            val = builder->CreateUIToFP(val, get_type_llvm(*context, typeTo_cpoint), "uitofp_cast");
         }
         return true;
     } else if ((nb_bits_type_from = typeFrom.get_number_of_bits()) != -1 && nb_bits_type_from != (nb_bits_type_to = typeTo_cpoint.get_number_of_bits())){
         if (nb_bits_type_from < nb_bits_type_to){
             if (typeFrom.is_signed()){
                 Log::Info() << "Sext cast" << "\n";
-                val = builder->CreateSExt(val, get_type_llvm(typeTo_cpoint), "sext_cast");
+                val = builder->CreateSExt(val, get_type_llvm(*context, typeTo_cpoint), "sext_cast");
             } else {
                 Log::Info() << "Zext cast" << "\n";
-                val = builder->CreateZExt(val, get_type_llvm(typeTo_cpoint), "zext_cast");
+                val = builder->CreateZExt(val, get_type_llvm(*context, typeTo_cpoint), "zext_cast");
             }
             return true;
         } else {
             Log::Info() << "Trunc cast" << "\n";
-            val = builder->CreateTrunc(val, get_type_llvm(typeTo_cpoint), "trunc_cast");
+            val = builder->CreateTrunc(val, get_type_llvm(*context, typeTo_cpoint), "trunc_cast");
             return true;
         }
     }
@@ -621,11 +626,11 @@ static bool convert_to_type(std::unique_ptr<llvm::IRBuilder<>>& builder, Cpoint_
 }
 
 bool convert_to_type(Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &val){
-    return convert_to_type(Builder, typeFrom, typeTo_cpoint, val);
+    return convert_to_type(Builder, TheContext, typeFrom, typeTo_cpoint, val);
 }
 
 bool convert_to_type(std::unique_ptr<LLVM::Context>& llvm_context, Cpoint_Type typeFrom, Cpoint_Type typeTo_cpoint, Value* &val){
-    return convert_to_type(llvm_context->Builder, typeFrom, typeTo_cpoint, val);
+    return convert_to_type(llvm_context->Builder, llvm_context->TheContext, typeFrom, typeTo_cpoint, val);
 }
 
 bool convert_to_type(Cpoint_Type typeFrom, Type* typeTo, Value* &val){

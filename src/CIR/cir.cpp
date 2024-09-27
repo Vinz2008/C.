@@ -502,9 +502,9 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         }
     }
     // TODO : transform i8 and i16s to i32 ? (see codegen.cpp and see if it is needed)
-    std::cout << "LHS_Type : " << LHS_type << std::endl;
+    /*std::cout << "LHS_Type : " << LHS_type << std::endl;
     std::cout << "RHS_type : " << RHS_type << std::endl;
-    std::cout << "LHS_Type == RHS_Type : " << (LHS_type == RHS_type) << std::endl;
+    std::cout << "LHS_Type == RHS_Type : " << (LHS_type == RHS_type) << std::endl;*/
     if (LHS_type != RHS_type){
         (Log::Warning(this->loc) << "Types are not the same for the binary operation '" << Op << "' to the " << create_pretty_name_for_type(LHS_type) << " and " << create_pretty_name_for_type(RHS_type) << " types" << "\n").end(); // TODO : add a better syntax for simple warnings (for ex a wrapper struct WarningSimple which would call end in destructor)
         cir_convert_to_type(fileCIR, RHS_type, LHS_type, RHS_Instr);
@@ -724,11 +724,13 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     fileCIR->set_insert_point(entry_bb);
     fileCIR->CurrentFunction->vars.clear();
     for (int i = 0; i < Proto->Args.size(); i++){
-        auto load_arg_instr = std::make_unique<CIR::LoadArgInstruction>(Proto->Args.at(i).first, Proto->Args.at(i).second);
-        load_arg_instr->label = Proto->Args.at(i).first + ".load_arg";
-        load_arg_instr->type = Proto->Args.at(i).second;
-        auto load_arg = fileCIR->add_instruction(std::move(load_arg_instr));
-        fileCIR->CurrentFunction->vars[Proto->Args.at(i).first] = CIR::Var(load_arg, Proto->Args.at(i).second);
+        auto init_arg_instr = std::make_unique<CIR::InitArgInstruction>(Proto->Args.at(i).first, Proto->Args.at(i).second);
+        init_arg_instr->label = Proto->Args.at(i).first + ".init_arg";
+        init_arg_instr->type = Proto->Args.at(i).second;
+        init_arg_instr->type.is_ptr = true;
+        init_arg_instr->type.nb_ptr++;
+        auto init_arg = fileCIR->add_instruction(std::move(init_arg_instr));
+        fileCIR->CurrentFunction->vars[Proto->Args.at(i).first] = CIR::Var(init_arg, Proto->Args.at(i).second);
     }
     CIR::InstructionRef ret_val;
     for (int i = 0; i < Body.size(); i++){

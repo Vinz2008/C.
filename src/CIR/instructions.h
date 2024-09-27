@@ -81,11 +81,11 @@ namespace CIR {
         LoadGlobalInstruction(Cpoint_Type type, bool is_string, int global_pos) : Instruction(type), is_string(is_string), global_pos(global_pos) {}
         std::string to_string() override;
     };
-    class LoadArgInstruction : public CIR::Instruction {
+    class InitArgInstruction : public CIR::Instruction {
     public:
         std::string arg_name;
         Cpoint_Type arg_type;
-        LoadArgInstruction(std::string arg_name, Cpoint_Type arg_type) : Instruction(arg_type), arg_name(arg_name), arg_type(arg_type) {}
+        InitArgInstruction(std::string arg_name, Cpoint_Type arg_type) : Instruction(arg_type), arg_name(arg_name), arg_type(arg_type) {}
         std::string to_string() override;
     };
     class StoreVarInstruction : public CIR::Instruction {

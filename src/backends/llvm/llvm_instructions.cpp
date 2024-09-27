@@ -67,13 +67,13 @@ static Function* codegenProto(std::unique_ptr<LLVM::Context>& codegen_context, C
     bool has_added_sret = false;
     for (auto &Arg : F->args()){
         if (has_sret && Idx == 0 && !has_added_sret){
-            addArgSretAttribute(Arg, get_type_llvm(codegen_context, proto.return_type));
+            addArgSretAttribute(*codegen_context->TheContext, Arg, get_type_llvm(codegen_context, proto.return_type));
             Arg.setName("sret_arg"); // needed ? (it was already added, remove this ? TODO)
             Idx = 0;
             has_added_sret = true;
         } else if (proto.args.at(Idx).second.is_just_struct() && should_pass_struct_byval(proto.args.at(Idx).second)){
             Log::Info() << "should_pass_struct_byval arg " << proto.args.at(Idx).first << " : " << proto.args.at(Idx).second << "\n";
-            Cpoint_Type arg_type = get_cpoint_type_from_llvm(get_type_llvm(codegen_context, proto.args.at(Idx).second));
+            Cpoint_Type arg_type = proto.args.at(Idx).second;
             Cpoint_Type by_val_ptr_type = arg_type;
             by_val_ptr_type.is_ptr = true;
             by_val_ptr_type.nb_ptr++;
@@ -125,7 +125,7 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
             int idx = 0;
             for (auto& Arg : calling_function->args()){
                 if (idx == 0){
-                    addArgSretAttribute(Arg, SretArgAlloca->getAllocatedType());
+                    addArgSretAttribute(*codegen_context->TheContext, Arg, SretArgAlloca->getAllocatedType());
                 } else {
                     break;
                 }
@@ -149,12 +149,14 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
     } else if (dynamic_cast<CIR::ReturnInstruction*>(instruction.get())){
         auto return_instr = get_Instruction_from_CIR_Instruction<CIR::ReturnInstruction>(std::move(instruction));
         instruction_val = codegen_context->Builder->CreateRet(codegen_context->functionValues.at(return_instr->ret_val.get_pos()));
-    } else if (dynamic_cast<CIR::LoadArgInstruction*>(instruction.get())){
-        auto load_arg_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadArgInstruction>(std::move(instruction));
-        AllocaInst* Alloca = codegen_context->functionVarsAllocas[load_arg_instruction->arg_name];
+    } else if (dynamic_cast<CIR::InitArgInstruction*>(instruction.get())){
+        // create the arg at the start of the function frame
+        auto init_arg_instruction = get_Instruction_from_CIR_Instruction<CIR::InitArgInstruction>(std::move(instruction));
+        AllocaInst* Alloca = codegen_context->functionVarsAllocas[init_arg_instruction->arg_name];
         //Type* load_type = get_type_llvm(codegen_context, load_arg_instruction->type);
-        Type* load_type = Alloca->getAllocatedType();
-        instruction_val = codegen_context->Builder->CreateLoad(load_type, Alloca);
+        //Type* load_type = Alloca->getAllocatedType();
+        //instruction_val = codegen_context->Builder->CreateLoad(load_type, Alloca);
+        instruction_val = Alloca;
     } else if (dynamic_cast<CIR::ConstNumber*>(instruction.get())){
         auto const_nb_instruction = get_Instruction_from_CIR_Instruction<CIR::ConstNumber>(std::move(instruction));
         if (const_nb_instruction->is_float){
@@ -193,6 +195,12 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         auto load_var_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadVarInstruction>(std::move(instruction));
         Value* AllocaVal = codegen_context->functionValues.at(load_var_instruction->var.get_pos());
         instruction_val = codegen_context->Builder->CreateLoad(get_type_llvm(codegen_context, load_var_instruction->load_type), AllocaVal);
+    } else if (dynamic_cast<CIR::StoreVarInstruction*>(instruction.get())){
+        auto store_var_instruction = get_Instruction_from_CIR_Instruction<CIR::StoreVarInstruction>(std::move(instruction));
+        Value* store_val = codegen_context->functionValues.at(store_var_instruction->val.get_pos());
+        Value* store_var = codegen_context->functionValues.at(store_var_instruction->var.get_pos());
+        codegen_context->Builder->CreateStore(store_val, store_var);
+        instruction_val = nullptr;
     } else if (dynamic_cast<CIR::CmpInstruction*>(instruction.get())){
         auto cmp_instruction = get_Instruction_from_CIR_Instruction<CIR::CmpInstruction>(std::move(instruction));
         Value* arg1_val = codegen_context->functionValues.at(cmp_instruction->arg1.get_pos());
@@ -202,10 +210,17 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         if (arg_type->isVectorTy()){
             arg_type = dyn_cast<VectorType>(arg_type)->getElementType();
         }
-        arg1_val->print(outs());
-        outs() << "\n";
+        /*arg1_val->print(outs());
+        outs() << " and ";
         arg2_val->print(outs());
         outs() << "\n";
+        arg1_val->getType()->print(outs());
+        outs() << " and ";
+        arg2_val->getType()->print(outs());
+        outs() << "\n";
+        Type* arg1_type = arg1_val->getType();
+        Type* arg2_type = arg2_val->getType();
+        outs() << "arg1_val->getType() == arg2_val->getType() : " << (arg1_type == arg2_type) << "\n";*/
         switch (cmp_instruction->cmp_type){
             case CIR::CmpInstruction::CMP_EQ:
                 if (arg_type->isFloatTy()){

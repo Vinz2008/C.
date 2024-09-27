@@ -73,9 +73,9 @@ bool should_pass_struct_byval(Cpoint_Type cpoint_type){
     return false;
 }
 
-void addArgSretAttribute(Argument& Arg, Type* type){
-    Arg.addAttr(Attribute::getWithStructRetType(*TheContext, type));
-    Arg.addAttr(Attribute::getWithAlignment(*TheContext, Align(8)));
+void addArgSretAttribute(LLVMContext& Context, Argument& Arg, Type* type){
+    Arg.addAttr(Attribute::getWithStructRetType(Context, type));
+    Arg.addAttr(Attribute::getWithAlignment(Context, Align(8)));
 }
 
 static int type_size(Cpoint_Type type){

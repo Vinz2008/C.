@@ -59,8 +59,8 @@ std::string CIR::LoadGlobalInstruction::to_string(){
     return load_global_cir;
 }
 
-std::string CIR::LoadArgInstruction::to_string(){
-    return "load_arg " + create_pretty_name_for_type(arg_type) + " " + arg_name;
+std::string CIR::InitArgInstruction::to_string(){
+    return "init_arg " + create_pretty_name_for_type(arg_type) + " " + arg_name;
 }
 
 std::string CIR::LoadVarInstruction::to_string(){

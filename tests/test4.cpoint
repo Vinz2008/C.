@@ -4,9 +4,9 @@ func main(){
   for i : i32 = 1, i <= 100, 1.0 {
     if i % 15 == 0 {
       printstr("FizzBuzz\t")
-    } else if i%3 == 0 {
+    } else if i % 3 == 0 {
         printstr("Fizz\t")
-    } else if i%5 == 0 {
+    } else if i % 5 == 0 {
         printstr("Buzz\t")
     } else {
         printi(i)

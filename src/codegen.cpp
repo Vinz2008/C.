@@ -1394,7 +1394,7 @@ Value *CallExprAST::codegen() {
     for (auto& Arg : CalleeF->args()){
         if (idx == 0){
             Log::Info() << "Adding sret attr in callexpr" << "\n";
-            addArgSretAttribute(Arg, SretArgAlloca->getAllocatedType());
+            addArgSretAttribute(*TheContext, Arg, SretArgAlloca->getAllocatedType());
         } else {
             break;
         }
@@ -1785,7 +1785,7 @@ Function *PrototypeAST::codegen() {
   for (auto &Arg : F->args()){
     //if (Args[Idx++].first != "..."){
     if (has_sret && Idx == 0 && !has_added_sret){
-    addArgSretAttribute(Arg, get_type_llvm(cpoint_type));
+    addArgSretAttribute(*TheContext, Arg, get_type_llvm(cpoint_type));
     Arg.setName("sret_arg");
     Idx = 0;
     has_added_sret = true;
