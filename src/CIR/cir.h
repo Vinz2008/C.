@@ -298,8 +298,8 @@ public:
     std::string to_string();
 };
 
-#endif
-
-#endif
-
 bool checkFileCIR(std::unique_ptr<FileCIR>& fileCIR);
+
+#endif
+
+#endif

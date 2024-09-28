@@ -1,7 +1,7 @@
 #include "../../config.h"
 
-//#if ENABLE_CIR
-#if 1
+#if ENABLE_CIR
+//#if 1
 
 #include "llvm_instructions.h"
 #include "llvm.h"

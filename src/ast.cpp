@@ -244,7 +244,7 @@ Cpoint_Type VariableExprAST::get_type(FileCIR* fileCIR){
         //fprintf(stderr, "No type found (compiler bug probably)");
         //exit(1);
     }*/
-
+#if ENABLE_CIR
    if (fileCIR != nullptr){
        // TODO : add support for functions used like vars
         if (!fileCIR->CurrentFunction->vars[Name].is_empty()){
@@ -262,6 +262,7 @@ Cpoint_Type VariableExprAST::get_type(FileCIR* fileCIR){
             return Cpoint_Type();
         }
    }
+#endif
    if (FunctionProtos[Name]){
     std::vector<Cpoint_Type> args;
     for (int i = 0; i < FunctionProtos[Name]->Args.size(); i++){

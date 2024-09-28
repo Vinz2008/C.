@@ -39,6 +39,8 @@ class FileCIR;
 namespace CIR {
     class InstructionRef;
 }
+#else
+class FileCIR {};
 #endif
 
 namespace c_translator {
