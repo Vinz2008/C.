@@ -109,7 +109,8 @@ namespace CIR {
         bool is_extern;
         CIR::InstructionRef Init;
         std::string section_name; // TODO : have a better way to have attributes to global vars (an Attributes class ?)
-        GlobalVar(std::string name, Cpoint_Type type, bool is_const, bool is_extern, CIR::InstructionRef Init, std::string section_name) : name(name), type(type), is_const(is_const), is_extern(is_extern), Init(Init), section_name(section_name) {}
+        int pos;
+        GlobalVar(std::string name, Cpoint_Type type, bool is_const, bool is_extern, CIR::InstructionRef Init, std::string section_name, int pos) : name(name), type(type), is_const(is_const), is_extern(is_extern), Init(Init), section_name(section_name), pos(pos) {}
     };
     class Var {
     public:
@@ -130,6 +131,13 @@ namespace CIR {
         Function() : proto(), basicBlocks(), vars() {}
         Function(std::unique_ptr<FunctionProto> proto, std::vector<std::unique_ptr<CIR::BasicBlock>> basicBlocks = {}, std::unordered_map<std::string, Var> vars = {}) : proto(std::move(proto)), basicBlocks(std::move(basicBlocks)), vars(vars) {}
         std::string to_string();
+        int get_instruction_nb(){
+            int iter_pos = 0;
+            for (int i = 0; i < basicBlocks.size(); i++){
+                iter_pos += basicBlocks.at(i)->instructions.size();
+            }
+            return iter_pos;
+        }
         Instruction* get_instruction(int pos){
             int iter_pos = 0;
             for (int i = 0; i < basicBlocks.size(); i++){
@@ -141,6 +149,26 @@ namespace CIR {
                 }
             }
             return nullptr;
+        }
+        std::unique_ptr<Instruction> get_unique_instruction(int pos){
+            int iter_pos = 0;
+            for (int i = 0; i < basicBlocks.size(); i++){
+                for (int j = 0; j < basicBlocks.at(i)->instructions.size(); j++){
+                    if (iter_pos == pos){
+                        return std::move(basicBlocks.at(i)->instructions.at(j));
+                    }
+                    iter_pos++;
+                }
+            }
+            return nullptr;
+        }
+        std::unique_ptr<CIR::BasicBlock> pop_bb(){
+            auto last_bb = std::move(basicBlocks.back());
+            basicBlocks.pop_back();
+            return last_bb;
+        }
+        void push_bb(std::unique_ptr<CIR::BasicBlock> bb){
+            basicBlocks.push_back(std::move(bb));
         }
     };
     class Struct {
@@ -170,31 +198,40 @@ public:
     // TODO : add function to reset all these ptrs and indices
     CIR::Function global_context; // is a (false) function with global vars (is used to have const instructions for global vars init)
     CIR::Function* CurrentFunction;
-    //CIR::BasicBlock* CurrentBasicBlock;
-    CIR::BasicBlockRef CurrentBasicBlock;
+    CIR::BasicBlock* CurrentBasicBlock;
+    int already_named_index; // index that is added to already existing bbs
+    //CIR::BasicBlockRef CurrentBasicBlock;
     //int InsertPoint;
-    FileCIR(std::string filename, std::vector<std::unique_ptr<CIR::Function>> functions) : filename(filename), functions(std::move(functions)), protos(), global_vars(), strings(), global_context(), CurrentFunction(nullptr), CurrentBasicBlock() /*, InsertPoint(0)*/  {} 
+    FileCIR(std::string filename, std::vector<std::unique_ptr<CIR::Function>> functions) : filename(filename), functions(std::move(functions)), protos(), global_vars(), strings(), global_context(), CurrentFunction(nullptr), CurrentBasicBlock(), already_named_index(1) /*, InsertPoint(0)*/  {} 
     
     void add_function(std::unique_ptr<CIR::Function> func){
         functions.push_back(std::move(func));
         CurrentFunction = functions.back().get();
 
         // reset refs that are no longer valid
-        CurrentBasicBlock = CIR::BasicBlockRef();
+        CurrentBasicBlock = nullptr;
     }
 
-    CIR::BasicBlockRef add_basic_block(std::unique_ptr<CIR::BasicBlock> basic_block){
+    CIR::BasicBlock* add_basic_block(std::unique_ptr<CIR::BasicBlock> basic_block){
         assert(CurrentFunction != nullptr);
-        std::string bb_name = basic_block->name; 
+        //std::string bb_name = basic_block->name; 
+        for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
+            if (CurrentFunction->basicBlocks.at(i)->name == basic_block->name){
+                basic_block->name += std::to_string(already_named_index);
+                already_named_index++;
+                break;
+            } 
+        }
         CurrentFunction->basicBlocks.push_back(std::move(basic_block) /*std::make_unique<CIR::BasicBlock>("entry")*/);
         //CurrentBasicBlock = CurrentFunction->basicBlocks.back().get();
         //return CurrentFunction->basicBlocks.back().get();
-        return CIR::BasicBlockRef(CurrentFunction->basicBlocks.size()-1, bb_name);
+        //return CIR::BasicBlockRef(CurrentFunction->basicBlocks.size()-1, bb_name);
+        return CurrentFunction->basicBlocks.back().get();
     }
 
-    CIR::BasicBlock* get_basic_block(CIR::BasicBlockRef basic_block_ref){
+    /*CIR::BasicBlock* get_basic_block(CIR::BasicBlockRef basic_block_ref){
         return CurrentFunction->basicBlocks.at(basic_block_ref.get_pos()).get();
-    }
+    }*/
 
     CIR::Instruction* get_instruction(CIR::InstructionRef instruction_ref){
         int ret_instruction_pos = 0;
@@ -210,22 +247,24 @@ public:
         return nullptr;
     }
 
-    CIR::BasicBlockRef get_basic_block_from_name(std::string bb_name){
+    CIR::BasicBlock* get_basic_block_from_name(std::string bb_name){
         for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
             if (CurrentFunction->basicBlocks.at(i)->name == bb_name){
-                return CIR::BasicBlockRef(i, bb_name);
+                return CurrentFunction->basicBlocks.at(i).get();
+                //return CIR::BasicBlockRef(i, bb_name);
             }
         }
-        return CIR::BasicBlockRef();
+        return nullptr;
     }
 
-    void set_insert_point(CIR::BasicBlockRef basic_block){
+    void set_insert_point(CIR::BasicBlock* basic_block){
         CurrentBasicBlock = basic_block;
     }
 
     CIR::InstructionRef add_instruction(std::unique_ptr<CIR::Instruction> instruction){
         //assert(CurrentBasicBlock != nullptr);
-        CIR::BasicBlock* bb = get_basic_block(CurrentBasicBlock);
+        //CIR::BasicBlock* bb = get_basic_block(CurrentBasicBlock);
+        CIR::BasicBlock* bb = CurrentBasicBlock;
         bb->instructions.push_back(std::move(instruction));
         int function_instruction_nb = 0;
         for (int i = 0; i < CurrentFunction->basicBlocks.size(); i++){
@@ -244,7 +283,7 @@ public:
     void start_global_context(){
         CurrentFunction = &global_context;
         std::string global_bb_name = "globals";
-        global_context.basicBlocks.push_back(std::make_unique<CIR::BasicBlock>(global_bb_name));
+        global_context.basicBlocks.push_back(std::make_unique<CIR::BasicBlock>(this, global_bb_name));
         set_insert_point(get_basic_block_from_name(global_bb_name));
     }
 
@@ -253,7 +292,7 @@ public:
             global_context.basicBlocks.clear();
         }
         CurrentFunction = nullptr;
-        CurrentBasicBlock = CIR::BasicBlockRef();
+        CurrentBasicBlock = nullptr;
     }
     
     std::string to_string();

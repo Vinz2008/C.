@@ -14,7 +14,8 @@
 class FileCIR;
 
 namespace CIR {
-    class BasicBlockRef;
+    //class BasicBlockRef;
+    class BasicBlock;
     class Instruction {
     public:
         // TODO : add a type to each instruction
@@ -78,7 +79,8 @@ namespace CIR {
     public:
         bool is_string;
         int global_pos; // TODO : replace with a GlobalRef type ?
-        LoadGlobalInstruction(Cpoint_Type type, bool is_string, int global_pos) : Instruction(type), is_string(is_string), global_pos(global_pos) {}
+        std::string var_name;
+        LoadGlobalInstruction(Cpoint_Type type, bool is_string, int global_pos, std::string var_name) : Instruction(type), is_string(is_string), global_pos(global_pos), var_name(var_name) {}
         std::string to_string() override;
     };
     class InitArgInstruction : public CIR::Instruction {
@@ -114,17 +116,17 @@ namespace CIR {
     
     class GotoInstruction : public CIR::Instruction {
     public:
-        CIR::BasicBlockRef goto_bb;
-        GotoInstruction(CIR::BasicBlockRef goto_bb) : Instruction(Cpoint_Type(never_type)), goto_bb(goto_bb) {}
+        CIR::BasicBlock* goto_bb;
+        GotoInstruction(CIR::BasicBlock* goto_bb) : Instruction(Cpoint_Type(never_type)), goto_bb(goto_bb) {}
         std::string to_string() override;
     };
 
     class GotoIfInstruction : public CIR::Instruction {
     public:
         CIR::InstructionRef cond_instruction;
-        CIR::BasicBlockRef goto_bb_if_true;
-        CIR::BasicBlockRef goto_bb_if_false;
-        GotoIfInstruction(CIR::InstructionRef cond_instruction, CIR::BasicBlockRef goto_bb_if_true, CIR::BasicBlockRef goto_bb_if_false) : Instruction(Cpoint_Type(never_type)), cond_instruction(cond_instruction), goto_bb_if_true(goto_bb_if_true), goto_bb_if_false(goto_bb_if_false) {}
+        CIR::BasicBlock* goto_bb_if_true;
+        CIR::BasicBlock* goto_bb_if_false;
+        GotoIfInstruction(CIR::InstructionRef cond_instruction, CIR::BasicBlock* goto_bb_if_true, CIR::BasicBlock* goto_bb_if_false) : Instruction(Cpoint_Type(never_type)), cond_instruction(cond_instruction), goto_bb_if_true(goto_bb_if_true), goto_bb_if_false(goto_bb_if_false) {}
         std::string to_string() override;
     };
 
@@ -231,11 +233,11 @@ namespace CIR {
     class PhiInstruction : public CIR::Instruction {
     public:
         Cpoint_Type phi_type;
-        BasicBlockRef bb1;
+        BasicBlock* bb1;
         InstructionRef arg1;
-        BasicBlockRef bb2;
+        BasicBlock* bb2;
         InstructionRef arg2;
-        PhiInstruction(Cpoint_Type phi_type, BasicBlockRef bb1, InstructionRef arg1, BasicBlockRef bb2, InstructionRef arg2) : Instruction(phi_type), phi_type(phi_type), bb1(bb1), arg1(arg1), bb2(bb2), arg2(arg2) {}
+        PhiInstruction(Cpoint_Type phi_type, BasicBlock* bb1, InstructionRef arg1, BasicBlock* bb2, InstructionRef arg2) : Instruction(phi_type), phi_type(phi_type), bb1(bb1), arg1(arg1), bb2(bb2), arg2(arg2) {}
         std::string to_string() override;
     };
 

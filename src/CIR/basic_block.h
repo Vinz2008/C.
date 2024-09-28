@@ -9,7 +9,7 @@ class FileCIR;
 
 namespace CIR {
     class Instruction;
-    class BasicBlockRef {
+    /*class BasicBlockRef {
         bool empty_ref;
         int basic_block_pos;
         std::string label;
@@ -32,15 +32,24 @@ namespace CIR {
             }
             return label + ":"; 
         }
-    };
+    };*/
     class BasicBlock {
     public:
         std::string name;
         std::vector<std::unique_ptr<Instruction>> instructions; // TODO : remove unique_ptr
-        std::vector<BasicBlockRef> predecessors;
-        BasicBlock(std::string name, std::vector<std::unique_ptr<Instruction>> instructions = std::vector<std::unique_ptr<Instruction>>()) : name(name), instructions(std::move(instructions)), predecessors() {}
+        //std::vector<BasicBlockRef> predecessors;
+        std::vector<BasicBlock*> predecessors;
+        BasicBlock(FileCIR* fileCIR, std::string name, std::vector<std::unique_ptr<Instruction>> instructions = std::vector<std::unique_ptr<Instruction>>()); /*: name(name), instructions(std::move(instructions)), predecessors() {
+            if (fileCIR->get_basic_block_from_name(name) != nullptr){
+                name += std::to_string(fileCIR->already_named_index);
+                already_named_index
+            }
+        }*/
         //std::string to_string();
         std::string to_string(int& InstructionIndex);
     };
 
 }
+
+
+std::string BasicBlock_ptr_to_string(CIR::BasicBlock* bb);

@@ -107,7 +107,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarNa
   return TmpB.CreateAlloca(type, 0, VarName);
 }
 
-static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<CIR::Instruction>& instruction) {
+static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<CIR::Instruction>& instruction, bool is_global = false) {
     std::string instruction_label = instruction->label;
     Value* instruction_val = nullptr;
     if (dynamic_cast<CIR::CallInstruction*>(instruction.get())){
@@ -188,8 +188,10 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         if (load_global_instruction->is_string){
             instruction_val = codegen_context->staticStrings.at(load_global_instruction->global_pos);
         } else {
-            fprintf(stderr, "NOT IMPLEMENTED, TODO");
-            exit(1);
+            auto global_var = codegen_context->GlobalVars[load_global_instruction->var_name];
+            instruction_val = codegen_context->Builder->CreateLoad(global_var->getValueType(), global_var, load_global_instruction->label);
+            //fprintf(stderr, "NOT IMPLEMENTED, TODO\n");
+            //exit(1);
         }
     } else if (dynamic_cast<CIR::LoadVarInstruction*>(instruction.get())){
         auto load_var_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadVarInstruction>(std::move(instruction));
@@ -294,22 +296,23 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         }
     } else if (dynamic_cast<CIR::GotoInstruction*>(instruction.get())){
         auto goto_instruction = get_Instruction_from_CIR_Instruction<CIR::GotoInstruction>(std::move(instruction));
-        BasicBlock* bb = codegen_context->functionBBs.at(goto_instruction->goto_bb.get_pos());
+        //BasicBlock* bb = codegen_context->functionBBs.at(goto_instruction->goto_bb.get_pos());
+        BasicBlock* bb = codegen_context->get_function_BB(goto_instruction->goto_bb);
         codegen_context->Builder->CreateBr(bb);
         instruction_val = nullptr;
     } else if (dynamic_cast<CIR::GotoIfInstruction*>(instruction.get())){
         auto goto_if_instruction = get_Instruction_from_CIR_Instruction<CIR::GotoIfInstruction>(std::move(instruction));
         Value* CondV = codegen_context->functionValues.at(goto_if_instruction->cond_instruction.get_pos());
-        BasicBlock* bb_if_true = codegen_context->functionBBs.at(goto_if_instruction->goto_bb_if_true.get_pos());
-        BasicBlock* bb_if_false = codegen_context->functionBBs.at(goto_if_instruction->goto_bb_if_false.get_pos());
+        BasicBlock* bb_if_true = codegen_context->get_function_BB(goto_if_instruction->goto_bb_if_true);
+        BasicBlock* bb_if_false = codegen_context->get_function_BB(goto_if_instruction->goto_bb_if_false);
         codegen_context->Builder->CreateCondBr(CondV, bb_if_true, bb_if_false);
         instruction_val = nullptr;
     } else if (dynamic_cast<CIR::PhiInstruction*>(instruction.get())){
         auto phi_instruction = get_Instruction_from_CIR_Instruction<CIR::PhiInstruction>(std::move(instruction));
         Value* phi_val1 = codegen_context->functionValues.at(phi_instruction->arg1.get_pos());
-        BasicBlock* phi_bb1 = codegen_context->functionBBs.at(phi_instruction->bb1.get_pos());
+        BasicBlock* phi_bb1 = codegen_context->get_function_BB(phi_instruction->bb1);
         Value* phi_val2 = codegen_context->functionValues.at(phi_instruction->arg2.get_pos());
-        BasicBlock* phi_bb2 = codegen_context->functionBBs.at(phi_instruction->bb2.get_pos());
+        BasicBlock* phi_bb2 = codegen_context->get_function_BB(phi_instruction->bb2);
         PHINode* PN = codegen_context->Builder->CreatePHI(get_type_llvm(codegen_context, phi_instruction->phi_type), 2, phi_instruction->label);
         std::cout << "phi_instruction->phi_type : " << phi_instruction->phi_type << std::endl;
         phi_val1->print(outs());
@@ -343,7 +346,12 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
     if (instruction_val && instruction_label != ""){
         instruction_val->setName(instruction_label);
     }
-    codegen_context->functionValues.push_back(instruction_val);
+
+    if (is_global){
+        codegen_context->GlobalValues.push_back(instruction_val);
+    } else {
+        codegen_context->functionValues.push_back(instruction_val);
+    }
 }
 
 static void codegenBasicBlock(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> &fileCIR, Function* TheFunction, std::unique_ptr<CIR::BasicBlock> basic_block /*, bool is_first_bb = false*/){
@@ -351,7 +359,7 @@ static void codegenBasicBlock(std::unique_ptr<LLVM::Context>& codegen_context, s
         /*BasicBlock *BB = BasicBlock::Create(*codegen_context->TheContext, basic_block->name, TheFunction);
         codegen_context->Builder->SetInsertPoint(BB);
         codegen_context->functionBBs.push_back(BB);*/
-        codegen_context->Builder->SetInsertPoint(codegen_context->functionBBs.at(codegen_context->bb_codegen_number));
+        codegen_context->Builder->SetInsertPoint(codegen_context->functionBBs.at(codegen_context->bb_codegen_number).second);
     }
     //codegen_context->functionValues.clear();
     for (int i = 0; i < basic_block->instructions.size(); i++){
@@ -370,7 +378,7 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
     codegen_context->functionValues.clear();
     BasicBlock* entryBB = BasicBlock::Create(*codegen_context->TheContext, function->basicBlocks.at(0)->name, TheFunction);
     codegen_context->Builder->SetInsertPoint(entryBB);
-    codegen_context->functionBBs.push_back(entryBB);
+    codegen_context->functionBBs.push_back(std::make_pair(function->basicBlocks.at(0).get(), entryBB));
     int j = 0;
     for (auto &Arg : TheFunction->args()){
         std::string arg_name;
@@ -391,7 +399,7 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
     }
     for (int i = 1; i < function->basicBlocks.size(); i++){
         BasicBlock *BB = BasicBlock::Create(*codegen_context->TheContext, function->basicBlocks.at(i)->name, TheFunction);
-        codegen_context->functionBBs.push_back(BB);
+        codegen_context->functionBBs.push_back(std::make_pair(function->basicBlocks.at(i).get(), BB));
     }
     for (int i = 0; i < function->basicBlocks.size(); i++){
         codegenBasicBlock(codegen_context, fileCIR, TheFunction, std::move(function->basicBlocks.at(i)) /*, i == 0*/);
@@ -412,10 +420,45 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
     return TheFunction;
 }
 
+static void codegenGlobalVar(std::unique_ptr<LLVM::Context> &codegen_context, CIR::GlobalVar& global_var, CIR::Function& global_context){
+    if (global_var.is_extern && !global_var.Init.is_empty()){
+        LogErrorGLLVM("Init Value found even though the global variable is extern"); // TODO
+        return;
+    }
+    GlobalValue::LinkageTypes linkage = GlobalValue::ExternalLinkage;
+    Constant* InitVal = nullptr;
+    if (!global_var.is_extern){
+        if (!global_var.Init.is_empty()){
+            InitVal = from_val_to_constant(codegen_context->GlobalValues.at(global_var.Init.get_pos()), global_var.type);
+            if (!InitVal){
+                LogErrorGLLVM("The constant initialization of the global variable couldn't be converted to a constant");
+                return;
+            }
+        } else {
+            InitVal = get_default_constant(global_var.type);
+        }
+    }
+    // TODO : add private global vars
+    GlobalVariable* globalVar = new GlobalVariable(*codegen_context->TheModule, get_type_llvm(global_var.type), global_var.is_const, linkage, InitVal, global_var.name);
+    if (global_var.section_name != ""){
+        globalVar->setSection(global_var.section_name);
+    }
+    codegen_context->GlobalVars[global_var.name] = globalVar;
+}
+
 void codegenFile(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> fileCIR){
     for (int i = 0; i < fileCIR->strings.size(); i++){
         auto const_str = codegen_context->Builder->CreateGlobalStringPtr(StringRef(fileCIR->strings.at(i)), "", 0, codegen_context->TheModule.get());
         codegen_context->staticStrings.push_back(const_str);
+    }
+    for (int i = 0; i < fileCIR->global_context.get_instruction_nb(); i++){
+        auto instruction = fileCIR->global_context.get_unique_instruction(i);
+        codegenInstruction(codegen_context, fileCIR, instruction, true);
+    }
+    for (auto& g : fileCIR->global_vars){
+        if (g.second != nullptr){
+            codegenGlobalVar(codegen_context, *g.second, fileCIR->global_context);
+        }
     }
     for (auto& s : fileCIR->structs){
         codegenStruct(codegen_context, s.second);

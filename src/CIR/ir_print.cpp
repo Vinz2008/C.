@@ -53,9 +53,10 @@ std::string CIR::ReturnInstruction::to_string(){
 std::string CIR::LoadGlobalInstruction::to_string(){
     std::string load_global_cir = "load_global ";
     if (is_string){
-        load_global_cir += "(str)";
+        load_global_cir += "(str)" + std::to_string(global_pos);
+    } else {
+        load_global_cir += var_name;
     }
-    load_global_cir += std::to_string(global_pos);
     return load_global_cir;
 }
 
@@ -72,11 +73,11 @@ std::string CIR::StoreVarInstruction::to_string(){
 }
 
 std::string CIR::GotoInstruction::to_string(){
-    return "goto " + goto_bb.to_string();
+    return "goto " + BasicBlock_ptr_to_string(goto_bb);
 }
 
 std::string CIR::GotoIfInstruction::to_string(){
-    return "goto if " + cond_instruction.to_string() + ", true : " +  goto_bb_if_true.to_string() + ", false : " + goto_bb_if_false.to_string();
+    return "goto if " + cond_instruction.to_string() + ", true : " +  BasicBlock_ptr_to_string(goto_bb_if_true) + ", false : " + BasicBlock_ptr_to_string(goto_bb_if_false);
 }
 
 std::string CIR::SizeofInstruction::to_string(){
@@ -157,7 +158,7 @@ std::string CIR::ShiftInstruction::to_string(){
 }
 
 std::string CIR::PhiInstruction::to_string(){
-    return "phi " + bb1.to_string() + " -> " + arg1.to_string() + ", " + bb2.to_string() + " -> " + arg2.to_string();
+    return "phi " + BasicBlock_ptr_to_string(bb1) + " -> " + arg1.to_string() + ", " + BasicBlock_ptr_to_string(bb2) + " -> " + arg2.to_string();
 }
 
 /*std::string CIR::BasicBlock::to_string(){
@@ -176,6 +177,13 @@ std::string CIR::InstructionRef::to_string(){
     return instruction_ref_str; 
 }
 
+std::string BasicBlock_ptr_to_string(CIR::BasicBlock* bb){
+    if (!bb) {
+        return "(invalid basic block)";
+    }
+    return bb->name + ":";
+}
+
 std::string CIR::BasicBlock::to_string(int& InstructionIndex){
     std::string basic_block_cir = name + ":";
     if (!predecessors.empty()){
@@ -184,7 +192,8 @@ std::string CIR::BasicBlock::to_string(int& InstructionIndex){
             if (i != 0){
                 basic_block_cir += ", ";
             }
-            basic_block_cir += predecessors.at(i).get_label();
+            //basic_block_cir += predecessors.at(i).get_label();
+            basic_block_cir += predecessors.at(i)->name;
         }
     }
     basic_block_cir += "\n";

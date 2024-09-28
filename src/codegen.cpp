@@ -135,7 +135,7 @@ AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Cpo
     return CreateEntryBlockAlloca(TheFunction, VarName, get_type_llvm(type));
 }
 
-BasicBlock* get_basic_block(Function* TheFunction, std::string name){
+static BasicBlock* get_basic_block(Function* TheFunction, std::string name){
   for (Function::iterator b = TheFunction->begin(), be = TheFunction->end(); b != be; ++b){
     BasicBlock* BB = &(*b);
     Log::Info() << "BasicBlock : " << (std::string)BB->getName() << "\n";
