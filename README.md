@@ -258,6 +258,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Have the least number of unique_ptrs (so dynamic allocation) in the codebase (ex : use only vectors and not vectors of unique_ptrs when you can, it will also optimize cache)
 - [ ] Make if (expr1 && expr2) two ifs to make guards work (like clang)
 - [ ] After removing the old llvm backend, replace not needed clones in the cir with std::move
+- [ ] Make work the DISABLE_OLD_LLVM_BACKEND config
 
 ## Benchmarks compared to other languages
 

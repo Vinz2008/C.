@@ -1319,7 +1319,9 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   }
   getNextToken();
 
+#if DISABLE_OLD_LLVM_BACKEND == 0
   StructDeclarations[structName] = std::make_unique<StructDeclaration>(nullptr, nullptr, std::vector<std::pair<std::string,Cpoint_Type>>(), std::vector<std::string>());
+#endif
   while ((CurTok == tok_var || CurTok == tok_func || CurTok == tok_extern) && CurTok != '}'){
     Log::Info() << "Curtok in struct parsing : " << CurTok << "\n";
     if (CurTok == tok_var){

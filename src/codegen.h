@@ -1,6 +1,9 @@
 #ifndef _CODEGEN_HEADER_
 #define _CODEGEN_HEADER_
 
+
+#if DISABLE_OLD_LLVM_BACKEND == 0
+
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/GlobalVariable.h"
@@ -136,5 +139,7 @@ Function *getFunction(std::string Name);
 std::pair<Cpoint_Type, int>* get_member_type_and_pos_object(Cpoint_Type objectType, std::string MemberName);
 Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>>& Args);
 Value* callLLVMIntrisic(std::string Callee, std::vector<Value*> ArgsV, std::vector<Type*> Tys);
+
+#endif
 
 #endif

@@ -1,3 +1,7 @@
+#include "config.h"
+
+#if DISABLE_OLD_LLVM_BACKEND == 0
+
 #include "codegen.h"
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/STLExtras.h"
@@ -21,7 +25,6 @@
 //#include "lexer.h"
 //#include "types.h"
 //#include "log.h"
-#include "config.h"
 #include "debuginfo.h"
 #include "operators.h"
 #include "checking.h"
@@ -2840,3 +2843,5 @@ void InitializeModule(std::string filename) {
   // Create a new builder for the module.
   Builder = std::make_unique<IRBuilder<>>(*TheContext);
 }
+
+#endif

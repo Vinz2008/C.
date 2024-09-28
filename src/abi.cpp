@@ -1,5 +1,10 @@
 #include "abi.h"
+#include "config.h"
+#if DISABLE_OLD_LLVM_BACKEND == 0
 #include "codegen.h"
+#else 
+#include "ast.h"
+#endif
 #include "targets/targets.h"
 #include "llvm/TargetParser/Triple.h"
 #include "llvm/IR/IRBuilder.h"
