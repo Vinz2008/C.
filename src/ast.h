@@ -26,6 +26,7 @@ using namespace llvm;
 #include "log.h"
 //#include "c_translator.h"
 #include "config.h"
+#include "cpoint.h"
 #include "vars.h"
 #include "mangling.h"
 
@@ -585,7 +586,7 @@ public:
         return "Vector { " + vector_members_str + " }";
     }
     Cpoint_Type get_type(FileCIR* fileCIR) override {
-        return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, (vector_element_type.is_empty) ? nullptr : new Cpoint_Type(vector_element_type), vector_size);
+        return get_vector_type(vector_element_type, vector_size);
     }
     std::string generate_c() override { return ""; }
 #if ENABLE_CIR

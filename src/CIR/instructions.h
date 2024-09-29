@@ -75,6 +75,13 @@ namespace CIR {
         LoadVarInstruction(InstructionRef var, Cpoint_Type load_type) : Instruction(load_type), var(var), load_type(load_type) {}
         std::string to_string() override;
     };
+    class DerefInstruction : public CIR::Instruction {
+    public:
+        InstructionRef ptr;
+        Cpoint_Type element_type;
+        DerefInstruction(InstructionRef ptr, Cpoint_Type element_type) : ptr(ptr), element_type(element_type) {}
+        std::string to_string() override;
+    };
     class LoadGlobalInstruction : public CIR::Instruction {
     public:
         bool is_string;
@@ -83,6 +90,8 @@ namespace CIR {
         LoadGlobalInstruction(Cpoint_Type type, bool is_string, int global_pos, std::string var_name) : Instruction(type), is_string(is_string), global_pos(global_pos), var_name(var_name) {}
         std::string to_string() override;
     };
+
+
     class InitArgInstruction : public CIR::Instruction {
     public:
         std::string arg_name;
@@ -305,7 +314,14 @@ namespace CIR {
     class ConstBool : public CIR::ConstInstruction {
     public:
         bool val;
-        ConstBool(Cpoint_Type type, bool val) : ConstInstruction(type), val(val){}
+        ConstBool(bool val) : ConstInstruction(Cpoint_Type(bool_type)), val(val){}
+        std::string to_string() override;
+    };
+    class ConstVector : public CIR::ConstInstruction {
+    public:
+        Cpoint_Type vector_element_type;
+        std::vector<CIR::InstructionRef> VectorMembers; // all of these should be consts, TODO ? : enforce it at the type level (with a CIR::ConstInstructionRef ?)
+        ConstVector(Cpoint_Type vector_element_type, std::vector<CIR::InstructionRef> VectorMembers) : ConstInstruction(get_vector_type(vector_element_type, VectorMembers.size())), vector_element_type(vector_element_type), VectorMembers(VectorMembers)  {}
         std::string to_string() override;
     };
     class ConstVoid : public CIR::ConstInstruction {

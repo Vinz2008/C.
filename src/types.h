@@ -152,5 +152,6 @@ int struct_get_number_type(Cpoint_Type cpoint_type, int type);
 bool is_struct_all_type(Cpoint_Type cpoint_type, int type);
 llvm::VectorType* vector_type_from_struct(Cpoint_Type cpoint_type);
 int get_type_size(Cpoint_Type type);
+Cpoint_Type get_vector_type(Cpoint_Type vector_element_type, int vector_size);
 
 #endif

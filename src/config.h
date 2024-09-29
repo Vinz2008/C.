@@ -21,11 +21,7 @@
 // comment this if you want to disable it (it is not like the other flags because it is needed to be known in the build system)
 #define ENABLE_LLVM_TOOLS_EMBEDDED_COMPILER
 
-#define BUILD_TIMESTAMP __TIMESTAMP__
-
 #ifndef TARGET
 // TARGET is defined in CXXFLAGS of Makefile but it is useful to remove errors in ide and so it compiles even with overriden cxxflags (which would break the infos menu)
 #define TARGET ""
 #endif
-
-#define INTERNAL_FUNC_PREFIX "cpoint_internal_"

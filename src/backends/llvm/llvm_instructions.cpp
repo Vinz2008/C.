@@ -3,6 +3,7 @@
 #if ENABLE_CIR
 //#if 1
 
+#include "../../cpoint.h"
 #include "llvm_instructions.h"
 #include "llvm.h"
 #include "structs.h"
@@ -333,6 +334,11 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         Value* size = codegen_context->Builder->CreateGEP(llvm_type, codegen_context->Builder->CreateIntToPtr(ConstantInt::get(get_type_llvm(codegen_context, Cpoint_Type(i64_type)), 0),llvm_type->getPointerTo()), {one});
         size = codegen_context->Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
         instruction_val = size;
+    } else if (dynamic_cast<CIR::DerefInstruction*>(instruction.get())){
+        auto deref_instruction = get_Instruction_from_CIR_Instruction<CIR::DerefInstruction>(std::move(instruction));
+        Type* element_type = get_type_llvm(codegen_context, deref_instruction->element_type);
+        Value* VarAlloc = codegen_context->functionValues.at(deref_instruction->ptr.get_pos());
+        instruction_val = codegen_context->Builder->CreateLoad(element_type, VarAlloc, deref_instruction->label);
     } else if (dynamic_cast<CIR::ConstVoid*>(instruction.get())){
         instruction_val = nullptr;
     } else if (dynamic_cast<CIR::ConstNull*>(instruction.get())){

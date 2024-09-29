@@ -28,6 +28,19 @@ std::string CIR::ConstBool::to_string(){
     return const_bool_cir;
 }
 
+
+std::string CIR::ConstVector::to_string(){
+    std::string const_vec_cir = "const Vector" + std::to_string(VectorMembers.size()) + " {";
+    for (int i = 0; i < VectorMembers.size(); i++){
+        if (i != 0){
+            const_vec_cir += ", ";
+        }
+        const_vec_cir += VectorMembers.at(i).to_string();
+    }
+    const_vec_cir += "}";
+    return const_vec_cir;
+}
+
 std::string CIR::VarInit::to_string(){
     std::string init_val_cir = (VarName.second.is_empty()) ? "" : VarName.second.to_string();
     std::string varinit_cir = "var " + create_pretty_name_for_type(var_type) + " " + VarName.first + " " + init_val_cir ;
@@ -159,6 +172,10 @@ std::string CIR::ShiftInstruction::to_string(){
 
 std::string CIR::PhiInstruction::to_string(){
     return "phi " + BasicBlock_ptr_to_string(bb1) + " -> " + arg1.to_string() + ", " + BasicBlock_ptr_to_string(bb2) + " -> " + arg2.to_string();
+}
+
+std::string CIR::DerefInstruction::to_string(){
+    return "deref " + ptr.to_string() + " to " + create_pretty_name_for_type(element_type);
 }
 
 /*std::string CIR::BasicBlock::to_string(){

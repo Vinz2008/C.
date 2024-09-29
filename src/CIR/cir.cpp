@@ -3,6 +3,8 @@
 
 #if ENABLE_CIR
 
+#include "../cpoint.h"
+
 #include <stack>
 #include "../ast.h"
 #include "../reflection.h"
@@ -170,6 +172,17 @@ CIR::InstructionRef AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 CIR::InstructionRef AddrExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     // TODO : implement GEP in the language ?
+    if (dynamic_cast<VariableExprAST*>(Expr.get())){
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(Expr->clone());
+        Log::Info() << "Addr Variable : " << VariableExpr->getName() << "\n";
+        if (fileCIR->global_vars[VariableExpr->Name]){
+            NOT_IMPLEMENTED();
+        } else {
+            return fileCIR->CurrentFunction->vars[VariableExpr->Name].var_ref;
+        }
+    } else if (dynamic_cast<BinaryExprAST*>(Expr.get())){
+        NOT_IMPLEMENTED();
+    }
     return CIR::InstructionRef();
 }
 
@@ -218,6 +231,26 @@ CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    if (dynamic_cast<VariableExprAST*>(Expr.get())){
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(Expr->clone());
+        // TODO : make this work with global vars (add functions like in codegen.cpp to known if the var exists and have the var ptr andthe var type)
+        if (fileCIR->CurrentFunction->vars[VariableExpr->Name].is_empty()){
+            LogErrorV(this->loc, "Unknown variable in deref : %s", VariableExpr->getName().c_str());
+            return CIR::InstructionRef();
+        }
+        if (!fileCIR->CurrentFunction->vars[VariableExpr->Name].type.is_ptr){
+            LogErrorV(this->loc, "Derefencing a variable (%s) that is not a pointer", VariableExpr->getName().c_str());
+            return CIR::InstructionRef();
+        }
+
+        CIR::InstructionRef varAlloc = fileCIR->CurrentFunction->vars[VariableExpr->Name].var_ref;
+        Cpoint_Type contained_type = fileCIR->CurrentFunction->vars[VariableExpr->Name].type.deref_type();
+
+        Log::Info() << "Deref Type : " << contained_type << "\n";
+        return fileCIR->add_instruction(std::make_unique<CIR::DerefInstruction>(varAlloc, contained_type));
+        //return Builder->CreateLoad(get_type_llvm(contained_type), VarAlloc, VariableExpr->getName().c_str());
+    }
+    NOT_IMPLEMENTED();
     return CIR::InstructionRef();
 }
 
@@ -344,7 +377,7 @@ CIR::InstructionRef SizeofExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef BoolExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    auto bool_instr = std::make_unique<CIR::ConstBool>(Cpoint_Type(bool_type), val);
+    auto bool_instr = std::make_unique<CIR::ConstBool>(val);
     return fileCIR->add_instruction(std::move(bool_instr));
 }
 
@@ -456,7 +489,16 @@ CIR::InstructionRef MatchExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef ConstantVectorExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    std::vector<CIR::InstructionRef> VectorMembersI;
+    for (int i = 0; i < VectorMembers.size(); i++){
+        CIR::InstructionRef instr = VectorMembers.at(i)->cir_gen(fileCIR);
+        if (!dynamic_cast<CIR::ConstInstruction*>(fileCIR->get_instruction(instr))){
+            LogErrorV(this->loc, "Passing a non constant value to a constant vector in %d pos", i);
+            return CIR::InstructionRef();
+        }
+        VectorMembersI.push_back(instr);
+    }
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstVector>(vector_element_type, VectorMembersI));
 }
 
 CIR::InstructionRef EnumCreation::cir_gen(std::unique_ptr<FileCIR>& fileCIR){

@@ -1,5 +1,6 @@
 #include "cli_infos.h"
-#include "config.h"
+//#include "config.h"
+#include "cpoint.h"
 #include <iostream>
 #include <llvm/Config/llvm-config.h>
 

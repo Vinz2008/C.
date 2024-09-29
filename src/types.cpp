@@ -189,6 +189,10 @@ bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
     return !(lhs == rhs);
 }
 
+Cpoint_Type get_vector_type(Cpoint_Type vector_element_type, int vector_size){
+    return Cpoint_Type(other_type, false, 0, false, 0, false, "", false, "", false, "", false, false, nullptr, false, {}, nullptr, true, (vector_element_type.is_empty) ? nullptr : new Cpoint_Type(vector_element_type), vector_size);
+}
+
 bool is_llvm_type_number(Type* llvm_type){
     return llvm_type == get_type_llvm(Cpoint_Type(double_type)) || llvm_type == get_type_llvm(Cpoint_Type(i8_type)) || llvm_type == get_type_llvm(Cpoint_Type(i16_type)) || llvm_type == get_type_llvm(Cpoint_Type(i32_type)) || get_type_llvm(Cpoint_Type(i64_type)) || llvm_type == get_type_llvm(Cpoint_Type(i128_type));
 }
