@@ -73,6 +73,10 @@ std::string CIR::LoadGlobalInstruction::to_string(){
     return load_global_cir;
 }
 
+std::string CIR::StoreGlobalInstruction::to_string(){
+    return "store_global " + var_name + " = " + val.to_string();
+}
+
 std::string CIR::InitArgInstruction::to_string(){
     return "init_arg " + create_pretty_name_for_type(arg_type) + " " + arg_name;
 }

@@ -91,6 +91,14 @@ namespace CIR {
         std::string to_string() override;
     };
 
+    class StoreGlobalInstruction : public CIR::Instruction {
+    public:
+        std::string var_name;
+        InstructionRef val;
+        StoreGlobalInstruction(std::string var_name, InstructionRef val) : Instruction(Cpoint_Type(void_type)), var_name(var_name), val(val) {}
+        std::string to_string() override;
+    };
+
 
     class InitArgInstruction : public CIR::Instruction {
     public:

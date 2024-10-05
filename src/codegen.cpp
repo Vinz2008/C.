@@ -2096,6 +2096,11 @@ Function *FunctionAST::codegen() {
         std::error_code EC;
         auto dump_file = raw_fd_ostream(StringRef("dump_" + P.getName() + ".ll"), EC);
         TheFunction->print(dump_file);
+        dump_file.close();
+        /*std::error_code EC2;
+        auto dump_module_file = raw_fd_ostream(StringRef("dump_module.ll"), EC2);
+        TheModule->print(dump_module_file, nullptr);
+        dump_module_file.close();*/
         LogErrorV(emptyLoc, "LLVM ERROR : %s\n", error_str.c_str());
         return nullptr;
     }

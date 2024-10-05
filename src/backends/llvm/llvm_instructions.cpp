@@ -194,6 +194,12 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
             //fprintf(stderr, "NOT IMPLEMENTED, TODO\n");
             //exit(1);
         }
+    } else if (dynamic_cast<CIR::StoreGlobalInstruction*>(instruction.get())){
+        auto store_global_instruction = get_Instruction_from_CIR_Instruction<CIR::StoreGlobalInstruction>(std::move(instruction));
+        Value* store_val = codegen_context->functionValues.at(store_global_instruction->val.get_pos());
+        Value* store_var = codegen_context->GlobalVars[store_global_instruction->var_name];
+        codegen_context->Builder->CreateStore(store_val, store_var);
+        instruction_val = nullptr;
     } else if (dynamic_cast<CIR::LoadVarInstruction*>(instruction.get())){
         auto load_var_instruction = get_Instruction_from_CIR_Instruction<CIR::LoadVarInstruction>(std::move(instruction));
         Value* AllocaVal = codegen_context->functionValues.at(load_var_instruction->var.get_pos());
@@ -346,7 +352,7 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
     } else if (dynamic_cast<CIR::ConstNever*>(instruction.get())){
         instruction_val = codegen_context->Builder->CreateUnreachable();
     } else {
-        fprintf(stderr, "ERROR : unknown instruction %s\n", typeid(*instruction.get()).name());
+        fprintf(stderr, "ERROR (LLVM BACKEND) : unknown instruction %s\n", typeid(*instruction.get()).name());
         exit(1);
     }
     if (instruction_val && instruction_label != ""){

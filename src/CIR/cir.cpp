@@ -48,6 +48,18 @@ CIR::BasicBlock::BasicBlock(FileCIR* fileCIR, std::string name, std::vector<std:
     }*/
 }
 
+static Cpoint_Type cir_get_var_type(std::unique_ptr<FileCIR>& fileCIR, std::string var_name){
+    if (!fileCIR->CurrentFunction->vars[var_name].is_empty()){
+        return fileCIR->CurrentFunction->vars[var_name].type;
+    }
+    if (fileCIR->global_vars[var_name]){
+        return fileCIR->global_vars[var_name]->type;
+    }
+
+    LogErrorV(emptyLoc, "Unknown Var : %s", var_name.c_str()); // should never happen, verify before (TODO) ?
+    return Cpoint_Type();
+}
+
 // TODO : is this needed ?
 Cpoint_Type CIR::InstructionRef::get_type(std::unique_ptr<FileCIR>& fileCIR){
     return fileCIR->CurrentFunction->get_instruction(this->get_pos())->type;
@@ -103,7 +115,9 @@ static CIR::InstructionRef createGotoIf(std::unique_ptr<FileCIR>& fileCIR, CIR::
 
 CIR::InstructionRef VariableExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     if (fileCIR->global_vars[Name]){
-        return fileCIR->add_instruction(std::make_unique<CIR::LoadGlobalInstruction>(fileCIR->global_vars[Name]->type, false, -1, Name));
+        auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(fileCIR->global_vars[Name]->type, false, -1, Name);
+        load_global_instr->label = Name + ".load_global";  
+        return fileCIR->add_instruction(std::move(load_global_instr));
     }
     auto var_ref = fileCIR->CurrentFunction->vars[Name].var_ref;
     auto load_var_instr = std::make_unique<CIR::LoadVarInstruction>(var_ref, fileCIR->CurrentFunction->vars[Name].type);
@@ -205,6 +219,7 @@ CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
     auto var_instr = std::make_unique<CIR::VarInit>(std::make_pair(VarNames.at(0).first, varInit), cpoint_type);
     var_instr->type = cpoint_type;
+    var_instr->label = VarNames.at(0).first;
     auto var_ref = fileCIR->add_instruction(std::move(var_instr));
     fileCIR->CurrentFunction->vars[VarNames.at(0).first] = CIR::Var(var_ref, cpoint_type);
     // TODO : struct constructors
@@ -594,13 +609,79 @@ CIR::InstructionRef ConstantStructExprAST::cir_gen(std::unique_ptr<FileCIR>& fil
 
 extern std::unordered_map<std::string, int> BinopPrecedence;
 
+static CIR::InstructionRef getArrayMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
+    NOT_IMPLEMENTED();
+}
+
+static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
+    if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
+        Log::Info() << "Equal op bin lvalue" << "\n";
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
+        Log::Info() << "op : " << BinExpr->Op << "\n";
+        if (BinExpr->Op.at(0) == '['){
+            NOT_IMPLEMENTED();
+        } else if (BinExpr->Op.at(0) == '.'){
+            NOT_IMPLEMENTED();
+        } else {
+            NOT_IMPLEMENTED();
+        }
+    } else if (dynamic_cast<VariableExprAST*>(lvalue.get())){
+        std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(lvalue));
+        bool is_global = fileCIR->global_vars[VarExpr->Name] != nullptr;
+        Cpoint_Type var_type = cir_get_var_type(fileCIR, VarExpr->Name);
+        Cpoint_Type rvalue_type = rvalue->get_type();
+        CIR::InstructionRef rvalueI = rvalue->cir_gen(fileCIR);
+        if (rvalue_type != var_type){
+            cir_convert_to_type(fileCIR, rvalue_type, var_type, rvalueI);
+        }
+        if (is_global){
+            return fileCIR->add_instruction(std::make_unique<CIR::StoreGlobalInstruction>(VarExpr->Name, rvalueI));
+        } else {
+            return fileCIR->add_instruction(std::make_unique<CIR::StoreVarInstruction>(fileCIR->CurrentFunction->vars[VarExpr->Name].var_ref, rvalueI));
+        }
+    } else if (dynamic_cast<UnaryExprAST*>(lvalue.get()) || dynamic_cast<DerefExprAST*>(lvalue.get())){
+        CIR::InstructionRef lvalI;
+        if (dynamic_cast<UnaryExprAST*>(lvalue.get())){
+            std::unique_ptr<UnaryExprAST> UnaryExpr = get_Expr_from_ExprAST<UnaryExprAST>(std::move(lvalue));
+            if (UnaryExpr->Opcode != '*'){
+                LogErrorV(emptyLoc, "The equal operator is not implemented for other Unary Operators as rvalue than deref");
+                return CIR::InstructionRef();
+            }
+            lvalI = AddrExprAST(std::move(UnaryExpr->Operand)).cir_gen(fileCIR);
+        } else if (dynamic_cast<DerefExprAST*>(lvalue.get())){
+            lvalI = lvalue->cir_gen(fileCIR);
+        }
+        // TODO
+        NOT_IMPLEMENTED();
+    }
+    
+    NOT_IMPLEMENTED();
+}
+
+static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+    NOT_IMPLEMENTED();
+}
+
 CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     if (BinopPrecedence.find(Op) == BinopPrecedence.end()){ // is custom op
         std::vector<std::unique_ptr<ExprAST>> Args;
-        Args.push_back(std::move(LHS));
-        Args.push_back(std::move(RHS));
+        Args.push_back(LHS->clone());
+        Args.push_back(RHS->clone());
         return CallExprAST(emptyLoc, "binary" + Op, std::move(Args), Cpoint_Type()).cir_gen(fileCIR);
     }
+
+    if (Op.at(0) == '['){
+        return getArrayMember(fileCIR, LHS->clone(), RHS->clone());
+    } 
+
+    if (Op.at(0) == '=' && Op.size() == 1){
+        return equalOperator(fileCIR, LHS->clone(), RHS->clone());
+    }
+    if (Op.at(0) == '.'){
+        return getStructMember(fileCIR, LHS->clone(), RHS->clone());
+    }
+
+
     // TODO : readd this after fixing get_type for vars (problem with NamedValues, put it in the AST node ?)
     Cpoint_Type LHS_type = LHS->get_type(fileCIR.get()).get_real_type();
     Cpoint_Type RHS_type = RHS->get_type(fileCIR.get());
