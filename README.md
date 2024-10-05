@@ -52,7 +52,7 @@ The recommended LLVM version is 18.x. (17.x could work, but it is not garenteed 
 make
 sudo make install
 ```
-(You can add ```-j$(nproc)``` to make to make it parallel)
+(You can add ```-j$(nproc)``` to make the build parallel)
 
 ## Build Statically the compiler
 [How to build statically the compiler](https://github.com/Vinz2008/C./blob/master/docs/static.md)
