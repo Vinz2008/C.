@@ -43,7 +43,7 @@ git clone --recurse-submodules https://github.com/Vinz2008/C.
 - pandoc (for man pages)
 - groff (for man pages)
 
-*LLVM version used
+*LLVM version used. 
 The recommended LLVM version is 18.x. (17.x could work, but it is not garenteed to work without some edits in the code or disabling some flags)
 
 ## Build Instructions
