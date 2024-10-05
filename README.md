@@ -260,6 +260,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] After removing the old llvm backend, replace not needed clones in the cir with std::move
 - [ ] Make work the DISABLE_OLD_LLVM_BACKEND config
 - [ ] Make the size of bool 8 bits
+- [ ] Add the possibility to use an included binutils (in /usr/local/cpoint/tools ?) to use as an assembler for the x86 backend
 
 ## Benchmarks compared to other languages
 
