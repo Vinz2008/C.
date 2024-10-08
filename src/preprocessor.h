@@ -17,9 +17,10 @@ public:
 
 class Context {
 public:
-    std::vector<std::unique_ptr<Variable>> variables;
-    Context(std::vector<std::unique_ptr<Variable>> variables) : variables(std::move(variables)) {}
-    void add_variable(std::unique_ptr<Variable> var);
+    std::vector<Variable> variables;
+    Context() : variables() {}
+    Context(std::vector<Variable> variables) : variables(variables) {}
+    void add_variable(Variable var);
     void remove_variable(std::string name);
     int get_variable_pos(std::string name);
     std::string get_variable_value(std::string name);

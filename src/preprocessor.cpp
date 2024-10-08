@@ -12,19 +12,19 @@ static std::string word;
 static std::stringstream wordstrtream;
 
 namespace Preprocessor {
-    void Context::add_variable(std::unique_ptr<Variable> var){
-        variables.push_back(std::move(var));
+    void Context::add_variable(Variable var){
+        variables.push_back(var);
     }
     void Context::remove_variable(std::string name){
         for (int i = 0; i < variables.size(); i++){
-            if (variables.at(i)->getName() == name){
+            if (variables.at(i).getName() == name){
                 variables.erase(variables.begin() + i);
             }
         }
     }
     int Context::get_variable_pos(std::string name){
         for (int i = 0; i < variables.size(); i++){
-            if (variables.at(i)->getName() == name){
+            if (variables.at(i).getName() == name){
                 return i;
             }
         }
@@ -32,8 +32,8 @@ namespace Preprocessor {
     }
     std::string Context::get_variable_value(std::string name){
         for (int i = 0; i < variables.size(); i++){
-            if (variables.at(i)->getName() == name){
-                return variables.at(i)->getValue();
+            if (variables.at(i).getName() == name){
+                return variables.at(i).getValue();
             }
         }
         return "";
@@ -41,30 +41,29 @@ namespace Preprocessor {
     void Context::replace_variable_preprocessor(std::string& str){
         std::string variable_name;
         for (int i = 0; i < variables.size(); i++){
-            if (variables.at(i) != nullptr){
-            variable_name = variables.at(i)->getName();
+            //if (variables.at(i) != nullptr){
+            variable_name = variables.at(i).getName();
             size_t pos = 0;
             while (pos != std::string::npos){
                 pos = str.find(variable_name, pos);
                 if (pos != std::string::npos){
                     Log::Preprocessor_Info() << "REPLACING VARIABLE" << "\n";
-                    str.replace(pos, variable_name.length(), variables.at(i)->getValue());
+                    str.replace(pos, variable_name.length(), variables.at(i).getValue());
                 }
             }
-            }
+            //}
         }
     }
 }
 
 void init_context_preprocessor(){
-    std::vector<std::unique_ptr<Preprocessor::Variable>> variables;
-    context = std::make_unique<Preprocessor::Context>(std::move(variables));
+    context = std::make_unique<Preprocessor::Context>(std::vector<Preprocessor::Variable>());
 }
 
 void setup_preprocessor(std::string target_triplet){
-    context->variables.push_back(std::make_unique<Preprocessor::Variable>("OS", get_os(target_triplet)));
-    context->variables.push_back(std::make_unique<Preprocessor::Variable>("ARCH", get_arch(target_triplet)));
-    context->variables.push_back(std::make_unique<Preprocessor::Variable>("VENDOR", get_vendor(target_triplet)));
+    context->variables.push_back(Preprocessor::Variable("OS", get_os(target_triplet)));
+    context->variables.push_back(Preprocessor::Variable("ARCH", get_arch(target_triplet)));
+    context->variables.push_back(Preprocessor::Variable("VENDOR", get_vendor(target_triplet)));
     
 }
 
@@ -189,7 +188,7 @@ void preprocess_instruction(std::string line, std::ifstream& file_code, int& pos
         get_next_word(instruction, pos);
         std::string value = word;
         Log::Preprocessor_Info() << "value : " << value << "\n";
-        context->add_variable(std::make_unique<Preprocessor::Variable>(varName, value));
+        context->add_variable(Preprocessor::Variable(varName, value));
         Log::Preprocessor_Info() << "Number of variables in context : " << context->variables.size() << "\n";
     } else if (word == "undefine"){
         get_next_word(instruction, pos);
