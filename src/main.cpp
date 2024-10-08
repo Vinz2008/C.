@@ -643,7 +643,7 @@ int main(int argc, char **argv){
         object_filename = "out.S";
       }
     }
-    init_context_preprocessor();
+//    init_context_preprocessor();
     if (target_triplet_found_bool){
     TargetTriple = target_triplet_found;
     } else {

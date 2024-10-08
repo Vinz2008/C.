@@ -9,5 +9,5 @@ Value* not_struct_member_call(std::unique_ptr<ExprAST> Expr, std::string functio
     Log::Info() << "expr_type : " << expr_type << "\n";
     std::string mangled_function_name = expr_type.create_mangled_name() + "__" + functionCall;
     Args.insert(Args.begin(), std::move(Expr));
-    return std::make_unique<CallExprAST>(emptyLoc, mangled_function_name, std::move(Args), Cpoint_Type())->codegen();
+    return CallExprAST(emptyLoc, mangled_function_name, std::move(Args), Cpoint_Type()).codegen();
 }

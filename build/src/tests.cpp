@@ -64,7 +64,7 @@ void buildTests(std::vector<std::string> PathList, std::vector<std::string> Link
 
 static void runTest(std::string path){
     std::string exe_name = fs::path(path).replace_extension(".test").string();
-    std::cout << runCommand(exe_name)->buffer;
+    std::cout << runCommand(exe_name).buffer;
     std::flush(std::cout);
 }
 

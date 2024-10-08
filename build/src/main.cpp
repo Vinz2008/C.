@@ -89,8 +89,8 @@ void runCustomScripts(toml::v3::table& config){
                 cmd = "TARGET=" + target_cross_compiler + " " + (std::string)script;
                 }
                 Log() << "script : " << cmd << "\n";
-                std::unique_ptr<ProgramReturn> returnScript = runCommand(cmd);
-                std::cout << returnScript->buffer << std::endl; // TODO : remove this / make it debug output
+                ProgramReturn returnScript = runCommand(cmd);
+                std::cout << returnScript.buffer << std::endl; // TODO : remove this / make it debug output
             }
         });
     }
@@ -143,8 +143,8 @@ void runPrebuildCommands(toml::v3::table& config){
                 cmd = "TARGET=" + target_cross_compiler + " " + (std::string)cmd;
                 }
                 Log() << "cmd : " << cmd << "\n";
-                std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
-                Log() << returnCmd->buffer << "\n";
+                ProgramReturn returnCmd = runCommand((std::string) cmd);
+                Log() << returnCmd.buffer << "\n";
             }
         });
     }

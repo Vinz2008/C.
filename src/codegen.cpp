@@ -719,7 +719,7 @@ Value* equalOperator(std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> r
             if (UnaryExpr->Opcode != '*'){
                 return LogErrorV(emptyLoc, "The equal operator is not implemented for other Unary Operators as rvalue than deref");
             }
-            lval_llvm = std::make_unique<AddrExprAST>(std::move(UnaryExpr->Operand))->codegen();
+            lval_llvm = AddrExprAST(std::move(UnaryExpr->Operand)).codegen();
         } else if (dynamic_cast<DerefExprAST*>(lvalue.get())) {
             lval_llvm = lvalue->codegen();
         }

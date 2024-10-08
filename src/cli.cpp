@@ -7,7 +7,7 @@
 #include "windows.h"
 #endif
 
-std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
+ProgramReturn runCommand(const std::string cmd){
     int exit_status = 0;
     auto pipe = popen(cmd.c_str(), "r");
     if (pipe == nullptr){
@@ -26,6 +26,6 @@ std::unique_ptr<ProgramReturn> runCommand(const std::string cmd){
     if (WEXITSTATUS(rc)){
         exit_status = WEXITSTATUS(rc);
     }
-    return std::make_unique<ProgramReturn>(exit_status, result);
+    return ProgramReturn(exit_status, result);
 
 }

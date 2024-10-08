@@ -7,7 +7,7 @@
 #include "log.h"
 //#include "ast.h"
 
-std::unique_ptr<Preprocessor::Context> context;
+Preprocessor::Context context;
 static std::string word;
 static std::stringstream wordstrtream;
 
@@ -56,14 +56,15 @@ namespace Preprocessor {
     }
 }
 
-void init_context_preprocessor(){
-    context = std::make_unique<Preprocessor::Context>(std::vector<Preprocessor::Variable>());
-}
+// will be inited with the constuctor called for the global var
+/*void init_context_preprocessor(){
+    context = Preprocessor::Context(std::vector<Preprocessor::Variable>());
+}*/
 
 void setup_preprocessor(std::string target_triplet){
-    context->variables.push_back(Preprocessor::Variable("OS", get_os(target_triplet)));
-    context->variables.push_back(Preprocessor::Variable("ARCH", get_arch(target_triplet)));
-    context->variables.push_back(Preprocessor::Variable("VENDOR", get_vendor(target_triplet)));
+    context.variables.push_back(Preprocessor::Variable("OS", get_os(target_triplet)));
+    context.variables.push_back(Preprocessor::Variable("ARCH", get_arch(target_triplet)));
+    context.variables.push_back(Preprocessor::Variable("VENDOR", get_vendor(target_triplet)));
     
 }
 
@@ -128,18 +129,18 @@ static void preprocess_if(std::string instruction, int& pos, std::ifstream& file
         r2 = word;
         get_next_word(instruction, pos);
     }
-    int pos_var = context->get_variable_pos(l);
+    int pos_var = context.get_variable_pos(l);
     if (pos_var == -1){
         fprintf(stderr, "PREPROCESSOR : unknown variable %s\n", l.c_str());
     } else {
         if (op == "=="){
         bool is_if_true = false;
-        is_if_true = context->get_variable_value(l) == r;
+        is_if_true = context.get_variable_value(l) == r;
         if (operator_in_between != ""){
             if (operator_in_between == "or"){
                 bool is_if_true2 = false;
                 if (op2 == "=="){
-                    is_if_true2 = context->get_variable_value(l2) == r2;
+                    is_if_true2 = context.get_variable_value(l2) == r2;
                 } else {
                     fprintf(stderr, "PREPROCESSOR : unknown operator '%s' in between expressions", op2.c_str());
                 }
@@ -188,12 +189,12 @@ void preprocess_instruction(std::string line, std::ifstream& file_code, int& pos
         get_next_word(instruction, pos);
         std::string value = word;
         Log::Preprocessor_Info() << "value : " << value << "\n";
-        context->add_variable(Preprocessor::Variable(varName, value));
-        Log::Preprocessor_Info() << "Number of variables in context : " << context->variables.size() << "\n";
+        context.add_variable(Preprocessor::Variable(varName, value));
+        Log::Preprocessor_Info() << "Number of variables in context : " << context.variables.size() << "\n";
     } else if (word == "undefine"){
         get_next_word(instruction, pos);
         std::string varName = word;
-        context->remove_variable(varName);
+        context.remove_variable(varName);
     } else if (word == "warning"){
         std::string warning = "";
         get_next_word(instruction, pos);
@@ -215,8 +216,5 @@ void preprocess_instruction(std::string line, std::ifstream& file_code, int& pos
 }
 
 void preprocess_replace_variable(std::string& str){
-    if (context == nullptr){
-        std::cout << "CONTEXT IS NULL" << std::endl;
-    }
-    context->replace_variable_preprocessor(str);
+    context.replace_variable_preprocessor(str);
 }

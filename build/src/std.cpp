@@ -35,5 +35,5 @@ void rebuildSTD(std::string target, std::string path, bool is_gc){
     if (!is_gc){
         cmd_start += "NO_GC=TRUE ";
     }
-    Log() << runCommand(cmd_start + "make -C " + path)->buffer << "\n";
+    Log() << runCommand(cmd_start + "make -C " + path).buffer << "\n";
 }

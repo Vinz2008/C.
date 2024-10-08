@@ -25,7 +25,7 @@ int download_package_github(std::string username, std::string reponame){
     cmd.append("/");
     cmd.append(reponame);
     auto out = runCommand(cmd);
-    std::cout << out->buffer << std::endl;
+    std::cout << out.buffer << std::endl;
     return 0;
 }
 
@@ -41,6 +41,6 @@ int build_package(std::string path){
     cmd_build += "cpoint-build build";
 
     auto out = runCommand(cmd_build);
-    std::cout << out->buffer << std::endl;
+    std::cout << out.buffer << std::endl;
     return 0;
 }

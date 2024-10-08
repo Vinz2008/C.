@@ -11,7 +11,7 @@ static void updateGitRepo(std::string folder){
     cmd += folder;
     cmd += " pull";
     auto returnGit = runCommand(cmd);
-    Log() << folder << " : " << returnGit->buffer << "\n";
+    Log() << folder << " : " << returnGit.buffer << "\n";
 }
 
 void cloneGit(std::string url, std::string username, std::string repo_name, std::string folder){
@@ -30,7 +30,7 @@ void cloneGit(std::string url, std::string username, std::string repo_name, std:
     cmd += folder;
     Log() << "git cmd : " << cmd << "\n";
     auto returnGit = runCommand(cmd);
-    Log() << "out : " << returnGit->buffer << "\n";
+    Log() << "out : " << returnGit.buffer << "\n";
 }
 
 void cloneGithub(std::string username, std::string repo_name, std::string folder){

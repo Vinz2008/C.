@@ -12,8 +12,8 @@ static void runCustomCleanCommands(toml::v3::table& config){
         arr->for_each([](auto&& cmd){
             if constexpr (toml::is_string<decltype(cmd)>){
                 std::cout << "cmd : " << cmd << std::endl;
-                std::unique_ptr<ProgramReturn> returnCmd = runCommand((std::string) cmd);
-                std::cout << returnCmd->buffer << std::endl;
+                ProgramReturn returnCmd = runCommand((std::string) cmd);
+                std::cout << returnCmd.buffer << std::endl;
             }
         });
     }

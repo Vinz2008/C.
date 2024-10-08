@@ -32,4 +32,4 @@ public:
 void setup_preprocessor(std::string target_triplet);
 void preprocess_instruction(std::string line, std::ifstream& file_code, int& pos_line_file);
 void preprocess_replace_variable(std::string& str);
-void init_context_preprocessor();
+//void init_context_preprocessor();

@@ -24,9 +24,9 @@ int build_std(string path, string target_triplet, bool verbose_std_build, bool u
     if (Comp_context->debug_mode){
     cout << "cmd clean : " << cmd_clean << endl;
     }
-    auto out_clean = runCommand(cmd_clean);
+    ProgramReturn out_clean = runCommand(cmd_clean);
     if (verbose_std_build){
-    cout << out_clean->buffer << endl;
+    cout << out_clean.buffer << endl;
     }
     int retcode = -1;
     string cmd = "";
@@ -44,9 +44,9 @@ int build_std(string path, string target_triplet, bool verbose_std_build, bool u
     cout << "cmd : " << cmd << endl;
     }
     auto out = runCommand(cmd);
-    retcode = out->exit_status;
+    retcode = out.exit_status;
     if (verbose_std_build){
-    cout << out->buffer << endl;
+    cout << out.buffer << endl;
     cout << "retcode : " << retcode << endl;
     }
     return retcode;
@@ -60,20 +60,20 @@ int build_gc(string path, string target_triplet){
     cmd_configure += complete_string_path;
     cout << "cmd_configure : " << cmd_configure << endl;
     auto out_configure = runCommand(cmd_configure);
-    cout << out_configure->buffer << endl;
+    cout << out_configure.buffer << endl;
     } else {
         std::string cmd_clean = "make -C " + path + " clean";
         auto out_clean = runCommand(cmd_clean);
-        cout << out_clean->buffer << endl;
+        cout << out_clean.buffer << endl;
     }
     std::string cmd_make = "make -C " + path;
     cout << "cmd_make : " << cmd_make << endl;
     auto out = runCommand(cmd_make);
-    cout << out->buffer << endl;
+    cout << out.buffer << endl;
     std::string cmd_install = cmd_make + " install";
     cout << "cmd_install : " << cmd_install << endl;
     auto out_install = runCommand(cmd_install);
-    cout << out_install->buffer << endl;
+    cout << out_install.buffer << endl;
     std::cout << "end build gc" << std::endl;
     return 0;
 }
@@ -99,7 +99,7 @@ void link_files(vector<string> list_files, string filename_out, string target_tr
         cout << "cmd : " << cmd << endl;
     }
     auto out = runCommand(cmd);
-    retcode = out->exit_status;
+    retcode = out.exit_status;
     if (Comp_context->debug_mode){
         cout << "retcode : " << retcode << endl;
     }
