@@ -127,5 +127,10 @@
         "print": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang",
-    "C_Cpp.default.compileCommands": "/home/vincent/C./build/tomlplusplus/builddir/compile_commands.json"
+    "C_Cpp.default.compileCommands": "/home/vincent/C./build/tomlplusplus/builddir/compile_commands.json",
+    "todo-tree.filtering.excludeGlobs": [
+        "**/bdwgc/**",
+        "**/bdwgc_prefix/**",
+        "**/external/**",
+    ]      
 }
