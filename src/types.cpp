@@ -389,6 +389,10 @@ bool Cpoint_Type::is_decimal_number_type(){
     return type == double_type || type == float_type;
 }
 
+bool Cpoint_Type::is_number_type(){
+    return this->is_signed() || this->is_unsigned();
+}
+
 // is a struct, but not a ptr and not an array
 bool Cpoint_Type::is_just_struct(){
     return is_struct && !is_ptr && !is_array;

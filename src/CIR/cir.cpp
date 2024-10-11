@@ -609,9 +609,55 @@ CIR::InstructionRef ConstantStructExprAST::cir_gen(std::unique_ptr<FileCIR>& fil
 
 extern std::unordered_map<std::string, int> BinopPrecedence;
 
-static CIR::InstructionRef getArrayMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
+static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index, Cpoint_Type& element_type){
+    CIR::InstructionRef indexI = index->cir_gen(fileCIR);
+    if (indexI.is_empty()){
+        LogError("Error in array index");
+        return CIR::InstructionRef();
+    }
+
+    if (dynamic_cast<VariableExprAST*>(array.get())){
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(array));
+        std::string ArrayName = VariableExpr->Name;
+        Cpoint_Type cpoint_type = cir_get_var_type(fileCIR, ArrayName);
+        if (!cpoint_type.is_array && !cpoint_type.is_vector_type && !cpoint_type.is_ptr){
+            LogErrorV(emptyLoc, "Trying to index on an expr that is neither an array, a vector or a pointer");
+            return CIR::InstructionRef();
+        }
+
+        Cpoint_Type index_type = index->get_type();
+
+        // TODO : if index is const, add a static bound checking
+        if (!index_type.is_number_type()){
+            LogErrorV(emptyLoc, "The index for array is not a number\n");
+            return CIR::InstructionRef();
+        }
+
+        if (index_type != Cpoint_Type(i64_type)){
+            cir_convert_to_type(fileCIR, index_type, Cpoint_Type(i64_type), indexI);
+        }
+
+        CIR::InstructionRef allocated_value = fileCIR->CurrentFunction->vars[ArrayName].var_ref; // TODO : make it work with global vars
+        // TODO : add dynamic bound checking
+
+        element_type = cpoint_type.deref_type();
+
+        return fileCIR->add_instruction(std::make_unique<CIR::getArrayElement>(allocated_value, indexI, cpoint_type, element_type));
+    
+    } else if (dynamic_cast<BinaryExprAST*>(array.get())){
+        NOT_IMPLEMENTED();
+    }
+
     NOT_IMPLEMENTED();
 }
+
+/*static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
+    Cpoint_Type member_type;
+    // TODO : add should load for vector types (codegen.cpp) or add it in another function
+    CIR::InstructionRef value = getArrayElementImpl(fileCIR, std::move(array), std::move(index), member_type);
+    return value;
+    //NOT_IMPLEMENTED();
+}*/
 
 static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
     if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
@@ -619,6 +665,9 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
         Log::Info() << "op : " << BinExpr->Op << "\n";
         if (BinExpr->Op.at(0) == '['){
+            Cpoint_Type element_type;
+            CIR::InstructionRef get_array = getArrayElement(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS), element_type);
+            
             NOT_IMPLEMENTED();
         } else if (BinExpr->Op.at(0) == '.'){
             NOT_IMPLEMENTED();
@@ -671,7 +720,8 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
 
     if (Op.at(0) == '['){
-        return getArrayMember(fileCIR, LHS->clone(), RHS->clone());
+        Cpoint_Type element_type;
+        return getArrayElement(fileCIR, LHS->clone(), RHS->clone(), element_type);
     } 
 
     if (Op.at(0) == '=' && Op.size() == 1){

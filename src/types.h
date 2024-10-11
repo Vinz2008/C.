@@ -110,6 +110,7 @@ public:
     bool is_decimal_number_type();
     bool is_signed();
     bool is_unsigned();
+    bool is_number_type();
     // if is a template, remove it
     Cpoint_Type get_real_type();
     Cpoint_Type deref_type();

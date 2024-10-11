@@ -182,6 +182,17 @@ std::string CIR::DerefInstruction::to_string(){
     return "deref " + ptr.to_string() + " to " + create_pretty_name_for_type(element_type);
 }
 
+std::string CIR::getArrayElement::to_string(){
+    std::string res = "get_array_element ";
+    if (is_array_access_mem){
+        res += array.accessMemInstruction->to_string();
+    } else {
+        res += array.val.to_string();
+    }
+    res += " " + index.to_string();
+    return res;
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){

@@ -273,6 +273,32 @@ namespace CIR {
         CmpInstruction(enum cmp_type_ty cmp_type, InstructionRef arg1, InstructionRef arg2) : Instruction(Cpoint_Type(bool_type)), cmp_type(cmp_type), arg1(arg1), arg2(arg2) {}
         std::string to_string() override;
     };
+
+    // instructions for array members and structs
+    class AccessMemoryInstruction : public CIR::Instruction  {
+    public:
+        AccessMemoryInstruction(){}
+        AccessMemoryInstruction(Cpoint_Type type) : CIR::Instruction("", type) {}
+    };
+    class getArrayElement : public CIR::AccessMemoryInstruction {
+    public:
+        bool is_array_access_mem;
+        union array_ty {
+            CIR::InstructionRef val;
+            std::unique_ptr<AccessMemoryInstruction> accessMemInstruction;
+            array_ty(CIR::InstructionRef val) : val(val) {}
+            array_ty(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction) : accessMemInstruction(std::move(accessMemInstruction)) {}
+            ~array_ty() {}
+        } array;
+        CIR::InstructionRef index;
+        Cpoint_Type array_type;
+        Cpoint_Type element_type;
+        getArrayElement(CIR::InstructionRef val, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : AccessMemoryInstruction(element_type), is_array_access_mem(false), array(val), index(index), array_type(array_type), element_type(element_type) {}
+        getArrayElement(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type, bool is_ptr) : AccessMemoryInstruction(element_type), is_array_access_mem(true), array(std::move(accessMemInstruction)), index(index), array_type(array_type), element_type(element_type) {}
+        std::string to_string() override;
+    };
+
+
     class ConstNumber;
     class ConstVoid;
     class ConstNever;
