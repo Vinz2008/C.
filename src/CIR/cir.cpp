@@ -1019,12 +1019,17 @@ void FunctionAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    // TODO : generate funcs
     std::vector<std::pair<std::string, Cpoint_Type>> vars;
     for (int i = 0; i < Vars.size(); i++){
         // TODO : add support for support of multiple variables in one var
         vars.push_back(std::make_pair(Vars.at(i)->VarNames.at(0).first, Vars.at(i)->cpoint_type));
     }
-    fileCIR->structs[Name] = CIR::Struct(Name, vars);
+    if (has_template){
+        NOT_IMPLEMENTED(); // TODO
+    } else {
+        fileCIR->structs[Name] = CIR::Struct(Name, vars);
+    }
 }
 
 // remove parts of cir that would create problems with backends (ex : things generated after a never type with llvm)
@@ -1036,6 +1041,7 @@ void fixFileCIR(std::unique_ptr<FileCIR>& fileCIR){
                 std::unique_ptr<CIR::Instruction>& instruction = bb->instructions.at(instruction_nb);
                 if (instruction->type == never_type){
                     bb->instructions.erase(bb->instructions.begin()+instruction_nb+1, bb->instructions.end());
+                    break;
                 }
             }
         }
