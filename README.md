@@ -35,6 +35,7 @@ git clone --recurse-submodules https://github.com/Vinz2008/C.
 - llvm 18.x*
 - clang
 - lld
+- autotools and libtool (for bdwgc)
 - gettext (except in windows)
 - tomlplusplus (for cpoint-build)
 
