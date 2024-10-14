@@ -262,7 +262,8 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make work the DISABLE_OLD_LLVM_BACKEND config
 - [ ] Make the size of bool 8 bits
 - [ ] Use an arena for allocation in the compiler
-- [ ] Add the possibility to use an included binutils (in /usr/local/cpoint/tools ?) to use as an assembler for the x86 backend
+- [ ] Add the possibility to use an included binutils (in /usr/local/lib/cpoint/tools ?) to use as an assembler for the x86 backend
+- [ ] Make so the makefile build a separate llvm in tree if llvm is not installed (or if manually asked) and link to it (probably statically in this case or put it in /usr/local/lib/cpoint)
 
 ## Benchmarks compared to other languages
 
