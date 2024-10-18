@@ -175,6 +175,7 @@ namespace CIR {
     public:
         std::string name;
         std::vector<std::pair<std::string, Cpoint_Type>> vars;
+        std::vector<std::string> functions; // only need names to verify if a function exists in a struct
         Struct() : name(), vars() {}
         Struct(std::string name, std::vector<std::pair<std::string, Cpoint_Type>> vars) : name(name), vars(vars) {}
     };
@@ -204,6 +205,7 @@ public:
     //int InsertPoint;
     FileCIR(std::string filename, std::vector<std::unique_ptr<CIR::Function>> functions) : filename(filename), functions(std::move(functions)), protos(), global_vars(), strings(), global_context(), CurrentFunction(nullptr), CurrentBasicBlock(), already_named_index(1) /*, InsertPoint(0)*/  {} 
     
+    // TODO : move these functions in cir.cpp
     void add_function(std::unique_ptr<CIR::Function> func){
         functions.push_back(std::move(func));
         CurrentFunction = functions.back().get();
@@ -278,6 +280,19 @@ public:
         } else {
             CurrentBasicBlock->instructions.insert(CurrentBasicBlock->instructions.begin() + InsertPoint, std::move(instruction));
         }*/
+    }
+
+    CIR::InstructionRef add_string(std::string str){
+        auto find_duplicate_string = std::find(strings.begin(), strings.end(), str);
+        int pos = -1;
+        if (find_duplicate_string != strings.end()){
+            pos = std::distance(strings.begin(), find_duplicate_string);
+        } else {
+            strings.push_back(str);
+            pos = strings.size()-1;
+        }
+        auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(Cpoint_Type(i8_type, true), true, pos, "");
+        return this->add_instruction(std::move(load_global_instr));
     }
 
     void start_global_context(){

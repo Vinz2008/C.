@@ -233,7 +233,8 @@ CIR::InstructionRef EmptyExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    auto find_duplicate_string = std::find(fileCIR->strings.begin(), fileCIR->strings.end(), str);
+    return fileCIR->add_string(str);
+    /*auto find_duplicate_string = std::find(fileCIR->strings.begin(), fileCIR->strings.end(), str);
     int pos = -1;
     if (find_duplicate_string != fileCIR->strings.end()){
         pos = std::distance(fileCIR->strings.begin(), find_duplicate_string);
@@ -242,7 +243,7 @@ CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         pos = fileCIR->strings.size()-1;
     }
     auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(Cpoint_Type(i8_type, true), true, pos, "");
-    return fileCIR->add_instruction(std::move(load_global_instr));
+    return fileCIR->add_instruction(std::move(load_global_instr));*/
 }
 
 CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -496,7 +497,70 @@ CIR::InstructionRef ForExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef StructMemberCallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
-    return CIR::InstructionRef();
+    if (dynamic_cast<VariableExprAST*>(StructMember->LHS.get())){
+        std::unique_ptr<VariableExprAST> structNameExpr = get_Expr_from_ExprAST<VariableExprAST>(StructMember->LHS->clone());
+        std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(StructMember->RHS->clone());
+        std::string StructName = structNameExpr->Name;
+        std::string MemberName = structMemberExpr->Name;
+        if (StructName == "reflection"){
+            return refletionInstructionCIR(fileCIR, MemberName, std::move(Args));
+        }
+    }
+    Cpoint_Type lhs_type = StructMember->LHS->get_type();
+    if (!lhs_type.is_struct && !lhs_type.is_ptr){
+        // not struct member call
+        // will handle the special name mangling in this function
+        std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(StructMember->RHS->clone());
+        std::string functionCall = structMemberExpr->Name;
+        NOT_IMPLEMENTED();
+        //return not_struct_member_call(std::move(StructMember->LHS), functionCall, std::move(Args));
+    }
+    std::string struct_type_name = lhs_type.struct_name;
+    if (lhs_type.is_object_template){
+        struct_type_name = get_object_template_name(struct_type_name, *lhs_type.object_template_type_passed);
+        Log::Info() << "StructName call struct function after mangling : " << struct_type_name << "\n";
+    }
+
+    std::unique_ptr<VariableExprAST> structMemberExpr = get_Expr_from_ExprAST<VariableExprAST>(StructMember->RHS->clone());
+    std::string MemberName = structMemberExpr->Name;
+    
+    auto functions = fileCIR->structs[MemberName].functions; // TODO 
+    bool found_function = false;
+
+    for (int i = 0; i < functions.size(); i++){
+        Log::Info() << "functions.at(i) : " << functions.at(i) << "\n";
+        if (functions.at(i) == MemberName){
+            found_function = true;
+            Log::Info() << "Is function Call" << "\n";
+        }
+    }
+    if (!found_function){
+        LogErrorV(this->loc, "Unknown struct function member called : %s\n", MemberName.c_str());
+        return CIR::InstructionRef();
+    }
+
+    CIR::InstructionRef struct_ptr;
+    if (lhs_type.is_ptr){
+        struct_ptr = StructMember->LHS->cir_gen(fileCIR);
+    } else {
+        struct_ptr = AddrExprAST(StructMember->LHS->clone()).cir_gen(fileCIR);
+    }
+
+    std::string function_name = struct_function_mangling(struct_type_name, MemberName);
+    Cpoint_Type return_type = fileCIR->protos[function_name].return_type;
+
+    std::vector<CIR::InstructionRef> CallArgs;
+    CallArgs.push_back(struct_ptr);
+
+    for (int i = 0; i < Args.size(); i++){
+        CallArgs.push_back(Args.at(i)->cir_gen(fileCIR));
+    }
+
+    auto call_instruction = std::make_unique<CIR::CallInstruction>(return_type, function_name, CallArgs);
+    if (!is_just_type(return_type, void_type)){
+        call_instruction->label = "calltmp_struct";
+    }
+    return fileCIR->add_instruction(std::move(call_instruction));
 }
 
 CIR::InstructionRef MatchExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -659,17 +723,22 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
     //NOT_IMPLEMENTED();
 }*/
 
+static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+    NOT_IMPLEMENTED();
+}
+
 static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){
     if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
+        // TODO : make work the equal operator with binary exprs by making store accept a ref to an instruction or an AccessMemoryInstruction
         Log::Info() << "Equal op bin lvalue" << "\n";
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
         Log::Info() << "op : " << BinExpr->Op << "\n";
+        Cpoint_Type element_type;
         if (BinExpr->Op.at(0) == '['){
-            Cpoint_Type element_type;
             CIR::InstructionRef get_array = getArrayElement(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS), element_type);
-            
             NOT_IMPLEMENTED();
         } else if (BinExpr->Op.at(0) == '.'){
+            CIR::InstructionRef get_struct = getStructMember(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS));
             NOT_IMPLEMENTED();
         } else {
             NOT_IMPLEMENTED();
@@ -704,10 +773,6 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
         NOT_IMPLEMENTED();
     }
     
-    NOT_IMPLEMENTED();
-}
-
-static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
     NOT_IMPLEMENTED();
 }
 

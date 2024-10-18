@@ -344,7 +344,7 @@ int find_struct_type_size(Cpoint_Type cpoint_type){
 }
 
 bool is_just_type(Cpoint_Type type, int type_type){
-    return type.type == type_type && !type.is_ptr && !type.is_array && !type.is_struct;
+    return type.type == type_type && !type.is_ptr && !type.is_array && !type.is_struct && !type.is_union && !type.is_enum && !type.is_function && !type.is_vector_type;
 }
 
 int struct_get_number_type(Cpoint_Type cpoint_type, int type){
