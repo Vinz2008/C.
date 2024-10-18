@@ -176,8 +176,8 @@ namespace CIR {
         std::string name;
         std::vector<std::pair<std::string, Cpoint_Type>> vars;
         std::vector<std::string> functions; // only need names to verify if a function exists in a struct
-        Struct() : name(), vars() {}
-        Struct(std::string name, std::vector<std::pair<std::string, Cpoint_Type>> vars) : name(name), vars(vars) {}
+        Struct() : name(), vars(), functions() {}
+        Struct(std::string name, std::vector<std::pair<std::string, Cpoint_Type>> vars, std::vector<std::string> functions) : name(name), vars(vars), functions() {}
     };
     // TODO : make it a base class
     class Value {

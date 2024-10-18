@@ -1090,10 +1090,14 @@ void StructDeclarAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         // TODO : add support for support of multiple variables in one var
         vars.push_back(std::make_pair(Vars.at(i)->VarNames.at(0).first, Vars.at(i)->cpoint_type));
     }
+    std::vector<std::string> functions;
+    for (int i = 0; i < Functions.size(); i++){
+        functions.push_back(Functions.at(i)->Proto->Name);
+    }
     if (has_template){
         NOT_IMPLEMENTED(); // TODO
     } else {
-        fileCIR->structs[Name] = CIR::Struct(Name, vars);
+        fileCIR->structs[Name] = CIR::Struct(Name, vars, functions);
     }
 }
 

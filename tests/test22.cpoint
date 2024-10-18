@@ -20,8 +20,8 @@ func main(){
   var a : double = 2 
   printd(sizeof x)
   y = alloc::manual_alloc(sizeof x)
-  y.z = 3
-  x.z = 2
+  // y.z = 3
+  // x.z = 2
   x.test_function(cast i32 2) 
   y.test_function(cast i32 3)
   alloc::manual_dealloc(y)
