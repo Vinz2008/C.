@@ -266,6 +266,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make so the makefile build a separate llvm in tree if llvm is not installed (or if manually asked) and link to it (probably statically in this case or put it in /usr/local/lib/cpoint)
 - [ ] Add typechecking for casts (also differenciate depending of if the cast is implicit)
 - [ ] Make the compiler work with mimalloc to improve performance
+- [ ] Make backends shared libraries to remove useless shared libraries dependencies and enable lazy load backend dependencies (llvm, maybe libgccjit in the future ?)
 
 ## Benchmarks compared to other languages
 
