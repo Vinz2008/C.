@@ -267,6 +267,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add typechecking for casts (also differenciate depending of if the cast is implicit)
 - [ ] Make the compiler work with mimalloc to improve performance
 - [ ] Make backends shared libraries to remove useless shared libraries dependencies and enable lazy load backend dependencies (llvm, maybe libgccjit in the future ?)
+- [ ] Use ccache if available when building the compiler (will speed up rebuilds)
 
 ## Benchmarks compared to other languages
 

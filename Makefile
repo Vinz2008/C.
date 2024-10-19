@@ -13,7 +13,6 @@ export CXX
 
 NO_MOLD ?= FALSE
 
-
 STATIC_LLVM ?= FALSE
 
 #LLVM_CONFIG ?= llvm-config
