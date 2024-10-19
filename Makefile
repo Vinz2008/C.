@@ -76,7 +76,8 @@ endif
 LDFLAGS = $(ADDITIONAL_LDFLAGS)
 
 ifeq ($(STATIC_LLVM_DEPENDENCIES), TRUE)
-LDFLAGS += -L$(STATIC_LLVM_DEPENDENCIES_PREFIX) -Wl,-Bstatic -lncursesw 
+LDFLAGS += -Wl,-Bstatic
+#LDFLAGS += -L$(STATIC_LLVM_DEPENDENCIES_PREFIX) -Wl,-Bstatic -lncursesw 
 endif
 
 ifeq ($(OS), Windows_NT)
@@ -87,15 +88,17 @@ ifneq (,$(findstring mingw,$(CXX)))
 LDFLAGS += -L/usr/x86_64-w64-mingw32/lib/ -lLLVM-17 -lstdc++ 
 #LDFLAGS += -lintl
 else
+
 ifeq ($(STATIC_LLVM), TRUE)
 CLANG_STATIC_LIBS=$(shell ls $(LLVM_PREFIX)/lib/libclang*.a)
 CLANG_STATIC_LDFLAGS = $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(CLANG_STATIC_LIBS)))))
 LLD_STATIC_LIBS=$(shell ls $(LLVM_PREFIX)/lib/liblld*.a)
 LLD_STATIC_LDFLAGS = $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(LLD_STATIC_LIBS)))))
-LDFLAGS += $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs all) $(CLANG_STATIC_LDFLAGS)  $(LLD_STATIC_LDFLAGS)
+LDFLAGS +=  -Wl,--start-group $(CLANG_STATIC_LDFLAGS) -Wl,--end-group  $(LLD_STATIC_LDFLAGS) $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs all)
 else
-LDFLAGS += $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs core)
+LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs core)
 endif
+
 endif
 endif
 
@@ -127,9 +130,9 @@ LLVM_TOOLS_EXTERNAL_OBJS = $(patsubst %.cpp,%.o,$(LLVM_TOOLS_EXTERNAL_SRCS))
 OBJS += $(LLVM_TOOLS_EXTERNAL_OBJS)
 
 
-ifeq ($(STATIC_LLVM), FALSE)
-LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
-endif
+# ifeq ($(STATIC_LLVM), FALSE)
+# LDFLAGS += -lclang-cpp -llldCommon -llldELF -llldMachO -llldCOFF -llldWasm -llldMinGW
+# endif
 
 endif
 
@@ -149,6 +152,7 @@ CXXFLAGS += -O$(PROFILING_OPTIMIZATION_LEVEL)
 #CXXFLAGS += -DTRACY_NO_EXIT
 LDFLAGS += -lpthread -ldl
 endif
+
 
 DEP = $(OBJS:%.o=%.d)
 #DEPENDS := $(patsubst %.cpp,%.d,$(SRCS))
