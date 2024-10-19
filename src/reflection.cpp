@@ -2,6 +2,8 @@
 #include "types.h"
 #include "log.h"
 #include "ast.h"
+
+
 #include "CIR/cir.h"
 
 using namespace llvm;
@@ -22,13 +24,6 @@ int getTypeId(Cpoint_Type cpoint_type){
 Value* getTypeIdLLVM(Cpoint_Type cpoint_type){
     return ConstantInt::get(*TheContext, APInt(32, getTypeId(cpoint_type)));
 }
-
-CIR::InstructionRef getTypeIdCIR(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type cpoint_type){
-    CIR::ConstNumber::nb_val_ty nb_val;
-    nb_val.int_nb = getTypeId(cpoint_type);
-    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(Cpoint_Type(i32_type), false, nb_val));
-}
-
 
 static Value* refletionInstrTypeId(std::vector<std::unique_ptr<ExprAST>> Args){
     if (Args.size() > 1){
@@ -77,6 +72,16 @@ Value* refletionInstruction(std::string instruction, std::vector<std::unique_ptr
     }
     return LogErrorV(emptyLoc, "Unknown Reflection Instruction");
 }
+
+
+#if ENABLE_CIR
+
+CIR::InstructionRef getTypeIdCIR(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type cpoint_type){
+    CIR::ConstNumber::nb_val_ty nb_val;
+    nb_val.int_nb = getTypeId(cpoint_type);
+    return fileCIR->add_instruction(std::make_unique<CIR::ConstNumber>(Cpoint_Type(i32_type), false, nb_val));
+}
+
 
 
 static CIR::InstructionRef refletionInstrTypeIdCIR(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>> Args){
@@ -132,3 +137,6 @@ CIR::InstructionRef refletionInstructionCIR(std::unique_ptr<FileCIR>& fileCIR, s
     LogError("Unknown Reflection Instruction");
     return CIR::InstructionRef();
 }
+
+
+#endif
