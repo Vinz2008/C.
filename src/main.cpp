@@ -49,6 +49,10 @@
 
 #include "tracy.h"
 
+#ifdef PROFILING
+#include "external/tracy/public/client/TracyProfiler.hpp"
+#endif
+
 using namespace std;
 
 /*using namespace llvm;
@@ -384,6 +388,8 @@ int StartJIT(){
 #endif
 
 int main(int argc, char **argv){
+
+
 #ifndef _WIN32 // TODO : make work gettext on windows (removed also because of problems with mingw gettext in the docker ci)
     setlocale(LC_ALL, "");
     bindtextdomain("cpoint", "/usr/share/locale/" /*"./locales/"*/ /*NULL*/);
@@ -853,5 +859,6 @@ int main(int argc, char **argv){
     if (remove_temp_file){
       remove(temp_filename.c_str());
     }
+    
     return return_status;
 }
