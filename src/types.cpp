@@ -390,6 +390,10 @@ bool Cpoint_Type::is_decimal_number_type(){
 }
 
 bool Cpoint_Type::is_number_type(){
+    return this->is_integer_type() || this->is_decimal_number_type();
+}
+
+bool Cpoint_Type::is_integer_type(){
     return this->is_signed() || this->is_unsigned();
 }
 

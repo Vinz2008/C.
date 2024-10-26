@@ -99,8 +99,11 @@ public:
     friend bool operator!=(const Cpoint_Type& lhs, const Cpoint_Type& rhs){
         return !(lhs == rhs);
     }*/
+   std::string to_string(){
+        return create_pretty_name_for_type(*this);
+   }
     char* c_stringify(){
-        std::string str = create_pretty_name_for_type(*this);
+        std::string str = this->to_string();
         return strdup(str.c_str());
     }
     int get_number_of_bits();
@@ -111,6 +114,7 @@ public:
     bool is_signed();
     bool is_unsigned();
     bool is_number_type();
+    bool is_integer_type();
     // if is a template, remove it
     Cpoint_Type get_real_type();
     Cpoint_Type deref_type();

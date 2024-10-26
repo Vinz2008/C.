@@ -23,6 +23,7 @@ static void string_vector_erase(std::vector<std::string>& strings, std::string s
     }
 }
 
+#if DISABLE_OLD_LLVM_BACKEND == 0
 
 Value* MatchNotEnumCodegen(std::string matchVar, std::vector<matchCase> matchCases, Function* TheFunction){
     // For now consider by default it will compare ints
@@ -304,3 +305,5 @@ Value* MatchExprAST::codegen(){
     Builder->SetInsertPoint(AfterMatch);
     return Constant::getNullValue(get_type_llvm(double_type)); // TODO : return a phi node
 }
+
+#endif

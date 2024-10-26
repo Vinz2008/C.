@@ -205,7 +205,7 @@ CIR::InstructionRef VarExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     if (VarNames.at(0).second){
         varInit = VarNames.at(0).second->cir_gen(fileCIR);
         if (!varInit.is_empty()){ // TODO : remove this if ?
-            Cpoint_Type init_type = VarNames.at(0).second->get_type();
+            Cpoint_Type init_type = VarNames.at(0).second->get_type(fileCIR.get());
             if (infer_type){
                 cpoint_type = init_type;
             } else {
@@ -611,7 +611,7 @@ CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         CIR::InstructionRef argI = Args.at(i)->cir_gen(fileCIR);
         Cpoint_Type arg_type = Args.at(i)->get_type(fileCIR.get());
         //std::cout << fileCIR->protos[Callee].args.size() << std::endl;
-        if (arg_type != fileCIR->protos[Callee].args.at(i).second){
+        if (!fileCIR->protos[Callee].is_variable_number_args && arg_type != fileCIR->protos[Callee].args.at(i).second){
             cir_convert_to_type(fileCIR, arg_type, fileCIR->protos[Callee].args.at(i).second, argI);
         }
         call_instr->Args.push_back(argI);
@@ -689,7 +689,7 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
             return CIR::InstructionRef();
         }
 
-        Cpoint_Type index_type = index->get_type();
+        Cpoint_Type index_type = index->get_type(fileCIR.get());
 
         // TODO : if index is const, add a static bound checking
         if (!index_type.is_number_type()){

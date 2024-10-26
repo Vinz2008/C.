@@ -32,20 +32,28 @@ extern std::string strPosArray;
 extern std::string OpStringMultiChar;
 extern int posArrayNb;
 extern std::unique_ptr<Compiler_context> Comp_context;
+
 extern std::unordered_map<std::string, std::unique_ptr<NamedValue>> NamedValues;
+
+#if DISABLE_OLD_LLVM_BACKEND == 0
 extern std::unordered_map<std::string, std::unique_ptr<GlobalVariableValue>> GlobalVariables;
+#endif
+
 extern std::unordered_map<std::string, std::unique_ptr<EnumDeclaration>> EnumDeclarations;
+
 extern std::unique_ptr<Module> TheModule;
 extern std::vector<std::string> types_list;
 extern std::vector<Cpoint_Type> typeDefTable;
 
-extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclar>> TemplateStructDeclars;
-extern std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
-//extern std::vector<std::string> modulesNamesContext;
-extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
+
 extern std::vector<TemplateStructCreation> StructTemplatesToGenerate;
+extern std::unordered_map<std::string, std::unique_ptr<EnumDeclar>> TemplateEnumDeclars;
+extern std::unordered_map<std::string, std::unique_ptr<TemplateProto>> TemplateProtos;
 extern std::vector<TemplateEnumCreation> EnumTemplatesToGenerate;
+//extern std::vector<std::string> modulesNamesContext;
+
+extern std::pair<std::string, Cpoint_Type> TypeTemplateCallCodegen;
 extern std::string TypeTemplateCallAst;
 extern std::unordered_map<std::string, std::unique_ptr<StructDeclaration>> StructDeclarations;
 
@@ -1356,7 +1364,11 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
     } else if (CurTok == tok_func){
       Log::Info() << "function found in struct" << "\n";
       Cpoint_Type self_type = Cpoint_Type(other_type, true, 1, false, 0, true, structName);
+#if DISABLE_OLD_LLVM_BACKEND
+      NamedValues["self"] = std::make_unique<NamedValue>(self_type);
+#else
       NamedValues["self"] = std::make_unique<NamedValue>(nullptr, self_type);
+#endif
       std::unique_ptr<FunctionAST> declar = ParseDefinition();
       Log::Info() << "AFTER ParseDefinition" << "\n";
       if (!declar){
@@ -1385,6 +1397,8 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
   getNextToken();  // eat '}'.
   if (!has_template){
     std::vector<std::pair<std::string, Cpoint_Type>> members_reordered;
+    // TODO : move this in cir gen to make it work without the old llvm backend
+#if DISABLE_OLD_LLVM_BACKEND == 0
     bool is_reordering_needed = reorder_struct(StructDeclarations[structName].get(), structName, members_reordered);
     if (is_reordering_needed){
     if (struct_repr == "auto_reorder"){
@@ -1418,6 +1432,7 @@ std::unique_ptr<StructDeclarAST> ParseStruct(){
 
     }
     }
+#endif
   }
   auto structDeclar = std::make_unique<StructDeclarAST>(structName, std::move(VarList), std::move(Functions), std::move(ExternFunctions), has_template, template_name);
   struct_parsing = false;
@@ -1458,7 +1473,11 @@ std::unique_ptr<MembersDeclarAST> ParseMembers(){
             } else {
                 self_type = Cpoint_Type(get_type(members_for));
             }
+#if DISABLE_OLD_LLVM_BACKEND
+            NamedValues["self"] = std::make_unique<NamedValue>(self_type);
+#else
             NamedValues["self"] = std::make_unique<NamedValue>(nullptr, self_type);
+#endif
             auto funcAST = ParseDefinition();
             if (funcAST == nullptr){
                 return LogErrorMembers("Error in members declaration funcs");
@@ -1578,7 +1597,12 @@ std::unique_ptr<EnumDeclarAST> ParseEnum(){
     }
     getNextToken();
     auto enumDeclar = std::make_unique<EnumDeclarAST>(Name, enum_member_contain_type, std::move(EnumMembers), has_template, template_name);
+    
+#if DISABLE_OLD_LLVM_BACKEND
+    EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumDeclar->clone());
+#else
     EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(nullptr, enumDeclar->clone());
+#endif
     if (has_template){
         TemplateEnumDeclars[Name] = std::make_unique<EnumDeclar>(std::move(enumDeclar), template_name);
         is_template_parsing_enum = true;
@@ -1597,7 +1621,11 @@ std::unique_ptr<FunctionAST> ParseDefinition() {
   getNextToken();  // eat '{'
   for (int i = 0; i < Proto->Args.size(); i++){
     Log::Info() << "args added to NamedValues when doing ast : " << Proto->Args.at(i).first << "\n";
+#if DISABLE_OLD_LLVM_BACKEND
+    NamedValues[Proto->Args.at(i).first] = std::make_unique<NamedValue>(Proto->Args.at(i).second);
+#else
     NamedValues[Proto->Args.at(i).first] = std::make_unique<NamedValue>(nullptr,Proto->Args.at(i).second);
+#endif
   }
   StructTemplatesToGenerate.clear();
   Log::Info() << "cleared StructTemplatesToGenerate" << "\n";
@@ -2300,7 +2328,11 @@ std::unique_ptr<ExprAST> ParseVarExpr() {
   }
 
   //cpoint_type.is_struct = cpoint_type.struct_name != "";
+#if DISABLE_OLD_LLVM_BACKEND
+  NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(cpoint_type);
+#else
   NamedValues[VarNames.at(0).first] = std::make_unique<NamedValue>(nullptr, cpoint_type);
+#endif
   return std::make_unique<VarExprAST>(std::move(VarNames), cpoint_type, std::move(index), infer_type);
 }
 

@@ -260,7 +260,7 @@ Value* callLLVMIntrisic(std::string Callee, std::vector<std::unique_ptr<ExprAST>
   return callLLVMIntrisic(Callee, ArgsV, Tys);
 }
 
-Value* getSizeOfStruct(Value *A){
+static Value* getSizeOfStruct(Value *A){
     Type* llvm_type = A->getType();
     auto one = llvm::ConstantInt::get(*TheContext, llvm::APInt(32, 1, true));
     Value* size = Builder->CreateGEP(llvm_type, Builder->CreateIntToPtr(ConstantInt::get(Builder->getInt64Ty(), 0),llvm_type->getPointerTo()), {one});
@@ -540,7 +540,7 @@ Type* EnumDeclarAST::codegen(){
     Type* enumType = nullptr;
     if (!enum_member_contain_type){
         enumType = get_type_llvm(i32_type);
-        EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, std::move(this->clone()));
+        EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, this->clone());
         return nullptr;
     }
     Log::Info() << "codegen EnumDeclarAST with type" << "\n";

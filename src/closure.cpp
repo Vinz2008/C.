@@ -72,6 +72,7 @@ void generateClosures(){
 
 extern Triple TripleLLVM;
 
+#if DISABLE_OLD_LLVM_BACKEND == 0
 Value* ClosureAST::codegen(){
     std::string closure_name = "closure" + std::to_string(closure_number);
     closure_number++;
@@ -122,3 +123,5 @@ Value* ClosureAST::codegen(){
     }
     return f;
 }
+
+#endif

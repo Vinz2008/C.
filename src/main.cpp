@@ -743,7 +743,10 @@ int main(int argc, char **argv){
     codegenTemplates();
     //codegenStructTemplates();
     generateTests();
+    // TODO : add closures
+#if DISABLE_OLD_LLVM_BACKEND == 0
     generateClosures();
+#endif
     //generateExterns();
     if (debug_info_mode){
     DBuilder->finalize();

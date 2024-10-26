@@ -95,6 +95,7 @@ static bool reorder_struct_sorter(const std::pair<std::string,Cpoint_Type>& lhs,
     return type_size(lhs.second) > type_size(rhs.second);
 }
 
+#if DISABLE_OLD_LLVM_BACKEND == 0
 // return value is if the struct should be reordered
 bool reorder_struct(StructDeclaration* structDeclaration, std::string structName, std::vector<std::pair<std::string,Cpoint_Type>>& return_members){
     // for now only have a reorder warning for structs without complex types in it (TODO)
@@ -135,3 +136,5 @@ bool reorder_struct(StructDeclaration* structDeclaration, std::string structName
         }
     }*/
 }
+
+#endif

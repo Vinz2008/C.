@@ -1,8 +1,9 @@
 #DEFAULT_CC_VAL = g++
-DEFAULT_CC_VAL = gcc
+DEFAULT_CC_VAL = g++
 ifeq ($(CC), cc)
 CC = $(DEFAULT_CC_VAL)
 endif
+
 
 #CC ?= $(DEFAULT_CC_VAL)
 ifeq ($(OS),Windows_NT)
@@ -30,7 +31,7 @@ ifeq ($(STATIC_LLVM), FALSE)
 LDFLAGS = -lclang
 else
 CLANG_STATIC_LIBS=$(shell ls $(LLVM_PREFIX)/lib/libclang*.a)
-CLANG_STATIC_LDFLAGS = $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(CLANG_STATIC_LIBS)))))
+CLANG_STATIC_LDFLAGS =  $(addprefix -l,$(basename $(notdir $(subst /lib,/,$(CLANG_STATIC_LIBS)))))
 LDFLAGS = $(shell $(LLVM_PREFIX)/bin/llvm-config --ldflags --system-libs --libs all) $(CLANG_STATIC_LDFLAGS)
 LDFLAGS += -lclang # TODO : remove this (it links the dynamic lib)
 #LDFLAGS += $(LLVM_PREFIX)/lib/libclang.a

@@ -1,12 +1,15 @@
 #ifndef _CODEGEN_HEADER_
 #define _CODEGEN_HEADER_
 
-
 #if DISABLE_OLD_LLVM_BACKEND == 0
-
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/GlobalVariable.h"
+
+
+using namespace llvm;
+
+#endif
 //#include "types.h"
 //#include "errors.h"
 #include "ast.h"
@@ -14,17 +17,26 @@
 #include <unordered_map>
 #include <cmath>
 
-using namespace llvm;
 
 void InitializeModule(std::string filename);
 
 class NamedValue {
 public:
+
+#if DISABLE_OLD_LLVM_BACKEND == 0
     llvm::AllocaInst* alloca_inst;
+#endif
     Cpoint_Type type;
+
+#if DISABLE_OLD_LLVM_BACKEND == 0
     llvm::Type* struct_type;
+#endif
     std::string struct_declaration_name;
+#if DISABLE_OLD_LLVM_BACKEND
+    NamedValue(Cpoint_Type type, const std::string &struct_declaration_name = "") : type(std::move(type)), struct_declaration_name(struct_declaration_name) {}
+#else
     NamedValue(llvm::AllocaInst* alloca_inst, Cpoint_Type type, llvm::Type* struct_type = get_type_llvm(Cpoint_Type(double_type)), const std::string &struct_declaration_name = "") : alloca_inst(alloca_inst), type(std::move(type)), struct_type(struct_type), struct_declaration_name(struct_declaration_name) {}
+#endif
 };
 
 class TemplateProto {
@@ -41,6 +53,7 @@ public:
     StructDeclar(std::unique_ptr<StructDeclarAST> declarAST, const std::string& template_type_name) : declarAST(std::move(declarAST)), template_type_name(template_type_name) {}
 };
 
+
 class EnumDeclar {
 public:
     std::unique_ptr<EnumDeclarAST> declarAST;
@@ -48,12 +61,15 @@ public:
     EnumDeclar(std::unique_ptr<EnumDeclarAST> declarAST, const std::string& template_type_name) : declarAST(std::move(declarAST)), template_type_name(template_type_name) {}
 };
 
+
 class TemplateCall {
 public:
     /*std::string*/ Cpoint_Type type;
     std::unique_ptr<FunctionAST> functionAST;
     TemplateCall(Cpoint_Type type, std::unique_ptr<FunctionAST> functionAST) : type(type), functionAST(std::move(functionAST)) {}
 };
+
+
 
 class TemplateStructCreation {
 public:
@@ -98,17 +114,31 @@ public:
 
 class UnionDeclaration {
 public:
+#if DISABLE_OLD_LLVM_BACKEND == 0
     llvm::Type* union_type;
+#endif
     std::vector<std::pair<std::string,Cpoint_Type>> members;
+#if DISABLE_OLD_LLVM_BACKEND
+UnionDeclaration(std::vector<std::pair<std::string,Cpoint_Type>> members) : members(std::move(members)) {}
+#else
     UnionDeclaration(llvm::Type* union_type, std::vector<std::pair<std::string,Cpoint_Type>> members) : union_type(union_type), members(std::move(members)) {}
+#endif
 };
 
 class EnumDeclaration {
 public:
+#if DISABLE_OLD_LLVM_BACKEND == 0
     llvm::Type* enumType;
+#endif
     std::unique_ptr<EnumDeclarAST> EnumDeclar;
+#if DISABLE_OLD_LLVM_BACKEND
+    EnumDeclaration(std::unique_ptr<EnumDeclarAST> EnumDeclar) : EnumDeclar(std::move(EnumDeclar)) {} 
+#else
     EnumDeclaration(llvm::Type* enumType, std::unique_ptr<EnumDeclarAST> EnumDeclar) : enumType(enumType), EnumDeclar(std::move(EnumDeclar)) {} 
+#endif
 };
+
+#if DISABLE_OLD_LLVM_BACKEND == 0
 
 class ExternToGenerate {
 public:

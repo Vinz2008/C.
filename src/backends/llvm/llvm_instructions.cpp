@@ -103,10 +103,13 @@ static Function* getFunction(std::unique_ptr<LLVM::Context>& codegen_context, st
     return nullptr;
 }
 
+
 static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarName, Type* type){
   IRBuilder<> TmpB(&TheFunction->getEntryBlock(), TheFunction->getEntryBlock().begin());
   return TmpB.CreateAlloca(type, 0, VarName);
 }
+
+// TODO : remove ref to instruction (because it is technically moved ?)
 
 static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<CIR::Instruction>& instruction, bool is_global = false) {
     std::string instruction_label = instruction->label;
@@ -117,12 +120,13 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         auto call_instr = get_Instruction_from_CIR_Instruction<CIR::CallInstruction>(std::move(instruction));
         Function* calling_function = getFunction(codegen_context, fileCIR, call_instr->Callee);
         // TODO : add support for NamedValues calling
+        bool should_add_unreachable = call_instr->type.type == never_type;
         bool has_sret = call_instr->type.is_just_struct() && should_return_struct_with_ptr(call_instr->type);
         std::vector<Value *> Args;
         AllocaInst* SretArgAlloca = nullptr;
         if (has_sret){
-            Function* TheFunction = codegen_context->Builder->GetInsertBlock()->getParent();
-            SretArgAlloca = CreateEntryBlockAlloca(TheFunction, call_instr->type.struct_name + "_sret", get_type_llvm(codegen_context, call_instr->type));
+            //Function* TheFunction = codegen_context->Builder->GetInsertBlock()->getParent();
+            SretArgAlloca = CreateEntryBlockAlloca(codegen_context->TheFunction, call_instr->type.struct_name + "_sret", get_type_llvm(codegen_context, call_instr->type));
             int idx = 0;
             for (auto& Arg : calling_function->args()){
                 if (idx == 0){
@@ -133,6 +137,7 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
                 idx++;
             }
             Args.push_back(SretArgAlloca);
+
         }
         for (int i = 0; i < call_instr->Args.size(); i++){
             Value* arg_val = codegen_context->functionValues.at(call_instr->Args.at(i).get_pos());
@@ -146,6 +151,9 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
             instruction_val = codegen_context->Builder->CreateLoad(SretArgAlloca->getAllocatedType(), SretArgAlloca);
         } else {
             instruction_val = call;
+        }
+        if (should_add_unreachable){
+            codegen_context->Builder->CreateUnreachable();
         }
     } else if (dynamic_cast<CIR::ReturnInstruction*>(instruction.get())){
         auto return_instr = get_Instruction_from_CIR_Instruction<CIR::ReturnInstruction>(std::move(instruction));
@@ -175,8 +183,8 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         instruction_val = cast_val;
     } else if (dynamic_cast<CIR::VarInit*>(instruction.get())){
         auto var_init_instruction = get_Instruction_from_CIR_Instruction<CIR::VarInit>(std::move(instruction));
-        Function* TheFunction = codegen_context->Builder->GetInsertBlock()->getParent();
-        AllocaInst *Alloca = CreateEntryBlockAlloca(TheFunction, var_init_instruction->VarName.first, get_type_llvm(codegen_context, var_init_instruction->type));
+        //Function* TheFunction = codegen_context->Builder->GetInsertBlock()->getParent();
+        AllocaInst *Alloca = CreateEntryBlockAlloca(codegen_context->TheFunction, var_init_instruction->VarName.first, get_type_llvm(codegen_context, var_init_instruction->type));
         if (!var_init_instruction->VarName.second.is_empty()){
             Value* InitVal = codegen_context->functionValues.at(var_init_instruction->VarName.second.get_pos());
             codegen_context->Builder->CreateStore(InitVal, Alloca);
@@ -232,42 +240,42 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         outs() << "arg1_val->getType() == arg2_val->getType() : " << (arg1_type == arg2_type) << "\n";*/
         switch (cmp_instruction->cmp_type){
             case CIR::CmpInstruction::CMP_EQ:
-                if (arg_type->isFloatTy()){
+                if (arg_type->isFloatingPointTy()){
                     instruction_val =  codegen_context->Builder->CreateFCmpUEQ(arg1_val, arg2_val, cmp_label);
                 } else {
                     instruction_val = codegen_context->Builder->CreateICmpEQ(arg1_val, arg2_val, cmp_label);
                 }
                 break;
             case CIR::CmpInstruction::CMP_NOT_EQ:
-                if (arg_type->isFloatTy()){
+                if (arg_type->isFloatingPointTy()){
                     instruction_val = codegen_context->Builder->CreateFCmpUNE(arg1_val, arg2_val, cmp_label);
                 } else {
                     instruction_val = codegen_context->Builder->CreateICmpNE(arg1_val, arg2_val, cmp_label);
                 }
                 break;
             case CIR::CmpInstruction::CMP_GREATER:
-                if (arg_type->isFloatTy()){
+                if (arg_type->isFloatingPointTy()){
                     instruction_val = codegen_context->Builder->CreateFCmpOGT(arg1_val, arg2_val, cmp_label);
                 } else {
                     instruction_val = codegen_context->Builder->CreateICmpSGT(arg1_val,  arg2_val, cmp_label);
                 }
                 break;
             case CIR::CmpInstruction::CMP_GREATER_EQ:
-                if (arg_type->isFloatTy()){
+                if (arg_type->isFloatingPointTy()){
                     instruction_val = codegen_context->Builder->CreateFCmpOGE(arg1_val, arg2_val, cmp_label);
                 } else {
                     instruction_val = codegen_context->Builder->CreateICmpSGE(arg1_val, arg2_val, cmp_label);
                 }
                 break;
             case CIR::CmpInstruction::CMP_LOWER:
-                if (arg_type->isFloatTy()){
+                if (arg_type->isFloatingPointTy()){
                     instruction_val = codegen_context->Builder->CreateFCmpOLT(arg1_val, arg2_val, cmp_label);
                 } else {
                     instruction_val = codegen_context->Builder->CreateICmpSLT(arg1_val, arg2_val, cmp_label);
                 }
                 break;
             case CIR::CmpInstruction::CMP_LOWER_EQ:
-                if (arg_type->isFloatTy()){
+                if (arg_type->isFloatingPointTy()){
                     instruction_val = codegen_context->Builder->CreateFCmpOLE(arg1_val, arg2_val, cmp_label);
                 } else {
                     instruction_val = codegen_context->Builder->CreateICmpSLE(arg1_val, arg2_val, cmp_label);
@@ -277,15 +285,36 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
                 fprintf(stderr, "CIR ERROR : Invalid compare instruction");
                 exit(1);
         }
+
     } else if (dynamic_cast<CIR::AddInstruction*>(instruction.get())){
         auto add_instruction = get_Instruction_from_CIR_Instruction<CIR::AddInstruction>(std::move(instruction));
         Value* arg1_val = codegen_context->functionValues.at(add_instruction->arg1.get_pos());
         Value* arg2_val = codegen_context->functionValues.at(add_instruction->arg2.get_pos());
         Cpoint_Type add_type = add_instruction->type;
-        if (!add_type.is_decimal_number_type() || add_type.is_vector_type){
+        if (!add_type.is_decimal_number_type() || add_type.is_vector_type){ // TODO : maybe use fadd when the type contained in the vector is a float
             instruction_val = codegen_context->Builder->CreateAdd(arg1_val, arg2_val, "addtmp");
         } else {
             instruction_val = codegen_context->Builder->CreateFAdd(arg1_val, arg2_val, "faddtmp");
+        }
+    } else if (dynamic_cast<CIR::SubInstruction*>(instruction.get())){
+        auto sub_instruction = get_Instruction_from_CIR_Instruction<CIR::SubInstruction>(std::move(instruction));
+        Value* arg1_val = codegen_context->functionValues.at(sub_instruction->arg1.get_pos());
+        Value* arg2_val = codegen_context->functionValues.at(sub_instruction->arg2.get_pos());
+        Cpoint_Type sub_type = sub_instruction->type;
+        if (!sub_type.is_decimal_number_type() || sub_type.is_vector_type){
+            instruction_val = codegen_context->Builder->CreateSub(arg1_val, arg2_val, "subtmp");
+        } else {
+            instruction_val = codegen_context->Builder->CreateFSub(arg1_val, arg2_val, "fsubtmp");
+        }
+    } else if (dynamic_cast<CIR::MulInstruction*>(instruction.get())){
+        auto mul_instruction = get_Instruction_from_CIR_Instruction<CIR::MulInstruction>(std::move(instruction));
+        Value* arg1_val = codegen_context->functionValues.at(mul_instruction->arg1.get_pos());
+        Value* arg2_val = codegen_context->functionValues.at(mul_instruction->arg2.get_pos());
+        Cpoint_Type mul_type = mul_instruction->type;
+        if (!mul_type.is_decimal_number_type() || mul_type.is_vector_type){
+            instruction_val = codegen_context->Builder->CreateMul(arg1_val, arg2_val, "multmp");
+        } else {
+            instruction_val = codegen_context->Builder->CreateFMul(arg1_val, arg2_val, "fmultmp");
         }
     } else if (dynamic_cast<CIR::RemInstruction*>(instruction.get())){
         auto rem_instruction = get_Instruction_from_CIR_Instruction<CIR::RemInstruction>(std::move(instruction));
@@ -301,6 +330,17 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         } else {
             instruction_val = codegen_context->Builder->CreateFRem(arg1_val, arg2_val, "fremtmp");
         }
+    } else if (dynamic_cast<CIR::AndInstruction*>(instruction.get())){
+        auto and_instruction = get_Instruction_from_CIR_Instruction<CIR::AndInstruction>(std::move(instruction));
+        Value* arg1_val = codegen_context->functionValues.at(and_instruction->arg1.get_pos());
+        Value* arg2_val = codegen_context->functionValues.at(and_instruction->arg2.get_pos());
+        instruction_val = codegen_context->Builder->CreateAnd(arg1_val, arg2_val, "andtmp");
+    } else if (dynamic_cast<CIR::OrInstruction*>(instruction.get())){
+        auto or_instruction = get_Instruction_from_CIR_Instruction<CIR::OrInstruction>(std::move(instruction));
+        Value* arg1_val = codegen_context->functionValues.at(or_instruction->arg1.get_pos());
+        Value* arg2_val = codegen_context->functionValues.at(or_instruction->arg2.get_pos());
+        Cpoint_Type or_type = or_instruction->type;
+        instruction_val = codegen_context->Builder->CreateOr(arg1_val, arg2_val, "andtmp");
     } else if (dynamic_cast<CIR::GotoInstruction*>(instruction.get())){
         auto goto_instruction = get_Instruction_from_CIR_Instruction<CIR::GotoInstruction>(std::move(instruction));
         //BasicBlock* bb = codegen_context->functionBBs.at(goto_instruction->goto_bb.get_pos());
@@ -388,24 +428,50 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
     }
 }
 
-static void codegenBasicBlock(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> &fileCIR, Function* TheFunction, std::unique_ptr<CIR::BasicBlock> basic_block /*, bool is_first_bb = false*/){
-    if (/*!is_first_bb*/ codegen_context->bb_codegen_number != 0){
-        /*BasicBlock *BB = BasicBlock::Create(*codegen_context->TheContext, basic_block->name, TheFunction);
-        codegen_context->Builder->SetInsertPoint(BB);
-        codegen_context->functionBBs.push_back(BB);*/
+// copy of the one in codegen.cpp
+static Value* getSizeOfStruct(std::unique_ptr<LLVM::Context> &codegen_context, Type* struct_type, Value *A){
+    Type* llvm_type = A->getType();
+    auto one = llvm::ConstantInt::get(*codegen_context->TheContext, llvm::APInt(32, 1, true));
+    Value* size = codegen_context->Builder->CreateGEP(struct_type, codegen_context->Builder->CreateIntToPtr(ConstantInt::get(codegen_context->Builder->getInt64Ty(), 0), llvm_type->getPointerTo()), {one});
+    size = codegen_context->Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
+    return size;
+}
+
+static void handleSretReturn(std::unique_ptr<LLVM::Context> &codegen_context, std::unique_ptr<FileCIR> &fileCIR, std::unique_ptr<CIR::Instruction>& instruction){
+    std::unique_ptr<CIR::ReturnInstruction> return_instruction = get_Instruction_from_CIR_Instruction<CIR::ReturnInstruction>(std::move(instruction));
+    Value* ret_val = codegen_context->functionValues.at(return_instruction->ret_val.get_pos());
+    std::string sret_arg_name = "sret_arg";
+    AllocaInst* sret_ptr = codegen_context->functionVarsAllocas[sret_arg_name];
+    AllocaInst* temp_var = CreateEntryBlockAlloca(codegen_context->TheFunction, "temp_retvar_sret", ret_val->getType());
+    codegen_context->Builder->CreateStore(ret_val, temp_var);
+    codegen_context->Builder->CreateMemCpy(sret_ptr, MaybeAlign(0), temp_var, MaybeAlign(0), getSizeOfStruct(codegen_context, codegen_context->function_sret_type, sret_ptr));
+    codegen_context->Builder->CreateRetVoid();
+}
+
+static void codegenBasicBlock(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> &fileCIR, std::unique_ptr<CIR::BasicBlock> basic_block, int bb_nb, bool has_function_sret){
+    if (codegen_context->bb_codegen_number != 0){
         codegen_context->Builder->SetInsertPoint(codegen_context->functionBBs.at(codegen_context->bb_codegen_number).second);
     }
-    //codegen_context->functionValues.clear();
     for (int i = 0; i < basic_block->instructions.size(); i++){
-        codegenInstruction(codegen_context, fileCIR, basic_block->instructions.at(i));
+        bool is_last_bb = codegen_context->bb_codegen_number == bb_nb-1;
+        bool is_last_instruction = i == basic_block->instructions.size()-1;
+        if (has_function_sret && is_last_bb && is_last_instruction && dynamic_cast<CIR::ReturnInstruction*>(basic_block->instructions.at(i).get())){
+            handleSretReturn(codegen_context, fileCIR, basic_block->instructions.at(i));
+        } else {
+            codegenInstruction(codegen_context, fileCIR, basic_block->instructions.at(i));
+        }
     }
     codegen_context->bb_codegen_number++;
 }
 
 static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR> &fileCIR, std::unique_ptr<CIR::Function> function) {
     Function *TheFunction = getFunction(codegen_context, fileCIR, function->proto->name);
+    codegen_context->TheFunction = TheFunction;
     // TODO : uncomment this after implementing codegen of instructions
     bool has_sret = function->proto->return_type.is_just_struct() && should_return_struct_with_ptr(function->proto->return_type);
+    if (has_sret){
+        codegen_context->function_sret_type = get_type_llvm(codegen_context, function->proto->return_type);
+    }
     codegen_context->functionVarsAllocas.clear();
     codegen_context->functionBBs.clear();
     codegen_context->bb_codegen_number = 0;
@@ -435,9 +501,11 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
         BasicBlock *BB = BasicBlock::Create(*codegen_context->TheContext, function->basicBlocks.at(i)->name, TheFunction);
         codegen_context->functionBBs.push_back(std::make_pair(function->basicBlocks.at(i).get(), BB));
     }
-    for (int i = 0; i < function->basicBlocks.size(); i++){
-        codegenBasicBlock(codegen_context, fileCIR, TheFunction, std::move(function->basicBlocks.at(i)) /*, i == 0*/);
+    int bb_nb = function->basicBlocks.size();
+    for (int i = 0; i < bb_nb; i++){
+        codegenBasicBlock(codegen_context, fileCIR, std::move(function->basicBlocks.at(i)), bb_nb,  has_sret);
     }
+
 
     // TODO : maybe enable this only in somes cases
     std::string error_str;    

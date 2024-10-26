@@ -167,7 +167,6 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Split codegen.cpp (and ast.cpp ?) in match.cpp, closures.cpp, etc
 - [ ] Make every string translated in french (and other languages ?) with gettext
 - [ ] Refactor big functions in ast.cpp and codegen.cpp as smaller functions
-- [ ] Remove useless Log::Info() calls
 - [ ] Replace all uses emptyLoc by the real loc passed to the function 
 - [ ] Add debuginfos 
 - [ ] Add cc and ar like zig cc 
@@ -269,6 +268,9 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make backends shared libraries to remove useless shared libraries dependencies and enable lazy load backend dependencies (llvm, maybe libgccjit in the future ?)
 - [ ] Use ccache if available when building the compiler (will speed up rebuilds)
 - [ ] Add support for (downloading?), building and linking libc for other platforms for cross-compiling (ex : wasi, libcxx, llvm libc/musl ?)
+- [ ] Simplify the command to compile the compiler for wasm
+- [ ] Fix crash that happens sometimes (not all the time !) when compiling arena.cpoint in the std with optimizations on level 3 (it prints "malloc_consolidate(): unaligned fastbin chunk detected") 
+- [ ] Remove useless Log::Info() calls
 
 ## Benchmarks compared to other languages
 
