@@ -268,6 +268,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Make the compiler work with mimalloc to improve performance
 - [ ] Make backends shared libraries to remove useless shared libraries dependencies and enable lazy load backend dependencies (llvm, maybe libgccjit in the future ?)
 - [ ] Use ccache if available when building the compiler (will speed up rebuilds)
+- [ ] Add support for (downloading?), building and linking libc for other platforms for cross-compiling (ex : wasi, libcxx, llvm libc/musl ?)
 
 ## Benchmarks compared to other languages
 
