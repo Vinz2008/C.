@@ -127,6 +127,7 @@ llvm::Type* get_type_llvm(std::unique_ptr<LLVM::Context>& llvm_context, Cpoint_T
 llvm::Type* get_type_llvm(Cpoint_Type cpoint_type); // TODO : move this to a member function
 llvm::Value* get_default_value(Cpoint_Type type);
 llvm::Constant* get_default_constant(Cpoint_Type type);
+llvm::Constant* get_default_constant(llvm::LLVMContext& context, Cpoint_Type type);
 Cpoint_Type get_cpoint_type_from_llvm(llvm::Type* llvm_type);
 bool is_llvm_type_number(llvm::Type* llvm_type);
 bool convert_to_type(Cpoint_Type typeFrom, llvm::Type* typeTo, llvm::Value* &val);
@@ -148,6 +149,7 @@ bool cir_convert_to_type(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type typeFrom
 #endif
 
 llvm::Constant* from_val_to_constant_infer(llvm::Value* val);
+llvm::Constant* from_val_to_constant(llvm::LLVMContext& context, llvm::Value* val, Cpoint_Type type);
 llvm::Constant* from_val_to_constant(llvm::Value* val, Cpoint_Type type);
 int from_val_to_int(llvm::Value* val);
 //std::string from_cpoint_type_to_printf_format(Cpoint_Type type);

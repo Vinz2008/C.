@@ -403,14 +403,18 @@ bool Cpoint_Type::is_just_struct(){
 }
 
 Constant* get_default_constant(Cpoint_Type type){
+    return get_default_constant(*TheContext, type);
+}
+
+Constant* get_default_constant(LLVMContext& context, Cpoint_Type type){
     if (type.is_ptr){
-        return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
+        return ConstantPointerNull::get(PointerType::get(context, 0));
     }
     if (type.type == void_type){
         return nullptr;
     }
     if (type.type == double_type || type.type == float_type){
-        return ConstantFP::get(*TheContext, APFloat(0.0));
+        return ConstantFP::get(context, APFloat(0.0));
     }
 
     if (type.is_vector_type){
@@ -437,9 +441,9 @@ Constant* get_default_constant(Cpoint_Type type){
         case u128_type:
             bool type_is_signed = type.is_signed();
             int nb_bits = type.get_number_of_bits();
-            return ConstantInt::get(*TheContext, APInt(nb_bits, 0, type_is_signed));
+            return ConstantInt::get(context, APInt(nb_bits, 0, type_is_signed));
     }
-    return ConstantFP::get(*TheContext, APFloat(0.0));
+    return ConstantFP::get(context, APFloat(0.0));
 }
 
 
@@ -458,12 +462,16 @@ int from_val_to_int(Value* val){
 }
 
 Constant* from_val_to_constant(Value* val, Cpoint_Type type){
+    return from_val_to_constant(*TheContext, val, type);
+}
+
+Constant* from_val_to_constant(LLVMContext& context, Value* val, Cpoint_Type type){
     if (dyn_cast<ConstantFP>(val)){
         auto constFP = dyn_cast<ConstantFP>(val);
         // TODO : add more types for variable types
         if (type.is_signed() || type.is_unsigned()){
             int val_int = (int)constFP->getValue().convertToDouble();
-            return ConstantInt::get(*TheContext, llvm::APInt(type.get_number_of_bits(), val_int, true));
+            return ConstantInt::get(context, llvm::APInt(type.get_number_of_bits(), val_int, true));
         }
         if (type.type == double_type || type.type == float_type){
             return constFP;
@@ -471,14 +479,14 @@ Constant* from_val_to_constant(Value* val, Cpoint_Type type){
         if (type.is_ptr){
             int val_int = (int)constFP->getValue().convertToDouble();
             if (val_int == 0){
-                return ConstantPointerNull::get(PointerType::get(*TheContext, 0));
+                return ConstantPointerNull::get(PointerType::get(context, 0));
             }
         }
     } else if (dyn_cast<ConstantInt>(val)) {
         auto constInt = dyn_cast<ConstantInt>(val);
         if (type.type == double_type || type.type == float_type){
             double val_double = (double)constInt->getSExtValue();
-            return ConstantFP::get(*TheContext, APFloat(val_double));
+            return ConstantFP::get(context, APFloat(val_double));
         }
         if (type.is_signed() || type.is_unsigned()){
             return constInt;

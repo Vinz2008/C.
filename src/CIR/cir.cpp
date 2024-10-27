@@ -725,6 +725,8 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
 
 static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
     NOT_IMPLEMENTED();
+    std::unique_ptr<CIR::getStructMember> struct_member_instr;
+    return fileCIR->add_instruction(std::move(struct_member_instr));
 }
 
 static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> lvalue, std::unique_ptr<ExprAST> rvalue){

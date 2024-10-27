@@ -280,6 +280,7 @@ namespace CIR {
         AccessMemoryInstruction(){}
         AccessMemoryInstruction(Cpoint_Type type) : CIR::Instruction("", type) {}
     };
+    // TODO : maybe refactor this code to have GetArrayElement that load the ptr and GetArrayElementPtr that returns the ptr ?
     class getArrayElement : public CIR::AccessMemoryInstruction {
     public:
         bool is_array_access_mem;
@@ -295,6 +296,24 @@ namespace CIR {
         Cpoint_Type element_type;
         getArrayElement(CIR::InstructionRef val, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : AccessMemoryInstruction(element_type), is_array_access_mem(false), array(val), index(index), array_type(array_type), element_type(element_type) {}
         getArrayElement(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type, bool is_ptr) : AccessMemoryInstruction(element_type), is_array_access_mem(true), array(std::move(accessMemInstruction)), index(index), array_type(array_type), element_type(element_type) {}
+        std::string to_string() override;
+    };
+
+    class getStructMember : public CIR::AccessMemoryInstruction {
+    public:
+        bool is_struct_access_mem;
+        union struct_ty {
+            CIR::InstructionRef val;
+            std::unique_ptr<AccessMemoryInstruction> accessMemInstruction;
+            struct_ty(CIR::InstructionRef val) : val(val) {}
+            struct_ty(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction) : accessMemInstruction(std::move(accessMemInstruction)) {}
+            ~struct_ty() {}
+        } structVal;
+        std::string member;
+        Cpoint_Type struct_type;
+        Cpoint_Type element_type;
+        getStructMember(CIR::InstructionRef val, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : AccessMemoryInstruction(element_type), is_struct_access_mem(false), structVal(val), member(member), struct_type(struct_type), element_type(element_type) {}
+        getStructMember(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type, bool is_ptr) : AccessMemoryInstruction(element_type), is_struct_access_mem(true), structVal(std::move(accessMemInstruction)), member(member), struct_type(struct_type), element_type(element_type) {}
         std::string to_string() override;
     };
 

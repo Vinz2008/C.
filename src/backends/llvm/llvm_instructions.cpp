@@ -537,7 +537,7 @@ static void codegenGlobalVar(std::unique_ptr<LLVM::Context> &codegen_context, CI
                 return;
             }
         } else {
-            InitVal = get_default_constant(global_var.type);
+            InitVal = get_default_constant(*codegen_context->TheContext, global_var.type);
         }
     }
     // TODO : add private global vars
