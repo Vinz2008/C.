@@ -12,6 +12,7 @@
 #include "../../log.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/IR/InlineAsm.h"
 
 using namespace llvm;
 
@@ -407,6 +408,27 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         Type* element_type_llvm = get_type_llvm(codegen_context, element_type);
         auto gep_ptr = codegen_context->Builder->CreateGEP(element_type_llvm, array, IdxList, "", true); // TODO : then load ?
         instruction_val = codegen_context->Builder->CreateLoad(element_type_llvm, gep_ptr);
+    } else if (dynamic_cast<CIR::InlineAsmInstruction*>(instruction.get())){
+        auto inline_asm_instruction = get_Instruction_from_CIR_Instruction<CIR::InlineAsmInstruction>(std::move(instruction));
+        bool contains_out = false;
+        std::vector<Value*> AsmArgs;
+        std::vector<Type*> AsmArgsTypes;
+        auto asm_type = Cpoint_Type(void_type);
+        Value* out_var_allocation = nullptr; // for now only support one out var (TODO : will need to extract all of them returned by the  struct instruction
+
+        std::string generated_assembly_code = ""; // TODO : replace {}s
+        std::string constraints = ""; // TODO 
+
+        NOT_IMPLEMENTED();
+
+        auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(asm_type), AsmArgsTypes, false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
+        if (contains_out){
+            auto asmCalled = codegen_context->Builder->CreateCall(inlineAsm, AsmArgs); 
+            codegen_context->Builder->CreateStore(asmCalled, out_var_allocation);
+        } else {
+            codegen_context->Builder->CreateCall(inlineAsm, AsmArgs);
+        }
+        instruction_val = nullptr;
     } else if (dynamic_cast<CIR::ConstVoid*>(instruction.get())){
         instruction_val = nullptr;
     } else if (dynamic_cast<CIR::ConstNull*>(instruction.get())){

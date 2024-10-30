@@ -171,16 +171,32 @@ CIR::InstructionRef ScopeExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 }
 
 CIR::InstructionRef AsmExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
+    CIR::InstructionRef outVar;
+    std::vector<CIR::ArgInlineAsm> CIRInputOutputArgs;
     for (int i = 0; i < InputOutputArgs.size(); i++){
         if (dynamic_cast<VariableExprAST*>(InputOutputArgs.at(i).ArgExpr.get())){
             auto var_expr = get_Expr_from_ExprAST<VariableExprAST>(InputOutputArgs.at(i).ArgExpr->clone());
-            // TODO
+            if (!var_expr){
+                LogErrorV(this->loc, "Error in expression of asm macro");
+                return CIR::InstructionRef();
+            }
+            if (fileCIR->CurrentFunction->vars[var_expr->Name].is_empty()){
+                LogErrorV(this->loc, "Unknown var in args of asm macro");
+                return CIR::InstructionRef();
+            }
+            CIR::ArgInlineAsm::ArgType arg_type;
+            if (InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::input){
+                arg_type = CIR::ArgInlineAsm::ArgType::input;
+            } else if (InputOutputArgs.at(i).argType == ArgInlineAsm::ArgType::output) {
+                arg_type = CIR::ArgInlineAsm::ArgType::output;
+            }
+            CIRInputOutputArgs.push_back(CIR::ArgInlineAsm(fileCIR->CurrentFunction->vars[var_expr->Name].var_ref, arg_type));
         } else {
             LogErrorV(this->loc, "Unknown expression for \"in\" in asm macro"); // TODO : add dedicated function for this case
             return CIR::InstructionRef();
         }
     }
-    return CIR::InstructionRef();
+    return fileCIR->add_instruction(std::make_unique<CIR::InlineAsmInstruction>(assembly_code->str, CIRInputOutputArgs));
 }
 
 

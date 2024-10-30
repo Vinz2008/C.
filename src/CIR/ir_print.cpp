@@ -193,6 +193,22 @@ std::string CIR::getArrayElement::to_string(){
     return res;
 }
 
+std::string CIR::InlineAsmInstruction::to_string(){
+    std::string asm_cir = "asm (\"" + asm_code + "\", " ;
+    for (int i = 0; i < InputOutputArgs.size(); i++){
+        if (InputOutputArgs.at(i).argType == CIR::ArgInlineAsm::ArgType::input){
+            asm_cir += "in";
+        } else {
+            asm_cir += "out";
+        }
+        asm_cir += " " + InputOutputArgs.at(i).ArgExpr.to_string();
+        if (i != InputOutputArgs.size()-1){
+            asm_cir += ", ";
+        }
+    }
+    return asm_cir + ")";
+}
+
 /*std::string CIR::BasicBlock::to_string(){
     std::string basic_block_cir = name + ":\n";
     for (int i = 0; i < instructions.size(); i++){

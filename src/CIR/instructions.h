@@ -177,6 +177,7 @@ namespace CIR {
         std::string asm_code;
         std::vector<CIR::ArgInlineAsm> InputOutputArgs;
         InlineAsmInstruction(std::string asm_code, std::vector<CIR::ArgInlineAsm> InputOutputArgs) : asm_code(asm_code), InputOutputArgs(InputOutputArgs) {}
+        std::string to_string() override;
     };
 
     class AddInstruction : public CIR::Instruction {
@@ -312,11 +313,10 @@ namespace CIR {
         std::string member;
         Cpoint_Type struct_type;
         Cpoint_Type element_type;
-        getStructMember(CIR::InstructionRef val, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : AccessMemoryInstruction(element_type), is_struct_access_mem(false), structVal(val), member(member), struct_type(struct_type), element_type(element_type) {}
-        getStructMember(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type, bool is_ptr) : AccessMemoryInstruction(element_type), is_struct_access_mem(true), structVal(std::move(accessMemInstruction)), member(member), struct_type(struct_type), element_type(element_type) {}
+        getStructMember(CIR::InstructionRef val, std::string member, Cpoint_Type struct_type, Cpoint_Type element_type) : AccessMemoryInstruction(element_type), is_struct_access_mem(false), structVal(val), member(member), struct_type(struct_type), element_type(element_type) {}
+        getStructMember(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction, std::string member, Cpoint_Type struct_type, Cpoint_Type element_type, bool is_ptr) : AccessMemoryInstruction(element_type), is_struct_access_mem(true), structVal(std::move(accessMemInstruction)), member(member), struct_type(struct_type), element_type(element_type) {}
         std::string to_string() override;
     };
-
 
     class ConstNumber;
     class ConstVoid;
