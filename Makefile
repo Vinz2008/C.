@@ -281,12 +281,29 @@ clean: clean-cpoint
 	make -C bdwgc clean
 	rm bdwgc/Makefile
 
+UNIT_TESTS_DIR = ./tests/unit-tests
+
 all-clean: clean
-	rm -f ./src/external/*.o
+	rm -f ./src/external/*.o $(UNIT_TESTS_DIR)/*.o $(UNIT_TESTS_DIR)/test-runner
 
 test:
 	make -C tests python
 #	make -C tests run
+
+UNIT_TESTS_OBJS = src/utils.o
+
+UNIT_TESTS_SRCS = $(wildcard $(UNIT_TESTS_DIR)/*.cpp)
+UNIT_TESTS_OBJS += $(patsubst %.cpp,%.o,$(UNIT_TESTS_SRCS))
+
+UNIT_TESTS_LDFLAGS = $(shell pkg-config --libs gmock)
+
+
+$(UNIT_TESTS_DIR)/test-runner: $(UNIT_TESTS_OBJS)
+	$(CXX) -o $@ $^ $(UNIT_TESTS_LDFLAGS)
+
+unit-tests: $(UNIT_TESTS_DIR)/test-runner
+	$(UNIT_TESTS_DIR)/test-runner
+
 
 std-test:
 #	make -C std test

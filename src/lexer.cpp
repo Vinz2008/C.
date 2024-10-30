@@ -6,6 +6,7 @@
 #include "errors.h"
 #include "log.h"
 #include "config.h"
+#include "utils.h"
 
 using namespace std;
 
@@ -51,16 +52,6 @@ static int getLine(std::istream &__is, std::string &__str){
 
 std::string get_line_returned(){
   return line;
-}
-
-
-static bool is_char_one_of_these(int c, std::string chars){
-    for (int i = 0; i < chars.size(); i++){
-        if (c == chars.at(i)){
-            return true;
-        }
-    }
-    return false;
 }
 
 static void goToNextLine(std::istream &__is, std::string &__str){

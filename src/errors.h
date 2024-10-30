@@ -39,7 +39,6 @@ public:
 void logErrorExit(std::unique_ptr<Compiler_context> cc, const char* format, ...);
 
 void vlogErrorExit(Source_location cc_lexloc, std::string line, std::string filename, const char* format, std::va_list args, Source_location astLoc);
-int stringDistance(std::string s1, std::string s2);
 
 
 #endif

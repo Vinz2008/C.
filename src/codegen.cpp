@@ -38,6 +38,7 @@
 #include "macros.h"
 #include "match.h"
 #include "targets/targets.h"
+#include "utils.h"
 
 #include "tracy.h"
 
@@ -297,13 +298,48 @@ Value* StringExprAST::codegen() {
   return string;
 }
 
+std::string nearest_var(std::string var){
+    int minDistance = -1;
+    std::string minDistanceName = "";
+    for (auto& global : GlobalVariables){
+        if (minDistance == -1){
+            minDistance = stringDistance(global.first, var);
+        } else {
+            int tempGlobalDistance = stringDistance(global.first, var);
+            if (tempGlobalDistance < minDistance){
+                minDistance = tempGlobalDistance;
+                minDistanceName = global.first;
+            }
+        }
+    }
+
+    for (auto& local : NamedValues){
+        if (minDistance == -1){
+            minDistance = stringDistance(local.first, var);
+        } else {
+            int tempGlobalDistance = stringDistance(local.first, var);
+            if (tempGlobalDistance < minDistance){
+                minDistance = tempGlobalDistance;
+                minDistanceName = local.first;
+            }
+        }
+    }
+
+    if (minDistance == -1){
+        return "";
+    }
+
+    return minDistanceName;
+}
+
 Value *VariableExprAST::codegen() {
   // Look this variable up in the function.
   if (FunctionProtos[Name] != nullptr){
     return GeneratedFunctions[Name];
   }
   if (!var_exists(Name)) {
-    return LogErrorV(this->loc, "Unknown variable name %s", Name.c_str());
+    std::string nearest_var_name = nearest_var(Name); // TODO : implement this in CIR 
+    return LogErrorV(this->loc, "Unknown variable name %s, maybe you meant %s", Name.c_str(), nearest_var_name.c_str()); // TODO : print the "maybe you meant" part only when the string is not empty ?
   }
   Value* ptr = get_var_allocation(Name);
   Cpoint_Type var_type = *get_variable_type(Name); 
