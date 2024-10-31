@@ -202,6 +202,7 @@ Type* get_array_llvm_type(Type* type, int nb_element){
     return llvm::ArrayType::get(type, nb_element);
 }
 
+
 Cpoint_Type get_cpoint_type_from_llvm(Type* llvm_type){
     int type = double_type;
     bool is_ptr = false;
@@ -512,9 +513,12 @@ Constant* from_val_to_constant_infer(Value* val){
 // the val passed is the val to convert, and after the function is the val converted
 // if return true, the conversion FAILED (even if the conversion does nothing, it will return true)
 bool cir_convert_to_type(std::unique_ptr<FileCIR>& fileCIR, Cpoint_Type typeFrom, Cpoint_Type typeTo, CIR::InstructionRef& val){
+    typeFrom = typeFrom.get_real_type();
+    typeTo = typeTo.get_real_type();
     if (typeFrom == typeTo){
         return true; // noop if the same type
     }
+    if (typeFrom.type >= 0){}
     if (typeTo == Cpoint_Type(void_type)){
         val = fileCIR->add_instruction(std::make_unique<CIR::ConstVoid>());
         return true;
@@ -687,6 +691,8 @@ Cpoint_Type Cpoint_Type::get_real_type(){
         }
         // TODO : add more modifiers to the type (ex : is an array)
         return template_type;
+   }  else if (type >= 0 && typeDefTable.size() >= type){
+        return typeDefTable.at(type); // TODO : add modifiers
     } else {
         return *this;
     }

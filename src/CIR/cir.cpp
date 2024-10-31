@@ -250,16 +250,6 @@ CIR::InstructionRef EmptyExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 CIR::InstructionRef StringExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     return fileCIR->add_string(str);
-    /*auto find_duplicate_string = std::find(fileCIR->strings.begin(), fileCIR->strings.end(), str);
-    int pos = -1;
-    if (find_duplicate_string != fileCIR->strings.end()){
-        pos = std::distance(fileCIR->strings.begin(), find_duplicate_string);
-    } else {
-        fileCIR->strings.push_back(str);
-        pos = fileCIR->strings.size()-1;
-    }
-    auto load_global_instr = std::make_unique<CIR::LoadGlobalInstruction>(Cpoint_Type(i8_type, true), true, pos, "");
-    return fileCIR->add_instruction(std::move(load_global_instr));*/
 }
 
 CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
@@ -280,7 +270,6 @@ CIR::InstructionRef DerefExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
         Log::Info() << "Deref Type : " << contained_type << "\n";
         return fileCIR->add_instruction(std::make_unique<CIR::DerefInstruction>(varAlloc, contained_type));
-        //return Builder->CreateLoad(get_type_llvm(contained_type), VarAlloc, VariableExpr->getName().c_str());
     }
     NOT_IMPLEMENTED();
     return CIR::InstructionRef();
@@ -519,7 +508,7 @@ CIR::InstructionRef StructMemberCallExprAST::cir_gen(std::unique_ptr<FileCIR>& f
         std::string StructName = structNameExpr->Name;
         std::string MemberName = structMemberExpr->Name;
         if (StructName == "reflection"){
-            return refletionInstructionCIR(fileCIR, MemberName, std::move(Args));
+            return refletionInstructionCIR(fileCIR, MemberName, clone_unique_ptr_vec<ExprAST>(Args));
         }
     }
     Cpoint_Type lhs_type = StructMember->LHS->get_type();
@@ -697,7 +686,7 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
     }
 
     if (dynamic_cast<VariableExprAST*>(array.get())){
-        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(array));
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(array->clone());
         std::string ArrayName = VariableExpr->Name;
         Cpoint_Type cpoint_type = cir_get_var_type(fileCIR, ArrayName);
         if (!cpoint_type.is_array && !cpoint_type.is_vector_type && !cpoint_type.is_ptr){
@@ -749,7 +738,7 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
     if (dynamic_cast<BinaryExprAST*>(lvalue.get())){
         // TODO : make work the equal operator with binary exprs by making store accept a ref to an instruction or an AccessMemoryInstruction
         Log::Info() << "Equal op bin lvalue" << "\n";
-        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(std::move(lvalue));
+        std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(lvalue->clone());
         Log::Info() << "op : " << BinExpr->Op << "\n";
         Cpoint_Type element_type;
         if (BinExpr->Op.at(0) == '['){
@@ -762,7 +751,7 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
             NOT_IMPLEMENTED();
         }
     } else if (dynamic_cast<VariableExprAST*>(lvalue.get())){
-        std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(lvalue));
+        std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(lvalue->clone());
         bool is_global = fileCIR->global_vars[VarExpr->Name] != nullptr;
         Cpoint_Type var_type = cir_get_var_type(fileCIR, VarExpr->Name);
         Cpoint_Type rvalue_type = rvalue->get_type();
@@ -778,7 +767,7 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
     } else if (dynamic_cast<UnaryExprAST*>(lvalue.get()) || dynamic_cast<DerefExprAST*>(lvalue.get())){
         CIR::InstructionRef lvalI;
         if (dynamic_cast<UnaryExprAST*>(lvalue.get())){
-            std::unique_ptr<UnaryExprAST> UnaryExpr = get_Expr_from_ExprAST<UnaryExprAST>(std::move(lvalue));
+            std::unique_ptr<UnaryExprAST> UnaryExpr = get_Expr_from_ExprAST<UnaryExprAST>(lvalue->clone());
             if (UnaryExpr->Opcode != '*'){
                 LogErrorV(emptyLoc, "The equal operator is not implemented for other Unary Operators as rvalue than deref");
                 return CIR::InstructionRef();
@@ -799,7 +788,7 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
         std::vector<std::unique_ptr<ExprAST>> Args;
         Args.push_back(LHS->clone());
         Args.push_back(RHS->clone());
-        return CallExprAST(emptyLoc, "binary" + Op, std::move(Args), Cpoint_Type()).cir_gen(fileCIR);
+        return CallExprAST(emptyLoc, "binary" + Op, clone_unique_ptr_vec<ExprAST>(Args), Cpoint_Type()).cir_gen(fileCIR);
     }
 
     if (Op.at(0) == '['){
@@ -940,14 +929,14 @@ CIR::InstructionRef NumberExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 CIR::InstructionRef UnaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     if (Opcode == '-'){
         auto LHS = std::make_unique<NumberExprAST>(0);
-        auto RHS = std::move(Operand);
-        return BinaryExprAST(this->loc, "-", std::move(LHS), std::move(RHS)).cir_gen(fileCIR);
+        auto RHS = Operand->clone();
+        return BinaryExprAST(this->loc, "-", LHS->clone(), RHS->clone()).cir_gen(fileCIR);
     }
     if (Opcode == '&'){
-        return AddrExprAST(std::move(Operand)).cir_gen(fileCIR);
+        return AddrExprAST(Operand->clone()).cir_gen(fileCIR);
     }
     if (Opcode == '*'){
-        return DerefExprAST(std::move(Operand)).cir_gen(fileCIR);
+        return DerefExprAST(Operand->clone()).cir_gen(fileCIR);
     }
     std::vector<std::unique_ptr<ExprAST>> Operands;
     Operands.push_back(Operand->clone());

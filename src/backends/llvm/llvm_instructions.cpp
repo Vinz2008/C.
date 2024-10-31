@@ -112,7 +112,7 @@ static AllocaInst *CreateEntryBlockAlloca(Function *TheFunction, StringRef VarNa
 
 // TODO : remove ref to instruction (because it is technically moved ?)
 
-static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<CIR::Instruction>& instruction, bool is_global = false) {
+static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<CIR::Instruction> instruction, bool is_global = false) {
     std::string instruction_label = instruction->label;
     Value* instruction_val = nullptr;
     if (dynamic_cast<CIR::CallInstruction*>(instruction.get())){
@@ -379,7 +379,7 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
             llvm_type = codegen_context->functionValues.at(sizeof_instruction->expr.get_pos())->getType();
         }
         Value* size = codegen_context->Builder->CreateGEP(llvm_type, codegen_context->Builder->CreateIntToPtr(ConstantInt::get(get_type_llvm(codegen_context, Cpoint_Type(i64_type)), 0),llvm_type->getPointerTo()), {one});
-        size = codegen_context->Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
+        size = codegen_context->Builder->CreatePtrToInt(size, get_type_llvm(codegen_context, Cpoint_Type(i32_type)));
         instruction_val = size;
     } else if (dynamic_cast<CIR::DerefInstruction*>(instruction.get())){
         auto deref_instruction = get_Instruction_from_CIR_Instruction<CIR::DerefInstruction>(std::move(instruction));
@@ -421,7 +421,7 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
 
         NOT_IMPLEMENTED();
 
-        auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(asm_type), AsmArgsTypes, false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
+        auto inlineAsm = InlineAsm::get(FunctionType::get(get_type_llvm(codegen_context, asm_type), AsmArgsTypes, false), (StringRef)generated_assembly_code, (StringRef)constraints, true, true, InlineAsm::AD_Intel); // use intel dialect
         if (contains_out){
             auto asmCalled = codegen_context->Builder->CreateCall(inlineAsm, AsmArgs); 
             codegen_context->Builder->CreateStore(asmCalled, out_var_allocation);
@@ -455,7 +455,7 @@ static Value* getSizeOfStruct(std::unique_ptr<LLVM::Context> &codegen_context, T
     Type* llvm_type = A->getType();
     auto one = llvm::ConstantInt::get(*codegen_context->TheContext, llvm::APInt(32, 1, true));
     Value* size = codegen_context->Builder->CreateGEP(struct_type, codegen_context->Builder->CreateIntToPtr(ConstantInt::get(codegen_context->Builder->getInt64Ty(), 0), llvm_type->getPointerTo()), {one});
-    size = codegen_context->Builder->CreatePtrToInt(size, get_type_llvm(Cpoint_Type(i32_type)));
+    size = codegen_context->Builder->CreatePtrToInt(size, get_type_llvm(codegen_context, Cpoint_Type(i32_type)));
     return size;
 }
 
@@ -480,7 +480,7 @@ static void codegenBasicBlock(std::unique_ptr<LLVM::Context>& codegen_context, s
         if (has_function_sret && is_last_bb && is_last_instruction && dynamic_cast<CIR::ReturnInstruction*>(basic_block->instructions.at(i).get())){
             handleSretReturn(codegen_context, fileCIR, basic_block->instructions.at(i));
         } else {
-            codegenInstruction(codegen_context, fileCIR, basic_block->instructions.at(i));
+            codegenInstruction(codegen_context, fileCIR, std::move(basic_block->instructions.at(i)));
         }
     }
     codegen_context->bb_codegen_number++;
@@ -563,7 +563,7 @@ static void codegenGlobalVar(std::unique_ptr<LLVM::Context> &codegen_context, CI
         }
     }
     // TODO : add private global vars
-    GlobalVariable* globalVar = new GlobalVariable(*codegen_context->TheModule, get_type_llvm(global_var.type), global_var.is_const, linkage, InitVal, global_var.name);
+    GlobalVariable* globalVar = new GlobalVariable(*codegen_context->TheModule, get_type_llvm(codegen_context, global_var.type), global_var.is_const, linkage, InitVal, global_var.name);
     if (global_var.section_name != ""){
         globalVar->setSection(global_var.section_name);
     }
@@ -577,7 +577,7 @@ void codegenFile(std::unique_ptr<LLVM::Context>& codegen_context, std::unique_pt
     }
     for (int i = 0; i < fileCIR->global_context.get_instruction_nb(); i++){
         auto instruction = fileCIR->global_context.get_unique_instruction(i);
-        codegenInstruction(codegen_context, fileCIR, instruction, true);
+        codegenInstruction(codegen_context, fileCIR, std::move(instruction), true);
     }
     for (auto& g : fileCIR->global_vars){
         if (g.second != nullptr){

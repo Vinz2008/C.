@@ -283,7 +283,7 @@ Value *NumberExprAST::codegen() {
   if (trunc(Val) == Val){
     return ConstantInt::get(*TheContext, APInt(32, (int)Val, true));
   } else {
-    return ConstantFP::get(get_type_llvm(double_type), APFloat(Val));
+    return ConstantFP::get(get_type_llvm(Cpoint_Type(double_type)), APFloat(Val));
   }
 }
 
@@ -575,7 +575,7 @@ Type* UnionDeclarAST::codegen(){
 Type* EnumDeclarAST::codegen(){
     Type* enumType = nullptr;
     if (!enum_member_contain_type){
-        enumType = get_type_llvm(i32_type);
+        enumType = get_type_llvm(Cpoint_Type(i32_type));
         EnumDeclarations[Name] = std::make_unique<EnumDeclaration>(enumType, this->clone());
         return nullptr;
     }
@@ -683,7 +683,7 @@ Value* DeferExprAST::codegen(){
     Scopes.pop_back();
     back.deferExprs.push_back(std::move(Expr));
     Scopes.push_back(std::move(back));
-    return Constant::getNullValue(get_type_llvm(void_type));
+    return Constant::getNullValue(get_type_llvm(Cpoint_Type(void_type)));
 }
 
 void assignUnionMember(Value* union_ptr, Value* val, Cpoint_Type member_type){
