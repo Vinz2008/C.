@@ -271,6 +271,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Simplify the command to compile the compiler for wasm
 - [ ] Fix crash that happens sometimes (not all the time !) when compiling arena.cpoint in the std with optimizations on level 3 (it prints "malloc_consolidate(): unaligned fastbin chunk detected") 
 - [ ] Remove useless Log::Info() calls
+- [ ] Add comptime/const functions
 
 ## Benchmarks compared to other languages
 
