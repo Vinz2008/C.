@@ -272,6 +272,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Fix crash that happens sometimes (not all the time !) when compiling arena.cpoint in the std with optimizations on level 3 (it prints "malloc_consolidate(): unaligned fastbin chunk detected") 
 - [ ] Remove useless Log::Info() calls
 - [ ] Add comptime/const functions
+- [ ] Add a c backend using llvm-cbe after the llvm backend
 
 ## Benchmarks compared to other languages
 
