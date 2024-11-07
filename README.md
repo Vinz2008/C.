@@ -273,6 +273,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Remove useless Log::Info() calls
 - [ ] Add comptime/const functions
 - [ ] Add a c backend using llvm-cbe after the llvm backend
+- [ ] Add support for custom json target files to replace the custom targets informations like in rust (use glaze or simdjson to parse the json)
 
 ## Benchmarks compared to other languages
 
