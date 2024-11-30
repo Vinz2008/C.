@@ -182,7 +182,19 @@ std::string CIR::DerefInstruction::to_string(){
     return "deref " + ptr.to_string() + " to " + create_pretty_name_for_type(element_type);
 }
 
-std::string CIR::getArrayElement::to_string(){
+std::string CIR::GepArray::to_string(){
+    return "gep_array " + array.to_string() + "[" + index.to_string() + "]";
+}
+
+std::string CIR::GepStruct::to_string(){
+    return "gep_struct " + struct_ref.to_string() + "." + member_name;
+}
+
+std::string CIR::StoreInPtr::to_string(){
+    return "store_in_ptr *" + ptr.to_string() + " = " + val_to_store.to_string();
+}
+
+/*std::string CIR::getArrayElement::to_string(){
     std::string res = "get_array_element ";
     if (is_array_access_mem){
         res += array.accessMemInstruction->to_string();
@@ -191,7 +203,7 @@ std::string CIR::getArrayElement::to_string(){
     }
     res += " " + index.to_string();
     return res;
-}
+}*/
 
 std::string CIR::InlineAsmInstruction::to_string(){
     std::string asm_cir = "asm (\"" + asm_code + "\", " ;

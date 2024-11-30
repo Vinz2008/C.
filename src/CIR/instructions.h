@@ -82,6 +82,14 @@ namespace CIR {
         DerefInstruction(InstructionRef ptr, Cpoint_Type element_type) : ptr(ptr), element_type(element_type) {}
         std::string to_string() override;
     };
+    class StoreInPtr : public CIR::Instruction {
+    public:
+        InstructionRef ptr;
+        InstructionRef val_to_store;
+        StoreInPtr(InstructionRef ptr, InstructionRef val_to_store) : ptr(ptr), val_to_store(val_to_store) {}
+        std::string to_string() override;
+    };
+
     class LoadGlobalInstruction : public CIR::Instruction {
     public:
         bool is_string;
@@ -275,7 +283,7 @@ namespace CIR {
         std::string to_string() override;
     };
 
-    // instructions for array members and structs
+    /*// instructions for array members and structs
     class AccessMemoryInstruction : public CIR::Instruction  {
     public:
         AccessMemoryInstruction(){}
@@ -316,7 +324,30 @@ namespace CIR {
         getStructMember(CIR::InstructionRef val, std::string member, Cpoint_Type struct_type, Cpoint_Type element_type) : AccessMemoryInstruction(element_type), is_struct_access_mem(false), structVal(val), member(member), struct_type(struct_type), element_type(element_type) {}
         getStructMember(std::unique_ptr<AccessMemoryInstruction> accessMemInstruction, std::string member, Cpoint_Type struct_type, Cpoint_Type element_type, bool is_ptr) : AccessMemoryInstruction(element_type), is_struct_access_mem(true), structVal(std::move(accessMemInstruction)), member(member), struct_type(struct_type), element_type(element_type) {}
         std::string to_string() override;
+    };*/
+
+    class GepArray : public CIR::Instruction {
+    public:
+        CIR::InstructionRef array;
+        CIR::InstructionRef index;
+        Cpoint_Type array_type;
+        Cpoint_Type element_type;
+        GepArray(CIR::InstructionRef array, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : array(array), index(index), array_type(array_type), element_type(element_type) {}
+        std::string to_string() override;
     };
+
+    class GepStruct : public CIR::Instruction {
+    public:
+        CIR::InstructionRef struct_ref;
+        std::string member_name;
+        Cpoint_Type struct_type;
+        GepStruct(CIR::InstructionRef struct_ref, std::string member_name, Cpoint_Type struct_type) : struct_ref(struct_ref), member_name(member_name), struct_type(struct_type) {}
+        std::string to_string() override;
+    };
+
+    // TODO : add gep ptr to help add optimizations specifically for indexing with arrays ?
+
+
 
     class ConstNumber;
     class ConstVoid;

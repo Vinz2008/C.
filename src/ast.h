@@ -483,6 +483,7 @@ public:
 
 extern std::unordered_map<std::string, std::unique_ptr<PrototypeAST>> FunctionProtos;
 
+// TODO : rename it "AnyIdentifier" ??
 class VariableExprAST : public ExprAST {
 public:
   std::string Name;

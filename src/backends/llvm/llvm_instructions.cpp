@@ -400,18 +400,18 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         Type* element_type = get_type_llvm(codegen_context, deref_instruction->element_type);
         Value* VarAlloc = codegen_context->functionValues.at(deref_instruction->ptr.get_pos());
         instruction_val = codegen_context->Builder->CreateLoad(element_type, VarAlloc, deref_instruction->label);
-    } else if (dynamic_cast<CIR::getArrayElement*>(instruction.get())){
-        auto array_element_instruction = get_Instruction_from_CIR_Instruction<CIR::getArrayElement>(std::move(instruction));
-        if (array_element_instruction->is_array_access_mem){
+    } else if (dynamic_cast<CIR::GepArray*>(instruction.get())){
+        auto array_element_instruction = get_Instruction_from_CIR_Instruction<CIR::GepArray>(std::move(instruction));
+        /*if (array_element_instruction->is_array_access_mem){
             NOT_IMPLEMENTED();
-        }
-        Value* array = codegen_context->functionValues.at(array_element_instruction->array.val.get_pos()); // TODO : make it work with AccessMemInstruction
+        }*/
+        Value* array = codegen_context->functionValues.at(array_element_instruction->array.get_pos());
         Value* IndexV = codegen_context->functionValues.at(array_element_instruction->index.get_pos());
         /*if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){ // TODO : only do this in 64bits target ?
             convert_to_type(codegen_context, get_cpoint_type_from_llvm(IndexV->getType()), Cpoint_Type(i64_type), IndexV); // TODO : remove get_cpoint_type_from_llvm ?
         }*/
         Cpoint_Type array_type = array_element_instruction->array_type;
-        Cpoint_Type element_type = array_element_instruction->element_type; // = ? // TODO
+        //Cpoint_Type element_type = array_element_instruction->element_type; // = ? // TODO
         std::vector<llvm::Value *> IdxList; // TODO
         if (array_type.is_ptr && !array_type.is_array){
             IdxList = {IndexV};
@@ -419,9 +419,28 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
             auto zero = llvm::ConstantInt::get(*codegen_context->TheContext, llvm::APInt(64, 0, true));
             IdxList = { zero, IndexV};
         }
-        Type* element_type_llvm = get_type_llvm(codegen_context, element_type);
-        auto gep_ptr = codegen_context->Builder->CreateGEP(element_type_llvm, array, IdxList, "", true); // TODO : then load ?
-        instruction_val = codegen_context->Builder->CreateLoad(element_type_llvm, gep_ptr);
+        //Type* element_type_llvm = get_type_llvm(codegen_context, element_type);
+        auto gep_ptr = codegen_context->Builder->CreateGEP(/*element_type_llvm*/ get_type_llvm(codegen_context, array_type), array, IdxList, "", true); // TODO : then load ?
+        instruction_val = gep_ptr;
+        //instruction_val = codegen_context->Builder->CreateLoad(element_type_llvm, gep_ptr);
+    } else if (dynamic_cast<CIR::GepStruct*>(instruction.get())){
+        auto struct_element_instruction = get_Instruction_from_CIR_Instruction<CIR::GepStruct>(std::move(instruction));
+
+
+        Value* struct_val = codegen_context->functionValues.at(struct_element_instruction->struct_ref.get_pos());
+        Cpoint_Type struct_type = struct_element_instruction->struct_type;
+        int pos = 0; // TODO
+        auto zero = llvm::ConstantInt::get(*codegen_context->TheContext, llvm::APInt(32, 0, true));
+        auto index = llvm::ConstantInt::get(*codegen_context->TheContext, llvm::APInt(32, pos, true)); 
+        std::vector<llvm::Value *> IdxList = { zero, index};
+        auto gep_ptr = codegen_context->Builder->CreateGEP(get_type_llvm(codegen_context, struct_type), struct_val, IdxList, "", true); // TODO : then load ?
+        instruction_val = gep_ptr;
+    } else if (dynamic_cast<CIR::StoreInPtr*>(instruction.get())){
+        auto store_in_ptr_instruction = get_Instruction_from_CIR_Instruction<CIR::StoreInPtr>(std::move(instruction));
+        Value* store_ptr = codegen_context->functionValues.at(store_in_ptr_instruction->ptr.get_pos());
+        Value* store_val = codegen_context->functionValues.at(store_in_ptr_instruction->ptr.get_pos());
+        codegen_context->Builder->CreateStore(store_ptr, store_val);
+        instruction_val = nullptr;
     } else if (dynamic_cast<CIR::InlineAsmInstruction*>(instruction.get())){
         auto inline_asm_instruction = get_Instruction_from_CIR_Instruction<CIR::InlineAsmInstruction>(std::move(instruction));
         bool contains_out = false;
