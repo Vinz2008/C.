@@ -275,6 +275,7 @@ You can compile C. code to wasm using the ```-target-triplet wasm32-unknown-wasi
 - [ ] Add a c backend using llvm-cbe after the llvm backend
 - [ ] Add support for custom json target files to replace the custom targets informations like in rust (use glaze or simdjson to parse the json)
 - [ ] Auto import other files from project when building project with cpoint-build (use a --import flag which will import a file in the cpoint file)
+- [ ] Add support for unity builds in cpoint-build
 
 ## Benchmarks compared to other languages
 
