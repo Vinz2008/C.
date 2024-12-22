@@ -817,6 +817,19 @@ std::string create_pretty_name_for_type(Cpoint_Type type){
         }
         return name;
     }
+    if (type.is_function){
+        name = "function " + create_pretty_name_for_type(*type.return_type) + " (";
+        for (int i = 0; i < type.args.size(); i++){
+            name += create_pretty_name_for_type(type.args.at(i));
+            if (i != type.args.size()-1){
+                name += ", ";
+            }
+        }
+        
+        name += ")";
+        return name;
+
+    }
     if (type.type == never_type){
         name = "!";
     } else {

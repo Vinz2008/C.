@@ -168,7 +168,7 @@ public:
         return body_str;
     }
     Cpoint_Type get_type(FileCIR* fileCIR) override {
-        return Body.back()->get_type();
+        return Body.back()->get_type(fileCIR);
     }
     std::string generate_c() override { return ""; } // TODO
     bool contains_expr(enum ExprType exprType) override {
@@ -310,7 +310,7 @@ public:
     return "addr " + /*((Expr) ?*/ Expr->to_string() /*: Ident)*/;
   }
   Cpoint_Type get_type(FileCIR* fileCIR) override {
-    Cpoint_Type type = Expr->get_type();
+    Cpoint_Type type = Expr->get_type(fileCIR);
     type.is_ptr = true;
     type.nb_ptr++;
     return type;
@@ -333,7 +333,7 @@ public:
         return "deref " + Expr->to_string();
     }
     Cpoint_Type get_type(FileCIR* fileCIR) override {
-        return Expr->get_type().deref_type();
+        return Expr->get_type(fileCIR).deref_type();
     }
     std::string generate_c() override;
 #if ENABLE_CIR
@@ -538,7 +538,7 @@ public:
     return "[" + array + "]";
   }
   Cpoint_Type get_type(FileCIR* fileCIR) override {
-    Cpoint_Type type = ArrayMembers.at(0)->get_type();
+    Cpoint_Type type = ArrayMembers.at(0)->get_type(fileCIR);
     type.is_array = true;
     return type;
   }
@@ -687,7 +687,7 @@ struct StructMemberCallExprAST : public ExprAST {
                 }
             }
         }
-        Cpoint_Type LHS_type = StructMember->LHS->get_type();
+        Cpoint_Type LHS_type = StructMember->LHS->get_type(fileCIR);
         if (LHS_type.is_struct){
             std::string struct_name = LHS_type.struct_name;
             if (LHS_type.is_object_template){
@@ -993,7 +993,7 @@ public:
     Cpoint_Type get_type(FileCIR* fileCIR) override {
         Cpoint_Type match_return_type = Cpoint_Type(void_type);
         for (int i = 0; i < matchCases.size(); i++){
-            Cpoint_Type matchCaseType = matchCases.at(i).Body->get_type();
+            Cpoint_Type matchCaseType = matchCases.at(i).Body->get_type(fileCIR);
             if (matchCaseType.type != void_type && matchCaseType.type != never_type && match_return_type.type == void_type){
                 // found first non void or never type in match branches
                 match_return_type = matchCaseType;
@@ -1238,7 +1238,7 @@ public:
     if (!Else){
         return Cpoint_Type(void_type);
     } else {
-        return Then->get_type();
+        return Then->get_type(fileCIR);
     }
   }
   std::string generate_c() override;

@@ -569,6 +569,14 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
         std::error_code EC;
         auto dump_file = raw_fd_ostream(StringRef("dump_" + function->proto->name + ".ll"), EC);
         TheFunction->print(dump_file);
+        dump_file.write('\n');
+        auto function_list = codegen_context->TheModule->functions();
+        for (auto f = function_list.begin(), fe = function_list.end(); f != fe; f++){
+            if (f->getName() != TheFunction->getName()){
+                f->print(dump_file);
+            }
+        }
+        dump_file.close();
         LogErrorV(emptyLoc, "LLVM ERROR : %s\n", error_str.c_str());
         return nullptr;
     }

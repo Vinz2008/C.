@@ -420,6 +420,9 @@ int main(int argc, char **argv){
     bool thread_sanitizer = false;
     bool only_preprocess = false;
     bool should_use_internal_lld = true; // TODO : set this by default to true
+#if ENABLE_CIR
+    bool cir_enabled = true;
+#endif
     std::string linker_additional_flags = "";
     std::string run_args = "";
     std::string llvm_default_target_triple = llvm::sys::getDefaultTargetTriple();
@@ -595,6 +598,8 @@ int main(int argc, char **argv){
           thread_sanitizer = true;
         } else if (arg.compare("-E") == 0){
           only_preprocess = true;
+        } else if (arg.compare("-no-cir") == 0){
+            cir_enabled = false;
         } else if (arg.compare(0, 2, "-O") == 0){
           size_t pos = arg.find("O");
           std::string temp = arg.substr(pos+1, arg.size());
@@ -725,6 +730,7 @@ int main(int argc, char **argv){
 #if ENABLE_FILE_AST
   std::unique_ptr<FileAST> file_ast = ParseFile();
 #if ENABLE_CIR
+  if (cir_enabled){
   auto file_cir = file_ast->cir_gen(first_filename);
   std::string cir_string = file_cir->to_string();
   ofstream cir_file("out.cir");
@@ -734,6 +740,7 @@ int main(int argc, char **argv){
   assert(checkFileCIR(file_cir));
   if (codegenBackend(std::move(file_cir), backend, object_filename, TripleLLVM, PICmode, asm_mode, time_report, is_optimised, thread_sanitizer, optimize_level, targetInfos.cpu, targetInfos.features) == 1){
     return 1;
+  }
   }
 #endif
   file_ast->codegen();

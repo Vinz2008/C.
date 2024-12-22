@@ -154,7 +154,7 @@ CIR::InstructionRef DeferExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
 
 CIR::InstructionRef ReturnAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     auto returnedI = returned_expr->cir_gen(fileCIR);
-    Cpoint_Type returned_expr_type = returned_expr->get_type();
+    Cpoint_Type returned_expr_type = returned_expr->get_type(fileCIR.get());
     if (returned_expr_type != fileCIR->CurrentFunction->proto->return_type){
         cir_convert_to_type(fileCIR, returned_expr_type, fileCIR->CurrentFunction->proto->return_type, returnedI);
     }
@@ -511,7 +511,7 @@ CIR::InstructionRef StructMemberCallExprAST::cir_gen(std::unique_ptr<FileCIR>& f
             return refletionInstructionCIR(fileCIR, MemberName, clone_unique_ptr_vec<ExprAST>(Args));
         }
     }
-    Cpoint_Type lhs_type = StructMember->LHS->get_type();
+    Cpoint_Type lhs_type = StructMember->LHS->get_type(fileCIR.get());
     if (!lhs_type.is_struct && !lhs_type.is_ptr){
         // not struct member call
         // will handle the special name mangling in this function
@@ -728,16 +728,9 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
     //NOT_IMPLEMENTED();
 }*/
 
-static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
-    //NOT_IMPLEMENTED();
-    if (!dynamic_cast<VariableExprAST*>(member.get())){
-        LogErrorV(emptyLoc, "Can't use a struct member name that is not an identifier");
-        return CIR::InstructionRef();
-    }
 
-    auto member_name_expr = get_Expr_from_ExprAST<VariableExprAST>(member->clone());
-    std::string member_name = member_name_expr->Name;
-    Cpoint_Type struct_type = struct_expr->get_type();
+static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::string member_name){
+    Cpoint_Type struct_type = struct_expr->get_type(fileCIR.get());
     CIR::InstructionRef struct_ref = CIR::InstructionRef();
 
     if (dynamic_cast<VariableExprAST*>(struct_expr.get())){
@@ -751,6 +744,37 @@ static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, st
 
     std::unique_ptr<CIR::GepStruct> struct_member_instr = std::make_unique<CIR::GepStruct>(struct_ref, member_name, struct_type);
     return fileCIR->add_instruction(std::move(struct_member_instr));
+}
+
+static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+    //NOT_IMPLEMENTED();
+    if (!dynamic_cast<VariableExprAST*>(member.get())){
+        LogErrorV(emptyLoc, "Can't use a struct member name that is not an identifier");
+        return CIR::InstructionRef();
+    }
+
+    auto member_name_expr = get_Expr_from_ExprAST<VariableExprAST>(member->clone());
+    std::string member_name = member_name_expr->Name;
+    return getStructMember(fileCIR, std::move(struct_expr), member_name);
+}
+
+static Cpoint_Type getStructMemberType(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST>& struct_expr, std::unique_ptr<ExprAST>& member){
+    //NOT_IMPLEMENTED();
+    if (!dynamic_cast<VariableExprAST*>(member.get())){
+        LogErrorV(emptyLoc, "Can't use a struct member name that is not an identifier");
+        return Cpoint_Type();
+    }
+
+    auto member_name_expr = get_Expr_from_ExprAST<VariableExprAST>(member->clone());
+    std::string member_name = member_name_expr->Name;
+    Cpoint_Type struct_type = struct_expr->get_type(fileCIR.get());
+    std::string struct_name = struct_type.struct_name;
+    for (int i = 0; i < fileCIR->structs[struct_name].vars.size(); i++){
+        if (fileCIR->structs[struct_name].vars.at(i).first == member_name){
+            return fileCIR->structs[struct_name].vars.at(i).second;
+        }
+    }
+    return Cpoint_Type();
 }
 
 
@@ -777,7 +801,7 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
         std::unique_ptr<VariableExprAST> VarExpr = get_Expr_from_ExprAST<VariableExprAST>(lvalue->clone());
         bool is_global = fileCIR->global_vars[VarExpr->Name] != nullptr;
         Cpoint_Type var_type = cir_get_var_type(fileCIR, VarExpr->Name);
-        Cpoint_Type rvalue_type = rvalue->get_type();
+        Cpoint_Type rvalue_type = rvalue->get_type(fileCIR.get());
         CIR::InstructionRef rvalueI = rvalue->cir_gen(fileCIR);
         if (rvalue_type != var_type){
             cir_convert_to_type(fileCIR, rvalue_type, var_type, rvalueI);
@@ -824,8 +848,7 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
     if (Op.at(0) == '.'){
         CIR::InstructionRef structPtr = getStructMember(fileCIR, LHS->clone(), RHS->clone());
-        Cpoint_Type element_type = Cpoint_Type(); // TODO
-        NOT_IMPLEMENTED();
+        Cpoint_Type element_type = getStructMemberType(fileCIR, LHS, RHS);
         return fileCIR->add_instruction(std::make_unique<CIR::DerefInstruction>(structPtr, element_type));
     }
 

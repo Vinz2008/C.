@@ -89,7 +89,7 @@ static CIR::InstructionRef refletionInstrTypeIdCIR(std::unique_ptr<FileCIR>& fil
         LogError("wrong number of arguments for reflection function");
         return CIR::InstructionRef();
     }
-    return getTypeIdCIR(fileCIR, Args.at(0)->get_type());
+    return getTypeIdCIR(fileCIR, Args.at(0)->get_type(fileCIR.get()));
 }
 
 
