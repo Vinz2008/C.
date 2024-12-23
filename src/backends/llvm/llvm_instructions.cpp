@@ -402,14 +402,8 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
         instruction_val = codegen_context->Builder->CreateLoad(element_type, VarAlloc, deref_instruction->label);
     } else if (dynamic_cast<CIR::GepArray*>(instruction.get())){
         auto array_element_instruction = get_Instruction_from_CIR_Instruction<CIR::GepArray>(std::move(instruction));
-        /*if (array_element_instruction->is_array_access_mem){
-            NOT_IMPLEMENTED();
-        }*/
         Value* array = codegen_context->functionValues.at(array_element_instruction->array.get_pos());
         Value* IndexV = codegen_context->functionValues.at(array_element_instruction->index.get_pos());
-        /*if (IndexV->getType() != get_type_llvm(Cpoint_Type(i64_type))){ // TODO : only do this in 64bits target ?
-            convert_to_type(codegen_context, get_cpoint_type_from_llvm(IndexV->getType()), Cpoint_Type(i64_type), IndexV); // TODO : remove get_cpoint_type_from_llvm ?
-        }*/
         Cpoint_Type array_type = array_element_instruction->array_type;
         //Cpoint_Type element_type = array_element_instruction->element_type; // = ? // TODO
         std::vector<llvm::Value *> IdxList; // TODO
@@ -419,10 +413,8 @@ static void codegenInstruction(std::unique_ptr<LLVM::Context>& codegen_context, 
             auto zero = llvm::ConstantInt::get(*codegen_context->TheContext, llvm::APInt(64, 0, true));
             IdxList = { zero, IndexV};
         }
-        //Type* element_type_llvm = get_type_llvm(codegen_context, element_type);
         auto gep_ptr = codegen_context->Builder->CreateGEP(/*element_type_llvm*/ get_type_llvm(codegen_context, array_type), array, IdxList, "", true); // TODO : then load ?
         instruction_val = gep_ptr;
-        //instruction_val = codegen_context->Builder->CreateLoad(element_type_llvm, gep_ptr);
     } else if (dynamic_cast<CIR::GepStruct*>(instruction.get())){
         auto struct_element_instruction = get_Instruction_from_CIR_Instruction<CIR::GepStruct>(std::move(instruction));
 
@@ -572,7 +564,7 @@ static Function* codegenFunction(std::unique_ptr<LLVM::Context>& codegen_context
         dump_file.write('\n');
         auto function_list = codegen_context->TheModule->functions();
         for (auto f = function_list.begin(), fe = function_list.end(); f != fe; f++){
-            if (f->getName() != TheFunction->getName()){
+            if (f->getName() != TheFunction->getName() && f->isDeclarationForLinker()){
                 f->print(dump_file);
             }
         }

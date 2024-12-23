@@ -118,6 +118,12 @@ public:
     // if is a template, remove it
     Cpoint_Type get_real_type();
     Cpoint_Type deref_type();
+    Cpoint_Type get_ptr(){
+        Cpoint_Type new_type = *this;
+        new_type.is_ptr = true;
+        new_type.nb_ptr++;
+        return new_type;
+    }
 };
 
 namespace LLVM {

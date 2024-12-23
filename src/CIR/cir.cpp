@@ -82,6 +82,14 @@ static void add_externs_for_gc(std::unique_ptr<FileCIR>& fileCIR){
     add_manually_extern(fileCIR, CIR::FunctionProto("gc_realloc", Cpoint_Type(void_type, true), args_gc_realloc, false, false));
 }
 
+static void add_externs_for_panic(std::unique_ptr<FileCIR>& fileCIR){
+    std::vector<std::pair<std::string, Cpoint_Type>> panicx_args;
+    panicx_args.push_back(std::make_pair("string", Cpoint_Type(i8_type, true)));
+    panicx_args.push_back(std::make_pair("filename", Cpoint_Type(i8_type, true)));
+    panicx_args.push_back(std::make_pair("function", Cpoint_Type(i8_type, true)));
+    add_manually_extern(fileCIR, CIR::FunctionProto("panicx", Cpoint_Type(never_type), panicx_args, false, false));
+}
+
 
 static CIR::InstructionRef codegenBody(std::unique_ptr<FileCIR>& fileCIR, std::vector<std::unique_ptr<ExprAST>>& Body){
     CIR::InstructionRef ret;
@@ -615,7 +623,7 @@ CIR::InstructionRef CallExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     for (int i = 0; i < Args.size(); i++){
         CIR::InstructionRef argI = Args.at(i)->cir_gen(fileCIR);
         Cpoint_Type arg_type = Args.at(i)->get_type(fileCIR.get());
-        //std::cout << fileCIR->protos[Callee].args.size() << std::endl;
+        Log::Info() << "fileCIR->protos[" << Callee << "].args.size() : " << fileCIR->protos[Callee].args.size() << "\n";
         if (!fileCIR->protos[Callee].is_variable_number_args && arg_type != fileCIR->protos[Callee].args.at(i).second){
             cir_convert_to_type(fileCIR, arg_type, fileCIR->protos[Callee].args.at(i).second, argI);
         }
@@ -678,7 +686,7 @@ CIR::InstructionRef ConstantStructExprAST::cir_gen(std::unique_ptr<FileCIR>& fil
 
 extern std::unordered_map<std::string, int> BinopPrecedence;
 
-static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index, Cpoint_Type& element_type){
+static CIR::InstructionRef getArrayElementGEP(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index, Cpoint_Type& element_type){
     CIR::InstructionRef indexI = index->cir_gen(fileCIR);
     if (indexI.is_empty()){
         LogError("Error in array index");
@@ -686,7 +694,7 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
     }
 
     if (dynamic_cast<VariableExprAST*>(array.get())){
-        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(array->clone());
+        std::unique_ptr<VariableExprAST> VariableExpr = get_Expr_from_ExprAST<VariableExprAST>(std::move(array));
         std::string ArrayName = VariableExpr->Name;
         Cpoint_Type cpoint_type = cir_get_var_type(fileCIR, ArrayName);
         if (!cpoint_type.is_array && !cpoint_type.is_vector_type && !cpoint_type.is_ptr){
@@ -720,6 +728,12 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
     NOT_IMPLEMENTED();
 }
 
+static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
+    Cpoint_Type element_type;
+    auto array_element_GEP = getArrayElementGEP(fileCIR, std::move(array), std::move(index), element_type); 
+    return fileCIR->add_instruction(std::make_unique<CIR::DerefInstruction>(array_element_GEP, element_type));
+}
+
 /*static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> array, std::unique_ptr<ExprAST> index){
     Cpoint_Type member_type;
     // TODO : add should load for vector types (codegen.cpp) or add it in another function
@@ -727,9 +741,19 @@ static CIR::InstructionRef getArrayElement(std::unique_ptr<FileCIR>& fileCIR, st
     return value;
     //NOT_IMPLEMENTED();
 }*/
+static Cpoint_Type getStructMemberType(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST>& struct_expr, std::string member_name){
+    Cpoint_Type struct_type = struct_expr->get_type(fileCIR.get());
+    std::string struct_name = struct_type.struct_name;
+    for (int i = 0; i < fileCIR->structs[struct_name].vars.size(); i++){
+        if (fileCIR->structs[struct_name].vars.at(i).first == member_name){
+            return fileCIR->structs[struct_name].vars.at(i).second;
+        }
+    }
+    return Cpoint_Type();
+}
 
 
-static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::string member_name){
+static CIR::InstructionRef getStructMemberGEP(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::string member_name, Cpoint_Type& struct_member_type){
     Cpoint_Type struct_type = struct_expr->get_type(fileCIR.get());
     CIR::InstructionRef struct_ref = CIR::InstructionRef();
 
@@ -742,11 +766,14 @@ static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, st
         NOT_IMPLEMENTED();
     }
 
-    std::unique_ptr<CIR::GepStruct> struct_member_instr = std::make_unique<CIR::GepStruct>(struct_ref, member_name, struct_type);
+    struct_member_type = getStructMemberType(fileCIR, struct_expr, member_name);
+
+
+    std::unique_ptr<CIR::GepStruct> struct_member_instr = std::make_unique<CIR::GepStruct>(struct_ref, member_name, struct_type, struct_member_type);
     return fileCIR->add_instruction(std::move(struct_member_instr));
 }
 
-static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member){
+static CIR::InstructionRef getStructMemberGEP(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST> struct_expr, std::unique_ptr<ExprAST> member, Cpoint_Type& struct_member_type){
     //NOT_IMPLEMENTED();
     if (!dynamic_cast<VariableExprAST*>(member.get())){
         LogErrorV(emptyLoc, "Can't use a struct member name that is not an identifier");
@@ -755,26 +782,7 @@ static CIR::InstructionRef getStructMember(std::unique_ptr<FileCIR>& fileCIR, st
 
     auto member_name_expr = get_Expr_from_ExprAST<VariableExprAST>(member->clone());
     std::string member_name = member_name_expr->Name;
-    return getStructMember(fileCIR, std::move(struct_expr), member_name);
-}
-
-static Cpoint_Type getStructMemberType(std::unique_ptr<FileCIR>& fileCIR, std::unique_ptr<ExprAST>& struct_expr, std::unique_ptr<ExprAST>& member){
-    //NOT_IMPLEMENTED();
-    if (!dynamic_cast<VariableExprAST*>(member.get())){
-        LogErrorV(emptyLoc, "Can't use a struct member name that is not an identifier");
-        return Cpoint_Type();
-    }
-
-    auto member_name_expr = get_Expr_from_ExprAST<VariableExprAST>(member->clone());
-    std::string member_name = member_name_expr->Name;
-    Cpoint_Type struct_type = struct_expr->get_type(fileCIR.get());
-    std::string struct_name = struct_type.struct_name;
-    for (int i = 0; i < fileCIR->structs[struct_name].vars.size(); i++){
-        if (fileCIR->structs[struct_name].vars.at(i).first == member_name){
-            return fileCIR->structs[struct_name].vars.at(i).second;
-        }
-    }
-    return Cpoint_Type();
+    return getStructMemberGEP(fileCIR, std::move(struct_expr), member_name, struct_member_type);
 }
 
 
@@ -786,14 +794,14 @@ static CIR::InstructionRef equalOperator(std::unique_ptr<FileCIR>& fileCIR, std:
         std::unique_ptr<BinaryExprAST> BinExpr = get_Expr_from_ExprAST<BinaryExprAST>(lvalue->clone());
         Log::Info() << "op : " << BinExpr->Op << "\n";
         Cpoint_Type element_type;
+        CIR::InstructionRef rvalueI = rvalue->cir_gen(fileCIR);
         if (BinExpr->Op.at(0) == '['){
-            CIR::InstructionRef get_array = getArrayElement(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS), element_type);
-            NOT_IMPLEMENTED();
+            CIR::InstructionRef get_array = getArrayElementGEP(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS), element_type);
+            return fileCIR->add_instruction(std::make_unique<CIR::StoreInPtr>(get_array, rvalueI));
         } else if (BinExpr->Op.at(0) == '.'){
-            CIR::InstructionRef get_struct = getStructMember(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS));
-            CIR::InstructionRef rvalueI = rvalue->cir_gen(fileCIR);
+            Cpoint_Type member_type;
+            CIR::InstructionRef get_struct = getStructMemberGEP(fileCIR, std::move(BinExpr->LHS), std::move(BinExpr->RHS), member_type);
             return fileCIR->add_instruction(std::make_unique<CIR::StoreInPtr>(get_struct, rvalueI));
-            //NOT_IMPLEMENTED();
         } else {
             NOT_IMPLEMENTED();
         }
@@ -839,16 +847,15 @@ CIR::InstructionRef BinaryExprAST::cir_gen(std::unique_ptr<FileCIR>& fileCIR){
     }
 
     if (Op.at(0) == '['){
-        Cpoint_Type element_type;
-        return getArrayElement(fileCIR, LHS->clone(), RHS->clone(), element_type);
+        return getArrayElement(fileCIR, LHS->clone(), RHS->clone());
     } 
 
     if (Op.at(0) == '=' && Op.size() == 1){
         return equalOperator(fileCIR, LHS->clone(), RHS->clone());
     }
     if (Op.at(0) == '.'){
-        CIR::InstructionRef structPtr = getStructMember(fileCIR, LHS->clone(), RHS->clone());
-        Cpoint_Type element_type = getStructMemberType(fileCIR, LHS, RHS);
+        Cpoint_Type element_type;
+        CIR::InstructionRef structPtr = getStructMemberGEP(fileCIR, LHS->clone(), RHS->clone(), element_type);
         return fileCIR->add_instruction(std::make_unique<CIR::DerefInstruction>(structPtr, element_type));
     }
 
@@ -1226,6 +1233,9 @@ std::unique_ptr<FileCIR> FileAST::cir_gen(std::string filename){
   ZoneScopedN("CIR generation");
   auto fileCIR = std::make_unique<FileCIR>(filename, std::vector<std::unique_ptr<CIR::Function>>());
   add_externs_for_gc(fileCIR);
+  if (FunctionProtos["panicx"] != nullptr){
+    add_externs_for_panic(fileCIR);
+  }
   for (int i = 0; i < mods.size(); i++){
     register_mod_functions(fileCIR, mods.at(i));
   }

@@ -14,11 +14,12 @@
 class FileCIR;
 
 namespace CIR {
+    // TODO : remove type fields that are duplicates for the type field in the Instruction class (ex : member_type)
+
     //class BasicBlockRef;
     class BasicBlock;
     class Instruction {
     public:
-        // TODO : add a type to each instruction
         std::string label;
         Cpoint_Type type; // TODO : replace with CIR_Type ?
         Instruction(std::string label = "", Cpoint_Type type = Cpoint_Type()) : label(label), type(type) {}
@@ -79,14 +80,14 @@ namespace CIR {
     public:
         InstructionRef ptr;
         Cpoint_Type element_type;
-        DerefInstruction(InstructionRef ptr, Cpoint_Type element_type) : ptr(ptr), element_type(element_type) {}
+        DerefInstruction(InstructionRef ptr, Cpoint_Type element_type) : Instruction(element_type), ptr(ptr), element_type(element_type) {}
         std::string to_string() override;
     };
     class StoreInPtr : public CIR::Instruction {
     public:
         InstructionRef ptr;
         InstructionRef val_to_store;
-        StoreInPtr(InstructionRef ptr, InstructionRef val_to_store) : ptr(ptr), val_to_store(val_to_store) {}
+        StoreInPtr(InstructionRef ptr, InstructionRef val_to_store) : Instruction(Cpoint_Type(void_type)), ptr(ptr), val_to_store(val_to_store) {}
         std::string to_string() override;
     };
 
@@ -332,7 +333,7 @@ namespace CIR {
         CIR::InstructionRef index;
         Cpoint_Type array_type;
         Cpoint_Type element_type;
-        GepArray(CIR::InstructionRef array, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : array(array), index(index), array_type(array_type), element_type(element_type) {}
+        GepArray(CIR::InstructionRef array, CIR::InstructionRef index, Cpoint_Type array_type, Cpoint_Type element_type) : Instruction(array_type.deref_type().get_ptr()), array(array), index(index), array_type(array_type), element_type(element_type) {}
         std::string to_string() override;
     };
 
@@ -341,7 +342,9 @@ namespace CIR {
         CIR::InstructionRef struct_ref;
         std::string member_name;
         Cpoint_Type struct_type;
-        GepStruct(CIR::InstructionRef struct_ref, std::string member_name, Cpoint_Type struct_type) : struct_ref(struct_ref), member_name(member_name), struct_type(struct_type) {}
+        Cpoint_Type member_type;
+        // TODO : add a call to the Instruction Constructor with the type of the member
+        GepStruct(CIR::InstructionRef struct_ref, std::string member_name, Cpoint_Type struct_type, Cpoint_Type member_type) : Instruction(member_type.get_ptr()), struct_ref(struct_ref), member_name(member_name), struct_type(struct_type), member_type(member_type) {}
         std::string to_string() override;
     };
 
