@@ -3,6 +3,8 @@
 
 A programming language compiler written in C++ which is definitely not finished. It compile the C. code to LLVM IR.
 
+# **Warning : paused in the middle of rewriting, not functional at the moment**
+
 ## Advantages
 
 - simple C-like language
